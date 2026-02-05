@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web & Circuits — Terminal</title>
+<title>Web and Circuits LLC — Terminal</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
@@ -309,7 +309,7 @@ const ASCII_LOGO = `
 `;
 
 const bootSequence = [
-  { type: 'system', text: 'BIOS v2.4.1 — Web & Circuits Industries', delay: 0 },
+  { type: 'system', text: 'BIOS v2.4.1 — Web and Circuits LLC', delay: 0 },
   { type: 'system', text: 'Memory Test: 16384 MB OK', delay: 200 },
   { type: 'system', text: 'Detecting hardware...', delay: 400 },
   { type: 'system', text: '  ├─ Neural Core: ONLINE', delay: 600 },
@@ -320,7 +320,7 @@ const bootSequence = [
   { type: 'blank', delay: 2700 },
   { type: 'command', prompt: 'root@wac', text: 'cat /etc/motd', delay: 2800 },
   { type: 'output', text: '', delay: 3100 },
-  { type: 'output', text: '  Welcome to <span class="highlight">Web & Circuits</span>', delay: 3200 },
+  { type: 'output', text: '  Welcome to <span class="highlight">Web and Circuits LLC</span>', delay: 3200 },
   { type: 'output', text: '  ────────────────────────────', delay: 3300 },
   { type: 'output', text: '', delay: 3350 },
   { type: 'output', text: '  We build bridges between human creativity', delay: 3400 },
@@ -452,7 +452,7 @@ function setupInput() {
   const commands = {
     help: 'Available commands: help, projects, about, github, clear, matrix',
     projects: 'Navigate to: <span class="link" onclick="location.href=\'/heartbeat-demo\'">heartbeat-demo</span>',
-    about: 'Web & Circuits — Building the future, one commit at a time.',
+    about: 'Web and Circuits LLC — Building the future, one commit at a time.',
     github: 'Opening GitHub...',
     clear: 'CLEAR',
     matrix: 'Entering the Matrix...'
