@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --border: #1f1f2e;
+  --text: #e4e4ed;
+  --text-dim: #6b6b80;
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+  --cyan: #22d3ee;
+  --pink: #f472b6;
+  --green: #4ade80;
+  --orange: #fb923c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══ Animated Background ═══ */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: -2;
+}
+
+.bg-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  z-index: -1;
+  animation: glow-drift 20s ease-in-out infinite;
+}
+
+.bg-glow-1 {
+  top: -200px;
+  right: -100px;
+  background: var(--accent);
+}
+
+.bg-glow-2 {
+  bottom: -200px;
+  left: -100px;
+  background: var(--cyan);
+  animation-delay: -10s;
+}
+
+@keyframes glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, 20px) scale(1.1); }
+  66% { transform: translate(-20px, -30px) scale(0.9); }
+}
+
+/* ═══ Header ═══ */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+nav {
+  display: flex;
+  gap: 32px;
+}
+
+nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+nav a:hover { color: var(--text); }
+
+.cta-btn {
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.cta-btn:hover {
+  background: var(--accent-light);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ═══ Hero ═══ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 40px 80px;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.hero-badge-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+h1 {
+  font-size: clamp(48px, 8vw, 88px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--text) 0%, var(--text-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h1 span {
+  background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: clamp(18px, 2.5vw, 24px);
+  color: var(--text-dim);
+  max-width: 600px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: white;
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.5);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+/* ═══ Floating Elements ═══ */
+.floating-cards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.float-card {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-card-1 {
+  top: 20%;
+  left: 8%;
+  animation-delay: 0s;
+}
+
+.float-card-2 {
+  top: 30%;
+  right: 10%;
+  animation-delay: -2s;
+}
+
+.float-card-3 {
+  bottom: 25%;
+  left: 12%;
+  animation-delay: -4s;
+}
+
+.float-card-4 {
+  bottom: 20%;
+  right: 8%;
+  animation-delay: -1s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(1deg); }
+}
+
+.float-card code {
+  color: var(--cyan);
+}
+
+.float-card .comment {
+  color: var(--text-dim);
+}
+
+/* ═══ Projects Section ═══ */
+.projects {
+  padding: 120px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+h2 {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--cyan));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.project-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+
+.project-card:hover::before { opacity: 1; }
+
+.project-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(34, 211, 238, 0.2));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.project-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.project-card p {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-light);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.project-link:hover { text-decoration: underline; }
+
+/* ═══ Tech Stack ═══ */
+.tech-stack {
+  padding: 80px 40px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.tech-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tech-label {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.tech-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 48px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.tech-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.tech-item:hover { opacity: 1; }
+
+.tech-item span { font-size: 24px; }
+
+/* ═══ Footer ═══ */
+footer {
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.footer-logo {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.footer-tagline {
+  color: var(--text-dim);
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.footer-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--text); }
+
+.footer-copy {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ═══ Responsive ═══ */
+@media (max-width: 768px) {
+  header { padding: 16px 20px; }
+  nav { display: none; }
+  .hero { padding: 100px 20px 60px; }
+  .floating-cards { display: none; }
+  .projects { padding: 80px 20px; }
+  .tech-logos { gap: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span>Web & Circuits</span>
+  </div>
+  <nav>
+    <a href="#projects">Projects</a>
+    <a href="https://github.com/Web-and-Circuits">GitHub</a>
+    <a href="https://discord.com/invite/clawd">Discord</a>
+  </nav>
+  <a href="https://github.com/Web-and-Circuits" class="cta-btn">View on GitHub</a>
+</header>
+
+<section class="hero">
+  <div class="floating-cards">
+    <div class="float-card float-card-1">
+      <span class="comment">// magic happens here</span><br>
+      <code>await agent.wake()</code>
+    </div>
+    <div class="float-card float-card-2">
+      <code>status:</code> <span style="color: var(--green)">●</span> online
+    </div>
+    <div class="float-card float-card-3">
+      <code>const</code> future = <code>now()</code>
+    </div>
+    <div class="float-card float-card-4">
+      <span style="color: var(--pink)">♥</span> <code>open source</code>
+    </div>
+  </div>
+
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Building the future, one commit at a time
+  </div>
+  
+  <h1>Where <span>ideas</span> become<br>reality</h1>
+  
+  <p class="hero-sub">
+    We build tools that bridge the gap between human creativity and machine intelligence. 
+    Open source. Community driven. Endlessly curious.
+  </p>
+  
+  <div class="hero-buttons">
+    <a href="#projects" class="btn btn-primary">
+      Explore Projects →
+    </a>
+    <a href="https://github.com/Web-and-Circuits" class="btn btn-secondary">
+      <span>⭐</span> Star on GitHub
+    </a>
+  </div>
+</section>
+
+<section class="projects" id="projects">
+  <div class="section-header">
+    <div class="section-label">What We're Building</div>
+    <h2>Featured Projects</h2>
+  </div>
+  
+  <div class="project-grid">
+    <div class="project-card">
+      <div class="project-icon">🐑</div>
+      <h3>OpenClaw</h3>
+      <p>Your personal AI assistant that actually gets things done. Connects to your life — messages, calendar, email — and helps without getting in the way.</p>
+      <a href="https://github.com/nicholasgriffintn/OpenClaw" class="project-link">Learn more →</a>
+    </div>
+    
+    <div class="project-card">
+      <div class="project-icon">💓</div>
+      <h3>Heartbeat Demo</h3>
+      <p>Interactive visualization of OpenClaw's wake scheduler. Watch how the system coalesces requests and manages state — a living notebook in code.</p>
+      <a href="/heartbeat-demo" class="project-link">View demo →</a>
+    </div>
+    
+    <div class="project-card">
+      <div class="project-icon">🔧</div>
+      <h3>More Coming Soon</h3>
+      <p>We're always cooking up new experiments. Tools for developers, utilities for daily life, and occasionally something completely unexpected.</p>
+      <a href="https://github.com/Web-and-Circuits" class="project-link">Follow us →</a>
+    </div>
+  </div>
+</section>
+
+<section class="tech-stack">
+  <div class="tech-inner">
+    <div class="tech-label">Built With Love And</div>
+    <div class="tech-logos">
+      <div class="tech-item"><span>🦊</span> TypeScript</div>
+      <div class="tech-item"><span>⚛️</span> Node.js</div>
+      <div class="tech-item"><span>🤖</span> Claude</div>
+      <div class="tech-item"><span>🐙</span> GitHub</div>
+      <div class="tech-item"><span>☁️</span> Cloudflare</div>
+      <div class="tech-item"><span>💜</span> Open Source</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">⚡ Web & Circuits</div>
+  <p class="footer-tagline">Making technology feel a little more human.</p>
+  <div class="footer-links">
+    <a href="https://github.com/Web-and-Circuits">GitHub</a>
+    <a href="https://discord.com/invite/clawd">Discord</a>
+    <a href="https://docs.openclaw.ai">Docs</a>
+  </div>
+  <p class="footer-copy">© 2026 Web & Circuits. Open source under MIT.</p>
+</footer>
+
+<script>
+// Parallax on scroll
+document.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const glows = document.querySelectorAll('.bg-glow');
+  glows.forEach((glow, i) => {
+    const speed = i === 0 ? 0.1 : 0.15;
+    glow.style.transform = `translateY(${scrolled * speed}px)`;
+  });
+});
+
+// Smooth reveal on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.project-card').forEach(card => {
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(20px)';
+  card.style.transition = 'opacity 0.6s, transform 0.6s';
+  observer.observe(card);
+});
+</script>
+
+</body>
+</html>
