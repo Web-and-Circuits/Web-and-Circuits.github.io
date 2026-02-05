@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — The Journal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&family=Source+Serif+4:wght@300;400;600&family=Inter:wght@400;500&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --paper: #f5f1eb;
+  --ink: #1a1a1a;
+  --accent: #b8383b;
+  --rule: #333;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Source Serif 4', Georgia, serif;
+  min-height: 100vh;
+}
+
+/* Masthead */
+.masthead {
+  text-align: center;
+  padding: 30px 20px 20px;
+  border-bottom: 3px double var(--rule);
+}
+
+.date-line {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  color: #666;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(48px, 12vw, 120px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.tagline-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 15px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tagline-bar::before,
+.tagline-bar::after {
+  content: '';
+  width: 60px;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* Main grid */
+.main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1px 1fr;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  gap: 40px;
+}
+
+.divider {
+  background: var(--rule);
+}
+
+/* Main story */
+.main-story {
+  padding-right: 20px;
+}
+
+.main-story h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.main-story .byline {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #666;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.main-story .lead {
+  font-size: 22px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  font-weight: 300;
+}
+
+.main-story .body {
+  column-count: 2;
+  column-gap: 40px;
+  font-size: 16px;
+  line-height: 1.8;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.main-story .body p {
+  margin-bottom: 1.5em;
+  text-indent: 2em;
+}
+
+.main-story .body p:first-of-type {
+  text-indent: 0;
+}
+
+.main-story .body p:first-of-type::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 72px;
+  float: left;
+  line-height: 0.8;
+  padding-right: 10px;
+  color: var(--accent);
+}
+
+/* Pull quote */
+.pull-quote {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-style: italic;
+  text-align: center;
+  padding: 30px;
+  margin: 30px 0;
+  border-top: 2px solid var(--rule);
+  border-bottom: 2px solid var(--rule);
+  column-span: all;
+}
+
+/* Sidebar */
+.sidebar {
+  font-size: 14px;
+}
+
+.sidebar-section {
+  margin-bottom: 40px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #ddd;
+}
+
+.sidebar-section h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 15px;
+  color: var(--accent);
+}
+
+.sidebar-section h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+
+.sidebar-section p {
+  line-height: 1.6;
+  color: #444;
+}
+
+.sidebar-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.sidebar-link:hover {
+  text-decoration: underline;
+}
+
+/* Index box */
+.index-box {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 25px;
+  margin-top: 20px;
+}
+
+.index-box h3 {
+  color: var(--paper);
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 10px;
+}
+
+.index-box ul {
+  list-style: none;
+}
+
+.index-box li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.index-box a {
+  color: var(--paper);
+  text-decoration: none;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+}
+
+.index-box a:hover {
+  color: #f5c6c7;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 40px;
+  border-top: 3px double var(--rule);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #666;
+}
+
+/* Print aesthetic details */
+.edition-number {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  color: #999;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .divider { display: none; }
+  .main-story .body { column-count: 1; }
+  .main-story { padding-right: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="date-line">Volume I • Issue 001 • Open Source Edition</div>
+  <h1 class="logo">Web <span>&</span> Circuits</h1>
+  <div class="tagline-bar">The Journal of Digital Experiments</div>
+</header>
+
+<main class="main-grid">
+  <article class="main-story">
+    <h1>Building Bridges Between Human Creativity and Machine Intelligence</h1>
+    <div class="byline">A Manifesto for the Curious</div>
+    
+    <p class="lead">
+      In an age of rapid technological change, a small collective of builders asks a simple question: 
+      What happens when we stop treating code as a tool and start treating it as a canvas?
+    </p>
+    
+    <div class="body">
+      <p>
+        The best experiments begin with curiosity. Not the kind that seeks answers, 
+        but the kind that revels in questions. Web & Circuits exists in this liminal 
+        space—between knowing and wondering, between building and dreaming.
+      </p>
+      
+      <p>
+        We believe that open source is more than a license; it's a philosophy. When code 
+        is shared freely, ideas compound. When experiments are public, failures become 
+        lessons for everyone. This is the foundation upon which we build.
+      </p>
+      
+      <div class="pull-quote">
+        "The future belongs to those who tinker, experiment, and share what they learn."
+      </div>
+      
+      <p>
+        Our projects span the spectrum from practical utilities to conceptual art pieces. 
+        The Heartbeat Demo, for instance, transforms a mundane scheduling algorithm into 
+        a living, breathing visualization—proof that even infrastructure can be beautiful.
+      </p>
+      
+      <p>
+        We don't claim to have all the answers. We don't pretend our code is perfect. 
+        What we offer instead is a commitment to exploration, a willingness to fail 
+        publicly, and an invitation for others to join the journey.
+      </p>
+      
+      <p>
+        The tools we build today become the foundations of tomorrow's innovations. 
+        Every commit is a small act of optimism—a bet that someone, somewhere, will 
+        find value in what we've created.
+      </p>
+    </div>
+  </article>
+  
+  <div class="divider"></div>
+  
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Featured</h3>
+      <h4>The Heartbeat Demo</h4>
+      <p>An interactive visualization that brings a wake scheduler to life. Watch signals 
+      propagate, states change, and systems breathe.</p>
+      <a href="/heartbeat-demo" class="sidebar-link">Experience it →</a>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>From the Archives</h3>
+      <h4>On the Art of Building</h4>
+      <p>Why we choose to work in public, share our failures, and treat every project 
+      as an opportunity to learn something new.</p>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>The Workshop</h3>
+      <h4>Tools & Experiments</h4>
+      <p>A growing collection of utilities, prototypes, and occasionally inexplicable 
+      creations. All open source. All free to explore.</p>
+    </div>
+    
+    <div class="index-box">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/heartbeat-demo">→ Heartbeat Demo</a></li>
+        <li><a href="https://github.com/Web-and-Circuits">→ Source Code</a></li>
+        <li><a href="https://github.com/Web-and-Circuits">→ All Projects</a></li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  © 2026 Web & Circuits — All content freely available under MIT License
+</footer>
+
+<div class="edition-number">EST. 2026 — DIGITAL EDITION</div>
+
+</body>
+</html>
