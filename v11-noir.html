@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — Noir</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Space+Mono&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream: #f5f2eb;
+  --charcoal: #1a1a1a;
+  --gold: #c9a959;
+  --muted: #6b6b6b;
+}
+
+body {
+  background: var(--charcoal);
+  min-height: 100vh;
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--cream);
+  overflow-x: hidden;
+}
+
+/* Subtle grain texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Animated gradient lines */
+.lines {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.1;
+  animation: sweep 20s linear infinite;
+}
+
+@keyframes sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200vw); }
+}
+
+.line:nth-child(1) { top: 20%; animation-delay: 0s; animation-duration: 25s; }
+.line:nth-child(2) { top: 40%; animation-delay: 5s; animation-duration: 30s; }
+.line:nth-child(3) { top: 60%; animation-delay: 10s; animation-duration: 22s; }
+.line:nth-child(4) { top: 80%; animation-delay: 15s; animation-duration: 28s; }
+
+/* Main container */
+.container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Logo mark */
+.mark {
+  width: 80px;
+  height: 80px;
+  border: 1px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  position: relative;
+  animation: fadeIn 1.5s ease-out;
+}
+
+.mark::before,
+.mark::after {
+  content: '';
+  position: absolute;
+  background: var(--gold);
+}
+
+.mark::before {
+  width: 30px;
+  height: 1px;
+}
+
+.mark::after {
+  width: 1px;
+  height: 30px;
+}
+
+.mark span {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+}
+
+/* Title */
+h1 {
+  font-weight: 300;
+  font-size: clamp(2rem, 8vw, 5rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  animation: fadeIn 1.5s ease-out 0.3s backwards;
+}
+
+h1 span {
+  color: var(--gold);
+}
+
+.subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4rem;
+  animation: fadeIn 1.5s ease-out 0.6s backwards;
+}
+
+/* Divider */
+.divider {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin-bottom: 4rem;
+  animation: fadeIn 1.5s ease-out 0.9s backwards;
+}
+
+/* Description */
+.description {
+  max-width: 600px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 300;
+  line-height: 2;
+  color: var(--cream);
+  opacity: 0.8;
+  margin-bottom: 4rem;
+  animation: fadeIn 1.5s ease-out 1.2s backwards;
+}
+
+/* Services */
+.services {
+  display: flex;
+  gap: 4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 4rem;
+  animation: fadeIn 1.5s ease-out 1.5s backwards;
+}
+
+.service {
+  text-align: center;
+  position: relative;
+}
+
+.service::before {
+  content: '';
+  position: absolute;
+  top: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--gold);
+}
+
+.service h3 {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.service p {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* Contact */
+.contact {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  animation: fadeIn 1.5s ease-out 1.8s backwards;
+}
+
+.contact a {
+  color: var(--cream);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.contact a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--gold);
+  transition: width 0.3s ease;
+}
+
+.contact a:hover {
+  color: var(--gold);
+}
+
+.contact a:hover::after {
+  width: 100%;
+}
+
+/* Footer */
+footer {
+  position: fixed;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  animation: fadeIn 1.5s ease-out 2.1s backwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Corner accents */
+.corner {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  border: 1px solid var(--gold);
+  opacity: 0.2;
+}
+
+.corner--tl { top: 2rem; left: 2rem; border-right: none; border-bottom: none; }
+.corner--tr { top: 2rem; right: 2rem; border-left: none; border-bottom: none; }
+.corner--bl { bottom: 2rem; left: 2rem; border-right: none; border-top: none; }
+.corner--br { bottom: 2rem; right: 2rem; border-left: none; border-top: none; }
+
+/* Hover effects */
+.container:hover .mark {
+  border-color: var(--cream);
+}
+
+.container:hover .mark span,
+.container:hover .mark::before,
+.container:hover .mark::after {
+  background: var(--cream);
+  color: var(--cream);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  h1 {
+    letter-spacing: 0.15em;
+  }
+  
+  .services {
+    gap: 2rem;
+  }
+  
+  .corner {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .corner--tl, .corner--tr { top: 1rem; }
+  .corner--bl, .corner--br { bottom: 4rem; }
+  .corner--tl, .corner--bl { left: 1rem; }
+  .corner--tr, .corner--br { right: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="lines">
+  <div class="line"></div>
+  <div class="line"></div>
+  <div class="line"></div>
+  <div class="line"></div>
+</div>
+
+<div class="corner corner--tl"></div>
+<div class="corner corner--tr"></div>
+<div class="corner corner--bl"></div>
+<div class="corner corner--br"></div>
+
+<div class="container">
+  <div class="mark">
+    <span>W&C</span>
+  </div>
+  
+  <h1>Web <span>&</span> Circuits</h1>
+  <p class="subtitle">Technology Consultancy</p>
+  
+  <div class="divider"></div>
+  
+  <p class="description">
+    We build intelligent systems at the intersection of software and hardware. 
+    From AI agents to custom electronics, we craft solutions that bridge the digital and physical.
+  </p>
+  
+  <div class="services">
+    <div class="service">
+      <h3>Software</h3>
+      <p>Web · Mobile · AI</p>
+    </div>
+    <div class="service">
+      <h3>Hardware</h3>
+      <p>IoT · Embedded · PCB</p>
+    </div>
+    <div class="service">
+      <h3>Integration</h3>
+      <p>Systems · Automation</p>
+    </div>
+  </div>
+  
+  <div class="contact">
+    <a href="mailto:hello@webandcircuits.com">hello@webandcircuits.com</a>
+  </div>
+</div>
+
+<footer>
+  © 2026 Web and Circuits LLC
+</footer>
+
+</body>
+</html>
