@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — Cosmos</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  background: #000; 
+  overflow: hidden; 
+  font-family: 'SF Pro Display', -apple-system, sans-serif;
+}
+#canvas { position: fixed; inset: 0; z-index: 0; }
+
+.content {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  color: white;
+}
+
+h1 {
+  font-size: clamp(48px, 12vw, 120px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 80px rgba(167, 139, 250, 0.5);
+}
+
+.tagline {
+  font-size: clamp(16px, 3vw, 24px);
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 48px;
+  max-width: 500px;
+}
+
+.cta {
+  display: inline-flex;
+  gap: 16px;
+}
+
+.btn {
+  padding: 16px 32px;
+  border-radius: 100px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+  border: none;
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 60px rgba(139, 92, 246, 0.6);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.mouse-hint {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-8px); }
+}
+
+.stats {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-family: monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="content">
+  <h1>Web & Circuits</h1>
+  <p class="tagline">Building bridges between human creativity and machine intelligence. Open source. Community driven.</p>
+  <div class="cta">
+    <a href="/heartbeat-demo" class="btn btn-primary">Explore Projects</a>
+    <a href="https://github.com/Web-and-Circuits" class="btn btn-ghost">View Code</a>
+  </div>
+</div>
+
+<div class="mouse-hint">Move mouse to explore</div>
+<div class="stats" id="stats"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// THREE.JS COSMOS — Interactive Particle Universe
+// ═══════════════════════════════════════════════════════
+
+let scene, camera, renderer, particles, nebula, stars;
+let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+let clock = new THREE.Clock();
+
+const PARTICLE_COUNT = 15000;
+const NEBULA_COUNT = 5000;
+const STAR_COUNT = 2000;
+
+function init() {
+  // Scene
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x000011, 0.0008);
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.z = 400;
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ 
+    canvas: document.getElementById('canvas'),
+    antialias: true,
+    alpha: true 
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  createParticles();
+  createNebula();
+  createStars();
+  createConnections();
+
+  // Events
+  window.addEventListener('resize', onResize);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('click', onPulse);
+
+  animate();
+}
+
+function createParticles() {
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(PARTICLE_COUNT * 3);
+  const colors = new Float32Array(PARTICLE_COUNT * 3);
+  const sizes = new Float32Array(PARTICLE_COUNT);
+  const velocities = new Float32Array(PARTICLE_COUNT * 3);
+
+  const colorPalette = [
+    new THREE.Color(0x8b5cf6), // purple
+    new THREE.Color(0x6366f1), // indigo
+    new THREE.Color(0x3b82f6), // blue
+    new THREE.Color(0x60a5fa), // light blue
+    new THREE.Color(0xa78bfa), // violet
+  ];
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const i3 = i * 3;
+    
+    // Spiral galaxy distribution
+    const radius = Math.random() * 500;
+    const spinAngle = radius * 0.02;
+    const branchAngle = (i % 3) * (Math.PI * 2 / 3);
+    
+    const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 50;
+    const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 50;
+    const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 50;
+
+    positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+    positions[i3 + 1] = randomY;
+    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+    const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+    colors[i3] = color.r;
+    colors[i3 + 1] = color.g;
+    colors[i3 + 2] = color.b;
+
+    sizes[i] = Math.random() * 3 + 1;
+
+    velocities[i3] = (Math.random() - 0.5) * 0.02;
+    velocities[i3 + 1] = (Math.random() - 0.5) * 0.02;
+    velocities[i3 + 2] = (Math.random() - 0.5) * 0.02;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  geometry.userData.velocities = velocities;
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 },
+      pixelRatio: { value: renderer.getPixelRatio() }
+    },
+    vertexShader: `
+      attribute float size;
+      varying vec3 vColor;
+      uniform float time;
+      uniform float pixelRatio;
+      
+      void main() {
+        vColor = color;
+        vec3 pos = position;
+        pos.y += sin(time * 0.5 + position.x * 0.01) * 2.0;
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = size * pixelRatio * (300.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      
+      void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+        gl_FragColor = vec4(vColor, alpha * 0.8);
+      }
+    `,
+    transparent: true,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  particles = new THREE.Points(geometry, material);
+  scene.add(particles);
+}
+
+function createNebula() {
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(NEBULA_COUNT * 3);
+  const colors = new Float32Array(NEBULA_COUNT * 3);
+  const sizes = new Float32Array(NEBULA_COUNT);
+
+  for (let i = 0; i < NEBULA_COUNT; i++) {
+    const i3 = i * 3;
+    const radius = Math.random() * 800;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(Math.random() * 2 - 1);
+
+    positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+    positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.3;
+    positions[i3 + 2] = radius * Math.cos(phi);
+
+    const mixColor = Math.random();
+    if (mixColor < 0.3) {
+      colors[i3] = 0.5; colors[i3 + 1] = 0.2; colors[i3 + 2] = 0.8;
+    } else if (mixColor < 0.6) {
+      colors[i3] = 0.2; colors[i3 + 1] = 0.3; colors[i3 + 2] = 0.9;
+    } else {
+      colors[i3] = 0.8; colors[i3 + 1] = 0.4; colors[i3 + 2] = 0.9;
+    }
+
+    sizes[i] = Math.random() * 20 + 5;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 } },
+    vertexShader: `
+      attribute float size;
+      varying vec3 vColor;
+      varying float vAlpha;
+      uniform float time;
+      
+      void main() {
+        vColor = color;
+        float pulse = sin(time * 0.3 + position.x * 0.01) * 0.5 + 0.5;
+        vAlpha = pulse * 0.15;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (400.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vAlpha;
+      
+      void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        float alpha = exp(-dist * 4.0) * vAlpha;
+        gl_FragColor = vec4(vColor, alpha);
+      }
+    `,
+    transparent: true,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  nebula = new THREE.Points(geometry, material);
+  scene.add(nebula);
+}
+
+function createStars() {
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(STAR_COUNT * 3);
+
+  for (let i = 0; i < STAR_COUNT; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 2000;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const material = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 1,
+    transparent: true,
+    opacity: 0.8
+  });
+
+  stars = new THREE.Points(geometry, material);
+  scene.add(stars);
+}
+
+function createConnections() {
+  // Dynamic connection lines created in animation loop
+}
+
+function onMouseMove(e) {
+  mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onPulse(e) {
+  // Create explosion effect at click point
+  const positions = particles.geometry.attributes.position.array;
+  const velocities = particles.geometry.userData.velocities;
+  
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const i3 = i * 3;
+    const dx = positions[i3] - mouse.targetX * 200;
+    const dy = positions[i3 + 1] - mouse.targetY * 200;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist < 100) {
+      const force = (100 - dist) / 100 * 2;
+      velocities[i3] += (dx / dist) * force;
+      velocities[i3 + 1] += (dy / dist) * force;
+    }
+  }
+}
+
+function onResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  const time = clock.getElapsedTime();
+  const delta = clock.getDelta();
+
+  // Smooth mouse follow
+  mouse.x += (mouse.targetX - mouse.x) * 0.05;
+  mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+  // Rotate galaxy
+  particles.rotation.y = time * 0.05;
+  nebula.rotation.y = time * 0.03;
+  stars.rotation.y = time * 0.01;
+
+  // Camera follows mouse
+  camera.position.x += (mouse.x * 100 - camera.position.x) * 0.02;
+  camera.position.y += (mouse.y * 50 - camera.position.y) * 0.02;
+  camera.lookAt(scene.position);
+
+  // Update particle positions with velocities
+  const positions = particles.geometry.attributes.position.array;
+  const velocities = particles.geometry.userData.velocities;
+  
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const i3 = i * 3;
+    positions[i3] += velocities[i3];
+    positions[i3 + 1] += velocities[i3 + 1];
+    positions[i3 + 2] += velocities[i3 + 2];
+    
+    // Damping
+    velocities[i3] *= 0.98;
+    velocities[i3 + 1] *= 0.98;
+    velocities[i3 + 2] *= 0.98;
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  // Update uniforms
+  particles.material.uniforms.time.value = time;
+  nebula.material.uniforms.time.value = time;
+
+  renderer.render(scene, camera);
+
+  // Stats
+  document.getElementById('stats').textContent = 
+    `${(PARTICLE_COUNT + NEBULA_COUNT + STAR_COUNT).toLocaleString()} particles`;
+}
+
+init();
+</script>
+</body>
+</html>

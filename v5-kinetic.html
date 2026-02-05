@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — Kinetic</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #000;
+  --white: #fff;
+  --accent: #ff3366;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* Custom cursor */
+.cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s, border-color 0.2s;
+  mix-blend-mode: difference;
+}
+
+.cursor.hover {
+  transform: scale(2);
+  border-color: var(--accent);
+}
+
+.cursor-dot {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  background: var(--white);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+}
+
+/* Sections */
+section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hero section */
+.hero {
+  flex-direction: column;
+}
+
+.hero-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 20vw, 300px);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-text .line {
+  display: block;
+  overflow: hidden;
+}
+
+.hero-text .word {
+  display: inline-block;
+  transform: translateY(100%);
+  animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-text .line:nth-child(2) .word { animation-delay: 0.15s; }
+
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+
+.hero-sub {
+  margin-top: 40px;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeIn 1s 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 0.5; }
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeIn 1s 1s forwards;
+}
+
+.scroll-indicator span {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.scroll-line {
+  width: 1px;
+  height: 60px;
+  background: linear-gradient(to bottom, var(--white), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { transform: scaleY(1); opacity: 1; }
+  50% { transform: scaleY(0.5); opacity: 0.3; }
+}
+
+/* Manifesto section */
+.manifesto {
+  padding: 20vh 10vw;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.manifesto-word {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(60px, 15vw, 200px);
+  line-height: 1;
+  opacity: 0.1;
+  transition: opacity 0.4s, transform 0.4s, color 0.4s;
+  cursor: pointer;
+}
+
+.manifesto-word:hover {
+  opacity: 1;
+  transform: translateX(20px);
+  color: var(--accent);
+}
+
+.manifesto-word.active {
+  opacity: 1;
+}
+
+/* Projects section */
+.projects {
+  flex-direction: column;
+  padding: 10vh 5vw;
+}
+
+.projects-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 8vw, 100px);
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.projects-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100px;
+  height: 4px;
+  background: var(--accent);
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.4s;
+}
+
+.project-item:hover {
+  padding-left: 40px;
+  border-color: var(--accent);
+}
+
+.project-item:hover .project-name {
+  color: var(--accent);
+}
+
+.project-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(32px, 6vw, 72px);
+  transition: color 0.3s;
+}
+
+.project-desc {
+  font-size: 14px;
+  opacity: 0.5;
+  max-width: 300px;
+  text-align: right;
+}
+
+.project-arrow {
+  font-size: 32px;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.4s;
+}
+
+.project-item:hover .project-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* CTA section */
+.cta-section {
+  flex-direction: column;
+  text-align: center;
+}
+
+.cta-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 12vw, 180px);
+  line-height: 0.9;
+  margin-bottom: 40px;
+}
+
+.cta-big span {
+  display: block;
+}
+
+.cta-big .stroke {
+  -webkit-text-stroke: 2px var(--white);
+  color: transparent;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 48px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  background: var(--white);
+  text-decoration: none;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+}
+
+.cta-btn:hover::before {
+  transform: translateX(0);
+}
+
+.cta-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-btn:hover {
+  color: var(--white);
+}
+
+/* Footer */
+footer {
+  padding: 60px;
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.3;
+}
+
+/* Marquee */
+.marquee {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 0;
+  background: var(--accent);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.marquee-content {
+  display: flex;
+  animation: marquee 20s linear infinite;
+}
+
+.marquee-item {
+  flex-shrink: 0;
+  padding: 0 60px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: var(--bg);
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Floating letters background */
+.floating-letters {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.03;
+}
+
+.floating-letter {
+  position: absolute;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 300px;
+  animation: floatLetter 30s linear infinite;
+}
+
+@keyframes floatLetter {
+  from {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(-100vh) rotate(360deg);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursor-dot"></div>
+
+<div class="floating-letters" id="floating-letters"></div>
+
+<section class="hero">
+  <h1 class="hero-text">
+    <span class="line"><span class="word">WEB</span></span>
+    <span class="line"><span class="word">&CIRCUITS</span></span>
+  </h1>
+  <p class="hero-sub">Where ideas become reality</p>
+  
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<section class="manifesto">
+  <div class="manifesto-word" data-meaning="We share everything">OPEN</div>
+  <div class="manifesto-word" data-meaning="Building together">SOURCE</div>
+  <div class="manifesto-word" data-meaning="Always exploring">CURIOUS</div>
+  <div class="manifesto-word" data-meaning="Making things work">BUILDERS</div>
+</section>
+
+<section class="projects">
+  <h2 class="projects-title">PROJECTS</h2>
+  
+  <div class="project-list">
+    <a href="/heartbeat-demo" class="project-item">
+      <span class="project-name">HEARTBEAT DEMO</span>
+      <span class="project-desc">Interactive visualization of a wake scheduler. A living notebook in code.</span>
+      <span class="project-arrow">→</span>
+    </a>
+    <a href="https://github.com/Web-and-Circuits" class="project-item">
+      <span class="project-name">EXPERIMENTS</span>
+      <span class="project-desc">Tools, utilities, and occasionally something completely unexpected.</span>
+      <span class="project-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="cta-big">
+    <span>LET'S</span>
+    <span class="stroke">BUILD</span>
+    <span>SOMETHING</span>
+  </div>
+  <a href="https://github.com/Web-and-Circuits" class="cta-btn">
+    <span>VIEW ON GITHUB</span>
+    <span>→</span>
+  </a>
+</section>
+
+<footer>
+  © 2026 Web & Circuits — Open source under MIT
+</footer>
+
+<div class="marquee">
+  <div class="marquee-content">
+    <span class="marquee-item">✦ OPEN SOURCE</span>
+    <span class="marquee-item">✦ COMMUNITY DRIVEN</span>
+    <span class="marquee-item">✦ ENDLESSLY CURIOUS</span>
+    <span class="marquee-item">✦ BUILDING THE FUTURE</span>
+    <span class="marquee-item">✦ OPEN SOURCE</span>
+    <span class="marquee-item">✦ COMMUNITY DRIVEN</span>
+    <span class="marquee-item">✦ ENDLESSLY CURIOUS</span>
+    <span class="marquee-item">✦ BUILDING THE FUTURE</span>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CUSTOM CURSOR
+// ═══════════════════════════════════════════════════════
+
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+
+let mouseX = 0, mouseY = 0;
+let cursorX = 0, cursorY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  
+  cursorDot.style.left = mouseX - 3 + 'px';
+  cursorDot.style.top = mouseY - 3 + 'px';
+});
+
+function animateCursor() {
+  cursorX += (mouseX - cursorX) * 0.15;
+  cursorY += (mouseY - cursorY) * 0.15;
+  
+  cursor.style.left = cursorX - 10 + 'px';
+  cursor.style.top = cursorY - 10 + 'px';
+  
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// Hover effect on interactive elements
+document.querySelectorAll('a, button, .project-item, .manifesto-word').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// ═══════════════════════════════════════════════════════
+// SCROLL ANIMATIONS
+// ═══════════════════════════════════════════════════════
+
+const manifestoWords = document.querySelectorAll('.manifesto-word');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+
+manifestoWords.forEach(word => observer.observe(word));
+
+// ═══════════════════════════════════════════════════════
+// FLOATING LETTERS BACKGROUND
+// ═══════════════════════════════════════════════════════
+
+const floatingLetters = document.getElementById('floating-letters');
+const letters = 'WEBANDCIRCUITS'.split('');
+
+letters.forEach((letter, i) => {
+  const el = document.createElement('div');
+  el.className = 'floating-letter';
+  el.textContent = letter;
+  el.style.left = Math.random() * 100 + 'vw';
+  el.style.animationDelay = -Math.random() * 30 + 's';
+  el.style.animationDuration = (20 + Math.random() * 20) + 's';
+  floatingLetters.appendChild(el);
+});
+
+// ═══════════════════════════════════════════════════════
+// TEXT SCRAMBLE EFFECT ON HOVER
+// ═══════════════════════════════════════════════════════
+
+class TextScramble {
+  constructor(el) {
+    this.el = el;
+    this.chars = '!<>-_\\/[]{}—=+*^?#________';
+    this.originalText = el.textContent;
+  }
+  
+  scramble() {
+    const length = this.originalText.length;
+    let iteration = 0;
+    
+    const interval = setInterval(() => {
+      this.el.textContent = this.originalText
+        .split('')
+        .map((char, i) => {
+          if (i < iteration) return this.originalText[i];
+          return this.chars[Math.floor(Math.random() * this.chars.length)];
+        })
+        .join('');
+      
+      iteration += 1/3;
+      
+      if (iteration >= length) {
+        clearInterval(interval);
+        this.el.textContent = this.originalText;
+      }
+    }, 30);
+  }
+}
+
+document.querySelectorAll('.project-name').forEach(el => {
+  const scrambler = new TextScramble(el);
+  el.parentElement.addEventListener('mouseenter', () => scrambler.scramble());
+});
+
+// ═══════════════════════════════════════════════════════
+// PARALLAX ON SCROLL
+// ═══════════════════════════════════════════════════════
+
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  
+  document.querySelectorAll('.floating-letter').forEach(letter => {
+    const speed = parseFloat(letter.style.animationDuration) / 40;
+    letter.style.transform = `translateY(${scrolled * speed}px)`;
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --green: #00ff41;
+  --green-dim: #00aa2a;
+  --bg: #0a0a0a;
+  --amber: #ffb000;
+}
+
+body {
+  background: var(--bg);
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--green);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* CRT Effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* Matrix Rain Canvas */
+#matrix {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.15;
+}
+
+/* Terminal Window */
+.terminal {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #ff5f56; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #27ca40; }
+
+.terminal-title {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.terminal-body {
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid #333;
+  border-radius: 0 0 8px 8px;
+  padding: 24px;
+  min-height: 70vh;
+  box-shadow: 0 20px 60px rgba(0, 255, 65, 0.1);
+}
+
+.line {
+  margin-bottom: 8px;
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: lineIn 0.3s forwards;
+}
+
+@keyframes lineIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.prompt {
+  color: var(--amber);
+}
+
+.command {
+  color: #fff;
+}
+
+.output {
+  color: var(--green);
+  padding-left: 20px;
+}
+
+.ascii-art {
+  color: var(--green);
+  white-space: pre;
+  font-size: 10px;
+  line-height: 1.2;
+  margin: 20px 0;
+  text-shadow: 0 0 10px var(--green);
+}
+
+.highlight {
+  color: var(--amber);
+  text-shadow: 0 0 10px var(--amber);
+}
+
+.link {
+  color: #00bfff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.link:hover {
+  text-shadow: 0 0 10px #00bfff;
+}
+
+.cursor {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  background: var(--green);
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Interactive Command Input */
+.input-line {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.input-line input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  caret-color: var(--green);
+}
+
+/* Progress bar animation */
+.progress-bar {
+  width: 300px;
+  height: 16px;
+  background: #111;
+  border: 1px solid var(--green-dim);
+  margin: 10px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  width: 0%;
+  transition: width 0.1s;
+  box-shadow: 0 0 10px var(--green);
+}
+
+.progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #000;
+  mix-blend-mode: difference;
+}
+
+/* Glitch effect */
+.glitch {
+  position: relative;
+  animation: glitch 2s infinite;
+}
+
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(-2px, 1px); }
+  94% { transform: translate(2px, -1px); }
+  96% { transform: translate(-1px, 2px); }
+  98% { transform: translate(1px, -2px); }
+}
+
+/* Boot sequence */
+.boot-line {
+  animation-delay: var(--delay, 0s);
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="terminal-dot red"></div>
+    <div class="terminal-dot yellow"></div>
+    <div class="terminal-dot green"></div>
+    <div class="terminal-title">web-and-circuits — zsh — 120×40</div>
+  </div>
+  
+  <div class="terminal-body" id="terminal-body">
+    <!-- Content injected by JS -->
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// MATRIX RAIN
+// ═══════════════════════════════════════════════════════
+
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]';
+const fontSize = 14;
+const columns = Math.floor(canvas.width / fontSize);
+const drops = Array(columns).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = '#00ff41';
+  ctx.font = `${fontSize}px monospace`;
+  
+  for (let i = 0; i < drops.length; i++) {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+    
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+    drops[i]++;
+  }
+}
+
+setInterval(drawMatrix, 35);
+
+// ═══════════════════════════════════════════════════════
+// TERMINAL BOOT SEQUENCE
+// ═══════════════════════════════════════════════════════
+
+const terminal = document.getElementById('terminal-body');
+
+const ASCII_LOGO = `
+██╗    ██╗███████╗██████╗      ██╗       ██████╗██╗██████╗  ██████╗██╗   ██╗██╗████████╗███████╗
+██║    ██║██╔════╝██╔══██╗     ██║      ██╔════╝██║██╔══██╗██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
+██║ █╗ ██║█████╗  ██████╔╝  ████████╗   ██║     ██║██████╔╝██║     ██║   ██║██║   ██║   ███████╗
+██║███╗██║██╔══╝  ██╔══██╗  ██╔═██╔═╝   ██║     ██║██╔══██╗██║     ██║   ██║██║   ██║   ╚════██║
+╚███╔███╔╝███████╗██████╔╝  ██████║     ╚██████╗██║██║  ██║╚██████╗╚██████╔╝██║   ██║   ███████║
+ ╚══╝╚══╝ ╚══════╝╚═════╝   ╚═════╝      ╚═════╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+`;
+
+const bootSequence = [
+  { type: 'system', text: 'BIOS v2.4.1 — Web & Circuits Industries', delay: 0 },
+  { type: 'system', text: 'Memory Test: 16384 MB OK', delay: 200 },
+  { type: 'system', text: 'Detecting hardware...', delay: 400 },
+  { type: 'system', text: '  ├─ Neural Core: ONLINE', delay: 600 },
+  { type: 'system', text: '  ├─ Quantum Bus: SYNCED', delay: 700 },
+  { type: 'system', text: '  └─ Reality Engine: NOMINAL', delay: 800 },
+  { type: 'progress', label: 'Loading kernel', delay: 1000 },
+  { type: 'ascii', text: ASCII_LOGO, delay: 2500 },
+  { type: 'blank', delay: 2700 },
+  { type: 'command', prompt: 'root@wac', text: 'cat /etc/motd', delay: 2800 },
+  { type: 'output', text: '', delay: 3100 },
+  { type: 'output', text: '  Welcome to <span class="highlight">Web & Circuits</span>', delay: 3200 },
+  { type: 'output', text: '  ────────────────────────────', delay: 3300 },
+  { type: 'output', text: '', delay: 3350 },
+  { type: 'output', text: '  We build bridges between human creativity', delay: 3400 },
+  { type: 'output', text: '  and machine intelligence.', delay: 3500 },
+  { type: 'output', text: '', delay: 3550 },
+  { type: 'output', text: '  <span class="highlight">→</span> Open Source', delay: 3600 },
+  { type: 'output', text: '  <span class="highlight">→</span> Community Driven', delay: 3700 },
+  { type: 'output', text: '  <span class="highlight">→</span> Endlessly Curious', delay: 3800 },
+  { type: 'blank', delay: 4000 },
+  { type: 'command', prompt: 'root@wac', text: 'ls -la /projects/', delay: 4100 },
+  { type: 'output', text: '', delay: 4400 },
+  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/heartbeat-demo\'">heartbeat-demo/</span>    Interactive scheduler visualization', delay: 4500 },
+  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">experiments/</span>       Tools, utilities, and more', delay: 4600 },
+  { type: 'output', text: '-rw-r--r--  README.md          You are here', delay: 4700 },
+  { type: 'blank', delay: 4900 },
+  { type: 'command', prompt: 'root@wac', text: 'echo $LINKS', delay: 5000 },
+  { type: 'output', text: '', delay: 5200 },
+  { type: 'output', text: '  GitHub:  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">github.com/Web-and-Circuits</span>', delay: 5300 },
+  { type: 'blank', delay: 5700 },
+  { type: 'input', prompt: 'guest@wac', delay: 5800 },
+];
+
+let currentLine = 0;
+
+function typeText(element, text, speed = 30) {
+  return new Promise(resolve => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (text[i] === '<') {
+        // Handle HTML tags
+        const endTag = text.indexOf('>', i);
+        element.innerHTML += text.substring(i, endTag + 1);
+        i = endTag + 1;
+      } else {
+        element.innerHTML += text[i];
+        i++;
+      }
+      if (i >= text.length) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, speed);
+  });
+}
+
+async function showProgress(label) {
+  const container = document.createElement('div');
+  container.className = 'line';
+  container.innerHTML = `
+    <span class="output">${label}...</span>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+      <div class="progress-text" id="progress-text">0%</div>
+    </div>
+  `;
+  terminal.appendChild(container);
+  
+  const fill = container.querySelector('#progress-fill');
+  const text = container.querySelector('#progress-text');
+  
+  for (let i = 0; i <= 100; i += Math.random() * 15) {
+    const progress = Math.min(100, Math.floor(i));
+    fill.style.width = progress + '%';
+    text.textContent = progress + '%';
+    await new Promise(r => setTimeout(r, 50));
+  }
+  fill.style.width = '100%';
+  text.textContent = 'DONE';
+}
+
+async function runBootSequence() {
+  for (const item of bootSequence) {
+    await new Promise(r => setTimeout(r, item.delay - (bootSequence[currentLine - 1]?.delay || 0)));
+    
+    const line = document.createElement('div');
+    line.className = 'line';
+    
+    switch (item.type) {
+      case 'system':
+        line.innerHTML = `<span style="color: #666">[  OK  ]</span> ${item.text}`;
+        terminal.appendChild(line);
+        break;
+        
+      case 'progress':
+        await showProgress(item.label);
+        break;
+        
+      case 'ascii':
+        line.innerHTML = `<pre class="ascii-art glitch">${item.text}</pre>`;
+        terminal.appendChild(line);
+        break;
+        
+      case 'blank':
+        line.innerHTML = '&nbsp;';
+        terminal.appendChild(line);
+        break;
+        
+      case 'command':
+        line.innerHTML = `<span class="prompt">${item.prompt}:~$</span> <span class="command"></span>`;
+        terminal.appendChild(line);
+        await typeText(line.querySelector('.command'), item.text, 40);
+        break;
+        
+      case 'output':
+        line.innerHTML = `<span class="output">${item.text}</span>`;
+        terminal.appendChild(line);
+        break;
+        
+      case 'input':
+        line.className = 'line input-line';
+        line.innerHTML = `
+          <span class="prompt">${item.prompt}:~$</span>&nbsp;
+          <input type="text" id="user-input" autofocus placeholder="type 'help' for commands">
+          <span class="cursor"></span>
+        `;
+        terminal.appendChild(line);
+        setupInput();
+        break;
+    }
+    
+    currentLine++;
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+}
+
+function setupInput() {
+  const input = document.getElementById('user-input');
+  
+  const commands = {
+    help: 'Available commands: help, projects, about, github, clear, matrix',
+    projects: 'Navigate to: <span class="link" onclick="location.href=\'/heartbeat-demo\'">heartbeat-demo</span>',
+    about: 'Web & Circuits — Building the future, one commit at a time.',
+    github: 'Opening GitHub...',
+    clear: 'CLEAR',
+    matrix: 'Entering the Matrix...'
+  };
+  
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const cmd = input.value.trim().toLowerCase();
+      input.value = '';
+      
+      // Echo command
+      const cmdLine = document.createElement('div');
+      cmdLine.className = 'line';
+      cmdLine.innerHTML = `<span class="prompt">guest@wac:~$</span> <span class="command">${cmd}</span>`;
+      terminal.insertBefore(cmdLine, input.parentElement);
+      
+      // Response
+      const response = document.createElement('div');
+      response.className = 'line';
+      
+      if (cmd === 'clear') {
+        terminal.innerHTML = '';
+        const newInput = document.createElement('div');
+        newInput.className = 'line input-line';
+        newInput.innerHTML = `
+          <span class="prompt">guest@wac:~$</span>&nbsp;
+          <input type="text" id="user-input" autofocus>
+          <span class="cursor"></span>
+        `;
+        terminal.appendChild(newInput);
+        setupInput();
+        return;
+      } else if (cmd === 'github') {
+        window.open('https://github.com/Web-and-Circuits');
+        response.innerHTML = `<span class="output">${commands[cmd]}</span>`;
+      } else if (cmd === 'matrix') {
+        document.getElementById('matrix').style.opacity = '0.6';
+        response.innerHTML = `<span class="output" style="color: #00ff41; text-shadow: 0 0 20px #00ff41">${commands[cmd]}</span>`;
+      } else if (commands[cmd]) {
+        response.innerHTML = `<span class="output">${commands[cmd]}</span>`;
+      } else if (cmd) {
+        response.innerHTML = `<span class="output" style="color: #ff5555">Command not found: ${cmd}</span>`;
+      }
+      
+      if (cmd) {
+        terminal.insertBefore(response, input.parentElement);
+      }
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+  });
+}
+
+// Start boot sequence
+setTimeout(runBootSequence, 500);
+</script>
+</body>
+</html>

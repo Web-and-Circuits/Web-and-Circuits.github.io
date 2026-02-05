@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Circuits — Arcade</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --pixel: 4px;
+  --neon-pink: #ff2a6d;
+  --neon-blue: #05d9e8;
+  --neon-purple: #d300c5;
+  --neon-yellow: #fff01f;
+  --dark: #0d0221;
+}
+
+body {
+  background: var(--dark);
+  min-height: 100vh;
+  font-family: 'Press Start 2P', monospace;
+  color: white;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.2) 0px,
+    rgba(0,0,0,0.2) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Starfield canvas */
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Grid floor */
+.grid-floor {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  background: 
+    linear-gradient(to bottom, transparent 0%, rgba(5, 217, 232, 0.1) 100%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent calc(50px - 1px),
+      var(--neon-blue) calc(50px - 1px),
+      var(--neon-blue) 50px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent calc(50px - 1px),
+      var(--neon-blue) calc(50px - 1px),
+      var(--neon-blue) 50px
+    );
+  background-size: 100% 100%, 50px 50px, 50px 50px;
+  transform: perspective(500px) rotateX(60deg);
+  transform-origin: bottom;
+  animation: grid-scroll 2s linear infinite;
+  opacity: 0.4;
+  z-index: 1;
+}
+
+@keyframes grid-scroll {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 0 0, 0 50px, 0 50px; }
+}
+
+/* Main content */
+.content {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Pixel art logo */
+.pixel-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 40px;
+  position: relative;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.pixel-logo-inner {
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  clip-path: polygon(
+    20% 0%, 80% 0%, 100% 20%, 100% 80%, 
+    80% 100%, 20% 100%, 0% 80%, 0% 20%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 
+    0 0 20px var(--neon-pink),
+    0 0 40px var(--neon-purple);
+}
+
+h1 {
+  font-size: clamp(24px, 6vw, 48px);
+  margin-bottom: 16px;
+  text-shadow: 
+    4px 4px 0 var(--neon-pink),
+    -2px -2px 0 var(--neon-blue);
+  animation: glitch-text 3s infinite;
+}
+
+@keyframes glitch-text {
+  0%, 90%, 100% { 
+    text-shadow: 4px 4px 0 var(--neon-pink), -2px -2px 0 var(--neon-blue);
+    transform: translate(0);
+  }
+  92% { 
+    text-shadow: -4px 4px 0 var(--neon-blue), 2px -2px 0 var(--neon-pink);
+    transform: translate(-2px, 1px);
+  }
+  94% { 
+    text-shadow: 4px -4px 0 var(--neon-purple), -2px 2px 0 var(--neon-yellow);
+    transform: translate(2px, -1px);
+  }
+  96% { 
+    text-shadow: -2px -4px 0 var(--neon-pink), 4px 2px 0 var(--neon-blue);
+    transform: translate(-1px, 2px);
+  }
+}
+
+.tagline {
+  font-size: clamp(8px, 2vw, 12px);
+  color: var(--neon-blue);
+  margin-bottom: 48px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 10px var(--neon-blue);
+}
+
+/* Arcade buttons */
+.buttons {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.arcade-btn {
+  position: relative;
+  padding: 16px 32px;
+  font-family: inherit;
+  font-size: 10px;
+  text-decoration: none;
+  color: white;
+  background: transparent;
+  border: 4px solid;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.1s;
+}
+
+.arcade-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 4px solid;
+  opacity: 0.5;
+}
+
+.arcade-btn.pink {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 20px var(--neon-pink), inset 0 0 20px rgba(255, 42, 109, 0.2);
+}
+
+.arcade-btn.pink::before { border-color: var(--neon-pink); }
+
+.arcade-btn.blue {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 20px var(--neon-blue), inset 0 0 20px rgba(5, 217, 232, 0.2);
+}
+
+.arcade-btn.blue::before { border-color: var(--neon-blue); }
+
+.arcade-btn:hover {
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.1);
+}
+
+.arcade-btn:active {
+  transform: scale(0.95) translateY(4px);
+}
+
+/* Score display */
+.score {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-size: 10px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 10px var(--neon-yellow);
+  z-index: 100;
+}
+
+.score-label {
+  font-size: 8px;
+  color: white;
+  opacity: 0.5;
+}
+
+/* Lives/hearts */
+.lives {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.heart {
+  font-size: 16px;
+  animation: pulse-heart 1s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px var(--neon-pink));
+}
+
+.heart:nth-child(2) { animation-delay: 0.2s; }
+.heart:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse-heart {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Insert coin blink */
+.insert-coin {
+  position: fixed;
+  bottom: 60px;
+  font-size: 10px;
+  color: var(--neon-yellow);
+  animation: blink 1s step-end infinite;
+  text-shadow: 0 0 10px var(--neon-yellow);
+  z-index: 100;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Power-ups floating */
+.powerups {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.powerup {
+  position: absolute;
+  font-size: 24px;
+  animation: float-powerup 10s linear infinite;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+@keyframes float-powerup {
+  from { 
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  to { 
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* High scores panel */
+.highscores {
+  position: fixed;
+  bottom: 100px;
+  font-size: 8px;
+  color: var(--neon-blue);
+  text-align: left;
+  z-index: 100;
+  opacity: 0.6;
+}
+
+.highscores-title {
+  color: var(--neon-pink);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div class="grid-floor"></div>
+
+<div class="lives">
+  <span class="heart">❤️</span>
+  <span class="heart">❤️</span>
+  <span class="heart">❤️</span>
+</div>
+
+<div class="score">
+  <div class="score-label">SCORE</div>
+  <div id="score-value">000000</div>
+</div>
+
+<div class="powerups" id="powerups"></div>
+
+<div class="content">
+  <div class="pixel-logo">
+    <div class="pixel-logo-inner">⚡</div>
+  </div>
+  
+  <h1>WEB & CIRCUITS</h1>
+  <p class="tagline">Press start to begin your adventure</p>
+  
+  <div class="buttons">
+    <a href="/heartbeat-demo" class="arcade-btn pink">▶ START DEMO</a>
+    <a href="https://github.com/Web-and-Circuits" class="arcade-btn blue">◆ VIEW CODE</a>
+  </div>
+</div>
+
+<div class="insert-coin">[ INSERT COIN ]</div>
+
+<div class="highscores">
+  <div class="highscores-title">HIGH SCORES</div>
+  <div>1. WAC .... 999999</div>
+  <div>2. DEV .... 888888</div>
+  <div>3. YOU .... ??????</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STARFIELD
+// ═══════════════════════════════════════════════════════
+
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const stars = [];
+const STAR_COUNT = 200;
+
+for (let i = 0; i < STAR_COUNT; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    z: Math.random() * 3 + 1,
+    size: Math.random() * 2 + 1
+  });
+}
+
+function drawStars() {
+  ctx.fillStyle = '#0d0221';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  stars.forEach(star => {
+    // Move toward viewer
+    star.z -= 0.02;
+    if (star.z <= 0) {
+      star.z = 3;
+      star.x = Math.random() * canvas.width;
+      star.y = Math.random() * canvas.height;
+    }
+    
+    const x = (star.x - canvas.width / 2) / star.z + canvas.width / 2;
+    const y = (star.y - canvas.height / 2) / star.z + canvas.height / 2;
+    const size = star.size / star.z;
+    
+    const colors = ['#ff2a6d', '#05d9e8', '#fff01f', '#ffffff'];
+    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length * 0.3)];
+    ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(size), Math.ceil(size));
+  });
+  
+  requestAnimationFrame(drawStars);
+}
+
+drawStars();
+
+// ═══════════════════════════════════════════════════════
+// SCORE COUNTER
+// ═══════════════════════════════════════════════════════
+
+let score = 0;
+const scoreEl = document.getElementById('score-value');
+
+setInterval(() => {
+  score += Math.floor(Math.random() * 100);
+  scoreEl.textContent = score.toString().padStart(6, '0');
+}, 500);
+
+// ═══════════════════════════════════════════════════════
+// FLOATING POWERUPS
+// ═══════════════════════════════════════════════════════
+
+const powerupsContainer = document.getElementById('powerups');
+const powerupEmojis = ['⭐', '💎', '🔮', '⚡', '🎮', '🕹️', '👾', '🚀'];
+
+function spawnPowerup() {
+  const powerup = document.createElement('div');
+  powerup.className = 'powerup';
+  powerup.textContent = powerupEmojis[Math.floor(Math.random() * powerupEmojis.length)];
+  powerup.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+  powerup.style.animationDuration = (8 + Math.random() * 6) + 's';
+  powerup.style.animationDelay = Math.random() * 2 + 's';
+  powerup.style.color = ['#ff2a6d', '#05d9e8', '#fff01f'][Math.floor(Math.random() * 3)];
+  powerupsContainer.appendChild(powerup);
+  
+  setTimeout(() => powerup.remove(), 15000);
+}
+
+setInterval(spawnPowerup, 2000);
+
+// Initial powerups
+for (let i = 0; i < 5; i++) {
+  setTimeout(spawnPowerup, i * 400);
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD SOUNDS (visual feedback)
+// ═══════════════════════════════════════════════════════
+
+document.querySelectorAll('.arcade-btn').forEach(btn => {
+  btn.addEventListener('mouseenter', () => {
+    btn.style.filter = 'brightness(1.3)';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.filter = '';
+  });
+});
+
+// Konami code easter egg
+let konamiCode = [];
+const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+
+document.addEventListener('keydown', (e) => {
+  konamiCode.push(e.keyCode);
+  konamiCode = konamiCode.slice(-10);
+  
+  if (konamiCode.join(',') === konamiSequence.join(',')) {
+    document.body.style.animation = 'rainbow 0.5s infinite';
+    score += 999999;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes rainbow {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+});
+</script>
+</body>
+</html>
