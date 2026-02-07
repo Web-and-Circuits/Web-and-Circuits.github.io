@@ -18,31 +18,29 @@
   header .stat{display:flex;align-items:center;gap:4px}
   header .stat strong{color:var(--fg);font-weight:700}
 
-  .grid{max-width:900px;margin:32px auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
+  .grid{max-width:900px;margin:32px auto;padding:0 20px;display:flex;flex-direction:column;gap:8px}
 
-  .section-header{padding:12px 0 4px;margin-top:12px}
+  .section-header{padding:12px 0 4px;margin-top:16px}
   .section-header:first-child{margin-top:0}
   .section-header h2{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--fg2);display:flex;align-items:center;gap:8px}
   .section-header h2::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:all 0.2s;text-decoration:none;color:inherit;position:relative;overflow:hidden}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:all 0.2s;text-decoration:none;color:inherit;overflow:hidden}
   .card:hover{border-color:var(--fg2);transform:translateY(-1px);background:var(--surface2)}
   .card:active{transform:translateY(0)}
   .card-body{flex:1;min-width:0}
-  .card-title{font-size:16px;font-weight:700;margin-bottom:3px;line-height:1.3}
-  .card-desc{font-size:13px;color:var(--fg2);line-height:1.5}
-  .card-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+  .card-title{font-size:15px;font-weight:700;margin-bottom:2px;line-height:1.3}
+  .card-desc{font-size:12px;color:var(--fg2);line-height:1.5}
+  .card-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center}
   .tag{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:0.5px}
   .tag-interactive{background:rgba(232,168,124,0.1);color:var(--accent);border:1px solid rgba(232,168,124,0.2)}
   .tag-opinion{background:rgba(196,160,232,0.1);color:var(--purple);border:1px solid rgba(196,160,232,0.2)}
   .tag-read{background:rgba(126,198,153,0.1);color:var(--green);border:1px solid rgba(126,198,153,0.2)}
-  .card-arrow{color:var(--fg2);font-size:18px;flex-shrink:0;align-self:center;transition:transform 0.2s}
-  .card:hover .card-arrow{transform:translateX(3px);color:var(--fg)}
-
+  .ver{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--fg2);cursor:pointer;transition:all 0.15s}
+  .ver:hover{border-color:var(--fg2);color:var(--fg)}
   .stars{color:var(--amber);font-size:11px;letter-spacing:1px}
-  .versions{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
-  .versions a{padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--fg2);text-decoration:none;transition:all 0.15s}
-  .versions a:hover{border-color:var(--fg2);color:var(--fg)}
+  .card-arrow{color:var(--fg2);font-size:16px;flex-shrink:0;transition:transform 0.2s}
+  .card:hover .card-arrow{transform:translateX(3px);color:var(--fg)}
 
   footer{text-align:center;padding:40px 20px;border-top:1px solid var(--border);margin-top:24px}
   footer p{font-size:12px;color:var(--fg2)}
@@ -74,14 +72,13 @@
 
 <div class="grid">
 
-  <!-- ESSAYS -->
   <div class="section-header"><h2>Original Essays</h2></div>
 
   <a class="card" href="seven-books/">
     <div class="card-body">
       <div class="card-title">Seven Books, One Thread</div>
-      <div class="card-desc">The weave — how Cooper, Raymond, Nystrom, Pólya, Koza, Hofstadter, and Braitenberg are all saying the same thing. Complexity emerges from simplicity through process.</div>
-      <div class="card-tags"><span class="tag tag-opinion">SYNTHESIS</span></div>
+      <div class="card-desc">The weave — how Cooper, Raymond, Nystrom, Pólya, Koza, Hofstadter, and Braitenberg are all saying the same thing.</div>
+      <div class="card-meta"><span class="tag tag-opinion">SYNTHESIS</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -89,8 +86,8 @@
   <a class="card" href="four-books/">
     <div class="card-body">
       <div class="card-title">Order Emerges from Process</div>
-      <div class="card-desc">Four books braided — Alexander, Cooper, Raymond, Koza. A Rosetta Stone vocabulary switcher, design scenarios judged by all four authors, live evolution simulator.</div>
-      <div class="card-tags"><span class="tag tag-opinion">SYNTHESIS</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Four books braided — Alexander, Cooper, Raymond, Koza. Rosetta Stone vocabulary switcher, live evolution simulator.</div>
+      <div class="card-meta"><span class="tag tag-opinion">SYNTHESIS</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -98,44 +95,37 @@
   <a class="card" href="two-books/">
     <div class="card-body">
       <div class="card-title">Two Books Walk Into a Bar</div>
-      <div class="card-desc">Cooper vs Raymond — where they agree, where they fight, and what I think. Interactive debates, product spectrum slider, blind spot analysis.</div>
-      <div class="card-tags"><span class="tag tag-opinion">SYNTHESIS</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Cooper vs Raymond — where they agree, where they fight, and what I think.</div>
+      <div class="card-meta"><span class="tag tag-opinion">SYNTHESIS</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- DESIGN & COMPUTATION -->
   <div class="section-header"><h2>Design &amp; Computation</h2></div>
 
-  <a class="card" href="inmates/">
+  <a class="card" href="inmates/index-v2.html">
     <div class="card-body">
-      <div class="card-title">The Inmates Are Running the Asylum <span class="versions"><a href="inmates/" onclick="event.stopPropagation()">v1</a><a href="inmates/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
-      <div class="card-desc">Alan Cooper's case against programmer-designed software. Timed ATM under queue pressure, dancing bear drag-and-drop, stakeholder arguments collapsed by a persona.</div>
-      <div class="card-tags">
-        <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
-      </div>
+      <div class="card-title">The Inmates Are Running the Asylum</div>
+      <div class="card-desc">Alan Cooper's case against programmer-designed software. Timed ATM, dancing bear drag-and-drop, persona-driven stakeholder collapse.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span><span class="ver" data-href="inmates/">v1</span><span class="ver" data-href="inmates/index-v2.html">v2</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <a class="card" href="unix/">
+  <a class="card" href="unix/index-v2.html">
     <div class="card-body">
-      <div class="card-title">The Art of Unix Programming <span class="versions"><a href="unix/" onclick="event.stopPropagation()">v1</a><a href="unix/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
-      <div class="card-desc">Raymond's 17 rules, lived. Build pipelines from a 16-tool palette, feel the Rule of Silence, break the Rule of Repair, and vote on Worse Is Better.</div>
-      <div class="card-tags">
-        <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
-      </div>
+      <div class="card-title">The Art of Unix Programming</div>
+      <div class="card-desc">Raymond's 17 rules, lived. Build pipelines, feel the Rule of Silence, break the Rule of Repair, vote on Worse Is Better.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span><span class="ver" data-href="unix/">v1</span><span class="ver" data-href="unix/index-v2.html">v2</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
   <a class="card" href="crafting-interpreters/">
     <div class="card-body">
-      <div class="card-title">Crafting Interpreters <span class="stars">★★★★★</span> <span class="versions"><a href="crafting-interpreters/index-v1.html" onclick="event.stopPropagation()">v1</a><a href="crafting-interpreters/" onclick="event.stopPropagation()">v2</a></span></div>
-      <div class="card-desc">Nystrom's hands-on guide to building languages. Pipeline animation, Pratt parser visualizer, closure/upvalue toy, NaN boxing bit-toggler, animated GC simulator.</div>
-      <div class="card-tags">
-        <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
-      </div>
+      <div class="card-title">Crafting Interpreters <span class="stars">★★★★★</span></div>
+      <div class="card-desc">Build programming languages hands-on. Pratt parser visualizer, closure toy, NaN boxing bit-toggler, animated GC simulator.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span><span class="ver" data-href="crafting-interpreters/index-v1.html">v1</span><span class="ver" data-href="crafting-interpreters/">v2</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -143,51 +133,46 @@
   <a class="card" href="schemer/">
     <div class="card-body">
       <div class="card-title">The Little Schemer <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Socratic Q&amp;A from atoms to a metacircular evaluator. Working REPL, Ten Commandments, recursion tracer, Y combinator derivation, halting problem proof.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Socratic Q&amp;A from atoms to a metacircular evaluator. Working REPL, recursion tracer, Y combinator derivation.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- MATHEMATICS & SCIENCE -->
   <div class="section-header"><h2>Mathematics &amp; Science</h2></div>
 
   <a class="card" href="geb/">
     <div class="card-body">
       <div class="card-title">Gödel, Escher, Bach <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Hofstadter's eternal golden braid. MIU puzzle playground, Strange Loop visualizer, Gödel numbering encoder, formal system explorer, crab canon palindrome.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Hofstadter's eternal golden braid. MIU puzzle, Strange Loop visualizer, Gödel numbering encoder, crab canon palindrome.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
   <a class="card" href="vehicles/">
     <div class="card-body">
-      <div class="card-title">Vehicles: Experiments in Synthetic Psychology <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Braitenberg's thought experiments in wiring. Build vehicles from sensors and motors, watch fear, aggression, and love emerge from simple circuits.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-title">Vehicles <span class="stars">★★★★★</span></div>
+      <div class="card-desc">Braitenberg's thought experiments. Build vehicles from sensors and motors, watch fear, aggression, and love emerge from simple circuits.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
   <a class="card" href="polya/">
     <div class="card-body">
-      <div class="card-title">How to Solve It <span class="stars">★★★★★</span> <span class="versions"><a href="polya/index-v1.html" onclick="event.stopPropagation()">v1</a><a href="polya/" onclick="event.stopPropagation()">v2</a></span></div>
-      <div class="card-desc">Pólya's problem-solving heuristics. Four-problem workshop, heuristic toolkit, Inventor's Paradox demo, analysis vs synthesis visualizer, branching teacher dialogue.</div>
-      <div class="card-tags">
-        <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
-      </div>
+      <div class="card-title">How to Solve It <span class="stars">★★★★★</span></div>
+      <div class="card-desc">Pólya's heuristics. Four-problem workshop, Inventor's Paradox demo, branching teacher dialogue.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span><span class="ver" data-href="polya/index-v1.html">v1</span><span class="ver" data-href="polya/">v2</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <a class="card" href="gpiii/">
+  <a class="card" href="gpiii/index-v2.html">
     <div class="card-body">
-      <div class="card-title">Genetic Programming III <span class="stars">★★★★☆</span> <span class="versions"><a href="gpiii/" onclick="event.stopPropagation()">v1</a><a href="gpiii/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
-      <div class="card-desc">Koza's machine that reinvents patented circuits. Draw-your-own fitness curve, interactive crossover lab, program tree builder, Human vs GP challenge, 14-patent gallery.</div>
-      <div class="card-tags">
-        <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
-      </div>
+      <div class="card-title">Genetic Programming III <span class="stars">★★★★☆</span></div>
+      <div class="card-desc">Koza's machine that reinvents patented circuits. Fitness curves, crossover lab, Human vs GP challenge.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span><span class="ver" data-href="gpiii/">v1</span><span class="ver" data-href="gpiii/index-v2.html">v2</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -195,20 +180,19 @@
   <a class="card" href="information/">
     <div class="card-body">
       <div class="card-title">The Information <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Gleick's history of information theory. From African drums to Shannon entropy — the book that connects everything in the library.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Gleick's history of information theory. From African drums to Shannon entropy.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- EDUCATION & LEARNING -->
   <div class="section-header"><h2>Education &amp; Learning</h2></div>
 
   <a class="card" href="mindstorms/">
     <div class="card-body">
       <div class="card-title">Mindstorms <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Papert's vision of children as builders. Turtle geometry, microworlds, Mathland — the theoretical foundation for everything we build.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Papert's vision of children as builders. Turtle geometry, microworlds, Mathland.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -216,20 +200,19 @@
   <a class="card" href="subversive/">
     <div class="card-body">
       <div class="card-title">Teaching As a Subversive Activity <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Postman &amp; Weingartner's 1969 manifesto. The political argument Mindstorms gestures at but never makes. Questions are the curriculum.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Postman &amp; Weingartner's 1969 manifesto. Questions are the curriculum.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- NATURE & CREATIVITY -->
   <div class="section-header"><h2>Nature &amp; Creativity</h2></div>
 
   <a class="card" href="lastchance/">
     <div class="card-body">
       <div class="card-title">Last Chance to See <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Douglas Adams on endangered species. Brilliant human thought applied to an interesting topic — funny, devastating, and urgent.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Douglas Adams on endangered species. Funny, devastating, and urgent.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -237,8 +220,8 @@
   <a class="card" href="invisible/">
     <div class="card-body">
       <div class="card-title">Invisible Cities <span class="stars">★★★★★</span></div>
-      <div class="card-desc">Calvino's 55 cities as philosophical propositions. Every city is a compressed information packet — memory, desire, signs, the dead.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Calvino's 55 cities as philosophical propositions. Memory, desire, signs, the dead.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -246,32 +229,30 @@
   <a class="card" href="steal/">
     <div class="card-body">
       <div class="card-title">Steal Like an Artist <span class="stars">★★★☆☆</span></div>
-      <div class="card-desc">Kleon's creative permission slip. Charming gateway drug — Instagram wisdom before Instagram was a genre.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Kleon's creative permission slip. Charming gateway drug.</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- ARCHITECTURE -->
   <div class="section-header"><h2>Architecture &amp; Pattern</h2></div>
 
   <a class="card" href="timeless/">
     <div class="card-body">
       <div class="card-title">The Timeless Way of Building</div>
-      <div class="card-desc">Christopher Alexander's theory of patterns and the "quality without a name." Interactive pattern language, alive-or-dead judgment, forces that shape space.</div>
-      <div class="card-tags"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
+      <div class="card-desc">Alexander's theory of patterns and the "quality without a name."</div>
+      <div class="card-meta"><span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
 
-  <!-- AI TOOLS -->
   <div class="section-header"><h2>AI Tools</h2></div>
 
   <a class="card" href="replay/">
     <div class="card-body">
       <div class="card-title">Interview Replay Viewer</div>
-      <div class="card-desc">Replay any past AI interview. Real Excalidraw rendering — see exactly what each model drew, stage by stage.</div>
-      <div class="card-tags"><span class="tag tag-interactive">VIEWER</span></div>
+      <div class="card-desc">Real Excalidraw rendering — see exactly what each model drew, stage by stage.</div>
+      <div class="card-meta"><span class="tag tag-interactive">VIEWER</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -279,8 +260,8 @@
   <a class="card" href="benchmark/">
     <div class="card-body">
       <div class="card-title">Benchmark Results (v2)</div>
-      <div class="card-desc">11 models tested. Qwen3-VL-8B won. Full scoring breakdown, stage-by-stage analysis, context overflow tracking.</div>
-      <div class="card-tags"><span class="tag tag-interactive">BENCHMARK</span></div>
+      <div class="card-desc">11 models tested. Qwen3-VL-8B won. Full scoring breakdown and context overflow tracking.</div>
+      <div class="card-meta"><span class="tag tag-interactive">BENCHMARK</span></div>
     </div>
     <span class="card-arrow">→</span>
   </a>
@@ -291,5 +272,15 @@
   <p><a href="/">Web & Circuits</a></p>
 </footer>
 
+<script>
+// Handle version pill clicks without nested <a> tags
+document.querySelectorAll('.ver[data-href]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = el.dataset.href;
+  });
+});
+</script>
 </body>
 </html>
