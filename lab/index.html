@@ -40,6 +40,9 @@
   .card:hover .card-arrow{transform:translateX(3px);color:var(--fg)}
 
   .stars{color:var(--amber);font-size:11px;letter-spacing:1px}
+  .versions{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+  .versions a{padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--fg2);text-decoration:none;transition:all 0.15s}
+  .versions a:hover{border-color:var(--fg2);color:var(--fg)}
 
   footer{text-align:center;padding:40px 20px;border-top:1px solid var(--border);margin-top:24px}
   footer p{font-size:12px;color:var(--fg2)}
@@ -106,7 +109,7 @@
 
   <a class="card" href="inmates/">
     <div class="card-body">
-      <div class="card-title">The Inmates Are Running the Asylum</div>
+      <div class="card-title">The Inmates Are Running the Asylum <span class="versions"><a href="inmates/" onclick="event.stopPropagation()">v1</a><a href="inmates/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
       <div class="card-desc">Alan Cooper's case against programmer-designed software. Timed ATM under queue pressure, dancing bear drag-and-drop, stakeholder arguments collapsed by a persona.</div>
       <div class="card-tags">
         <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
@@ -117,7 +120,7 @@
 
   <a class="card" href="unix/">
     <div class="card-body">
-      <div class="card-title">The Art of Unix Programming</div>
+      <div class="card-title">The Art of Unix Programming <span class="versions"><a href="unix/" onclick="event.stopPropagation()">v1</a><a href="unix/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
       <div class="card-desc">Raymond's 17 rules, lived. Build pipelines from a 16-tool palette, feel the Rule of Silence, break the Rule of Repair, and vote on Worse Is Better.</div>
       <div class="card-tags">
         <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
@@ -128,7 +131,7 @@
 
   <a class="card" href="crafting-interpreters/">
     <div class="card-body">
-      <div class="card-title">Crafting Interpreters <span class="stars">★★★★★</span></div>
+      <div class="card-title">Crafting Interpreters <span class="stars">★★★★★</span> <span class="versions"><a href="crafting-interpreters/index-v1.html" onclick="event.stopPropagation()">v1</a><a href="crafting-interpreters/" onclick="event.stopPropagation()">v2</a></span></div>
       <div class="card-desc">Nystrom's hands-on guide to building languages. Pipeline animation, Pratt parser visualizer, closure/upvalue toy, NaN boxing bit-toggler, animated GC simulator.</div>
       <div class="card-tags">
         <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
@@ -169,7 +172,7 @@
 
   <a class="card" href="polya/">
     <div class="card-body">
-      <div class="card-title">How to Solve It <span class="stars">★★★★★</span></div>
+      <div class="card-title">How to Solve It <span class="stars">★★★★★</span> <span class="versions"><a href="polya/index-v1.html" onclick="event.stopPropagation()">v1</a><a href="polya/" onclick="event.stopPropagation()">v2</a></span></div>
       <div class="card-desc">Pólya's problem-solving heuristics. Four-problem workshop, heuristic toolkit, Inventor's Paradox demo, analysis vs synthesis visualizer, branching teacher dialogue.</div>
       <div class="card-tags">
         <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
@@ -180,7 +183,7 @@
 
   <a class="card" href="gpiii/">
     <div class="card-body">
-      <div class="card-title">Genetic Programming III <span class="stars">★★★★☆</span></div>
+      <div class="card-title">Genetic Programming III <span class="stars">★★★★☆</span> <span class="versions"><a href="gpiii/" onclick="event.stopPropagation()">v1</a><a href="gpiii/index-v2.html" onclick="event.stopPropagation()">v2</a></span></div>
       <div class="card-desc">Koza's machine that reinvents patented circuits. Draw-your-own fitness curve, interactive crossover lab, program tree builder, Human vs GP challenge, 14-patent gallery.</div>
       <div class="card-tags">
         <span class="tag tag-read">READ</span><span class="tag tag-interactive">INTERACTIVE</span>
