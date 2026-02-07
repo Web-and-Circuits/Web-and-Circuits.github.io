@@ -83,6 +83,43 @@
   .reset-btn:hover { color: #e6edf3; border-color: #8b949e; }
   .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: #0d1117; z-index: 5; font-size: 14px; color: #8b949e; }
   .loading-overlay.hidden { display: none; }
+
+  /* Portrait mobile: stack vertically, chat on top, canvas below */
+  @media (max-width: 768px) and (orientation: portrait) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 44px 1fr 1fr 54px;
+    }
+    .chat-panel { border-right: none; border-bottom: 1px solid #30363d; overflow: hidden; }
+    .canvas-area { min-height: 0; }
+    .header h1 { font-size: 13px; }
+    .model-select { font-size: 11px; max-width: 140px; }
+    .controls { gap: 8px; padding: 0 10px; overflow-x: auto; }
+    .speed-ctrl { display: none; }
+    .msg { font-size: 12px; padding: 8px 12px; }
+    .chat-header { padding: 6px 10px; }
+  }
+
+  /* Landscape mobile: side by side 50/50 */
+  @media (max-width: 1024px) and (orientation: landscape) {
+    .app {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 44px 1fr 50px;
+    }
+    .chat-panel { border-right: 1px solid #30363d; }
+    .msg { font-size: 12px; padding: 8px 12px; }
+    .header h1 { font-size: 13px; }
+    .speed-ctrl label { display: none; }
+  }
+
+  /* Tablet portrait */
+  @media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 44px 1fr 1fr 54px;
+    }
+    .chat-panel { border-right: none; border-bottom: 1px solid #30363d; }
+  }
 </style>
 </head>
 <body>
@@ -294,6 +331,20 @@ function renderElements(elements) {
   
   document.getElementById('canvas-label').textContent = `Canvas · ${elements.length} elements`;
 }
+
+// Re-zoom canvas on resize/orientation change
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (window.excalidrawAPI) {
+      const els = window.excalidrawAPI.getSceneElements();
+      if (els && els.length) {
+        window.excalidrawAPI.scrollToContent(els, { fitToContent: true, animate: true, duration: 300 });
+      }
+    }
+  }, 200);
+});
 
 // Get all elements accumulated up to a stage index (inclusive)
 function getElementsUpToStage(stageIndex) {
