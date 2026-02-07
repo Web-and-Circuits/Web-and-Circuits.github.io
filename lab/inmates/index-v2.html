@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Inmates Are Running the Asylum — V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--parchment:#f4e8c1;--ink:#2c1810;--ink2:#5a3a1a;--ink3:#6b4423;--ink4:#8b5a2b}
+  body{background:#1a1410;color:var(--ink);font-family:'EB Garamond',serif;line-height:1.7;font-size:17px}
+
+  section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;position:relative;overflow:hidden}
+  section .inner{max-width:680px;width:100%}
+  h1{font-family:'Playfair Display',serif;font-size:clamp(36px,7vw,64px);font-weight:900;line-height:1.1;margin-bottom:16px}
+  h2{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;line-height:1.2;margin-bottom:20px}
+  p{margin-bottom:18px}
+  em{font-style:italic}
+  strong{font-weight:700}
+  .small{font-size:14px;color:var(--ink3)}
+  .caption{font-size:13px;color:var(--ink3);font-style:italic;margin-top:8px}
+  .parchment{background:var(--parchment);background-image:radial-gradient(ellipse at 30% 50%,rgba(139,90,43,0.06) 0%,transparent 60%)}
+  .dark{background:#0d0a07;color:#e8dcc8}
+  .dark h2{color:#f4e8c1}
+  .dark .small{color:#8b7a60}
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.7s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--ink4);z-index:100;transition:width 0.1s}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+  /* ===== TIMED ATM ===== */
+  .atm-wrap{position:relative;max-width:400px;margin:0 auto}
+  .atm-timer-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:12px;overflow:hidden}
+  .atm-timer-fill{height:100%;background:#33ff33;transition:width 0.1s linear;border-radius:2px}
+  .atm-timer-fill.warn{background:#ffaa00}
+  .atm-timer-fill.danger{background:#ff3333}
+  .atm-queue-msg{text-align:center;font-family:'Inter',sans-serif;font-size:12px;color:#666;min-height:20px;margin-bottom:8px}
+  .atm-sim{background:#0a0a15;border:2px solid #333;border-radius:8px;padding:24px;font-family:'Inter',sans-serif;font-size:14px;text-align:center}
+  .atm-sim .screen{background:#0f2b0f;color:#33ff33;font-family:monospace;padding:16px;border-radius:4px;min-height:120px;margin-bottom:16px;text-align:left;font-size:13px;line-height:1.6}
+  .atm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .atm-btn{padding:10px;background:#222;color:#ccc;border:1px solid #444;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;transition:all 0.15s}
+  .atm-btn:hover{background:#333}
+  .atm-btn.wrong{animation:shake 0.3s;border-color:#ff3333}
+  .atm-btn.cancel{grid-column:1/-1;background:#331111;border-color:#553333;color:#ff6666}
+  .atm-counter{font-size:12px;color:#666;margin-top:12px}
+
+  /* Good ATM */
+  .atm-fixed{background:#0a0a15;border:2px solid #333;border-radius:8px;padding:24px;max-width:420px;margin:0 auto 24px;font-family:'Inter',sans-serif}
+  .atm-fixed .screen{background:#0f2b0f;color:#33ff33;font-family:monospace;padding:16px;border-radius:4px;margin-bottom:16px;font-size:13px;line-height:1.8}
+  .atm-fixed .screen .dim{color:#1a661a}
+  .atm-fixed .amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .atm-fixed .amt-btn{padding:12px;background:#1a331a;color:#33ff33;border:1px solid #2a552a;border-radius:4px;cursor:pointer;font-family:monospace;font-size:14px;transition:all 0.15s}
+  .atm-fixed .amt-btn:hover{background:#2a442a}
+  .atm-fixed .done{text-align:center;padding:20px;color:#33ff33;font-family:monospace;display:none}
+
+  /* ===== DANCING BEAR ===== */
+  .bear-demo{margin:24px 0;border:1px solid #333;border-radius:10px;overflow:hidden}
+  .bear-tabs{display:flex;border-bottom:1px solid #333}
+  .bear-tab{flex:1;padding:10px;text-align:center;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;color:#666;transition:all 0.2s}
+  .bear-tab.active{color:#f4e8c1;border-bottom-color:var(--ink4)}
+  .bear-panel{display:none;padding:20px}
+  .bear-panel.active{display:block}
+
+  .bear-canvas{background:#111;border:1px solid #333;border-radius:6px;height:200px;position:relative;overflow:hidden;margin-bottom:12px;cursor:grab}
+  .bear-canvas.dragging{cursor:grabbing}
+  .bear-item{position:absolute;width:80px;height:60px;background:#2a2a3e;border:1px solid #444;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:'Inter',sans-serif;color:#999;user-select:none;transition:box-shadow 0.2s}
+  /* Bad drag: items fight you */
+  .bear-canvas.bad .bear-item{transition:left 0.3s ease,top 0.3s ease,box-shadow 0.2s}
+  .bear-canvas.bad .bear-item.snapping{border-color:#ff6666;box-shadow:0 0 10px rgba(255,0,0,0.2)}
+  /* Good drag: smooth, magnetic guides */
+  .bear-canvas.good .bear-item{transition:box-shadow 0.2s}
+  .bear-guide{position:absolute;background:rgba(126,198,153,0.15);pointer-events:none;display:none}
+  .bear-guide.h{height:1px;width:100%;left:0}
+  .bear-guide.v{width:1px;height:100%;top:0}
+  .bear-guide.show{display:block}
+
+  .bear-caption{font-size:13px;color:#666;font-style:italic;text-align:center}
+
+  /* ===== ELASTIC USER / STAKEHOLDER ARGUMENT ===== */
+  .stakeholder-arena{margin:24px 0}
+  .stakeholder-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  @media(max-width:600px){.stakeholder-cards{grid-template-columns:1fr}}
+  .sk-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.5}
+  .sk-card .sk-name{font-weight:600;margin-bottom:4px;font-size:14px}
+  .sk-card .sk-role{font-size:11px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .sk-card .sk-want{color:var(--ink2)}
+  .sk-card .sk-speech{background:#faf8f2;padding:10px;border-radius:6px;margin-top:8px;font-style:italic;font-size:12px;color:var(--ink3);border-left:3px solid var(--ink4);display:none}
+  .sk-resolve{text-align:center;margin:16px 0}
+  .sk-resolve-btn{padding:10px 24px;background:var(--ink);color:var(--parchment);border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s}
+  .sk-resolve-btn:hover{background:var(--ink2)}
+  .sk-result{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.7;display:none;margin-top:16px}
+  .sk-result strong{color:var(--ink)}
+
+  /* ===== MENTAL MODEL GAP ===== */
+  .mm-container{margin:24px 0;position:relative}
+  .mm-pair{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #333;border-radius:10px;overflow:hidden}
+  @media(max-width:600px){.mm-pair{grid-template-columns:1fr}}
+  .mm-side{padding:20px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.8}
+  .mm-side.dev{background:#0d1117;color:#c8d0da;border-right:1px solid #333}
+  .mm-side.user{background:#faf8f2;color:var(--ink)}
+  .mm-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid rgba(128,128,128,0.2)}
+  .mm-side.dev .mm-label{color:#7ec699}
+  .mm-side.user .mm-label{color:var(--ink4)}
+  .mm-item{padding:4px 0;display:flex;align-items:center;gap:8px}
+  .mm-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .mm-side.dev .dot{background:#7ec699}
+  .mm-side.user .dot{background:var(--ink4)}
+  .mm-gap-meter{margin-top:16px;text-align:center}
+  .mm-gap-bar{height:8px;background:#222;border-radius:4px;overflow:hidden;margin:8px 0}
+  .mm-gap-fill{height:100%;border-radius:4px;transition:width 0.6s}
+  .mm-slider{width:100%;max-width:400px;margin:8px auto;display:block;accent-color:var(--ink4)}
+
+  /* ===== FEATURE BLOAT WITH CONSEQUENCES ===== */
+  .bloat-demo{margin:24px 0;text-align:center}
+  .bloat-app{background:#fff;border:1px solid #ddd;border-radius:10px;max-width:380px;margin:0 auto;overflow:hidden}
+  .bloat-toolbar{background:#f0ede6;padding:8px 12px;display:flex;flex-wrap:wrap;gap:4px;min-height:36px;border-bottom:1px solid #ddd;transition:all 0.3s}
+  .bloat-icon{width:24px;height:24px;background:var(--parchment);border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all 0.3s}
+  .bloat-body{padding:20px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .bloat-task{font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);margin-bottom:12px}
+  .bloat-spinner{display:none;margin:12px 0}
+  .bloat-spinner.show{display:block}
+  .bloat-spinner-ring{width:32px;height:32px;border:3px solid #eee;border-top-color:var(--ink4);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .bloat-time{font-family:'Inter',sans-serif;font-size:12px;color:var(--ink3)}
+  .bloat-controls{margin-top:16px}
+  .bloat-slider{width:100%;max-width:400px;accent-color:var(--ink4)}
+  .bloat-label{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink3);margin-top:6px}
+  .bloat-result{font-family:'Inter',sans-serif;font-size:12px;color:var(--ink3);margin-top:8px;font-style:italic;min-height:20px}
+
+  /* ===== POLITE VS RUDE WITH AUDIO ===== */
+  .polite-demo{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:24px 0}
+  @media(max-width:600px){.polite-demo{grid-template-columns:1fr}}
+  .polite-panel{background:#fff;border-radius:10px;overflow:hidden;border:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+  .polite-panel .panel-header{padding:10px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .rude .panel-header{background:#f5e6e6;color:#993333}
+  .nice .panel-header{background:#e6f0e6;color:#336633}
+  .polite-panel .panel-body{padding:16px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.6;min-height:220px}
+  .dialog-box{background:#f0f0f0;border:1px solid #ccc;border-radius:6px;padding:14px;margin:8px 0;text-align:center}
+  .dialog-box .dialog-title{font-weight:600;margin-bottom:8px}
+  .dialog-box .dialog-btns{display:flex;gap:8px;justify-content:center;margin-top:10px}
+  .d-btn{padding:6px 16px;border:1px solid #bbb;border-radius:4px;background:#e8e8e8;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif}
+  .d-btn:hover{background:#ddd}
+  .undo-toast{background:#2c1810;color:#f4e8c1;padding:10px 16px;border-radius:6px;font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-top:12px;opacity:0;transition:opacity 0.3s}
+  .undo-toast.show{opacity:1}
+  .undo-toast button{background:none;border:1px solid #8b7a60;color:#f4e8c1;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif}
+
+  /* ===== PERSONA BUILDER (enhanced) ===== */
+  .persona-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:24px;margin:24px 0;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+  .persona-card .fields{display:grid;grid-template-columns:100px 1fr;gap:8px 12px;align-items:center;margin-bottom:16px}
+  .persona-card label{font-size:13px;color:var(--ink3);text-align:right;font-family:'Inter',sans-serif}
+  .persona-card input,.persona-card select{padding:8px 10px;border:1px solid #ddd;border-radius:5px;font-family:'EB Garamond',serif;font-size:16px;background:#faf8f2}
+  .persona-card input:focus,.persona-card select:focus{outline:none;border-color:var(--ink4)}
+  .persona-result{background:#faf8f2;padding:16px;border-radius:6px;font-size:16px;line-height:1.7;min-height:80px;border-left:3px solid var(--ink4)}
+
+  /* ===== GOALS VS TASKS ===== */
+  .ba-slider{position:relative;margin:24px 0;border-radius:10px;overflow:hidden;height:280px;cursor:col-resize;user-select:none;border:1px solid #ddd}
+  .ba-layer{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:24px 32px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.8}
+  .ba-before{background:#f5f0e8;color:var(--ink);clip-path:inset(0 50% 0 0)}
+  .ba-after{background:#0d1a0d;color:#33ff33;font-family:monospace;clip-path:inset(0 0 0 50%)}
+  .ba-handle{position:absolute;top:0;left:50%;width:3px;height:100%;background:var(--ink4);transform:translateX(-50%);z-index:5;pointer-events:none}
+  .ba-handle::after{content:'◀ ▶';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--ink4);color:#fff;padding:4px 8px;border-radius:10px;font-size:10px;white-space:nowrap;letter-spacing:4px}
+  .ba-label{position:absolute;top:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;z-index:3}
+  .ba-label.left{left:14px;color:var(--ink3)}
+  .ba-label.right{right:14px;color:#2a662a}
+
+  /* ===== JETWAY ===== */
+  .jetway-choice{display:flex;gap:0;margin:30px 0;height:300px;border-radius:12px;overflow:hidden;cursor:pointer}
+  .jetway-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:all 0.6s ease;position:relative}
+  .jetway-left{background:#1a1a2e;color:#8888bb;border-right:2px solid #333}
+  .jetway-right{background:#f5f0e8;color:var(--ink3);border-left:2px solid #ddd}
+  .jetway-side .icon{font-size:48px;margin-bottom:12px}
+  .jetway-side h3{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px}
+  .jetway-side p{font-size:14px;line-height:1.5;max-width:200px}
+  .jetway-side .jlabel{position:absolute;bottom:16px;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:0.5}
+  .jetway-choice:hover .jetway-left{flex:1.15}
+  .jetway-choice:hover .jetway-right{flex:0.85}
+  .jetway-choice.chose-left .jetway-left{flex:3;background:#252545;color:#bbbbee}
+  .jetway-choice.chose-left .jetway-right{flex:1;opacity:0.4}
+  .jetway-choice.chose-right .jetway-right{flex:3;background:#faf5ec;color:var(--ink)}
+  .jetway-choice.chose-right .jetway-left{flex:1;opacity:0.4}
+  .jetway-result{font-style:italic;min-height:48px;transition:opacity 0.5s;opacity:0}
+  .jetway-result.show{opacity:1}
+
+  /* ===== SCORE ===== */
+  .score-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:24px;margin:24px 0;text-align:center}
+  .score-stars{font-size:32px;margin:12px 0}
+  .score-card p{font-size:15px;color:var(--ink3);max-width:500px;margin:0 auto}
+
+  /* ===== MOBILE NAV HINT ===== */
+  .mobile-nav-hint{display:none;position:fixed;top:8px;right:8px;z-index:99;background:rgba(44,24,16,0.85);color:var(--parchment);font-family:'Inter',sans-serif;font-size:12px;padding:6px 12px;border-radius:16px;opacity:0.8;pointer-events:none;animation:hintFade 4s ease-in-out forwards}
+  @keyframes hintFade{0%{opacity:0}10%{opacity:0.8}80%{opacity:0.8}100%{opacity:0}}
+  @media(max-width:600px){
+    .mobile-nav-hint{display:block}
+    .small{font-size:14px}
+    .caption{font-size:13px}
+    .atm-queue-msg{font-size:13px}
+    .atm-counter{font-size:13px}
+    .atm-btn{padding:14px 10px;font-size:14px;min-height:44px}
+    .atm-btn.cancel{min-height:44px}
+    .atm-sim .screen{font-size:13px}
+    .atm-fixed .screen{font-size:13px}
+    .atm-fixed .amt-btn{padding:14px;min-height:44px;font-size:14px}
+    .atm-fixed .amounts{grid-template-columns:repeat(2,1fr)}
+    .d-btn{padding:10px 16px;font-size:14px;min-height:44px}
+    .bear-tab{padding:12px 8px;font-size:11px;min-height:44px;display:flex;align-items:center;justify-content:center}
+    .bear-item{font-size:13px}
+    .bear-caption{font-size:13px}
+    .sk-card .sk-role{font-size:13px}
+    .sk-card .sk-speech{font-size:13px}
+    .sk-resolve-btn{padding:14px 24px;min-height:44px;font-size:14px}
+    .bloat-icon{width:28px;height:28px;font-size:12px}
+    .mm-side{font-size:13px}
+    .mm-label{font-size:13px}
+    .persona-card .fields{grid-template-columns:1fr;gap:6px}
+    .persona-card label{text-align:left}
+    .persona-card input,.persona-card select{min-height:44px}
+    .ba-slider{height:320px}
+    .jetway-choice{flex-direction:column;height:auto}
+    .jetway-side{padding:20px}
+    .jetway-side p{max-width:100%}
+    .stakeholder-cards{grid-template-columns:1fr}
+    section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="mobile-nav-hint">↕ Scroll to explore</div>
+
+<!-- ===== TITLE ===== -->
+<section style="background:var(--ink);color:var(--parchment);text-align:center">
+  <div class="inner">
+    <p class="small" style="margin-bottom:24px;color:var(--ink4)">A book report on</p>
+    <h1 style="color:var(--parchment)">The Inmates Are Running the Asylum</h1>
+    <div style="font-size:18px;color:var(--ink4);margin-bottom:40px">Alan Cooper, 2004 · 282 pages · v2</div>
+    <p style="color:var(--ink3);max-width:480px;margin:0 auto 40px;font-size:16px">A book about why the people who build our tools have accidentally seized control from the people who use them — and what to do about it.</p>
+    <div style="color:var(--ink4);animation:bob 2s ease-in-out infinite;font-size:14px">↓ scroll to begin</div>
+  </div>
+</section>
+
+<!-- ===== 1. TIMED ATM — feel the pressure ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">First, experience the problem. Under pressure.</h2>
+    <p class="reveal" style="color:#999">Cooper opens the book with an ATM. Withdraw $60 — but there's a line behind you.</p>
+
+    <div class="atm-wrap reveal">
+      <div class="atm-timer-bar"><div class="atm-timer-fill" id="atmTimerFill" style="width:100%"></div></div>
+      <div class="atm-queue-msg" id="atmQueueMsg"></div>
+      <div class="atm-sim" id="atm-bad">
+        <div class="screen" id="atm-screen">WELCOME<br>SELECT ACCOUNT TYPE:</div>
+        <div class="atm-buttons" id="atm-btns">
+          <div class="atm-btn" onclick="atmStep('checking')">Checking</div>
+          <div class="atm-btn" onclick="atmStep('savings')">Savings</div>
+          <div class="atm-btn" onclick="atmStep('money-market')">Money Market</div>
+          <div class="atm-btn" onclick="atmStep('credit')">Credit</div>
+        </div>
+        <div class="atm-counter" id="atm-counter"></div>
+      </div>
+    </div>
+    <div id="atm-commentary" class="reveal" style="text-align:center;min-height:60px;color:#999;font-size:15px;margin-top:16px"></div>
+  </div>
+</section>
+
+<!-- ===== 2. COOPER'S ATM ===== -->
+<section class="dark" id="friction-fix" style="display:none">
+  <div class="inner">
+    <h2 class="reveal">Now Cooper's version. Same bank. Same $60.</h2>
+    <p class="reveal" style="color:#999">All the information, upfront. One decision.</p>
+    <div class="atm-fixed reveal" id="atm-good">
+      <div class="screen">
+        <span class="dim">WITHDRAW FROM</span> CHECKING ****4821<br>
+        <span class="dim">BALANCE:</span> $1,247.50 <span class="dim"> · DAILY LIMIT:</span> $200<br>
+        <span class="dim">FEE:</span> $1.50<br><br>
+        <span class="dim">SELECT AMOUNT:</span>
+      </div>
+      <div class="amounts">
+        <div class="amt-btn" onclick="atmGood(20)">$20</div>
+        <div class="amt-btn" onclick="atmGood(40)">$40</div>
+        <div class="amt-btn" onclick="atmGood(60)">$60</div>
+        <div class="amt-btn" onclick="atmGood(100)">$100</div>
+        <div class="amt-btn" onclick="atmGood(200)">$200</div>
+        <div class="amt-btn" onclick="atmGood(0)">Other</div>
+      </div>
+      <div class="done" id="atm-good-done">✓ Dispensing $<span id="atm-good-amt"></span><br><span class="dim" style="font-size:12px">That took about 2 seconds. No one behind you even noticed.</span></div>
+    </div>
+    <p class="reveal" style="color:#999;text-align:center;font-size:15px">Same machine. Same bank. The information was always there.<br>The first one just never bothered to show it to you.</p>
+  </div>
+</section>
+
+<!-- ===== 3. THE JETWAY TEST ===== -->
+<section class="parchment" style="text-align:center">
+  <div class="inner">
+    <h2 class="reveal">Cooper says programmers are a different species.</h2>
+    <p class="reveal">He calls them <em>Homo logicus</em>. His test is simple: you're boarding a plane. Do you turn left, or right?</p>
+    <div class="jetway-choice reveal" id="jetwayChoice">
+      <div class="jetway-left" onclick="chooseJetway('left')">
+        <div class="icon">🎛️</div>
+        <h3>Left</h3>
+        <p>The cockpit. Every surface covered in gauges, knobs, levers. You understand the machine.</p>
+        <div class="jlabel">Turn left →</div>
+      </div>
+      <div class="jetway-right" onclick="chooseJetway('right')">
+        <div class="icon">☁️</div>
+        <h3>Right</h3>
+        <p>The cabin. Smooth, calm, beige. You don't know how it works. You arrive safely anyway.</p>
+        <div class="jlabel">← Turn right</div>
+      </div>
+    </div>
+    <div class="jetway-result" id="jetwayResult"></div>
+  </div>
+</section>
+
+<!-- ===== 4. THE ELASTIC USER — stakeholder argument ===== -->
+<section class="parchment">
+  <div class="inner">
+    <h2 class="reveal">The "Elastic User" kills good design.</h2>
+    <p class="reveal">When teams design for "the user," every stakeholder imagines a different person. Watch three stakeholders argue about the same photo-editing app:</p>
+
+    <div class="stakeholder-arena reveal">
+      <div class="stakeholder-cards" id="skCards">
+        <div class="sk-card" id="sk0">
+          <div class="sk-name">VP of Sales</div>
+          <div class="sk-role">Revenue</div>
+          <div class="sk-want">"The user needs advanced layer compositing. Enterprise clients are asking for it."</div>
+          <div class="sk-speech" id="sk0s">"The user" = a Photoshop power user at a Fortune 500 company who'll pay $500/seat.</div>
+        </div>
+        <div class="sk-card" id="sk1">
+          <div class="sk-name">VP of Engineering</div>
+          <div class="sk-role">Feasibility</div>
+          <div class="sk-want">"The user wants export to 15 formats. We need to support everything."</div>
+          <div class="sk-speech" id="sk1s">"The user" = an engineer who appreciates technical completeness and flexibility.</div>
+        </div>
+        <div class="sk-card" id="sk2">
+          <div class="sk-name">VP of Marketing</div>
+          <div class="sk-role">Growth</div>
+          <div class="sk-want">"The user needs social sharing. One-tap to Instagram. That's how we grow."</div>
+          <div class="sk-speech" id="sk2s">"The user" = a 22-year-old influencer who lives on their phone.</div>
+        </div>
+      </div>
+
+      <div class="sk-resolve">
+        <button class="sk-resolve-btn" id="skBtn" onclick="resolveStakeholders()">Reveal who each VP actually imagines</button>
+      </div>
+
+      <div class="sk-result" id="skResult">
+        <p><strong>Three "users." Three completely different people.</strong> And all three VPs are right — for their imaginary user. That's the problem.</p>
+        <p style="margin-top:12px">Cooper's fix: replace "the user" with a named persona. <strong>Meet Sarah Chen, 34, freelance wedding photographer.</strong> She uses Lightroom daily, shoots 2000 photos per wedding, and her goal is to deliver a curated gallery to clients within 48 hours.</p>
+        <p style="margin-top:12px">Now the argument collapses: Sarah doesn't need social sharing (she delivers via client portals). She needs batch export to 2 formats (JPEG + TIFF), not 15. And layer compositing? Irrelevant — she color-grades, she doesn't composite.</p>
+        <p style="margin-top:12px;font-style:italic;color:var(--ink3)">You can't stretch Sarah to justify your pet feature. That's why personas work — they're too specific to bend.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. DANCING BEAR — the drag-and-drop ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">The Dancing Bear</h2>
+    <p class="reveal" style="color:#999">A dancing bear at a circus isn't impressive because it dances <em>well</em>. It's impressive because it dances <em>at all</em>. Cooper says most software is a dancing bear. Try both:</p>
+
+    <div class="bear-demo reveal">
+      <div class="bear-tabs">
+        <div class="bear-tab active" onclick="bearTab(0)">🐻 Dancing Bear</div>
+        <div class="bear-tab" onclick="bearTab(1)">✨ Designed Version</div>
+      </div>
+      <div class="bear-panel active" id="bearPanel0">
+        <div class="bear-canvas bad" id="bearBad">
+          <div class="bear-item" style="left:20px;top:30px" data-ox="20" data-oy="30">📊 Chart</div>
+          <div class="bear-item" style="left:140px;top:80px" data-ox="140" data-oy="80">📝 Notes</div>
+          <div class="bear-item" style="left:260px;top:40px" data-ox="260" data-oy="40">📷 Photo</div>
+        </div>
+        <div class="bear-caption">Drag the items. It technically works. (Does it dance well?)</div>
+      </div>
+      <div class="bear-panel" id="bearPanel1">
+        <div class="bear-canvas good" id="bearGood">
+          <div class="bear-guide h" id="guideH"></div>
+          <div class="bear-guide v" id="guideV"></div>
+          <div class="bear-item" style="left:20px;top:30px">📊 Chart</div>
+          <div class="bear-item" style="left:140px;top:30px">📝 Notes</div>
+          <div class="bear-item" style="left:260px;top:30px">📷 Photo</div>
+        </div>
+        <div class="bear-caption">Same drag. Magnetic guides, smooth movement, items align automatically. This is dancing <em>well</em>.</div>
+      </div>
+    </div>
+
+    <p class="reveal caption" style="color:#666;text-align:center;margin-top:16px">Both versions "support drag and drop." Only one respects you.</p>
+  </div>
+</section>
+
+<!-- ===== 6. FEATURE BLOAT WITH CONSEQUENCES ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">Every feature has a cost. Feel it.</h2>
+    <p class="reveal" style="color:#999">This app does one thing: save a document. Add features and watch what happens to the core task:</p>
+
+    <div class="bloat-demo reveal">
+      <div class="bloat-app" id="bloatApp">
+        <div class="bloat-toolbar" id="bloatToolbar">
+          <div class="bloat-icon">💾</div>
+        </div>
+        <div class="bloat-body">
+          <div class="bloat-task" id="bloatTask">Click 💾 to save</div>
+          <div class="bloat-spinner" id="bloatSpinner"><div class="bloat-spinner-ring"></div></div>
+          <div class="bloat-time" id="bloatTime"></div>
+        </div>
+      </div>
+      <div class="bloat-controls">
+        <p style="color:#999;font-size:13px;margin-top:16px"><span id="bloatCount">1</span> features</p>
+        <input type="range" min="1" max="80" value="1" class="bloat-slider" id="bloatRange" oninput="updateBloat()">
+        <div class="bloat-label" id="bloatLabel">A focused tool. Fast, clear, no distractions.</div>
+      </div>
+      <div class="bloat-result" id="bloatResult"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. PROGRAMMER'S MODEL VS USER'S MODEL ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">The gap that explains everything.</h2>
+    <p class="reveal" style="color:#999">Cooper's deepest insight: programmers build software that mirrors their <em>implementation model</em>. Users think in terms of a completely different <em>mental model</em>. The gap between them is where all pain lives.</p>
+
+    <div class="mm-container reveal">
+      <div class="mm-pair">
+        <div class="mm-side dev">
+          <div class="mm-label">Programmer's Model (email app)</div>
+          <div class="mm-item"><span class="dot"></span> IMAP socket connection pool</div>
+          <div class="mm-item"><span class="dot"></span> SQLite message store (FTS5 index)</div>
+          <div class="mm-item"><span class="dot"></span> MIME parser → content-type dispatch</div>
+          <div class="mm-item"><span class="dot"></span> Thread-ID header → conversation grouping</div>
+          <div class="mm-item"><span class="dot"></span> OAuth2 token refresh lifecycle</div>
+          <div class="mm-item"><span class="dot"></span> POP3 fallback with UID tracking</div>
+          <div class="mm-item"><span class="dot"></span> Background sync service (15 min interval)</div>
+        </div>
+        <div class="mm-side user">
+          <div class="mm-label">User's Model (email app)</div>
+          <div class="mm-item"><span class="dot"></span> Inbox</div>
+          <div class="mm-item"><span class="dot"></span> Sent</div>
+          <div class="mm-item"><span class="dot"></span> Drafts</div>
+          <div class="mm-item"><span class="dot"></span> Trash</div>
+          <div class="mm-item"><span class="dot"></span> Search</div>
+          <div class="mm-item"><span class="dot"></span> Write new message</div>
+          <div class="mm-item"><span class="dot"></span> Attachments just... work</div>
+        </div>
+      </div>
+      <div class="mm-gap-meter">
+        <p style="color:#666;font-size:13px;font-family:'Inter',sans-serif">When the interface reflects the left side instead of the right, users suffer.</p>
+        <p style="color:#666;font-size:12px;font-family:'Inter',sans-serif;margin-top:8px;font-style:italic">"Show me an error about IMAP socket timeouts and I'll show you a programmer who shipped their mental model."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. PERSONA BUILDER (enhanced) ===== -->
+<section class="parchment">
+  <div class="inner">
+    <h2 class="reveal">Cooper's cure: design for one person.</h2>
+    <p class="reveal">Not "the user." A specific, named human. The more specific, the more powerful:</p>
+    <div class="persona-card reveal">
+      <div class="fields">
+        <label>Name</label><input type="text" id="pName" placeholder="e.g. Clevis" oninput="updatePersona()">
+        <label>Age</label><input type="number" id="pAge" placeholder="70" oninput="updatePersona()">
+        <label>Job</label><input type="text" id="pJob" placeholder="Retired oil field foreman" oninput="updatePersona()">
+        <label>Tech level</label>
+        <select id="pTech" onchange="updatePersona()">
+          <option value="">pick one</option>
+          <option value="Has never owned a computer">Never used a computer</option>
+          <option value="Uses email and the web reluctantly">Reluctant emailer</option>
+          <option value="Comfortable with apps but doesn't configure anything">App user</option>
+          <option value="Builds spreadsheets that would make an accountant weep">Spreadsheet wizard</option>
+          <option value="Could probably hack the Pentagon but can't set the clock on the microwave">Programmer</option>
+        </select>
+        <label>Quirk</label><input type="text" id="pQuirk" placeholder="Touch of arthritis in his hands" oninput="updatePersona()">
+        <label>Goal</label><input type="text" id="pGoal" placeholder="Watch a movie without feeling stupid" oninput="updatePersona()">
+      </div>
+      <div class="persona-result" id="personaResult"><span style="color:var(--ink3);font-style:italic">Start typing and watch a persona come to life...</span></div>
+    </div>
+    <p class="reveal">The moment you gave them a name and a quirk, they stopped being "the user." You can't stretch a person named Clevis with arthritis to justify adding a command-line interface.</p>
+  </div>
+</section>
+
+<!-- ===== 9. GOALS VS TASKS ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">Goals are not tasks.</h2>
+    <p class="reveal" style="color:#999">A goal is a stable end condition. A task is a transient way of reaching it. Technology changes tasks. Goals never change.</p>
+    <div class="ba-slider reveal" id="baSlider">
+      <div class="ba-label left">1850</div>
+      <div class="ba-label right">1999</div>
+      <div class="ba-layer ba-before" id="baBefore">
+        <p><strong>St. Louis → San Francisco</strong></p>
+        <p>🐴 Conestoga wagon</p>
+        <p>🔫 Bring Winchester rifle (safety)</p>
+        <p>⏱️ 4-6 months</p>
+        <p style="margin-top:12px;font-size:12px;color:var(--ink3)">Goal: speed, comfort, safety</p>
+      </div>
+      <div class="ba-layer ba-after" id="baAfter">
+        <p><strong>St. Louis → San Francisco</strong></p>
+        <p>✈️ Boeing 777</p>
+        <p>🚫 Leave rifle at HOME (safety)</p>
+        <p>⏱️ 4 hours</p>
+        <p style="margin-top:12px;font-size:12px;color:#2a662a">Goal: speed, comfort, safety</p>
+      </div>
+      <div class="ba-handle" id="baHandle"></div>
+    </div>
+    <p class="caption reveal" style="color:#666;text-align:center">← Drag to compare → Same goals. Opposite tasks.</p>
+  </div>
+</section>
+
+<!-- ===== 10. POLITE VS RUDE (with sound) ===== -->
+<section class="parchment">
+  <div class="inner">
+    <h2 class="reveal">What if software behaved like a person?</h2>
+    <p class="reveal">Cooper's most practical chapter. Delete a file in each version. Listen for the difference:</p>
+    <div class="polite-demo reveal">
+      <div class="polite-panel rude">
+        <div class="panel-header">❌ Rude Software</div>
+        <div class="panel-body">
+          <p>📄 quarterly-report.xlsx</p>
+          <p style="font-size:12px;color:#999">Click to delete ↓</p>
+          <div style="text-align:center;margin-top:8px"><button class="d-btn" onclick="rudeDelete()" id="rude-del-btn">🗑️ Delete</button></div>
+          <div id="rude-dialogs"></div>
+        </div>
+      </div>
+      <div class="polite-panel nice">
+        <div class="panel-header">✅ Polite Software</div>
+        <div class="panel-body">
+          <p>📄 quarterly-report.xlsx</p>
+          <p style="font-size:12px;color:#999">Click to delete ↓</p>
+          <div style="text-align:center;margin-top:8px"><button class="d-btn" onclick="niceDelete()" id="nice-del-btn">🗑️ Delete</button></div>
+          <div id="nice-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11. RATING ===== -->
+<section class="dark" style="min-height:60vh">
+  <div class="inner" style="text-align:center">
+    <h2 class="reveal">Final Assessment</h2>
+    <div class="score-card reveal" style="background:var(--parchment);color:var(--ink)">
+      <div class="score-stars">★★★★★</div>
+      <p>This book is twenty years old and embarrassingly little has changed. Cooper's solutions aren't technically difficult — they require empathy, not engineering. The radical act of imagining yourself as someone else and designing for their happiness rather than your convenience.</p>
+      <p style="margin-top:16px;font-style:italic;font-size:14px;color:var(--ink3)">"Ironically, the best way to increase profitability in the information age is to spend more."</p>
+    </div>
+    <p class="reveal small" style="color:#666;margin-top:24px">
+      Reviewed by John Isidore · February 2026 · v2<br>
+      This report attempted to demonstrate Cooper's ideas through its medium rather than just describe them.<br>
+      <a href="index.html" style="color:var(--ink4)">← v1</a>
+    </p>
+  </div>
+</section>
+
+<!-- ===== AUDIO CONTEXT FOR SOUND EFFECTS ===== -->
+<script>
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
+function playTone(freq,dur,type='sine',vol=0.15){
+  const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.value=vol;
+  o.connect(g);g.connect(ctx.destination);
+  o.start();g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+  o.stop(ctx.currentTime+dur);
+}
+function playError(){playTone(200,0.15,'square',0.12);setTimeout(()=>playTone(150,0.2,'square',0.12),160)}
+function playSuccess(){playTone(523,0.1,'sine',0.1);setTimeout(()=>playTone(659,0.1,'sine',0.1),120);setTimeout(()=>playTone(784,0.15,'sine',0.1),240)}
+function playUndo(){playTone(784,0.08,'sine',0.08);setTimeout(()=>playTone(659,0.08,'sine',0.08),100);setTimeout(()=>playTone(523,0.12,'sine',0.08),200)}
+function playDelete(){playTone(440,0.08,'sine',0.1);setTimeout(()=>playTone(330,0.15,'sine',0.08),100)}
+</script>
+
+<script>
+// ===== PROGRESS =====
+window.addEventListener('scroll',()=>{
+  document.getElementById('progressBar').style.width=
+    (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+});
+
+// ===== REVEAL =====
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ===== TIMED ATM =====
+let atmState=0,atmClicks=0,atmFails=0,atmStarted=false,atmTimer=null,atmTimeLeft=30;
+const queueMsgs=[
+  '',
+  '👤 Someone steps up behind you.',
+  '👤👤 Two people waiting now.',
+  '👤👤 The person behind you sighs.',
+  '👤👤👤 Three people. Someone checks their watch.',
+  '👤👤👤 "Is this thing broken?" someone mutters.',
+  '👤👤👤👤 The line is getting restless.'
+];
+
+function startAtmTimer(){
+  if(atmStarted)return;
+  atmStarted=true;
+  atmTimer=setInterval(()=>{
+    atmTimeLeft--;
+    const pct=Math.max(0,atmTimeLeft/30*100);
+    const fill=document.getElementById('atmTimerFill');
+    fill.style.width=pct+'%';
+    fill.className='atm-timer-fill'+(pct<33?' danger':pct<66?' warn':'');
+    // Queue pressure
+    const qi=Math.min(queueMsgs.length-1,Math.floor((30-atmTimeLeft)/5));
+    document.getElementById('atmQueueMsg').textContent=queueMsgs[qi];
+    if(atmTimeLeft<=0){
+      clearInterval(atmTimer);
+      document.getElementById('atm-screen').innerHTML='SESSION TIMED OUT<br>PLEASE REMOVE CARD<br><br>NEXT CUSTOMER PLEASE';
+      document.getElementById('atm-btns').innerHTML='<div class="atm-btn cancel" onclick="atmReset()">Start Over</div>';
+      document.getElementById('atm-commentary').textContent="The machine timed you out. The person behind you steps forward. Cooper's point: the software had all the information to prevent this. It chose not to.";
+      playError();
+    }
+  },1000);
+}
+
+function atmStep(choice){
+  startAtmTimer();
+  atmClicks++;
+  const screen=document.getElementById('atm-screen');
+  const btns=document.getElementById('atm-btns');
+  const counter=document.getElementById('atm-counter');
+  const commentary=document.getElementById('atm-commentary');
+
+  if(atmState===0){
+    if(choice==='checking'){
+      atmState=1;
+      screen.innerHTML='CHECKING ACCOUNT SELECTED<br><br>SELECT TRANSACTION:';
+      btns.innerHTML=`
+        <div class="atm-btn" onclick="atmStep('withdraw')">Withdrawal</div>
+        <div class="atm-btn" onclick="atmStep('deposit')">Deposit</div>
+        <div class="atm-btn" onclick="atmStep('transfer')">Transfer</div>
+        <div class="atm-btn" onclick="atmStep('balance')">Balance</div>`;
+    } else {
+      event.target.classList.add('wrong');
+      setTimeout(()=>event.target.classList.remove('wrong'),300);
+      atmFails++;
+      playError();
+      screen.innerHTML='INVALID ACCOUNT TYPE<br>TRANSACTION CANCELLED<br><br>PLEASE REMOVE CARD AND TRY AGAIN';
+      btns.innerHTML='<div class="atm-btn cancel" onclick="atmReset()">Start Over</div>';
+      commentary.textContent=atmFails===1
+        ?"The machine knows you don't have a savings account. It offered it anyway, then punished you for picking it."
+        :"It did it again. The line behind you grows. Cooper counted — this happens to him monthly.";
+    }
+  } else if(atmState===1){
+    if(choice==='withdraw'){
+      atmState=2;
+      screen.innerHTML='ENTER AMOUNT:';
+      btns.innerHTML=`
+        <div class="atm-btn" onclick="atmStep('40')">$40</div>
+        <div class="atm-btn" onclick="atmStep('60')">$60</div>
+        <div class="atm-btn" onclick="atmStep('100')">$100</div>
+        <div class="atm-btn" onclick="atmStep('220')">$220</div>`;
+    } else {
+      atmStep('withdraw');
+    }
+  } else if(atmState===2){
+    if(choice==='220'){
+      atmFails++;
+      playError();
+      screen.innerHTML='DAILY WITHDRAWAL LIMIT EXCEEDED<br>TRANSACTION CANCELLED<br><br>PLEASE REMOVE CARD';
+      btns.innerHTML='<div class="atm-btn cancel" onclick="atmReset()">Start Over</div>';
+      commentary.textContent="It doesn't tell you what the limit IS. Doesn't let you pick another amount. Just kicks you out. "+atmClicks+" clicks wasted, "+Math.round(30-atmTimeLeft)+"s gone.";
+    } else {
+      clearInterval(atmTimer);
+      playSuccess();
+      const elapsed=30-atmTimeLeft;
+      screen.innerHTML='DISPENSING $'+choice+'<br><br>PLEASE TAKE CASH AND CARD';
+      btns.innerHTML='';
+      commentary.innerHTML="<strong>"+atmClicks+" clicks</strong>, <strong>"+elapsed+"s</strong>"+(atmFails>0?", <strong>"+atmFails+" failures</strong>":"")+". Now scroll down for Cooper's version.";
+      document.getElementById('friction-fix').style.display='';
+    }
+  }
+  counter.textContent='Clicks: '+atmClicks+(atmFails?' · Fails: '+atmFails:'');
+}
+
+function atmReset(){
+  atmState=0;
+  document.getElementById('atm-screen').innerHTML='WELCOME<br>SELECT ACCOUNT TYPE:';
+  document.getElementById('atm-btns').innerHTML=`
+    <div class="atm-btn" onclick="atmStep('checking')">Checking</div>
+    <div class="atm-btn" onclick="atmStep('savings')">Savings</div>
+    <div class="atm-btn" onclick="atmStep('money-market')">Money Market</div>
+    <div class="atm-btn" onclick="atmStep('credit')">Credit</div>`;
+}
+
+function atmGood(amt){
+  if(amt===0)amt=60;
+  playSuccess();
+  document.getElementById('atm-good-amt').textContent=amt;
+  document.querySelector('.atm-fixed .amounts').style.display='none';
+  document.querySelector('.atm-fixed .screen').style.display='none';
+  document.getElementById('atm-good-done').style.display='block';
+}
+
+// ===== JETWAY =====
+function chooseJetway(side){
+  const el=document.getElementById('jetwayChoice');
+  const result=document.getElementById('jetwayResult');
+  el.className='jetway-choice chose-'+side;
+  if(side==='left'){
+    result.innerHTML='<strong>You turned left.</strong> Cooper says: you might be <em>Homo logicus</em>. You want to understand the machine. Two-thirds of programmers chose the same way. The problem isn\'t your preference — it\'s that you build interfaces as if everyone shares it.';
+  } else {
+    result.innerHTML='<strong>You turned right.</strong> You\'re like most people. You want simplicity and the confidence of arrival. Most software ignores you — it\'s built by people who turned left.';
+  }
+  result.classList.add('show');
+}
+
+// ===== STAKEHOLDERS =====
+function resolveStakeholders(){
+  document.querySelectorAll('.sk-speech').forEach(s=>s.style.display='block');
+  document.getElementById('skResult').style.display='block';
+  document.getElementById('skBtn').style.display='none';
+}
+
+// ===== DANCING BEAR DRAG =====
+function bearTab(i){
+  document.querySelectorAll('.bear-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.bear-panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+}
+
+// Bad drag — janky, snaps to grid badly, fights you
+(function(){
+  const canvas=document.getElementById('bearBad');
+  if(!canvas)return;
+  let drag=null,ox,oy;
+  function startDrag(item,cx,cy){
+    canvas.classList.add('dragging');
+    drag=item;
+    const r=item.getBoundingClientRect();
+    ox=cx-r.left;oy=cy-r.top;
+  }
+  function moveDrag(cx,cy){
+    if(!drag)return;
+    const cr=canvas.getBoundingClientRect();
+    let x=cx-cr.left-ox;
+    let y=cy-cr.top-oy;
+    const gx=Math.round(x/40)*40;
+    const gy=Math.round(y/40)*40;
+    drag.style.left=(gx+Math.random()*6-3)+'px';
+    drag.style.top=(gy+Math.random()*6-3)+'px';
+    if(Math.abs(x-gx)>15||Math.abs(y-gy)>15)drag.classList.add('snapping');
+    else drag.classList.remove('snapping');
+  }
+  function endDrag(){
+    if(drag){drag.classList.remove('snapping');canvas.classList.remove('dragging')}
+    drag=null;
+  }
+  canvas.addEventListener('mousedown',e=>{const item=e.target.closest('.bear-item');if(item)startDrag(item,e.clientX,e.clientY)});
+  window.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY));
+  window.addEventListener('mouseup',endDrag);
+  canvas.addEventListener('touchstart',e=>{const item=e.target.closest('.bear-item');if(item){e.preventDefault();startDrag(item,e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+  window.addEventListener('touchmove',e=>{if(drag){e.preventDefault();moveDrag(e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+  window.addEventListener('touchend',endDrag);
+})();
+
+// Good drag — smooth, magnetic guides
+(function(){
+  const canvas=document.getElementById('bearGood');
+  if(!canvas)return;
+  let drag=null,ox,oy;
+  const guideH=document.getElementById('guideH');
+  const guideV=document.getElementById('guideV');
+
+  function startDrag(item,cx,cy){
+    canvas.classList.add('dragging');
+    drag=item;
+    const r=item.getBoundingClientRect();
+    ox=cx-r.left;oy=cy-r.top;
+  }
+  function moveDrag(cx,cy){
+    if(!drag)return;
+    const cr=canvas.getBoundingClientRect();
+    let x=cx-cr.left-ox;
+    let y=cy-cr.top-oy;
+    x=Math.max(0,Math.min(cr.width-80,x));
+    y=Math.max(0,Math.min(cr.height-60,y));
+    const items=[...canvas.querySelectorAll('.bear-item')];
+    let snapX=null,snapY=null;
+    items.forEach(it=>{
+      if(it===drag)return;
+      const ix=parseFloat(it.style.left),iy=parseFloat(it.style.top);
+      if(Math.abs(y-iy)<8){snapY=iy}
+      if(Math.abs(x-ix)<8){snapX=ix}
+    });
+    if(snapY!==null){y=snapY;guideH.style.top=y+30+'px';guideH.classList.add('show')}
+    else guideH.classList.remove('show');
+    if(snapX!==null){x=snapX;guideV.style.left=x+40+'px';guideV.classList.add('show')}
+    else guideV.classList.remove('show');
+    drag.style.left=x+'px';
+    drag.style.top=y+'px';
+  }
+  function endDrag(){
+    if(drag)canvas.classList.remove('dragging');
+    drag=null;
+    guideH.classList.remove('show');
+    guideV.classList.remove('show');
+  }
+  canvas.addEventListener('mousedown',e=>{const item=e.target.closest('.bear-item');if(item)startDrag(item,e.clientX,e.clientY)});
+  window.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY));
+  window.addEventListener('mouseup',endDrag);
+  canvas.addEventListener('touchstart',e=>{const item=e.target.closest('.bear-item');if(item){e.preventDefault();startDrag(item,e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+  window.addEventListener('touchmove',e=>{if(drag){e.preventDefault();moveDrag(e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+  window.addEventListener('touchend',endDrag);
+})();
+
+// ===== FEATURE BLOAT =====
+const bloatIcons=['💾','✂️','📋','🔍','🖨️','📊','🎨','🔤','📐','📎','🔗','📧','☁️','🔒','📅','💬','📸','🎵','🗂️','⚙️','🧩','📝','🏷️','📌','🔔','📱','💡','🌐','🔧','🎯','📡','🗄️','🧮','🎪','🏗️','📦','🔮','🎭','🛡️','🔑','🗺️','📻','🎰','🧲','🔬','🔭','🎸','🎲','🧪','🎻','📯','🪄','🎺','🥁','🪘','🎹','🎵','🎶','🎙️','📺','🖥️','⌨️','🖱️','💿','📀','🧫','🧬','🔋','🪫','🔌','💻','📟','📠','📡','🛰️','🚀','🛸','🧭'];
+
+function updateBloat(){
+  const n=parseInt(document.getElementById('bloatRange').value);
+  document.getElementById('bloatCount').textContent=n;
+  const tb=document.getElementById('bloatToolbar');
+  tb.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='bloat-icon';
+    d.textContent=bloatIcons[i%bloatIcons.length];
+    if(i===0)d.style.cursor='pointer',d.onclick=()=>simulateSave(n);
+    tb.appendChild(d);
+  }
+
+  const label=document.getElementById('bloatLabel');
+  if(n<=3)label.textContent='A focused tool. Fast, clear.';
+  else if(n<=10)label.textContent='Getting busy. Can you still find 💾?';
+  else if(n<=25)label.textContent='The toolbar is getting crowded. Your eye has to hunt for the save button.';
+  else if(n<=50)label.textContent='Feature soup. The original purpose drowns in options nobody asked for.';
+  else label.textContent='Congratulations: you\'ve built Microsoft Word 2003. Cooper weeps.';
+
+  document.getElementById('bloatTime').textContent='';
+  document.getElementById('bloatSpinner').classList.remove('show');
+  document.getElementById('bloatTask').textContent='Click 💾 to save';
+}
+
+function simulateSave(n){
+  const delay=200+n*40+Math.random()*n*20; // More features = slower
+  document.getElementById('bloatTask').textContent='Saving...';
+  document.getElementById('bloatSpinner').classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('bloatSpinner').classList.remove('show');
+    document.getElementById('bloatTask').textContent='✓ Saved';
+    document.getElementById('bloatTime').textContent=
+      (delay/1000).toFixed(1)+'s — '+(n<=3?'instant.':n<=15?'noticeable pause.':n<=40?'why is saving slow?':'you can feel every feature weighing it down.');
+    playSuccess();
+  },delay);
+}
+
+// ===== PERSONA =====
+function updatePersona(){
+  const name=document.getElementById('pName').value;
+  const age=document.getElementById('pAge').value;
+  const job=document.getElementById('pJob').value;
+  const tech=document.getElementById('pTech').value;
+  const quirk=document.getElementById('pQuirk').value;
+  const goal=document.getElementById('pGoal').value;
+  if(!name){document.getElementById('personaResult').innerHTML='<span style="color:var(--ink3);font-style:italic">Start typing...</span>';return}
+  let t=`<strong>${name}</strong>`;
+  if(age)t+=`, ${age}`;
+  if(job)t+=` — ${job}`;
+  t+='.';
+  if(tech)t+=` ${tech}.`;
+  if(quirk)t+=` ${quirk}.`;
+  if(goal)t+=`<br><br>What ${name} wants: <em>${goal}</em>. Everything in the product exists to serve this goal — or it doesn't belong.`;
+  document.getElementById('personaResult').innerHTML=t;
+}
+
+// ===== BEFORE/AFTER SLIDER =====
+(function(){
+  const slider=document.getElementById('baSlider');
+  if(!slider)return;
+  let dragging=false;
+  function setPos(x){
+    const rect=slider.getBoundingClientRect();
+    let pct=Math.max(5,Math.min(95,(x-rect.left)/rect.width*100));
+    document.getElementById('baHandle').style.left=pct+'%';
+    document.getElementById('baBefore').style.clipPath=`inset(0 ${100-pct}% 0 0)`;
+    document.getElementById('baAfter').style.clipPath=`inset(0 0 0 ${pct}%)`;
+  }
+  slider.addEventListener('mousedown',e=>{dragging=true;setPos(e.clientX)});
+  slider.addEventListener('touchstart',e=>{dragging=true;setPos(e.touches[0].clientX)},{passive:true});
+  window.addEventListener('mousemove',e=>{if(dragging)setPos(e.clientX)});
+  window.addEventListener('touchmove',e=>{if(dragging)setPos(e.touches[0].clientX)},{passive:true});
+  window.addEventListener('mouseup',()=>dragging=false);
+  window.addEventListener('touchend',()=>dragging=false);
+})();
+
+// ===== POLITE VS RUDE =====
+let rudeStage=0;
+function rudeDelete(){
+  const area=document.getElementById('rude-dialogs');
+  if(rudeStage===0){
+    playError();
+    document.getElementById('rude-del-btn').style.display='none';
+    area.innerHTML=`<div class="dialog-box">
+      <div class="dialog-title">⚠️ Confirm Delete</div>
+      <p style="font-size:12px">Are you sure you want to delete quarterly-report.xlsx?</p>
+      <div class="dialog-btns">
+        <div class="d-btn" onclick="rudeStep2()">Yes</div>
+        <div class="d-btn" onclick="rudeCancel()">No</div>
+      </div></div>`;
+    rudeStage=1;
+  }
+}
+function rudeStep2(){
+  playError();
+  document.getElementById('rude-dialogs').innerHTML=`<div class="dialog-box">
+    <div class="dialog-title">⚠️ Really Delete?</div>
+    <p style="font-size:12px">This action cannot be undone. The file will be permanently removed.</p>
+    <div class="dialog-btns">
+      <div class="d-btn" onclick="rudeStep3()">Delete Permanently</div>
+      <div class="d-btn" onclick="rudeCancel()">Cancel</div>
+    </div></div>`;
+}
+function rudeStep3(){
+  playError();
+  document.getElementById('rude-dialogs').innerHTML=`<p style="font-size:13px;color:#993333;margin-top:12px;text-align:center">
+    ✓ File deleted.<br><span style="font-size:11px;color:#999">3 clicks. 2 guilt trips. The software made you prove you meant it — twice — instead of just being prepared to undo.</span></p>`;
+}
+function rudeCancel(){
+  document.getElementById('rude-dialogs').innerHTML='';
+  document.getElementById('rude-del-btn').style.display='';
+  rudeStage=0;
+}
+
+function niceDelete(){
+  playDelete();
+  document.getElementById('nice-del-btn').style.display='none';
+  const area=document.getElementById('nice-result');
+  area.innerHTML=`<p style="font-size:13px;margin-top:12px">
+    <span style="color:#999;text-decoration:line-through">📄 quarterly-report.xlsx</span></p>
+  <div class="undo-toast show">
+    <span>File deleted</span>
+    <button onclick="niceUndo()">Undo</button>
+  </div>
+  <p style="font-size:11px;color:#999;margin-top:12px;text-align:center">1 click. No interrogation. It trusts you — and quietly keeps a safety net.</p>`;
+}
+function niceUndo(){
+  playUndo();
+  document.getElementById('nice-result').innerHTML='<p style="font-size:13px;margin-top:12px;text-align:center;color:#336633">📄 quarterly-report.xlsx restored. No drama.</p>';
+  document.getElementById('nice-del-btn').style.display='';
+}
+</script>
+</body>
+</html>

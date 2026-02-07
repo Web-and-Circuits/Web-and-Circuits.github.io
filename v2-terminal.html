@@ -333,8 +333,9 @@ const bootSequence = [
   { type: 'command', prompt: 'root@wac', text: 'ls -la /projects/', delay: 4100 },
   { type: 'output', text: '', delay: 4400 },
   { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/heartbeat-demo\'">heartbeat-demo/</span>    Interactive scheduler visualization', delay: 4500 },
-  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">experiments/</span>       Tools, utilities, and more', delay: 4600 },
-  { type: 'output', text: '-rw-r--r--  README.md          You are here', delay: 4700 },
+  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/lab/\'">lab/</span>               Demos, book reports, experiments', delay: 4600 },
+  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">experiments/</span>       Tools, utilities, and more', delay: 4700 },
+  { type: 'output', text: '-rw-r--r--  README.md          You are here', delay: 4800 },
   { type: 'blank', delay: 4900 },
   { type: 'command', prompt: 'root@wac', text: 'echo $LINKS', delay: 5000 },
   { type: 'output', text: '', delay: 5200 },
@@ -451,7 +452,7 @@ function setupInput() {
   
   const commands = {
     help: 'Available commands: help, projects, about, github, clear, matrix',
-    projects: 'Navigate to: <span class="link" onclick="location.href=\'/heartbeat-demo\'">heartbeat-demo</span>',
+    projects: 'Navigate to: <span class="link" onclick="location.href=\'/heartbeat-demo\'">heartbeat-demo</span> | <span class="link" onclick="location.href=\'/lab/\'">lab</span>',
     about: 'Web and Circuits LLC — Building the future, one commit at a time.',
     github: 'Opening GitHub...',
     clear: 'CLEAR',

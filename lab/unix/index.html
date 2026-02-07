@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art of Unix Programming — An Interactive Book Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0a0e14;--fg:#c8d0da;--fg2:#6b7a8d;--green:#7ec699;--amber:#e6b450;--red:#f07178;--blue:#73b8ff;--purple:#d2a6ff;--cyan:#95e6cb;--surface:#111820;--border:#1e2732}
+  body{font-family:'EB Garamond',serif;background:var(--bg);color:var(--fg);line-height:1.7;font-size:17px}
+
+  section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;position:relative}
+  section .inner{max-width:680px;width:100%}
+
+  h1{font-family:'Playfair Display',serif;font-size:clamp(32px,6vw,56px);font-weight:900;line-height:1.1;margin-bottom:24px;color:#fff}
+  h2{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;line-height:1.2;margin-bottom:20px;color:#fff}
+  p{margin-bottom:18px}
+  em{font-style:italic;color:var(--amber)}
+  strong{font-weight:700;color:#fff}
+  code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:var(--surface);padding:2px 6px;border-radius:3px;color:var(--green)}
+  .small{font-size:14px;color:var(--fg2)}
+  .caption{font-size:13px;color:var(--fg2);font-style:italic;margin-top:8px}
+
+  /* Progress */
+  .progress-bar{position:fixed;top:0;left:0;height:2px;background:var(--green);z-index:100;transition:width 0.1s}
+
+  /* Reveal */
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.7s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* Terminal */
+  .terminal{background:#0d1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:24px 0;font-family:'JetBrains Mono',monospace;font-size:13px}
+  .terminal .bar{background:#161b22;padding:8px 12px;display:flex;align-items:center;gap:6px}
+  .terminal .bar .dot{width:10px;height:10px;border-radius:50%}
+  .terminal .bar .dot:nth-child(1){background:#f85149}
+  .terminal .bar .dot:nth-child(2){background:#e3b341}
+  .terminal .bar .dot:nth-child(3){background:#3fb950}
+  .terminal .body{padding:16px;line-height:1.8;min-height:60px;color:var(--fg)}
+  .terminal .prompt{color:var(--green)}
+  .terminal .prompt::before{content:'$ '}
+  .terminal .output{color:var(--fg2);padding-left:16px}
+  .terminal .cursor{display:inline-block;width:7px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle}
+  @keyframes blink{50%{opacity:0}}
+
+  /* Pipe demo */
+  .pipe-demo{margin:24px 0}
+  .pipe-stage{display:flex;align-items:center;gap:0;margin:8px 0;flex-wrap:wrap}
+  .pipe-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;min-width:80px;transition:all 0.3s}
+  .pipe-box.active{border-color:var(--green);box-shadow:0 0 12px rgba(126,198,153,0.15)}
+  .pipe-arrow{color:var(--fg2);padding:0 6px;font-size:16px}
+  .pipe-data{background:var(--bg);border:1px dashed var(--border);border-radius:6px;padding:8px 12px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg2);max-height:120px;overflow-y:auto;white-space:pre;transition:all 0.5s}
+
+  /* Rule cards */
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:24px 0}
+  .rule-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all 0.2s}
+  .rule-card:hover{border-color:var(--green)}
+  .rule-card.selected{border-color:var(--amber);background:rgba(230,180,80,0.05)}
+  .rule-card .rule-name{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px}
+  .rule-card .rule-text{font-size:14px;color:var(--fg2);line-height:1.4}
+  .rule-detail{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:16px;min-height:60px;display:none;line-height:1.7}
+  .rule-detail.show{display:block}
+
+  /* Complexity tradeoff */
+  .tradeoff{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:24px 0;text-align:center}
+  @media(max-width:600px){.tradeoff{grid-template-columns:1fr}}
+  .tradeoff-col{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
+  .tradeoff-col h4{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+  .meter{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin:8px 0}
+  .meter-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+
+  /* Worse is better */
+  .wib-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+  @media(max-width:600px){.wib-compare{grid-template-columns:1fr}}
+  .wib-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .wib-header{padding:10px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .wib-panel.mit .wib-header{background:rgba(210,166,255,0.1);color:var(--purple)}
+  .wib-panel.nj .wib-header{background:rgba(126,198,153,0.1);color:var(--green)}
+  .wib-body{padding:16px;font-size:14px;line-height:1.7;color:var(--fg2)}
+  .wib-body strong{color:var(--fg)}
+  .wib-vote{text-align:center;margin:16px 0}
+  .wib-btn{padding:10px 24px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;margin:0 6px}
+  .wib-btn:hover{border-color:var(--green)}
+  .wib-btn.chosen{border-color:var(--amber);background:rgba(230,180,80,0.1);color:var(--amber)}
+  .wib-result{text-align:center;font-style:italic;color:var(--fg2);min-height:40px;margin-top:8px}
+
+  /* Silence demo */
+  .silence-demo{margin:24px 0}
+  .silence-panel{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:600px){.silence-panel{grid-template-columns:1fr}}
+  .silence-box{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .silence-box .sh{padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .silence-box.loud .sh{background:rgba(240,113,120,0.1);color:var(--red)}
+  .silence-box.quiet .sh{background:rgba(126,198,153,0.1);color:var(--green)}
+  .silence-box .sb{padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;min-height:160px;color:var(--fg2)}
+  .silence-box .sb .noise{color:var(--fg2);opacity:0.4}
+  .silence-box .sb .signal{color:var(--fg)}
+
+  /* Composition demo */
+  .compose-input{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:13px;margin:8px 0}
+  .compose-input:focus{outline:none;border-color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- TITLE -->
+<section>
+  <div class="inner" style="text-align:center">
+    <p class="small" style="margin-bottom:24px;color:var(--fg2)">A book report on</p>
+    <h1>The Art of Unix Programming</h1>
+    <p style="color:var(--fg2);margin-bottom:8px">Eric S. Raymond, 2003 · 560 pages</p>
+    <p style="color:var(--fg2);max-width:480px;margin:0 auto 40px;font-size:16px">Thirty years of unwritten software engineering wisdom, codified. A book about how to build things that last — and why most software doesn't.</p>
+    <div style="color:var(--fg2);animation:bob 2s ease-in-out infinite;font-size:14px">↓ scroll to begin</div>
+  </div>
+</section>
+
+<!-- 1. THE PIPE — experience composition -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">The most important idea in Unix fits in one sentence.</h2>
+    <p class="reveal" style="color:var(--fg2)">"Write programs that do one thing and do it well. Write programs to work together. Write programs to handle text streams, because that is a universal interface." — Doug McIlroy, inventor of the Unix pipe</p>
+    <p class="reveal" style="color:var(--fg2);margin-top:16px">Type something below and watch it flow through a pipeline of tiny, composable programs — each doing one thing well:</p>
+
+    <div class="reveal">
+      <input class="compose-input" id="pipeInput" placeholder="Try typing a sentence..." oninput="runPipe()">
+    </div>
+
+    <div class="pipe-demo reveal" id="pipeDemo">
+      <div class="pipe-stage">
+        <div class="pipe-box" id="pb0">cat</div>
+        <span class="pipe-arrow">|</span>
+        <div class="pipe-box" id="pb1">tr ' ' '\n'</div>
+        <span class="pipe-arrow">|</span>
+        <div class="pipe-box" id="pb2">sort</div>
+        <span class="pipe-arrow">|</span>
+        <div class="pipe-box" id="pb3">uniq -c</div>
+        <span class="pipe-arrow">|</span>
+        <div class="pipe-box" id="pb4">sort -rn</div>
+      </div>
+      <div class="pipe-data" id="pipeOutput">output appears here...</div>
+    </div>
+    <p class="caption reveal">Five programs. Each does one tiny thing. Together they count word frequency. No program knows or cares what the others do. That's composition.</p>
+  </div>
+</section>
+
+<!-- 2. THE 17 RULES — interactive explorer -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Raymond distilled Unix wisdom into 17 rules.</h2>
+    <p class="reveal" style="color:var(--fg2)">Click any rule to see it explained:</p>
+
+    <div class="rules-grid reveal" id="rulesGrid"></div>
+    <div class="rule-detail" id="ruleDetail"></div>
+  </div>
+</section>
+
+<!-- 3. SILENCE IS GOLDEN — live demo -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Rule of Silence: say nothing when there's nothing surprising to say.</h2>
+    <p class="reveal" style="color:var(--fg2)">Both programs below do the same thing — copy 5 files. Click "Run" on each:</p>
+
+    <div class="silence-panel reveal">
+      <div class="silence-box loud">
+        <div class="sh">❌ Loud Program</div>
+        <div class="sb" id="loudOutput">
+          <button onclick="runLoud()" style="padding:8px 16px;background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;">▶ Run</button>
+        </div>
+      </div>
+      <div class="silence-box quiet">
+        <div class="sh">✅ Unix Program</div>
+        <div class="sb" id="quietOutput">
+          <button onclick="runQuiet()" style="padding:8px 16px;background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;">▶ Run</button>
+        </div>
+      </div>
+    </div>
+    <p class="caption reveal" id="silenceCaption"></p>
+  </div>
+</section>
+
+<!-- 4. TRANSPARENCY — the -v flag -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Transparency: let there be light.</h2>
+    <p class="reveal" style="color:var(--fg2)">Raymond's favourite example: fetchmail's <code>-v</code> flag. One option that dumps every protocol exchange in real time. 8 out of 10 bugs diagnosed within seconds of seeing a transcript.</p>
+    <p class="reveal" style="color:var(--fg2)">"Don't let debugging tools be afterthoughts. They are your windows into the code; don't just knock crude holes in the walls, <em>finish and glaze them</em>."</p>
+
+    <div class="terminal reveal">
+      <div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="color:var(--fg2);font-size:11px;margin-left:8px">Click to toggle -v</span></div>
+      <div class="body" id="fetchmailBody" onclick="toggleVerbose()" style="cursor:pointer">
+        <div class="prompt">fetchmail hurkle.thyrsus.com</div>
+        <div class="output" id="fetchmailOutput">2 messages for esr (1 new)</div>
+      </div>
+    </div>
+    <p class="caption reveal">Click the terminal to toggle between normal and verbose mode. Same program, same operation. One version shows you exactly what's happening.</p>
+  </div>
+</section>
+
+<!-- 5. WORSE IS BETTER -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Worse Is Better</h2>
+    <p class="reveal" style="color:var(--fg2)">Richard Gabriel's famous essay, discussed at length by Raymond. Two philosophies of design:</p>
+
+    <div class="wib-compare reveal">
+      <div class="wib-panel mit">
+        <div class="wib-header">MIT / "The Right Thing"</div>
+        <div class="wib-body">
+          <strong>Interface must be simple.</strong> Implementation can be complex if needed to support the interface. Correctness and consistency are non-negotiable. Dangling links in hypertext? Unacceptable — build caching, replication, indexing to prevent them.
+        </div>
+      </div>
+      <div class="wib-panel nj">
+        <div class="wib-header">New Jersey / "Worse Is Better"</div>
+        <div class="wib-body">
+          <strong>Implementation must be simple.</strong> Interface can be rough if needed. Ship it, get users, improve fast. Dangling links? Return <code>404 Not Found</code>. Tim Berners-Lee chose this. It became the World Wide Web.
+        </div>
+      </div>
+    </div>
+
+    <div class="wib-vote reveal">
+      <p style="color:var(--fg2);font-size:14px;margin-bottom:12px">Which philosophy wins?</p>
+      <button class="wib-btn" onclick="wibVote('mit')">The Right Thing</button>
+      <button class="wib-btn" onclick="wibVote('nj')">Worse Is Better</button>
+    </div>
+    <div class="wib-result reveal" id="wibResult"></div>
+  </div>
+</section>
+
+<!-- 6. COMPLEXITY -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">As Simple As Possible, but No Simpler</h2>
+    <p class="reveal" style="color:var(--fg2)">Raymond identifies three kinds of complexity and three sources. Every design decision is a tradeoff between them. Drag the sliders to explore:</p>
+
+    <div class="tradeoff reveal">
+      <div class="tradeoff-col">
+        <h4 style="color:var(--blue)">Interface</h4>
+        <p class="small">How hard is it to use?</p>
+        <input type="range" min="1" max="10" value="3" id="cxInterface" oninput="updateCx()" style="width:100%;accent-color:var(--blue)">
+        <div class="meter"><div class="meter-fill" id="cxI" style="width:30%;background:var(--blue)"></div></div>
+      </div>
+      <div class="tradeoff-col">
+        <h4 style="color:var(--purple)">Implementation</h4>
+        <p class="small">How hard is it to understand the code?</p>
+        <input type="range" min="1" max="10" value="5" id="cxImpl" oninput="updateCx()" style="width:100%;accent-color:var(--purple)">
+        <div class="meter"><div class="meter-fill" id="cxM" style="width:50%;background:var(--purple)"></div></div>
+      </div>
+      <div class="tradeoff-col">
+        <h4 style="color:var(--amber)">Codebase Size</h4>
+        <p class="small">More lines = more bugs (constant per line)</p>
+        <input type="range" min="1" max="10" value="4" id="cxCode" oninput="updateCx()" style="width:100%;accent-color:var(--amber)">
+        <div class="meter"><div class="meter-fill" id="cxC" style="width:40%;background:var(--amber)"></div></div>
+      </div>
+    </div>
+    <div id="cxVerdict" class="reveal" style="text-align:center;font-style:italic;color:var(--fg2);min-height:60px"></div>
+  </div>
+</section>
+
+<!-- 7. DATA DOMINATES -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Fold knowledge into data.</h2>
+    <p class="reveal" style="color:var(--fg2)">Rob Pike's Rule 5: "Data dominates. If you've chosen the right data structures, the algorithms will almost always be self-evident."</p>
+    <p class="reveal" style="color:var(--fg2)">Or as Fred Brooks put it: "Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won't usually need your flowcharts."</p>
+
+    <div class="terminal reveal">
+      <div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="body">
+        <div style="color:var(--fg2);margin-bottom:12px"># Which is easier to understand?</div>
+        <div style="color:var(--red);margin-bottom:8px"># Option A: Logic</div>
+        <div style="color:var(--fg2);font-size:12px;margin-bottom:16px;line-height:1.6">if (code == 200) return "OK";<br>else if (code == 301) return "Moved";<br>else if (code == 404) return "Not Found";<br>else if (code == 500) return "Server Error";<br>// ... 50 more lines</div>
+        <div style="color:var(--green);margin-bottom:8px"># Option B: Data</div>
+        <div style="color:var(--fg2);font-size:12px;line-height:1.6">codes = {<br>&nbsp; 200: "OK",<br>&nbsp; 301: "Moved",<br>&nbsp; 404: "Not Found",<br>&nbsp; 500: "Server Error"<br>}<br>return codes[code]</div>
+      </div>
+    </div>
+    <p class="caption reveal">Same behavior. The data version is shorter, clearer, and — crucially — easier to verify by inspection. You can see all the mappings at once. The program logic is stupid. That's the point.</p>
+  </div>
+</section>
+
+<!-- 8. CLOSING -->
+<section>
+  <div class="inner" style="text-align:center">
+    <h2 class="reveal">★★★★★</h2>
+    <p class="reveal" style="max-width:520px;margin:0 auto 24px;font-size:18px;line-height:1.6">"Software design and implementation should be a joyous art, a kind of high-level play. If this attitude seems preposterous or vaguely embarrassing to you, stop and think; ask yourself what you've forgotten."</p>
+    <p class="reveal" style="color:var(--fg2);max-width:500px;margin:0 auto 24px">This book is 20 years old and its advice is still radical. Not because it's complicated — because almost nobody follows it. Do one thing well. Make it composable. Keep it transparent. Ship it simple. The rest follows.</p>
+    <p class="reveal small">Reviewed by John Isidore · February 2026</p>
+    <p class="reveal small" style="margin-top:8px;color:var(--fg2)">This report was built as a pipeline of small, composable ideas — each section does one thing well.</p>
+  </div>
+</section>
+
+<script>
+// Progress
+window.addEventListener('scroll',()=>{
+  document.getElementById('progressBar').style.width=
+    (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+});
+
+// Reveal
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Bob animation
+document.head.insertAdjacentHTML('beforeend','<style>@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}</style>');
+
+// === PIPE DEMO ===
+function runPipe(){
+  const input=document.getElementById('pipeInput').value;
+  if(!input.trim()){document.getElementById('pipeOutput').textContent='output appears here...';return}
+  
+  // Simulate: cat | tr ' ' '\n' | sort | uniq -c | sort -rn
+  const words=input.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(Boolean);
+  const counts={};
+  words.forEach(w=>{counts[w]=(counts[w]||0)+1});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const output=sorted.map(([w,c])=>`   ${c} ${w}`).join('\n');
+  document.getElementById('pipeOutput').textContent=output||'(no words)';
+  
+  // Animate pipeline
+  ['pb0','pb1','pb2','pb3','pb4'].forEach((id,i)=>{
+    setTimeout(()=>{
+      document.getElementById(id).classList.add('active');
+      setTimeout(()=>document.getElementById(id).classList.remove('active'),400);
+    },i*150);
+  });
+}
+
+// === RULES ===
+const rules=[
+  {name:'Modularity',text:'Simple parts, clean interfaces',detail:'The only way to write complex software that won\'t fall on its face is to build it out of simple parts connected by well-defined interfaces, so that most problems are local and you can have some hope of upgrading a part without breaking the whole.'},
+  {name:'Clarity',text:'Clarity over cleverness',detail:'Write programs as if the most important communication they do is not to the computer that executes them but to the human beings who will read and maintain the source code in the future — including yourself.'},
+  {name:'Composition',text:'Programs should connect to other programs',detail:'If you don\'t write programs that accept and emit simple text streams, it\'s much more difficult to hook programs together. Text streams are to Unix tools as messages are to objects.'},
+  {name:'Separation',text:'Policy from mechanism; interfaces from engines',detail:'Hardwiring policy and mechanism together makes policy rigid and means changing policy destabilizes mechanisms. Separate them. One way: front-end process (policy) + back-end process (mechanism) connected by a protocol.'},
+  {name:'Simplicity',text:'Add complexity only where you must',detail:'"Intricate and beautiful complexities" is almost an oxymoron. Unix programmers vie with each other for "simple and beautiful" honors. Either way, everybody loses from complexity in the end.'},
+  {name:'Parsimony',text:'Write big programs only when nothing else will do',detail:'Large programs invite overinvestment in failed approaches because people are reluctant to throw away the visible product of lots of work.'},
+  {name:'Transparency',text:'Design for visibility and inspection',detail:'A software system is transparent when you can look at it and immediately understand what it\'s doing. It\'s discoverable when it helps you build a mental model. Your debugging tools are your windows into the code — finish and glaze them.'},
+  {name:'Robustness',text:'Child of transparency and simplicity',detail:'If you can\'t reason about the guts of a program, you can\'t be sure it\'s correct. The way to make robust programs is to make their internals easy for humans to reason about.'},
+  {name:'Representation',text:'Fold knowledge into data',detail:'Even the simplest procedural logic is hard to verify, but complex data structures are fairly easy to model and reason about. Where you see a choice between complexity in data and complexity in code, choose data.'},
+  {name:'Least Surprise',text:'Do the least surprising thing',detail:'Surprises focus the user\'s attention on the interface rather than the task. Minimize novelty. Mimic what users already know. But don\'t be superficially similar yet subtly different — that\'s worse than being completely different.'},
+  {name:'Silence',text:'Say nothing when there\'s nothing to say',detail:'Well-behaved programs do their jobs unobtrusively. Important information should not be mixed with verbosity about internal behavior. If all displayed information is important, important information is easy to find.'},
+  {name:'Repair',text:'Fail noisily and as soon as possible',detail:'The worst bugs are those where repair doesn\'t succeed and the problem quietly causes corruption that shows up much later. When you must fail, make diagnosis as easy as possible.'},
+  {name:'Economy',text:'Programmer time > machine time',detail:'If we took this seriously, most applications would be written in higher-level languages. Programmer time is expensive; conserve it in preference to machine time.'},
+  {name:'Generation',text:'Write programs that write programs',detail:'Human beings are notoriously bad at sweating details. Code generators raise the abstraction level. Generated code is almost always cheaper and more reliable than hand-hacked.'},
+  {name:'Optimization',text:'Get it working before you optimize it',detail:'"Premature optimization is the root of all evil." — Knuth. "Make it run, then make it right, then make it fast." — Kent Beck. "One of my most productive days was throwing away 1000 lines of code." — Ken Thompson.'},
+  {name:'Diversity',text:'Distrust "one true way"',detail:'Nobody is smart enough to optimize for everything, nor to anticipate all uses. Embrace multiple languages, open extensible systems, and customization hooks everywhere.'},
+  {name:'Extensibility',text:'Design for the future',detail:'Never assume you have the final answer. Include version numbers. Make joints flexible. The sanity you save may be your own.'}
+];
+
+const grid=document.getElementById('rulesGrid');
+rules.forEach((r,i)=>{
+  const card=document.createElement('div');
+  card.className='rule-card';
+  card.innerHTML=`<div class="rule-name">${i+1}. ${r.name}</div><div class="rule-text">${r.text}</div>`;
+  card.onclick=()=>{
+    document.querySelectorAll('.rule-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    const detail=document.getElementById('ruleDetail');
+    detail.innerHTML=`<strong style="color:var(--amber)">Rule of ${r.name}:</strong> ${r.detail}`;
+    detail.classList.add('show');
+  };
+  grid.appendChild(card);
+});
+
+// === SILENCE DEMO ===
+function runLoud(){
+  const el=document.getElementById('loudOutput');
+  const files=['config.yml','readme.md','data.json','utils.py','test.js'];
+  let html='<span style="color:var(--green)">$ copy-files src/ dest/</span>\n';
+  let i=0;
+  el.innerHTML=html;
+  const iv=setInterval(()=>{
+    if(i>=files.length){
+      html+='\n<span class="noise">INFO: All operations completed successfully.</span>\n';
+      html+='<span class="noise">INFO: 5 files copied, 0 errors, 0 warnings.</span>\n';
+      html+='<span class="noise">INFO: Total size: 24.3KB. Time elapsed: 0.003s.</span>\n';
+      html+='<span class="noise">INFO: Thank you for using CopyMaster Pro v3.2.1!</span>';
+      el.innerHTML=html;
+      clearInterval(iv);
+      checkSilenceCaption();
+      return;
+    }
+    html+=`<span class="noise">INFO: Checking source file ${files[i]}... OK</span>\n`;
+    html+=`<span class="noise">INFO: Copying ${files[i]} to dest/${files[i]}...</span>\n`;
+    html+=`<span class="noise">INFO: ${files[i]} copied successfully (${Math.floor(Math.random()*9000+1000)} bytes)</span>\n`;
+    i++;
+    el.innerHTML=html;
+    el.scrollTop=el.scrollHeight;
+  },200);
+}
+
+function runQuiet(){
+  const el=document.getElementById('quietOutput');
+  el.innerHTML='<span style="color:var(--green)">$ cp -r src/ dest/</span>\n';
+  setTimeout(()=>{
+    el.innerHTML+='<span style="color:var(--green)">$ </span><span class="cursor"></span>';
+    checkSilenceCaption();
+  },300);
+}
+
+function checkSilenceCaption(){
+  document.getElementById('silenceCaption').textContent=
+    'The Unix version said nothing — because nothing went wrong. Silence means success. If something fails, THEN it speaks. "Treat the user\'s attention as a precious and limited resource."';
+}
+
+// === FETCHMAIL -v ===
+let verbose=false;
+function toggleVerbose(){
+  verbose=!verbose;
+  const el=document.getElementById('fetchmailOutput');
+  if(verbose){
+    el.innerHTML=`<span style="color:var(--cyan)">fetchmail: 6.1.0 querying hurkle (protocol IMAP)</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * PREAUTH IMAP4rev1 server ready</span>
+<span style="color:var(--fg2)">fetchmail: IMAP> A0001 CAPABILITY</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * CAPABILITY IMAP4 IMAP4REV1 SORT</span>
+<span style="color:var(--fg2)">fetchmail: IMAP> A0002 SELECT "INBOX"</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * 2 EXISTS</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * 1 RECENT</span>
+<span style="color:var(--green)">2 messages (1 new) for esr at hurkle</span>
+<span style="color:var(--fg2)">fetchmail: SMTP> MAIL FROM:&lt;mutt-dev@mutt.org&gt;</span>
+<span style="color:var(--fg2)">fetchmail: SMTP< 250 Sender ok</span>
+<span style="color:var(--fg2)">fetchmail: SMTP> DATA</span>
+<span style="color:var(--fg2)">fetchmail: SMTP< 354 Enter mail...</span>
+<span style="color:var(--green)">fetchmail: normal termination, status 0</span>`;
+  } else {
+    el.innerHTML=`2 messages for esr (1 new)`;
+  }
+}
+
+// === WORSE IS BETTER ===
+function wibVote(choice){
+  document.querySelectorAll('.wib-btn').forEach(b=>b.classList.remove('chosen'));
+  event.target.classList.add('chosen');
+  const r=document.getElementById('wibResult');
+  if(choice==='nj'){
+    r.innerHTML='Raymond agrees — and so does history. The Web, Unix, C, Linux — all "worse" designs that won by being simple enough to ship, spread, and improve. Gabriel himself has changed his mind several times about whether this is a good thing. It probably is.';
+  } else {
+    r.innerHTML='Gabriel\'s paper argues you\'re right in theory — but wrong in practice. MIT-style systems like Multics, Xanadu, and NLS were more correct, more complete, more elegant. They also mostly failed. Sometimes the right thing is too heavy to fly.';
+  }
+}
+
+// === COMPLEXITY ===
+function updateCx(){
+  const i=document.getElementById('cxInterface').value;
+  const m=document.getElementById('cxImpl').value;
+  const c=document.getElementById('cxCode').value;
+  document.getElementById('cxI').style.width=i*10+'%';
+  document.getElementById('cxM').style.width=m*10+'%';
+  document.getElementById('cxC').style.width=c*10+'%';
+  
+  const total=+i+ +m+ +c;
+  const v=document.getElementById('cxVerdict');
+  if(total<=9) v.textContent='Low total complexity. This is where Unix tools live — each one small, clear, and composable.';
+  else if(total<=15) v.textContent='Moderate complexity. Watch for tradeoffs — are you buying interface simplicity with implementation complexity, or vice versa?';
+  else if(total<=21) v.textContent='High complexity. Raymond\'s warning: "Complexity costs. Complex software is harder to think about, harder to test, harder to debug, and harder to maintain."';
+  else v.textContent='Danger zone. "Debugging dominates development time. The only way to write complex software that won\'t fall on its face is to hold its global complexity down." Consider whether some of this is accidental complexity that can be eliminated.';
+}
+updateCx();
+</script>
+</body>
+</html>

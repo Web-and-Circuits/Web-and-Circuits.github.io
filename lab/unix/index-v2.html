@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art of Unix Programming — V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0a0e14;--fg:#c8d0da;--fg2:#6b7a8d;--green:#7ec699;--amber:#e6b450;--red:#f07178;--blue:#73b8ff;--purple:#d2a6ff;--cyan:#95e6cb;--surface:#111820;--border:#1e2732}
+  body{font-family:'EB Garamond',serif;background:var(--bg);color:var(--fg);line-height:1.7;font-size:17px}
+  section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;position:relative}
+  section .inner{max-width:720px;width:100%}
+  h1{font-family:'Playfair Display',serif;font-size:clamp(32px,6vw,56px);font-weight:900;line-height:1.1;margin-bottom:24px;color:#fff}
+  h2{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;line-height:1.2;margin-bottom:20px;color:#fff}
+  p{margin-bottom:18px}
+  em{font-style:italic;color:var(--amber)}
+  strong{font-weight:700;color:#fff}
+  code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:var(--surface);padding:2px 6px;border-radius:3px;color:var(--green)}
+  .small{font-size:14px;color:var(--fg2)}
+  .caption{font-size:13px;color:var(--fg2);font-style:italic;margin-top:8px}
+  .progress-bar{position:fixed;top:0;left:0;height:2px;background:var(--green);z-index:100;transition:width 0.1s}
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.7s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+  /* Terminal */
+  .terminal{background:#0d1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:24px 0;font-family:'JetBrains Mono',monospace;font-size:13px}
+  .terminal .bar{background:#161b22;padding:8px 12px;display:flex;align-items:center;gap:6px}
+  .terminal .dot{width:10px;height:10px;border-radius:50%}
+  .terminal .dot:nth-child(1){background:#f85149}
+  .terminal .dot:nth-child(2){background:#e3b341}
+  .terminal .dot:nth-child(3){background:#3fb950}
+  .terminal .body{padding:16px;line-height:1.8;min-height:60px;color:var(--fg)}
+  .terminal .prompt{color:var(--green)}
+  .terminal .prompt::before{content:'$ '}
+  .terminal .cursor{display:inline-block;width:7px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle}
+  @keyframes blink{50%{opacity:0}}
+
+  /* Pipeline builder */
+  .pipeline-builder{margin:24px 0}
+  .pipe-palette{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .pipe-chip{padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:all 0.2s;user-select:none}
+  .pipe-chip:hover{border-color:var(--green);background:rgba(126,198,153,0.05)}
+  .pipe-chip.used{border-color:var(--green);background:rgba(126,198,153,0.1);color:var(--green)}
+  .pipe-workspace{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;min-height:48px;display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px}
+  .pipe-ws-item{padding:6px 12px;background:rgba(126,198,153,0.1);border:1px solid var(--green);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);cursor:pointer;position:relative}
+  .pipe-ws-item:hover{background:rgba(240,113,120,0.1);border-color:var(--red)}
+  .pipe-ws-item:hover::after{content:'✕';position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;width:14px;height:14px;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center}
+  .pipe-ws-arrow{color:var(--fg2);padding:0 6px;font-size:14px;flex-shrink:0}
+  .pipe-ws-placeholder{color:var(--fg2);font-family:'Inter',sans-serif;font-size:13px;font-style:italic}
+  .pipe-input-area{margin-bottom:8px}
+  .pipe-input{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:13px;resize:vertical;min-height:60px}
+  .pipe-input:focus{outline:none;border-color:var(--green)}
+  .pipe-output{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg2);min-height:40px;max-height:160px;overflow-y:auto;white-space:pre;transition:all 0.3s}
+  .pipe-output .stage-label{color:var(--amber);font-size:11px}
+  .pipe-cmd-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg2);margin-bottom:4px}
+  .pipe-cmd-line .cmd{color:var(--green)}
+
+  /* Toolbox vs Swiss Army */
+  .compare-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+  @media(max-width:600px){.compare-row{grid-template-columns:1fr}}
+  .compare-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .compare-header{padding:10px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .compare-body{padding:16px;font-size:14px;line-height:1.7}
+  .tool-grid{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .tool-item{padding:4px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:default}
+  .task-list{margin:12px 0;padding:0;list-style:none}
+  .task-list li{padding:4px 0;font-size:13px;display:flex;align-items:center;gap:8px}
+  .task-list .check{color:var(--green)}
+  .task-list .fail{color:var(--red)}
+
+  /* Separation demo */
+  .sep-demo{margin:24px 0}
+  .sep-engine{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;text-align:center}
+  .sep-engine-label{font-family:'Inter',sans-serif;font-size:11px;color:var(--fg2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+  .sep-track{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--green)}
+  .sep-progress{height:4px;background:var(--border);border-radius:2px;margin:8px 0;overflow:hidden}
+  .sep-progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s;width:0%}
+  .sep-uis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:600px){.sep-uis{grid-template-columns:1fr}}
+  .sep-ui{border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all 0.2s;text-align:center}
+  .sep-ui:hover{border-color:var(--green)}
+  .sep-ui.active{border-color:var(--green);background:rgba(126,198,153,0.05)}
+  .sep-ui-label{font-family:'Inter',sans-serif;font-size:11px;color:var(--fg2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .sep-ui-display{font-size:13px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+  .sep-btn{padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.15s}
+  .sep-btn:hover{border-color:var(--green)}
+
+  /* Repair demo */
+  .repair-demo{margin:24px 0}
+  .repair-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:600px){.repair-row{grid-template-columns:1fr}}
+  .repair-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .repair-header{padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .repair-panel.silent .repair-header{background:rgba(240,113,120,0.1);color:var(--red)}
+  .repair-panel.loud .repair-header{background:rgba(126,198,153,0.1);color:var(--green)}
+  .repair-body{padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;min-height:200px;color:var(--fg2)}
+  .repair-body .ok{color:var(--fg2)}
+  .repair-body .err{color:var(--red)}
+  .repair-body .corrupt{color:var(--amber)}
+  .repair-body .fine{color:var(--green)}
+
+  /* Representation interactive */
+  .rep-demo{margin:24px 0}
+  .rep-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:600px){.rep-cols{grid-template-columns:1fr}}
+  .rep-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .rep-header{padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .rep-panel.logic .rep-header{background:rgba(240,113,120,0.1);color:var(--red)}
+  .rep-panel.data .rep-header{background:rgba(126,198,153,0.1);color:var(--green)}
+  .rep-code{padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;min-height:180px;white-space:pre;overflow-x:auto}
+  .rep-code .kw{color:var(--purple)}
+  .rep-code .str{color:var(--green)}
+  .rep-code .num{color:var(--amber)}
+  .rep-code .new-line{background:rgba(126,198,153,0.1);display:inline;border-radius:2px;padding:0 2px}
+  .rep-add{margin-top:12px;text-align:center}
+  .rep-add-btn{padding:8px 20px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s}
+  .rep-add-btn:hover{border-color:var(--green)}
+  .rep-add-btn:disabled{opacity:0.4;cursor:default}
+  .rep-verdict{text-align:center;font-size:14px;color:var(--fg2);font-style:italic;min-height:30px;margin-top:12px}
+
+  /* Rules */
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:24px 0}
+  .rule-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all 0.2s}
+  .rule-card:hover{border-color:var(--green)}
+  .rule-card.selected{border-color:var(--amber);background:rgba(230,180,80,0.05)}
+  .rule-card .rule-name{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px}
+  .rule-card .rule-text{font-size:14px;color:var(--fg2);line-height:1.4}
+  .rule-detail{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:16px;min-height:60px;display:none;line-height:1.7}
+  .rule-detail.show{display:block}
+
+  /* Silence */
+  .silence-panel{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+  @media(max-width:600px){.silence-panel{grid-template-columns:1fr}}
+  .silence-box{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .silence-box .sh{padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .silence-box.loud .sh{background:rgba(240,113,120,0.1);color:var(--red)}
+  .silence-box.quiet .sh{background:rgba(126,198,153,0.1);color:var(--green)}
+  .silence-box .sb{padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;min-height:160px;color:var(--fg2)}
+  .noise{opacity:0.4}
+  .signal{color:var(--fg)}
+
+  /* Worse is better */
+  .wib-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+  @media(max-width:600px){.wib-compare{grid-template-columns:1fr}}
+  .wib-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .wib-header{padding:10px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .wib-panel.mit .wib-header{background:rgba(210,166,255,0.1);color:var(--purple)}
+  .wib-panel.nj .wib-header{background:rgba(126,198,153,0.1);color:var(--green)}
+  .wib-body{padding:16px;font-size:14px;line-height:1.7;color:var(--fg2)}
+  .wib-body strong{color:var(--fg)}
+  .wib-scenario{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:16px 0;text-align:center}
+  .wib-choice{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .wib-btn{padding:10px 20px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s}
+  .wib-btn:hover{border-color:var(--green)}
+  .wib-btn.chosen{border-color:var(--amber);background:rgba(230,180,80,0.1);color:var(--amber)}
+  .wib-result{text-align:center;font-style:italic;color:var(--fg2);min-height:60px;margin-top:12px;line-height:1.7}
+
+  /* ===== MOBILE NAV HINT ===== */
+  .mobile-nav-hint{display:none;position:fixed;top:8px;right:8px;z-index:99;background:rgba(17,24,32,0.9);color:var(--green);font-family:'Inter',sans-serif;font-size:12px;padding:6px 12px;border-radius:16px;opacity:0.8;pointer-events:none;animation:hintFade 4s ease-in-out forwards}
+  @keyframes hintFade{0%{opacity:0}10%{opacity:0.8}80%{opacity:0.8}100%{opacity:0}}
+  @media(max-width:600px){
+    .mobile-nav-hint{display:block}
+    .small{font-size:14px}
+    .caption{font-size:13px}
+    .terminal .body{font-size:13px}
+    .pipe-chip{padding:10px 14px;font-size:13px;min-height:44px;display:inline-flex;align-items:center}
+    .pipe-ws-item{padding:8px 12px;font-size:13px;min-height:44px;display:inline-flex;align-items:center}
+    .pipe-input{min-height:80px;font-size:14px}
+    .pipe-output{font-size:13px}
+    .pipe-cmd-line{font-size:13px}
+    .tool-item{font-size:13px;padding:6px 10px}
+    .task-list li{font-size:13px}
+    .sep-btn{padding:10px 14px;font-size:13px;min-height:44px}
+    .sep-ui-label{font-size:13px}
+    .sep-engine-label{font-size:13px}
+    .repair-body{font-size:13px}
+    .repair-header{font-size:13px}
+    .rep-code{font-size:13px;white-space:pre-wrap;overflow-x:hidden}
+    .rep-header{font-size:13px}
+    .rep-add-btn{padding:12px 20px;min-height:44px}
+    .rule-card{padding:16px;min-height:44px}
+    .rule-card .rule-name{font-size:13px}
+    .rule-card .rule-text{font-size:14px}
+    .silence-box .sb{font-size:13px}
+    .silence-box .sh{font-size:13px}
+    .wib-btn{padding:12px 16px;min-height:44px;font-size:14px}
+    .wib-header{font-size:13px}
+    .compare-header{font-size:13px}
+    section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="mobile-nav-hint">↕ Scroll to explore</div>
+
+<!-- ===== TITLE ===== -->
+<section>
+  <div class="inner" style="text-align:center">
+    <p class="small" style="margin-bottom:24px">A book report on</p>
+    <h1>The Art of Unix Programming</h1>
+    <p style="color:var(--fg2);margin-bottom:8px">Eric S. Raymond, 2003 · 560 pages · v2</p>
+    <p style="color:var(--fg2);max-width:500px;margin:0 auto 40px;font-size:16px">Thirty years of unwritten software engineering wisdom, codified. This report doesn't just describe the ideas — it makes you build with them.</p>
+    <div style="color:var(--fg2);animation:bob 2s ease-in-out infinite;font-size:14px">↓ scroll to begin</div>
+  </div>
+</section>
+
+<!-- ===== 1. DO ONE THING WELL — toolbox vs swiss army ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">"Do one thing and do it well."</h2>
+    <p class="reveal" style="color:var(--fg2)">Doug McIlroy, inventor of the Unix pipe. The most cited rule in all of software. But what does it <em>feel</em> like? Compare:</p>
+
+    <div class="compare-row reveal">
+      <div class="compare-panel">
+        <div class="compare-header" style="background:rgba(240,113,120,0.1);color:var(--red)">🔪 The Swiss Army Knife</div>
+        <div class="compare-body" style="color:var(--fg2)">
+          <p style="font-size:13px"><strong style="color:var(--fg)">SuperTextPro 9000</strong></p>
+          <div class="tool-grid">
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">edit</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">compile</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">debug</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">email</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">browse</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">chat</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">ftp</span>
+            <span class="tool-item" style="background:rgba(240,113,120,0.05);border:1px solid rgba(240,113,120,0.2);color:var(--red)">calendar</span>
+          </div>
+          <ul class="task-list">
+            <li><span class="fail">✗</span> <span style="color:var(--fg2)">Can't use the editor without loading everything else</span></li>
+            <li><span class="fail">✗</span> <span style="color:var(--fg2)">Bug in email client crashes the whole app</span></li>
+            <li><span class="fail">✗</span> <span style="color:var(--fg2)">Want a better debugger? Too bad, it's built in</span></li>
+            <li><span class="fail">✗</span> <span style="color:var(--fg2)">Other programs can't use any of its parts</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="compare-panel">
+        <div class="compare-header" style="background:rgba(126,198,153,0.1);color:var(--green)">🧰 The Unix Toolbox</div>
+        <div class="compare-body" style="color:var(--fg2)">
+          <p style="font-size:13px"><strong style="color:var(--fg)">Small sharp tools</strong></p>
+          <div class="tool-grid">
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">vim</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">gcc</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">gdb</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">mutt</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">lynx</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">irc</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">scp</span>
+            <span class="tool-item" style="background:rgba(126,198,153,0.05);border:1px solid rgba(126,198,153,0.2);color:var(--green)">cal</span>
+          </div>
+          <ul class="task-list">
+            <li><span class="check">✓</span> <span style="color:var(--fg2)">Each tool loads in milliseconds</span></li>
+            <li><span class="check">✓</span> <span style="color:var(--fg2)">Bug in mutt? vim doesn't care</span></li>
+            <li><span class="check">✓</span> <span style="color:var(--fg2)">Don't like gdb? Use lldb. Swap freely</span></li>
+            <li><span class="check">✓</span> <span style="color:var(--fg2)">Pipe them together for things nobody planned</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="caption reveal" style="text-align:center">"Write programs that do one thing and do it well. Write programs to work together." The toolbox always wins long-term.</p>
+  </div>
+</section>
+
+<!-- ===== 2. BUILD-A-PIPELINE ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Build a pipeline. Experience composition.</h2>
+    <p class="reveal" style="color:var(--fg2)">Click tools to snap them together. Each does one thing. Together they do things nobody planned:</p>
+
+    <div class="pipeline-builder reveal">
+      <div class="pipe-palette" id="pipePalette"></div>
+      <div class="pipe-cmd-line">
+        <span class="cmd" id="pipeCmd">echo "..."</span>
+      </div>
+      <div class="pipe-workspace" id="pipeWorkspace">
+        <span class="pipe-ws-placeholder">click tools above to build a pipeline →</span>
+      </div>
+      <div class="pipe-input-area">
+        <textarea class="pipe-input" id="pipeInput" placeholder="Paste or type text here... (try pasting a paragraph from any webpage)" oninput="runPipeline()">To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles, and by opposing end them. To die, to sleep — no more — and by a sleep to say we end the heartache and the thousand natural shocks that flesh is heir to: 'tis a consummation devoutly to be wished. To die, to sleep — to sleep, perchance to dream.</textarea>
+      </div>
+      <div class="pipe-output" id="pipeOutput">add tools to see output...</div>
+    </div>
+    <p class="caption reveal">Each tool is ~10 lines of code. The pipeline is emergent power. No tool knows what the others do. That's the Rule of Composition.</p>
+  </div>
+</section>
+
+<!-- ===== 3. SEPARATION OF POLICY & MECHANISM ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Separate policy from mechanism.</h2>
+    <p class="reveal" style="color:var(--fg2)">One engine. Three interfaces. Click each to control the same music player with a completely different policy:</p>
+
+    <div class="sep-demo reveal">
+      <div class="sep-engine">
+        <div class="sep-engine-label">Engine (mechanism)</div>
+        <div class="sep-track" id="sepTrack">♫ No track loaded</div>
+        <div class="sep-progress"><div class="sep-progress-fill" id="sepProgress"></div></div>
+        <div style="font-size:11px;color:var(--fg2)" id="sepStatus">Stopped · 0:00</div>
+      </div>
+      <div class="sep-uis">
+        <div class="sep-ui active" id="sepUI0" onclick="setSepUI(0)">
+          <div class="sep-ui-label">CLI</div>
+          <div class="sep-ui-display" id="sepDisplay0">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)">$ play --track 1</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <button class="sep-btn" onclick="sepCmd('prev');event.stopPropagation()">prev</button>
+              <button class="sep-btn" onclick="sepCmd('play');event.stopPropagation()">play</button>
+              <button class="sep-btn" onclick="sepCmd('next');event.stopPropagation()">next</button>
+            </div>
+          </div>
+        </div>
+        <div class="sep-ui" id="sepUI1" onclick="setSepUI(1)">
+          <div class="sep-ui-label">Minimal</div>
+          <div class="sep-ui-display" id="sepDisplay1">
+            <div style="font-size:28px;letter-spacing:16px;cursor:pointer" onclick="event.stopPropagation()">
+              <span onclick="sepCmd('prev')">⏮</span>
+              <span onclick="sepCmd('play')" id="sepPlayBtn">▶</span>
+              <span onclick="sepCmd('next')">⏭</span>
+            </div>
+          </div>
+        </div>
+        <div class="sep-ui" id="sepUI2" onclick="setSepUI(2)">
+          <div class="sep-ui-label">Fancy</div>
+          <div class="sep-ui-display" id="sepDisplay2">
+            <div id="sepViz" style="display:flex;align-items:flex-end;gap:2px;height:32px">
+              <div style="width:4px;background:var(--green);border-radius:1px;height:8px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:16px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:10px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:24px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:12px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:20px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:6px" class="viz-bar"></div>
+              <div style="width:4px;background:var(--green);border-radius:1px;height:18px" class="viz-bar"></div>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <button class="sep-btn" onclick="sepCmd('prev');event.stopPropagation()">⏮</button>
+              <button class="sep-btn" onclick="sepCmd('play');event.stopPropagation()">⏯</button>
+              <button class="sep-btn" onclick="sepCmd('next');event.stopPropagation()">⏭</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption reveal" style="text-align:center">Three completely different interfaces. Zero changes to the engine. That's separation. Policy changes freely; mechanism endures.</p>
+  </div>
+</section>
+
+<!-- ===== 4. RULE OF REPAIR ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Fail noisily. Fail early.</h2>
+    <p class="reveal" style="color:var(--fg2)">Both programs process 5 data files. File #3 has a corrupt record. Click "Run" on each and watch what happens downstream:</p>
+
+    <div class="repair-demo reveal">
+      <div class="repair-row">
+        <div class="repair-panel silent">
+          <div class="repair-header">❌ Silent Failure</div>
+          <div class="repair-body" id="repairSilent">
+            <button onclick="runRepairSilent()" class="sep-btn" style="margin-bottom:8px">▶ Run</button>
+          </div>
+        </div>
+        <div class="repair-panel loud">
+          <div class="repair-header">✅ Loud Failure (Unix Way)</div>
+          <div class="repair-body" id="repairLoud">
+            <button onclick="runRepairLoud()" class="sep-btn" style="margin-bottom:8px">▶ Run</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption reveal" id="repairCaption"></p>
+  </div>
+</section>
+
+<!-- ===== 5. REPRESENTATION — add a case ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Fold knowledge into data.</h2>
+    <p class="reveal" style="color:var(--fg2)">Rob Pike: "Data dominates. If you've chosen the right data structures, the algorithms will be self-evident." Both versions handle HTTP codes. Click "Add 418 I'm a Teapot" and watch what each requires:</p>
+
+    <div class="rep-demo reveal">
+      <div class="rep-cols">
+        <div class="rep-panel logic">
+          <div class="rep-header">Logic-Heavy</div>
+          <div class="rep-code" id="repLogic"><span class="kw">function</span> <span style="color:var(--fg)">statusText</span>(code) {
+  <span class="kw">if</span> (code === <span class="num">200</span>) <span class="kw">return</span> <span class="str">"OK"</span>;
+  <span class="kw">else if</span> (code === <span class="num">301</span>) <span class="kw">return</span> <span class="str">"Moved"</span>;
+  <span class="kw">else if</span> (code === <span class="num">404</span>) <span class="kw">return</span> <span class="str">"Not Found"</span>;
+  <span class="kw">else if</span> (code === <span class="num">500</span>) <span class="kw">return</span> <span class="str">"Server Error"</span>;
+  <span class="kw">else return</span> <span class="str">"Unknown"</span>;
+}</div>
+        </div>
+        <div class="rep-panel data">
+          <div class="rep-header">Data-Driven</div>
+          <div class="rep-code" id="repData"><span class="kw">const</span> codes = {
+  <span class="num">200</span>: <span class="str">"OK"</span>,
+  <span class="num">301</span>: <span class="str">"Moved"</span>,
+  <span class="num">404</span>: <span class="str">"Not Found"</span>,
+  <span class="num">500</span>: <span class="str">"Server Error"</span>,
+};
+<span class="kw">return</span> codes[code] ?? <span class="str">"Unknown"</span>;</div>
+        </div>
+      </div>
+      <div class="rep-add">
+        <button class="rep-add-btn" id="repAddBtn" onclick="addRepCase()">+ Add 418 "I'm a Teapot"</button>
+      </div>
+      <div class="rep-verdict" id="repVerdict"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. THE 17 RULES ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">17 rules. 30 years of wisdom.</h2>
+    <p class="reveal" style="color:var(--fg2)">Click any rule:</p>
+    <div class="rules-grid reveal" id="rulesGrid"></div>
+    <div class="rule-detail" id="ruleDetail"></div>
+  </div>
+</section>
+
+<!-- ===== 7. SILENCE ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Silence is golden.</h2>
+    <p class="reveal" style="color:var(--fg2)">Both programs copy 5 files. Click "Run" on each:</p>
+    <div class="silence-panel reveal">
+      <div class="silence-box loud">
+        <div class="sh">❌ Loud Program</div>
+        <div class="sb" id="loudOutput"><button onclick="runLoud()" class="sep-btn">▶ Run</button></div>
+      </div>
+      <div class="silence-box quiet">
+        <div class="sh">✅ Unix Program</div>
+        <div class="sb" id="quietOutput"><button onclick="runQuiet()" class="sep-btn">▶ Run</button></div>
+      </div>
+    </div>
+    <p class="caption reveal" id="silenceCaption"></p>
+  </div>
+</section>
+
+<!-- ===== 8. TRANSPARENCY ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Transparency: let there be light.</h2>
+    <p class="reveal" style="color:var(--fg2)">fetchmail's <code>-v</code> flag: one option that shows everything. 8/10 bugs diagnosed within seconds.</p>
+    <div class="terminal reveal">
+      <div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="color:var(--fg2);font-size:11px;margin-left:8px">Click to toggle -v</span></div>
+      <div class="body" id="fetchmailBody" onclick="toggleVerbose()" style="cursor:pointer">
+        <div class="prompt">fetchmail hurkle.thyrsus.com</div>
+        <div id="fetchmailOutput">2 messages for esr (1 new)</div>
+      </div>
+    </div>
+    <p class="caption reveal">"Don't let debugging tools be afterthoughts. They are your windows into the code; don't just knock crude holes in the walls, <em>finish and glaze them</em>."</p>
+  </div>
+</section>
+
+<!-- ===== 9. WORSE IS BETTER — interactive scenario ===== -->
+<section>
+  <div class="inner">
+    <h2 class="reveal">Worse Is Better</h2>
+    <p class="reveal" style="color:var(--fg2)">Richard Gabriel's famous essay. Two philosophies of design:</p>
+    <div class="wib-compare reveal">
+      <div class="wib-panel mit">
+        <div class="wib-header">MIT / "The Right Thing"</div>
+        <div class="wib-body"><strong>Interface must be simple.</strong> Implementation can be complex. Correctness is non-negotiable.</div>
+      </div>
+      <div class="wib-panel nj">
+        <div class="wib-header">New Jersey / "Worse Is Better"</div>
+        <div class="wib-body"><strong>Implementation must be simple.</strong> Interface can be rough. Ship it, get users, improve fast.</div>
+      </div>
+    </div>
+
+    <div class="wib-scenario reveal">
+      <p style="color:var(--fg2);font-size:14px;margin-bottom:4px">📖 <strong>The scenario:</strong></p>
+      <p style="color:var(--fg2);font-size:14px">It's 1989. You're building a hypertext system. A document links to another document on a different server. That server goes down. What do you do?</p>
+      <div class="wib-choice">
+        <button class="wib-btn" onclick="wibVote('mit')">Build caching + replication to prevent broken links forever</button>
+        <button class="wib-btn" onclick="wibVote('nj')">Show "404 Not Found" and move on</button>
+      </div>
+    </div>
+    <div class="wib-result reveal" id="wibResult"></div>
+  </div>
+</section>
+
+<!-- ===== 10. CLOSING ===== -->
+<section>
+  <div class="inner" style="text-align:center">
+    <h2 class="reveal">★★★★★</h2>
+    <p class="reveal" style="max-width:520px;margin:0 auto 24px;font-size:18px;line-height:1.6">"Software design and implementation should be a joyous art, a kind of high-level play. If this attitude seems preposterous or vaguely embarrassing to you, stop and think; ask yourself what you've forgotten."</p>
+    <p class="reveal" style="color:var(--fg2);max-width:500px;margin:0 auto 24px">Twenty years old. Still radical. Not because it's complicated — because almost nobody follows it. Do one thing well. Make it composable. Keep it transparent. Ship it simple.</p>
+    <p class="reveal small">Reviewed by John Isidore · February 2026 · v2</p>
+    <p class="reveal small" style="margin-top:8px"><a href="index.html" style="color:var(--fg2)">← v1</a></p>
+  </div>
+</section>
+
+<!-- ===== AUDIO ===== -->
+<script>
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
+function playTone(f,d,t='sine',v=0.1){const c=getAudio(),o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(c.destination);o.start();g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.stop(c.currentTime+d)}
+function playClick(){playTone(800,0.03,'square',0.05)}
+function playSuccess(){playTone(523,0.08,'sine',0.08);setTimeout(()=>playTone(659,0.08,'sine',0.08),100);setTimeout(()=>playTone(784,0.12,'sine',0.08),200)}
+function playError(){playTone(200,0.15,'square',0.1);setTimeout(()=>playTone(150,0.2,'square',0.1),160)}
+function playType(){playTone(600+Math.random()*200,0.02,'square',0.03)}
+</script>
+
+<script>
+// Progress
+window.addEventListener('scroll',()=>{
+  document.getElementById('progressBar').style.width=
+    (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+});
+
+// Reveal
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ===== PIPELINE BUILDER =====
+const pipeTools=[
+  {name:'cat',desc:'pass through',fn:t=>t},
+  {name:'tr A-Z a-z',desc:'lowercase',fn:t=>t.toLowerCase()},
+  {name:"tr ' ' '\\n'",desc:'words→lines',fn:t=>t.replace(/\s+/g,'\n')},
+  {name:'sort',desc:'sort lines',fn:t=>t.split('\n').sort().join('\n')},
+  {name:'uniq -c',desc:'count duplicates',fn:t=>{const lines=t.split('\n'),c={};lines.forEach(l=>{if(l)c[l]=(c[l]||0)+1});return Object.entries(c).map(([k,v])=>`  ${v} ${k}`).join('\n')}},
+  {name:'sort -rn',desc:'sort by count',fn:t=>t.split('\n').sort((a,b)=>(parseInt(b)||0)-(parseInt(a)||0)).join('\n')},
+  {name:'head -5',desc:'first 5 lines',fn:t=>t.split('\n').slice(0,5).join('\n')},
+  {name:'tail -5',desc:'last 5 lines',fn:t=>{const l=t.split('\n');return l.slice(Math.max(0,l.length-5)).join('\n')}},
+  {name:'wc -l',desc:'count lines',fn:t=>String(t.split('\n').filter(Boolean).length)},
+  {name:'grep the',desc:'lines with "the"',fn:t=>t.split('\n').filter(l=>l.includes('the')).join('\n')},
+  {name:'rev',desc:'reverse chars',fn:t=>t.split('\n').map(l=>[...l].reverse().join('')).join('\n')},
+  {name:'tr -d aeiou',desc:'remove vowels',fn:t=>t.replace(/[aeiou]/gi,'')},
+  {name:'nl',desc:'number lines',fn:t=>t.split('\n').map((l,i)=>`  ${i+1}\t${l}`).join('\n')},
+  {name:'tac',desc:'reverse lines',fn:t=>t.split('\n').reverse().join('\n')},
+  {name:"tr -s ' '",desc:'squeeze spaces',fn:t=>t.replace(/ +/g,' ')},
+  {name:'cut -c1-20',desc:'first 20 chars/line',fn:t=>t.split('\n').map(l=>l.slice(0,20)).join('\n')},
+];
+
+let pipeline=[];
+
+const palette=document.getElementById('pipePalette');
+pipeTools.forEach((tool,i)=>{
+  const chip=document.createElement('div');
+  chip.className='pipe-chip';
+  chip.textContent=tool.name;
+  chip.title=tool.desc;
+  chip.onclick=()=>{addToPipeline(i);playClick()};
+  palette.appendChild(chip);
+});
+
+function addToPipeline(i){
+  pipeline.push(i);
+  renderPipeline();
+  runPipeline();
+}
+
+function removeFromPipeline(pos){
+  pipeline.splice(pos,1);
+  renderPipeline();
+  runPipeline();
+  playClick();
+}
+
+function renderPipeline(){
+  const ws=document.getElementById('pipeWorkspace');
+  if(pipeline.length===0){
+    ws.innerHTML='<span class="pipe-ws-placeholder">click tools above to build a pipeline →</span>';
+    document.getElementById('pipeCmd').textContent='echo "..."';
+    return;
+  }
+  ws.innerHTML='';
+  pipeline.forEach((ti,pos)=>{
+    if(pos>0){const a=document.createElement('span');a.className='pipe-ws-arrow';a.textContent='|';ws.appendChild(a)}
+    const item=document.createElement('div');
+    item.className='pipe-ws-item';
+    item.textContent=pipeTools[ti].name;
+    item.title='click to remove';
+    item.onclick=()=>removeFromPipeline(pos);
+    ws.appendChild(item);
+  });
+  document.getElementById('pipeCmd').textContent='echo "..." | '+pipeline.map(i=>pipeTools[i].name).join(' | ');
+}
+
+function runPipeline(){
+  let text=document.getElementById('pipeInput').value;
+  if(!pipeline.length){document.getElementById('pipeOutput').textContent='add tools to see output...';return}
+  // Remove punctuation for word processing
+  let working=text.replace(/[^\w\s'-]/g,'');
+  pipeline.forEach(ti=>{working=pipeTools[ti].fn(working)});
+  document.getElementById('pipeOutput').textContent=working||'(empty)';
+}
+
+// ===== SEPARATION =====
+const tracks=['♫ Coltrane — A Love Supreme','♫ Mingus — Goodbye Pork Pie Hat','♫ Miles — So What','♫ Monk — Round Midnight'];
+let sepPlaying=false,sepTrackIdx=0,sepTime=0,sepInterval=null;
+
+function sepCmd(cmd){
+  playClick();
+  if(cmd==='play'){
+    if(sepPlaying){sepPlaying=false;clearInterval(sepInterval);document.getElementById('sepPlayBtn').textContent='▶';document.getElementById('sepStatus').textContent='Paused · '+fmtTime(sepTime);stopViz();return}
+    sepPlaying=true;
+    document.getElementById('sepTrack').textContent=tracks[sepTrackIdx];
+    document.getElementById('sepPlayBtn').textContent='⏸';
+    sepInterval=setInterval(()=>{
+      sepTime++;
+      const pct=Math.min(100,(sepTime/180)*100);
+      document.getElementById('sepProgress').style.width=pct+'%';
+      document.getElementById('sepStatus').textContent='Playing · '+fmtTime(sepTime);
+    },1000);
+    startViz();
+  } else if(cmd==='next'){
+    sepTrackIdx=(sepTrackIdx+1)%tracks.length;
+    sepTime=0;
+    document.getElementById('sepTrack').textContent=tracks[sepTrackIdx];
+    document.getElementById('sepProgress').style.width='0%';
+    if(!sepPlaying)document.getElementById('sepStatus').textContent='Stopped · 0:00';
+  } else if(cmd==='prev'){
+    sepTrackIdx=(sepTrackIdx-1+tracks.length)%tracks.length;
+    sepTime=0;
+    document.getElementById('sepTrack').textContent=tracks[sepTrackIdx];
+    document.getElementById('sepProgress').style.width='0%';
+    if(!sepPlaying)document.getElementById('sepStatus').textContent='Stopped · 0:00';
+  }
+}
+
+function fmtTime(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+function setSepUI(i){
+  document.querySelectorAll('.sep-ui').forEach((u,j)=>u.classList.toggle('active',j===i));
+}
+
+let vizInterval;
+function startViz(){
+  vizInterval=setInterval(()=>{
+    document.querySelectorAll('.viz-bar').forEach(b=>{
+      b.style.height=(4+Math.random()*28)+'px';
+    });
+  },150);
+}
+function stopViz(){clearInterval(vizInterval);document.querySelectorAll('.viz-bar').forEach(b=>b.style.height='4px')}
+
+// ===== REPAIR DEMO =====
+function runRepairSilent(){
+  const el=document.getElementById('repairSilent');
+  const files=['users.csv','orders.csv','payments.csv','inventory.csv','report.csv'];
+  let html='';
+  let i=0;
+  el.innerHTML=html;
+  const iv=setInterval(()=>{
+    if(i>=files.length){
+      clearInterval(iv);
+      html+='\n<span class="ok">✓ Processing complete. 5/5 files done.</span>\n';
+      html+='\n<span class="corrupt">... 3 weeks later ...</span>\n';
+      html+='<span class="corrupt">⚠ Audit finds $47,000 discrepancy in Q3 revenue</span>\n';
+      html+='<span class="corrupt">⚠ Root cause: payments.csv had a corrupt record</span>\n';
+      html+='<span class="corrupt">⚠ Silent parser returned $0 instead of error</span>\n';
+      html+='<span class="corrupt">⚠ All downstream reports are wrong since Oct 3</span>';
+      el.innerHTML=html;
+      document.getElementById('repairCaption').textContent=
+        '"When you must fail, fail noisily and as soon as possible. The worst bugs are where repair doesn\'t succeed and the problem quietly causes corruption that shows up much later."';
+      playError();
+    } else {
+      if(i===2){
+        // Silently produces bad data
+        html+=`<span class="ok">  ${files[i]}</span> <span class="ok">... parsed (${Math.floor(Math.random()*900+100)} rows)</span>\n`;
+      } else {
+        html+=`<span class="ok">  ${files[i]}</span> <span class="ok">... parsed (${Math.floor(Math.random()*900+100)} rows)</span>\n`;
+      }
+      i++;
+      el.innerHTML=html;
+    }
+  },400);
+}
+
+function runRepairLoud(){
+  const el=document.getElementById('repairLoud');
+  const files=['users.csv','orders.csv','payments.csv','inventory.csv','report.csv'];
+  let html='';
+  let i=0;
+  el.innerHTML=html;
+  const iv=setInterval(()=>{
+    if(i===2){
+      clearInterval(iv);
+      html+=`<span class="ok">  ${files[i]}</span> <span class="err">FATAL: corrupt record at line 247</span>\n`;
+      html+=`<span class="err">  Expected numeric in column 'amount', got 'N/A'</span>\n`;
+      html+=`<span class="err">  Aborting. No output written.</span>\n`;
+      html+='\n<span class="fine">→ Fix payments.csv line 247</span>\n';
+      html+='<span class="fine">→ Re-run. All data correct.</span>\n';
+      html+='<span class="fine">→ Time to fix: 5 minutes.</span>';
+      el.innerHTML=html;
+      playError();
+      setTimeout(()=>playSuccess(),1500);
+    } else {
+      html+=`<span class="ok">  ${files[i]}</span> <span class="ok">... ok (${Math.floor(Math.random()*900+100)} rows)</span>\n`;
+      i++;
+      el.innerHTML=html;
+    }
+  },400);
+}
+
+// ===== REPRESENTATION =====
+let repAdded=false;
+function addRepCase(){
+  if(repAdded)return;
+  repAdded=true;
+  playClick();
+  document.getElementById('repAddBtn').disabled=true;
+
+  // Logic version: need to find the right spot, add else-if
+  const logic=document.getElementById('repLogic');
+  logic.innerHTML=`<span class="kw">function</span> <span style="color:var(--fg)">statusText</span>(code) {
+  <span class="kw">if</span> (code === <span class="num">200</span>) <span class="kw">return</span> <span class="str">"OK"</span>;
+  <span class="kw">else if</span> (code === <span class="num">301</span>) <span class="kw">return</span> <span class="str">"Moved"</span>;
+  <span class="kw">else if</span> (code === <span class="num">404</span>) <span class="kw">return</span> <span class="str">"Not Found"</span>;
+  <span class="new-line"><span class="kw">else if</span> (code === <span class="num">418</span>) <span class="kw">return</span> <span class="str">"I'm a Teapot"</span>;</span>
+  <span class="kw">else if</span> (code === <span class="num">500</span>) <span class="kw">return</span> <span class="str">"Server Error"</span>;
+  <span class="kw">else return</span> <span class="str">"Unknown"</span>;
+}
+<span style="color:var(--red);font-size:10px">// ← careful: order matters. put it before 500?
+// after 404? hope nobody else edits this function
+// at the same time. 6 lines to reason about.</span>`;
+
+  // Data version: just add a line
+  const data=document.getElementById('repData');
+  data.innerHTML=`<span class="kw">const</span> codes = {
+  <span class="num">200</span>: <span class="str">"OK"</span>,
+  <span class="num">301</span>: <span class="str">"Moved"</span>,
+  <span class="num">404</span>: <span class="str">"Not Found"</span>,
+  <span class="new-line"><span class="num">418</span>: <span class="str">"I'm a Teapot"</span>,</span>
+  <span class="num">500</span>: <span class="str">"Server Error"</span>,
+};
+<span class="kw">return</span> codes[code] ?? <span class="str">"Unknown"</span>;
+<span style="color:var(--green);font-size:10px">// ← one line. order doesn't matter.
+// impossible to break existing behavior.
+// data is verifiable by inspection.</span>`;
+
+  document.getElementById('repVerdict').textContent=
+    'Same change. The logic version requires surgical insertion and careful ordering. The data version: one line, anywhere. "Fold knowledge into data so program logic can be stupid and robust."';
+}
+
+// ===== RULES =====
+const rules=[
+  {name:'Modularity',text:'Simple parts, clean interfaces',detail:'The only way to write complex software that won\'t fall on its face is to build it out of simple parts connected by well-defined interfaces, so that most problems are local.'},
+  {name:'Clarity',text:'Clarity over cleverness',detail:'Write programs as if the most important communication they do is not to the computer but to the humans who will read and maintain the source code — including yourself.'},
+  {name:'Composition',text:'Programs should connect',detail:'Text streams are to Unix tools as messages are to objects. If your programs can\'t connect, you lose the emergent power of combination.'},
+  {name:'Separation',text:'Policy from mechanism',detail:'Separate what the program does (mechanism) from how the user controls it (policy). Mechanisms endure; policies change.'},
+  {name:'Simplicity',text:'Add complexity only where you must',detail:'"Intricate and beautiful complexities" is almost an oxymoron. Unix programmers vie with each other for "simple and beautiful" honors.'},
+  {name:'Parsimony',text:'Big programs only when necessary',detail:'Large programs invite overinvestment in failed approaches because people are reluctant to throw away the visible product of lots of work.'},
+  {name:'Transparency',text:'Design for visibility',detail:'A system is transparent when you can look at it and immediately see what\'s happening. Discoverable when it helps you build a mental model.'},
+  {name:'Robustness',text:'Child of transparency + simplicity',detail:'If you can\'t reason about the guts of a program, you can\'t be sure it\'s correct. Robustness comes from making internals easy to reason about.'},
+  {name:'Representation',text:'Fold knowledge into data',detail:'Even simple procedural logic is hard to verify, but complex data structures are fairly easy to model and reason about.'},
+  {name:'Least Surprise',text:'Do the expected thing',detail:'Surprises focus attention on the interface rather than the task. Minimize novelty. But don\'t be superficially similar yet subtly different — that\'s worse.'},
+  {name:'Silence',text:'Say nothing when there\'s nothing to say',detail:'Well-behaved programs do their jobs unobtrusively. If all displayed information is important, important information is easy to find.'},
+  {name:'Repair',text:'Fail noisily, fail early',detail:'The worst bugs are where repair doesn\'t succeed and the problem quietly causes corruption that shows up much later.'},
+  {name:'Economy',text:'Programmer time > machine time',detail:'Most applications should be written in higher-level languages. Programmer time is expensive; conserve it in preference to machine time.'},
+  {name:'Generation',text:'Write programs that write programs',detail:'Code generators raise the abstraction level. Generated code is almost always cheaper and more reliable than hand-hacked.'},
+  {name:'Optimization',text:'Get it working first',detail:'"Premature optimization is the root of all evil." — Knuth. "One of my most productive days was throwing away 1000 lines of code." — Thompson.'},
+  {name:'Diversity',text:'Distrust "one true way"',detail:'Nobody is smart enough to optimize for everything. Embrace multiple languages, open systems, and customization hooks.'},
+  {name:'Extensibility',text:'Design for the future',detail:'Never assume you have the final answer. Include version numbers. Make joints flexible.'}
+];
+const grid=document.getElementById('rulesGrid');
+rules.forEach((r,i)=>{
+  const card=document.createElement('div');
+  card.className='rule-card';
+  card.innerHTML=`<div class="rule-name">${i+1}. ${r.name}</div><div class="rule-text">${r.text}</div>`;
+  card.onclick=()=>{
+    playClick();
+    document.querySelectorAll('.rule-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    const d=document.getElementById('ruleDetail');
+    d.innerHTML=`<strong style="color:var(--amber)">Rule of ${r.name}:</strong> ${r.detail}`;
+    d.classList.add('show');
+  };
+  grid.appendChild(card);
+});
+
+// ===== SILENCE =====
+function runLoud(){
+  const el=document.getElementById('loudOutput');
+  const files=['config.yml','readme.md','data.json','utils.py','test.js'];
+  let html='<span style="color:var(--green)">$ copy-files src/ dest/</span>\n';
+  let i=0;el.innerHTML=html;
+  const iv=setInterval(()=>{
+    if(i>=files.length){
+      html+='\n<span class="noise">INFO: All operations completed successfully.</span>\n';
+      html+='<span class="noise">INFO: 5 files copied, 0 errors, 0 warnings.</span>\n';
+      html+='<span class="noise">INFO: Total size: 24.3KB. Time: 0.003s.</span>\n';
+      html+='<span class="noise">INFO: Thank you for using CopyMaster Pro v3.2.1!</span>';
+      el.innerHTML=html;clearInterval(iv);checkSilence();
+    } else {
+      playType();
+      html+=`<span class="noise">INFO: Checking ${files[i]}... OK</span>\n`;
+      html+=`<span class="noise">INFO: Copying ${files[i]}...</span>\n`;
+      html+=`<span class="noise">INFO: ${files[i]} done (${Math.floor(Math.random()*9000+1000)}B)</span>\n`;
+      i++;el.innerHTML=html;el.scrollTop=el.scrollHeight;
+    }
+  },180);
+}
+function runQuiet(){
+  const el=document.getElementById('quietOutput');
+  el.innerHTML='<span style="color:var(--green)">$ cp -r src/ dest/</span>\n';
+  setTimeout(()=>{el.innerHTML+='<span style="color:var(--green)">$ </span><span class="cursor"></span>';checkSilence()},250);
+}
+function checkSilence(){
+  document.getElementById('silenceCaption').textContent=
+    'Silence means success. The Unix version said nothing because nothing went wrong. "Treat the user\'s attention as a precious and limited resource."';
+}
+
+// ===== FETCHMAIL =====
+let verbose=false;
+function toggleVerbose(){
+  verbose=!verbose;playClick();
+  const el=document.getElementById('fetchmailOutput');
+  if(verbose){
+    el.innerHTML=`<span style="color:var(--cyan)">fetchmail: 6.1.0 querying hurkle (protocol IMAP)</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * PREAUTH IMAP4rev1 server ready</span>
+<span style="color:var(--fg2)">fetchmail: IMAP> A0001 CAPABILITY</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * CAPABILITY IMAP4 IMAP4REV1 SORT</span>
+<span style="color:var(--fg2)">fetchmail: IMAP> A0002 SELECT "INBOX"</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * 2 EXISTS</span>
+<span style="color:var(--fg2)">fetchmail: IMAP< * 1 RECENT</span>
+<span style="color:var(--green)">2 messages (1 new) for esr at hurkle</span>
+<span style="color:var(--fg2)">fetchmail: SMTP> MAIL FROM:&lt;mutt-dev@mutt.org&gt;</span>
+<span style="color:var(--fg2)">fetchmail: SMTP< 250 Sender ok</span>
+<span style="color:var(--green)">fetchmail: normal termination, status 0</span>`;
+  } else {
+    el.innerHTML='2 messages for esr (1 new)';
+  }
+}
+
+// ===== WORSE IS BETTER =====
+function wibVote(choice){
+  document.querySelectorAll('.wib-btn').forEach(b=>b.classList.remove('chosen'));
+  event.target.classList.add('chosen');
+  playClick();
+  const r=document.getElementById('wibResult');
+  if(choice==='nj'){
+    r.innerHTML='<p><strong>You just invented the World Wide Web.</strong></p><p style="margin-top:8px">Tim Berners-Lee made exactly this choice. The systems that tried to prevent broken links — Xanadu, NLS, HyperCard — were more correct, more complete, more elegant. They also never shipped (or never scaled). The Web shipped with 404s and conquered the world.</p><p style="margin-top:8px;color:var(--fg2)">"Worse" implementations propagate faster, get more users, and improve faster. Worse becomes better.</p>';
+  } else {
+    r.innerHTML='<p><strong>You just built Xanadu.</strong></p><p style="margin-top:8px">Ted Nelson\'s Project Xanadu tried to build a hypertext system with no broken links, bidirectional references, and perfect version tracking. Development started in 1960. It didn\'t ship until 2014 — as a demo. Meanwhile, the Web (with its "broken" 404s) shipped in 1991 and now serves 5 billion people.</p><p style="margin-top:8px;color:var(--fg2)">Sometimes the right thing is too heavy to fly.</p>';
+  }
+}
+</script>
+</body>
+</html>

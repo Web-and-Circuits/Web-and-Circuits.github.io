@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Inmates Are Running the Asylum — An Interactive Book Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --parchment: #f4e8c1;
+    --ink: #2c1810;
+    --ink2: #5a3a1a;
+    --ink3: #6b4423;
+    --ink4: #8b5a2b;
+  }
+  body {
+    background: #1a1410;
+    color: var(--ink);
+    font-family: 'EB Garamond', serif;
+    line-height: 1.7;
+    font-size: 17px;
+  }
+
+  /* ===== SECTIONS ===== */
+  section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  section .inner {
+    max-width: 680px;
+    width: 100%;
+  }
+
+  /* ===== TYPOGRAPHY ===== */
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 20px;
+  }
+  p { margin-bottom: 18px; }
+  .small { font-size: 14px; color: var(--ink3); }
+  .caption { font-size: 13px; color: var(--ink3); font-style: italic; margin-top: 8px; }
+  em { font-style: italic; }
+  strong { font-weight: 700; }
+
+  /* ===== PARCHMENT SECTIONS ===== */
+  .parchment {
+    background: var(--parchment);
+    background-image: radial-gradient(ellipse at 30% 50%, rgba(139,90,43,0.06) 0%, transparent 60%);
+  }
+
+  /* ===== DARK SECTIONS ===== */
+  .dark {
+    background: #0d0a07;
+    color: #e8dcc8;
+  }
+  .dark h2 { color: #f4e8c1; }
+  .dark .small { color: #8b7a60; }
+
+  /* ===== SECTION 0: TITLE ===== */
+  #title {
+    background: var(--ink);
+    color: var(--parchment);
+    text-align: center;
+    flex-direction: column;
+  }
+  #title h1 { color: var(--parchment); font-size: clamp(36px, 7vw, 64px); margin-bottom: 16px; }
+  #title .author { font-size: 18px; color: var(--ink4); margin-bottom: 40px; }
+  #title .scroll-hint {
+    font-size: 14px; color: var(--ink4);
+    animation: bob 2s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+  /* ===== SECTION 1: EXPERIENCE COGNITIVE FRICTION ===== */
+  #friction-demo {
+    background: #1a1a2e;
+    color: #ccc;
+  }
+  .atm-sim {
+    background: #0a0a15;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 380px;
+    margin: 0 auto 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    text-align: center;
+  }
+  .atm-sim .screen {
+    background: #0f2b0f;
+    color: #33ff33;
+    font-family: monospace;
+    padding: 16px;
+    border-radius: 4px;
+    min-height: 120px;
+    margin-bottom: 16px;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .atm-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .atm-btn {
+    padding: 10px;
+    background: #222;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .atm-btn:hover { background: #333; }
+  .atm-btn.wrong { animation: shake 0.3s; border-color: #ff3333; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .atm-btn.cancel { grid-column: 1/-1; background: #331111; border-color: #553333; color: #ff6666; }
+  .atm-counter { font-size: 12px; color: #666; margin-top: 12px; }
+
+  /* Fixed ATM */
+  .atm-fixed {
+    background: #0a0a15;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 420px;
+    margin: 0 auto 24px;
+    font-family: 'Inter', sans-serif;
+  }
+  .atm-fixed .screen {
+    background: #0f2b0f;
+    color: #33ff33;
+    font-family: monospace;
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .atm-fixed .screen .dim { color: #1a661a; }
+  .atm-fixed .amounts {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+  }
+  .atm-fixed .amt-btn {
+    padding: 12px;
+    background: #1a331a;
+    color: #33ff33;
+    border: 1px solid #2a552a;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .atm-fixed .amt-btn:hover { background: #2a442a; }
+  .atm-fixed .done {
+    text-align: center;
+    padding: 20px;
+    color: #33ff33;
+    font-family: monospace;
+    display: none;
+  }
+
+  /* ===== JETWAY ===== */
+  #jetway {
+    text-align: center;
+  }
+  .jetway-choice {
+    display: flex;
+    gap: 0;
+    margin: 30px 0;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .jetway-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: all 0.6s ease;
+    position: relative;
+  }
+  .jetway-left {
+    background: #1a1a2e;
+    color: #8888bb;
+    border-right: 2px solid #333;
+  }
+  .jetway-right {
+    background: #f5f0e8;
+    color: var(--ink3);
+    border-left: 2px solid #ddd;
+  }
+  .jetway-side .icon { font-size: 48px; margin-bottom: 12px; }
+  .jetway-side h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 8px; }
+  .jetway-side p { font-size: 14px; line-height: 1.5; max-width: 200px; }
+  .jetway-side .label {
+    position: absolute;
+    bottom: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+  .jetway-choice:hover .jetway-left { flex: 1.15; }
+  .jetway-choice:hover .jetway-right { flex: 0.85; }
+  .jetway-choice.chose-left .jetway-left { flex: 3; background: #252545; color: #bbbbee; }
+  .jetway-choice.chose-left .jetway-right { flex: 1; opacity: 0.4; }
+  .jetway-choice.chose-right .jetway-right { flex: 3; background: #faf5ec; color: var(--ink); }
+  .jetway-choice.chose-right .jetway-left { flex: 1; opacity: 0.4; }
+  .jetway-result {
+    font-style: italic;
+    min-height: 48px;
+    transition: opacity 0.5s;
+    opacity: 0;
+  }
+  .jetway-result.show { opacity: 1; }
+
+  /* ===== PERSONA BUILDER ===== */
+  .persona-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .persona-card .fields {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .persona-card label {
+    font-size: 13px;
+    color: var(--ink3);
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+  }
+  .persona-card input, .persona-card select {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    background: #faf8f2;
+  }
+  .persona-card input:focus, .persona-card select:focus {
+    outline: none;
+    border-color: var(--ink4);
+  }
+  .persona-result {
+    background: #faf8f2;
+    padding: 16px;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 80px;
+    border-left: 3px solid var(--ink4);
+  }
+
+  /* ===== POLITE VS RUDE ===== */
+  .polite-demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  @media(max-width:600px) { .polite-demo { grid-template-columns: 1fr; } }
+  .polite-panel {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .polite-panel .panel-header {
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .rude .panel-header { background: #f5e6e6; color: #993333; }
+  .nice .panel-header { background: #e6f0e6; color: #336633; }
+  .polite-panel .panel-body {
+    padding: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 200px;
+  }
+  .dialog-box {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 14px;
+    margin: 8px 0;
+    text-align: center;
+  }
+  .dialog-box .dialog-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .dialog-box .dialog-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .dialog-box .d-btn {
+    padding: 6px 16px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    background: #e8e8e8;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+  .dialog-box .d-btn:hover { background: #ddd; }
+  .undo-toast {
+    background: #2c1810;
+    color: #f4e8c1;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .undo-toast.show { opacity: 1; }
+  .undo-toast button {
+    background: none;
+    border: 1px solid #8b7a60;
+    color: #f4e8c1;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ===== BEFORE/AFTER SLIDER ===== */
+  .ba-slider {
+    position: relative;
+    margin: 24px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 280px;
+    cursor: col-resize;
+    user-select: none;
+    border: 1px solid #ddd;
+  }
+  .ba-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 32px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .ba-before {
+    background: #f5f0e8;
+    color: var(--ink);
+    clip-path: inset(0 50% 0 0);
+  }
+  .ba-after {
+    background: #0d1a0d;
+    color: #33ff33;
+    font-family: monospace;
+    clip-path: inset(0 0 0 50%);
+  }
+  .ba-handle {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 3px;
+    height: 100%;
+    background: var(--ink4);
+    transform: translateX(-50%);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .ba-handle::after {
+    content: '◀ ▶';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--ink4);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    white-space: nowrap;
+    letter-spacing: 4px;
+  }
+  .ba-label {
+    position: absolute;
+    top: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 3;
+  }
+  .ba-label.left { left: 14px; color: var(--ink3); }
+  .ba-label.right { right: 14px; color: #2a662a; }
+
+  /* ===== FEATURE COUNT ===== */
+  .feature-slider {
+    margin: 24px 0;
+    text-align: center;
+  }
+  .feature-slider input[type=range] {
+    width: 100%;
+    max-width: 400px;
+    margin: 12px 0;
+    accent-color: var(--ink4);
+  }
+  .feature-viz {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    margin: 16px 0;
+    min-height: 60px;
+  }
+  .feature-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    transition: all 0.3s;
+  }
+  .feature-dot.used { background: var(--ink); }
+  .feature-dot.unused { background: rgba(44,24,16,0.1); }
+  .feature-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--ink3);
+  }
+
+  /* ===== READING PROGRESS ===== */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: var(--ink4);
+    z-index: 100;
+    transition: width 0.1s;
+  }
+
+  /* ===== SCORE CARD ===== */
+  .score-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .score-stars { font-size: 32px; margin: 12px 0; }
+  .score-card p { font-size: 15px; color: var(--ink3); max-width: 500px; margin: 0 auto; }
+
+  /* ===== TRANSITIONS ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- ===== TITLE ===== -->
+<section id="title">
+  <div class="inner">
+    <p class="small" style="margin-bottom: 24px; color: var(--ink4);">A book report on</p>
+    <h1>The Inmates Are Running the Asylum</h1>
+    <div class="author">Alan Cooper, 2004 · 282 pages</div>
+    <p style="color: var(--ink3); max-width: 480px; margin: 0 auto 40px; font-size: 16px;">A book about why the people who build our tools have accidentally seized control from the people who use them — and what to do about it.</p>
+    <div class="scroll-hint">↓ scroll to begin</div>
+  </div>
+</section>
+
+<!-- ===== 1. EXPERIENCE COGNITIVE FRICTION ===== -->
+<section id="friction-demo" class="dark">
+  <div class="inner">
+    <h2 class="reveal">First, let's experience the problem.</h2>
+    <p class="reveal" style="color: #999; margin-bottom: 24px;">Cooper opens the book with an ATM. Try to withdraw $60 from this one.</p>
+
+    <div class="atm-sim reveal" id="atm-bad">
+      <div class="screen" id="atm-screen">WELCOME<br>SELECT ACCOUNT TYPE:</div>
+      <div class="atm-buttons" id="atm-btns">
+        <div class="atm-btn" onclick="atmStep('checking')">Checking</div>
+        <div class="atm-btn" onclick="atmStep('savings')">Savings</div>
+        <div class="atm-btn" onclick="atmStep('money-market')">Money Market</div>
+        <div class="atm-btn" onclick="atmStep('credit')">Credit</div>
+      </div>
+      <div class="atm-counter" id="atm-counter"></div>
+    </div>
+
+    <div id="atm-commentary" class="reveal" style="text-align:center; min-height: 60px; color: #999; font-size: 15px;"></div>
+  </div>
+</section>
+
+<!-- ===== 2. NOW THE COOPER REDESIGN ===== -->
+<section id="friction-fix" class="dark" style="display:none;">
+  <div class="inner">
+    <h2 class="reveal">Now Cooper's version. Same bank. Same $60.</h2>
+    <p class="reveal" style="color: #999; margin-bottom: 24px;">All the information, upfront. One decision.</p>
+
+    <div class="atm-fixed reveal" id="atm-good">
+      <div class="screen">
+        <span class="dim">WITHDRAW FROM</span> CHECKING ****4821<br>
+        <span class="dim">BALANCE:</span> $1,247.50 <span class="dim"> · DAILY LIMIT:</span> $200<br>
+        <span class="dim">FEE:</span> $1.50<br><br>
+        <span class="dim">SELECT AMOUNT:</span>
+      </div>
+      <div class="amounts">
+        <div class="amt-btn" onclick="atmGood(20)">$20</div>
+        <div class="amt-btn" onclick="atmGood(40)">$40</div>
+        <div class="amt-btn" onclick="atmGood(60)">$60</div>
+        <div class="amt-btn" onclick="atmGood(100)">$100</div>
+        <div class="amt-btn" onclick="atmGood(200)">$200</div>
+        <div class="amt-btn" onclick="atmGood(0)">Other</div>
+      </div>
+      <div class="done" id="atm-good-done">✓ Dispensing $<span id="atm-good-amt"></span><br><span class="dim" style="font-size:12px;">That took about 2 seconds.</span></div>
+    </div>
+
+    <p class="reveal" style="color:#999; text-align:center; font-size: 15px;">Same machine. Same bank. The information was always there.<br>The first one just never bothered to show it to you.</p>
+  </div>
+</section>
+
+<!-- ===== 3. THE JETWAY TEST ===== -->
+<section id="jetway" class="parchment">
+  <div class="inner">
+    <h2 class="reveal">Cooper says programmers are a different species.</h2>
+    <p class="reveal">He calls them <em>Homo logicus</em>. His test is simple: you're boarding a plane. Do you turn left, or right?</p>
+
+    <div class="jetway-choice reveal" id="jetwayChoice">
+      <div class="jetway-left" onclick="chooseJetway('left')">
+        <div class="icon">🎛️</div>
+        <h3>Left</h3>
+        <p>The cockpit. Every surface covered in gauges, knobs, levers. You understand the machine. You're in control.</p>
+        <div class="label">Turn left →</div>
+      </div>
+      <div class="jetway-right" onclick="chooseJetway('right')">
+        <div class="icon">☁️</div>
+        <h3>Right</h3>
+        <p>The cabin. Smooth, calm, beige. You don't know how it works. You arrive safely anyway.</p>
+        <div class="label">← Turn right</div>
+      </div>
+    </div>
+
+    <div class="jetway-result" id="jetwayResult"></div>
+  </div>
+</section>
+
+<!-- ===== 4. THE DANCING BEAR ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">The Dancing Bear</h2>
+    <p class="reveal" style="color:#999;">A dancing bear at a circus isn't impressive because it dances <em>well</em>. It's impressive because it dances <em>at all</em>. Cooper says most software is a dancing bear. We're so amazed it works that we never ask whether it works well.</p>
+
+    <p class="reveal" style="color:#999; margin-top: 24px;">How many features does the average person actually use? Drag the slider.</p>
+
+    <div class="feature-slider reveal">
+      <div class="feature-label"><span id="featureCount">50</span> features in the product</div>
+      <input type="range" min="5" max="120" value="50" id="featureRange" oninput="updateFeatures()">
+      <div class="feature-viz" id="featureViz"></div>
+      <div class="feature-label" id="featureCaption"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. PERSONA BUILDER ===== -->
+<section class="parchment">
+  <div class="inner">
+    <h2 class="reveal">Cooper's cure: design for one person.</h2>
+    <p class="reveal">Not "the user." Not a demographic. A specific, named human being. He calls them <em>personas</em>. The more specific, the more powerful. Try it — build one:</p>
+
+    <div class="persona-card reveal">
+      <div class="fields">
+        <label>Name</label>
+        <input type="text" id="pName" placeholder="e.g. Clevis" oninput="updatePersona()">
+        <label>Age</label>
+        <input type="number" id="pAge" placeholder="70" oninput="updatePersona()">
+        <label>Job</label>
+        <input type="text" id="pJob" placeholder="Retired oil field foreman" oninput="updatePersona()">
+        <label>Tech level</label>
+        <select id="pTech" onchange="updatePersona()">
+          <option value="">pick one</option>
+          <option value="Has never owned a computer">Never used a computer</option>
+          <option value="Uses email and the web reluctantly">Reluctant emailer</option>
+          <option value="Comfortable with apps but doesn't configure anything">Comfortable with apps</option>
+          <option value="Builds spreadsheets that would make an accountant weep">Spreadsheet wizard</option>
+          <option value="Could probably hack the Pentagon but can't set the clock on the microwave">Programmer</option>
+        </select>
+        <label>Quirk</label>
+        <input type="text" id="pQuirk" placeholder="Touch of arthritis in his hands" oninput="updatePersona()">
+        <label>Goal</label>
+        <input type="text" id="pGoal" placeholder="Watch a movie without feeling stupid" oninput="updatePersona()">
+      </div>
+      <div class="persona-result" id="personaResult">
+        <span style="color: var(--ink3); font-style: italic;">Start typing and watch a persona come to life...</span>
+      </div>
+    </div>
+
+    <p class="reveal">Notice what happened? The moment you gave them a name and a quirk, they stopped being "the user." You can't stretch a person named Clevis with arthritis to justify adding a command-line interface. Personas kill bad arguments by being too specific to bend.</p>
+  </div>
+</section>
+
+<!-- ===== 6. GOALS VS TASKS ===== -->
+<section class="dark">
+  <div class="inner">
+    <h2 class="reveal">Goals are not tasks.</h2>
+    <p class="reveal" style="color:#999;">A goal is a stable end condition. A task is a transient way of reaching it. Technology changes tasks. Goals never change.</p>
+
+    <div class="ba-slider reveal" id="baSlider">
+      <div class="ba-label left">1850</div>
+      <div class="ba-label right">1999</div>
+      <div class="ba-layer ba-before" id="baBefore">
+        <p><strong>St. Louis → San Francisco</strong></p>
+        <p>🐴 Conestoga wagon</p>
+        <p>🔫 Bring Winchester rifle (safety)</p>
+        <p>⏱️ 4-6 months</p>
+        <p style="margin-top:12px; font-size:12px; color:var(--ink3);">Goal: speed, comfort, safety</p>
+      </div>
+      <div class="ba-layer ba-after" id="baAfter">
+        <p><strong>St. Louis → San Francisco</strong></p>
+        <p>✈️ Boeing 777</p>
+        <p>🚫 Leave rifle at HOME (safety)</p>
+        <p>⏱️ 4 hours</p>
+        <p style="margin-top:12px; font-size:12px; color:#2a662a;">Goal: speed, comfort, safety</p>
+      </div>
+      <div class="ba-handle" id="baHandle"></div>
+    </div>
+    <p class="caption reveal" style="color:#666; text-align:center;">← Drag to compare → Same goals. Opposite tasks.</p>
+  </div>
+</section>
+
+<!-- ===== 7. POLITE VS RUDE SOFTWARE ===== -->
+<section class="parchment">
+  <div class="inner">
+    <h2 class="reveal">What if software behaved like a person?</h2>
+    <p class="reveal">Cooper's most practical chapter. Try deleting a file in each version:</p>
+
+    <div class="polite-demo reveal">
+      <div class="polite-panel rude">
+        <div class="panel-header">Rude Software</div>
+        <div class="panel-body">
+          <p>📄 quarterly-report.xlsx</p>
+          <p style="font-size:12px; color:#999;">Click to delete ↓</p>
+          <div style="text-align:center; margin-top:8px;">
+            <button class="d-btn" onclick="rudeDelete(this)" id="rude-del-btn">🗑️ Delete</button>
+          </div>
+          <div id="rude-dialogs"></div>
+        </div>
+      </div>
+      <div class="polite-panel nice">
+        <div class="panel-header">Polite Software</div>
+        <div class="panel-body">
+          <p>📄 quarterly-report.xlsx</p>
+          <p style="font-size:12px; color:#999;">Click to delete ↓</p>
+          <div style="text-align:center; margin-top:8px;">
+            <button class="d-btn" onclick="niceDelete(this)" id="nice-del-btn">🗑️ Delete</button>
+          </div>
+          <div id="nice-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. RATING ===== -->
+<section class="dark" style="min-height: 60vh;">
+  <div class="inner" style="text-align: center;">
+    <h2 class="reveal">Final Assessment</h2>
+    <div class="score-card reveal" style="background: var(--parchment); color: var(--ink);">
+      <div class="score-stars">★★★★★</div>
+      <p>This book is twenty years old and embarrassingly little has changed. Cooper's solutions aren't technically difficult — they require empathy, not engineering. The radical act of imagining yourself as someone else and designing for their happiness rather than your convenience.</p>
+      <p style="margin-top: 16px; font-style: italic; font-size: 14px; color: var(--ink3);">"Ironically, the best way to increase profitability in the information age is to spend more."</p>
+    </div>
+    <p class="reveal small" style="color: #666; margin-top: 24px;">
+      Reviewed by John Isidore · February 2026<br>
+      This report attempted to demonstrate Cooper's ideas through its medium rather than just describe them.<br>
+      How did it do? You've been interacting with design decisions this entire time.
+    </p>
+  </div>
+</section>
+
+<script>
+// ===== PROGRESS BAR =====
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ===== REVEAL ON SCROLL =====
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+// ===== BAD ATM =====
+let atmState = 0;
+let atmClicks = 0;
+let atmFails = 0;
+
+function atmStep(choice) {
+  atmClicks++;
+  const screen = document.getElementById('atm-screen');
+  const btns = document.getElementById('atm-btns');
+  const counter = document.getElementById('atm-counter');
+  const commentary = document.getElementById('atm-commentary');
+
+  if (atmState === 0) {
+    if (choice === 'checking') {
+      atmState = 1;
+      screen.innerHTML = 'CHECKING ACCOUNT SELECTED<br><br>SELECT TRANSACTION:';
+      btns.innerHTML = `
+        <div class="atm-btn" onclick="atmStep('withdraw')">Withdrawal</div>
+        <div class="atm-btn" onclick="atmStep('deposit')">Deposit</div>
+        <div class="atm-btn" onclick="atmStep('transfer')">Transfer</div>
+        <div class="atm-btn" onclick="atmStep('balance')">Balance</div>
+      `;
+    } else {
+      const btn = event.target;
+      btn.classList.add('wrong');
+      setTimeout(() => btn.classList.remove('wrong'), 300);
+      atmFails++;
+      screen.innerHTML = 'INVALID ACCOUNT TYPE<br>TRANSACTION CANCELLED<br><br>PLEASE REMOVE CARD AND TRY AGAIN';
+      btns.innerHTML = `<div class="atm-btn cancel" onclick="atmReset()">Start Over</div>`;
+      commentary.textContent = atmFails === 1
+        ? "The machine knows you don't have a savings account. It offered it anyway, then punished you for picking it."
+        : "It did it again. Same trap. Same punishment. Cooper counted — this happens to him monthly.";
+    }
+  } else if (atmState === 1) {
+    if (choice === 'withdraw') {
+      atmState = 2;
+      screen.innerHTML = 'ENTER AMOUNT:';
+      btns.innerHTML = `
+        <div class="atm-btn" onclick="atmStep('40')">$40</div>
+        <div class="atm-btn" onclick="atmStep('60')">$60</div>
+        <div class="atm-btn" onclick="atmStep('100')">$100</div>
+        <div class="atm-btn" onclick="atmStep('220')">$220</div>
+      `;
+    } else {
+      atmStep('withdraw'); // just redirect
+    }
+  } else if (atmState === 2) {
+    if (choice === '220') {
+      atmFails++;
+      screen.innerHTML = 'DAILY WITHDRAWAL LIMIT EXCEEDED<br>TRANSACTION CANCELLED<br><br>PLEASE REMOVE CARD';
+      btns.innerHTML = `<div class="atm-btn cancel" onclick="atmReset()">Start Over</div>`;
+      commentary.textContent = "It doesn't tell you what the limit IS. It doesn't let you enter a different amount. It just kicks you out. " + atmClicks + " button presses wasted.";
+    } else {
+      screen.innerHTML = 'DISPENSING $' + choice + '<br><br>PLEASE TAKE CASH AND CARD';
+      btns.innerHTML = '';
+      commentary.innerHTML = "That took <strong>" + atmClicks + " clicks</strong>" + (atmFails > 0 ? " and <strong>" + atmFails + " failed attempts</strong>" : "") + ". Now scroll down for Cooper's version.";
+      document.getElementById('friction-fix').style.display = '';
+    }
+  }
+  counter.textContent = 'Clicks: ' + atmClicks + (atmFails ? ' · Failures: ' + atmFails : '');
+}
+
+function atmReset() {
+  atmState = 0;
+  document.getElementById('atm-screen').innerHTML = 'WELCOME<br>SELECT ACCOUNT TYPE:';
+  document.getElementById('atm-btns').innerHTML = `
+    <div class="atm-btn" onclick="atmStep('checking')">Checking</div>
+    <div class="atm-btn" onclick="atmStep('savings')">Savings</div>
+    <div class="atm-btn" onclick="atmStep('money-market')">Money Market</div>
+    <div class="atm-btn" onclick="atmStep('credit')">Credit</div>
+  `;
+}
+
+// ===== GOOD ATM =====
+function atmGood(amt) {
+  if (amt === 0) amt = 60;
+  document.getElementById('atm-good-amt').textContent = amt;
+  document.querySelector('.atm-fixed .amounts').style.display = 'none';
+  document.querySelector('.atm-fixed .screen').style.display = 'none';
+  document.getElementById('atm-good-done').style.display = 'block';
+}
+
+// ===== JETWAY =====
+function chooseJetway(side) {
+  const el = document.getElementById('jetwayChoice');
+  const result = document.getElementById('jetwayResult');
+  el.className = 'jetway-choice chose-' + side;
+
+  if (side === 'left') {
+    result.innerHTML = '<strong>You turned left.</strong> Cooper says: you might be <em>Homo logicus</em>. You want to understand the machine. You want control. Two-thirds of programmers chose the same way. The problem isn\'t your preference — it\'s that you build interfaces as if everyone shares it.';
+  } else {
+    result.innerHTML = '<strong>You turned right.</strong> Cooper says: you\'re like most people. You want simplicity and the confidence of arrival. You\'ll happily trade control for ease. Most software ignores you — it\'s built by people who turned left.';
+  }
+  result.classList.add('show');
+}
+
+// ===== FEATURES =====
+function updateFeatures() {
+  const total = parseInt(document.getElementById('featureRange').value);
+  const used = Math.max(3, Math.round(total * 0.12)); // ~12% usage rate
+  document.getElementById('featureCount').textContent = total;
+
+  const viz = document.getElementById('featureViz');
+  viz.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'feature-dot ' + (i < used ? 'used' : 'unused');
+    viz.appendChild(dot);
+  }
+
+  document.getElementById('featureCaption').textContent =
+    `${used} features actually used (${Math.round(used/total*100)}%). The other ${total-used} are speed bumps across every user's road.`;
+}
+updateFeatures();
+
+// ===== PERSONA =====
+function updatePersona() {
+  const name = document.getElementById('pName').value;
+  const age = document.getElementById('pAge').value;
+  const job = document.getElementById('pJob').value;
+  const tech = document.getElementById('pTech').value;
+  const quirk = document.getElementById('pQuirk').value;
+  const goal = document.getElementById('pGoal').value;
+
+  if (!name) {
+    document.getElementById('personaResult').innerHTML = '<span style="color:var(--ink3); font-style:italic;">Start typing and watch a persona come to life...</span>';
+    return;
+  }
+
+  let text = `<strong>${name}</strong>`;
+  if (age) text += `, ${age}`;
+  if (job) text += ` — ${job}`;
+  text += '.';
+  if (tech) text += ` ${tech}.`;
+  if (quirk) text += ` ${quirk}.`;
+  if (goal) text += `<br><br>What ${name} wants: <em>${goal}</em>. That's it. Everything in the product exists to serve this goal — or it doesn't belong.`;
+
+  document.getElementById('personaResult').innerHTML = text;
+}
+
+// ===== BEFORE/AFTER SLIDER =====
+(function() {
+  const slider = document.getElementById('baSlider');
+  if (!slider) return;
+  let dragging = false;
+
+  function setPos(x) {
+    const rect = slider.getBoundingClientRect();
+    let pct = Math.max(5, Math.min(95, (x - rect.left) / rect.width * 100));
+    document.getElementById('baHandle').style.left = pct + '%';
+    document.getElementById('baBefore').style.clipPath = `inset(0 ${100-pct}% 0 0)`;
+    document.getElementById('baAfter').style.clipPath = `inset(0 0 0 ${pct}%)`;
+  }
+
+  slider.addEventListener('mousedown', (e) => { dragging = true; setPos(e.clientX); });
+  slider.addEventListener('touchstart', (e) => { dragging = true; setPos(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mousemove', (e) => { if (dragging) setPos(e.clientX); });
+  window.addEventListener('touchmove', (e) => { if (dragging) setPos(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mouseup', () => dragging = false);
+  window.addEventListener('touchend', () => dragging = false);
+})();
+
+// ===== POLITE VS RUDE =====
+let rudeStage = 0;
+function rudeDelete(btn) {
+  const area = document.getElementById('rude-dialogs');
+  if (rudeStage === 0) {
+    btn.style.display = 'none';
+    area.innerHTML = `<div class="dialog-box">
+      <div class="dialog-title">⚠️ Confirm Delete</div>
+      <p style="font-size:12px;">Are you sure you want to delete quarterly-report.xlsx?</p>
+      <div class="dialog-btns">
+        <div class="d-btn" onclick="rudeStep2()">Yes</div>
+        <div class="d-btn" onclick="rudeCancel()">No</div>
+      </div>
+    </div>`;
+    rudeStage = 1;
+  }
+}
+function rudeStep2() {
+  document.getElementById('rude-dialogs').innerHTML = `<div class="dialog-box">
+    <div class="dialog-title">⚠️ Really Delete?</div>
+    <p style="font-size:12px;">This action cannot be undone. The file will be permanently removed.</p>
+    <div class="dialog-btns">
+      <div class="d-btn" onclick="rudeStep3()">Delete Permanently</div>
+      <div class="d-btn" onclick="rudeCancel()">Cancel</div>
+    </div>
+  </div>`;
+}
+function rudeStep3() {
+  document.getElementById('rude-dialogs').innerHTML = `<p style="font-size:13px; color:#993333; margin-top:12px; text-align:center;">
+    ✓ File deleted.<br><span style="font-size:11px; color:#999;">That was 3 clicks and 2 anxiety-inducing questions.<br>The software made you confirm twice instead of just being prepared to undo.</span>
+  </p>`;
+}
+function rudeCancel() {
+  document.getElementById('rude-dialogs').innerHTML = '';
+  document.getElementById('rude-del-btn').style.display = '';
+  rudeStage = 0;
+}
+
+function niceDelete(btn) {
+  btn.style.display = 'none';
+  const area = document.getElementById('nice-result');
+  area.innerHTML = `<p style="font-size:13px; margin-top:12px;">
+    <span style="color:#999; text-decoration:line-through;">📄 quarterly-report.xlsx</span>
+  </p>
+  <div class="undo-toast show">
+    <span>File deleted</span>
+    <button onclick="niceUndo()">Undo</button>
+  </div>
+  <p style="font-size:11px; color:#999; margin-top:12px; text-align:center;">
+    1 click. No questions. Self-confident software that trusts you — and quietly prepares to undo if you change your mind.
+  </p>`;
+}
+function niceUndo() {
+  document.getElementById('nice-result').innerHTML = `<p style="font-size:13px; margin-top:12px; text-align:center; color: #336633;">📄 quarterly-report.xlsx restored. No drama.</p>`;
+  document.getElementById('nice-del-btn').style.display = '';
+}
+</script>
+
+</body>
+</html>
