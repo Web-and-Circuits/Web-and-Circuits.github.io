@@ -11,280 +11,340 @@
   .nav button{flex:1;padding:14px;background:#111;color:#888;border:none;font:14px/1 'Inter',sans-serif;cursor:pointer;transition:all 0.2s}
   .nav button.active{color:#e8a87c;background:#1a1a1a;border-bottom:2px solid #e8a87c}
   .nav button:hover{color:#ccc}
-  .alt{display:none;padding:80px 24px 60px;max-width:700px;margin:0 auto}
+  .alt{display:none;padding:80px 24px 60px;max-width:740px;margin:0 auto}
   .alt.active{display:block}
   h1{font-size:28px;margin-bottom:8px;color:#e8a87c}
-  h2{font-size:22px;margin-bottom:12px}
-  .subtitle{color:#888;font-size:14px;margin-bottom:32px;font-family:'Inter',sans-serif}
+  .subtitle{color:#888;font-size:14px;margin-bottom:32px;font-family:'Inter',sans-serif;line-height:1.6}
   p{line-height:1.7;margin-bottom:16px}
   .caption{color:#888;font-size:13px;font-family:'Inter',sans-serif;text-align:center;margin-top:16px}
 
-  /* === ALT A: Goal Rewriter === */
-  .rewriter{background:#141414;border:1px solid #333;border-radius:10px;padding:24px;margin:24px 0}
-  .rw-scenario{font-size:15px;line-height:1.7;margin-bottom:16px}
-  .rw-task{display:inline;background:rgba(232,124,124,0.15);color:#e87c7c;padding:2px 6px;border-radius:4px;cursor:pointer;transition:all 0.3s;font-family:Georgia,serif}
-  .rw-task.flipped{background:rgba(126,198,153,0.15);color:#7ec699;text-decoration:none}
-  .rw-label{font-family:'Inter',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-  .rw-label.task{color:#e87c7c}
-  .rw-label.goal{color:#7ec699}
-  .rw-hint{font-size:12px;color:#666;font-family:'Inter',sans-serif;margin-top:12px}
-  .rw-score{font-family:'Inter',sans-serif;font-size:14px;color:#888;margin-top:16px;text-align:center}
-  .rw-score strong{color:#e8a87c}
+  /* === ALT A: Side by Side Columns === */
+  .compare-table{margin:24px 0}
+  .compare-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #222}
+  .compare-row:last-child{border-bottom:none}
+  .compare-head{padding:12px 16px;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+  .compare-head.task-col{background:rgba(232,124,124,0.08);color:#e87c7c}
+  .compare-head.goal-col{background:rgba(126,198,153,0.08);color:#7ec699}
+  .compare-cell{padding:14px 16px;font-size:14px;line-height:1.6}
+  .compare-cell.task-col{background:rgba(232,124,124,0.04);color:#c8b8b8;border-right:1px solid #222}
+  .compare-cell.goal-col{background:rgba(126,198,153,0.04);color:#c8d8c8}
+  .compare-cell .strike{text-decoration:line-through;opacity:0.4;transition:all 0.3s}
+  .compare-row.highlighted .task-col{background:rgba(232,124,124,0.12)}
+  .compare-row.highlighted .goal-col{background:rgba(126,198,153,0.12)}
+  .compare-row{cursor:pointer;transition:all 0.15s}
+  .compare-row:hover .task-col{background:rgba(232,124,124,0.08)}
+  .compare-row:hover .goal-col{background:rgba(126,198,153,0.08)}
+  .compare-wrap{background:#141414;border:1px solid #333;border-radius:10px;overflow:hidden;margin:24px 0}
+  .compare-label{padding:16px;font-family:'Inter',sans-serif;font-size:13px;color:#888;border-bottom:1px solid #222}
 
-  /* === ALT B: Time Machine Dial === */
-  .dial-wrap{background:#141414;border:1px solid #333;border-radius:10px;padding:24px;margin:24px 0}
-  .dial-goal{text-align:center;padding:16px;background:rgba(126,198,153,0.08);border:1px solid rgba(126,198,153,0.2);border-radius:8px;margin-bottom:20px}
-  .dial-goal span{color:#7ec699;font-weight:bold}
-  .dial-year{text-align:center;font-size:48px;font-weight:bold;color:#e8a87c;font-family:'Inter',sans-serif;margin:12px 0 4px}
-  .dial-slider{width:100%;margin:8px 0 20px;accent-color:#e8a87c}
-  .dial-tasks{display:flex;flex-direction:column;gap:10px}
-  .dial-task{padding:12px 16px;background:#1a1a1a;border:1px solid #333;border-radius:8px;font-size:14px;display:flex;justify-content:space-between;align-items:center;transition:all 0.4s}
-  .dial-task .method{color:#e87c7c;font-family:'Inter',sans-serif;font-size:12px}
-  .dial-task.changed{border-color:#e8a87c;background:#1a1510}
-  .dial-task.changed .method{color:#e8a87c}
+  /* connector arrow between columns */
+  .compare-cell.arrow{display:flex;align-items:center;justify-content:center;color:#555;font-size:16px;padding:0;width:30px;grid-column:span 1}
 
-  /* === ALT C: Spec Surgery === */
-  .surgery{background:#141414;border:1px solid #333;border-radius:10px;padding:24px;margin:24px 0}
-  .surg-brief{padding:16px;background:#1a1a1a;border-radius:8px;margin-bottom:16px;font-size:14px;line-height:1.8}
-  .surg-line{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:4px 0;border-radius:6px;cursor:pointer;transition:all 0.2s;border:1px solid transparent}
-  .surg-line:hover{background:#1a1a1a}
-  .surg-line .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:all 0.3s}
-  .surg-line .dot.task{background:#e87c7c}
-  .surg-line .dot.goal{background:#7ec699}
-  .surg-line .text{flex:1;font-size:14px;transition:all 0.3s}
-  .surg-line.cut .text{text-decoration:line-through;opacity:0.3}
-  .surg-line .label-tag{font-family:'Inter',sans-serif;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px}
-  .surg-line .label-tag.task{background:rgba(232,124,124,0.15);color:#e87c7c}
-  .surg-line .label-tag.goal{background:rgba(126,198,153,0.15);color:#7ec699}
-  .surg-result{padding:16px;border-radius:8px;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;text-align:center;transition:all 0.3s;border:1px solid #333}
-  .surg-result.good{border-color:#7ec699;color:#7ec699}
-  .surg-result.bad{border-color:#e87c7c;color:#e87c7c}
+  /* === ALT B: Time Machine (both eras visible) === */
+  .era-wrap{background:#141414;border:1px solid #333;border-radius:10px;overflow:hidden;margin:24px 0}
+  .era-goal{text-align:center;padding:16px;background:rgba(126,198,153,0.08);border-bottom:1px solid #333;font-size:15px}
+  .era-goal span{color:#7ec699;font-weight:bold}
+  .era-cols{display:grid;grid-template-columns:1fr 40px 1fr}
+  .era-col{padding:20px}
+  .era-col h3{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+  .era-col.before h3{color:#e87c7c}
+  .era-col.after h3{color:#7ec699}
+  .era-item{font-size:14px;padding:8px 0;border-bottom:1px solid #1a1a1a;line-height:1.6}
+  .era-item .label{font-family:'Inter',sans-serif;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.5px}
+  .era-divider{display:flex;align-items:center;justify-content:center;border-left:1px solid #333;border-right:1px solid #333}
+  .era-divider span{writing-mode:vertical-lr;font-family:'Inter',sans-serif;font-size:10px;color:#555;letter-spacing:2px}
+  .era-slider-row{padding:16px 20px;border-top:1px solid #333;display:flex;align-items:center;gap:12px}
+  .era-slider-row input{flex:1;accent-color:#e8a87c}
+  .era-slider-row .yr{font-family:'Inter',sans-serif;font-size:13px;color:#e8a87c;font-weight:700;min-width:40px;text-align:center}
+
+  /* === ALT C: Spec Annotator (inline, nothing hidden) === */
+  .spec-wrap{background:#141414;border:1px solid #333;border-radius:10px;padding:24px;margin:24px 0}
+  .spec-line{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;margin:4px 0;border-radius:6px;transition:all 0.2s;cursor:pointer;border:1px solid transparent}
+  .spec-line:hover{background:#1a1a1a}
+  .spec-line.tagged{border-color:#333}
+  .spec-num{font-family:'Inter',sans-serif;font-size:11px;color:#555;min-width:20px;padding-top:3px}
+  .spec-text{flex:1;font-size:14px;line-height:1.6}
+  .spec-badge{font-family:'Inter',sans-serif;font-size:10px;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;font-weight:600;white-space:nowrap;align-self:center;min-width:48px;text-align:center;transition:all 0.3s}
+  .spec-badge.none{background:#222;color:#555;border:1px solid #333}
+  .spec-badge.task{background:rgba(232,124,124,0.15);color:#e87c7c;border:1px solid rgba(232,124,124,0.3)}
+  .spec-badge.goal{background:rgba(126,198,153,0.15);color:#7ec699;border:1px solid rgba(126,198,153,0.3)}
+  .spec-reveal{margin-top:16px;padding:16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.7;border:1px solid #333;color:#888}
+  .spec-reveal.done{border-color:#7ec699;color:#c8d8c8}
+  .spec-score{display:flex;justify-content:center;gap:24px;margin-top:12px;font-family:'Inter',sans-serif;font-size:13px}
+  .spec-score .right{color:#7ec699}
+  .spec-score .wrong{color:#e87c7c}
+
+  @media(max-width:600px){
+    .compare-row{grid-template-columns:1fr 1fr}
+    .era-cols{grid-template-columns:1fr;gap:0}
+    .era-divider{display:none}
+    .era-col{padding:16px}
+  }
 </style>
 </head>
 <body>
 
 <div class="nav">
-  <button class="active" onclick="showAlt(0)">A: Goal Rewriter</button>
+  <button class="active" onclick="showAlt(0)">A: Side by Side</button>
   <button onclick="showAlt(1)">B: Time Machine</button>
-  <button onclick="showAlt(2)">C: Spec Surgery</button>
+  <button onclick="showAlt(2)">C: Annotator</button>
 </div>
 
-<!-- ===================== ALT A: Goal Rewriter ===================== -->
+<!-- ===================== ALT A: Side by Side ===================== -->
 <div class="alt active" id="alt0">
-  <h1>A: Goal Rewriter</h1>
-  <div class="subtitle">Click each red task-statement to reveal the goal hiding behind it. Cooper says: tasks change, goals don't.</div>
+  <h1>A: Side by Side</h1>
+  <div class="subtitle">Task on the left, goal on the right. Always visible. Click a row to highlight the contrast.</div>
 
-  <div class="rewriter">
-    <div class="rw-label task">Product requirements (task-flavored)</div>
-    <div class="rw-scenario" id="rwScenario">
-      The user needs to <span class="rw-task" data-goal="send a message to someone" onclick="flipTask(this)">compose an email</span>, 
-      then <span class="rw-task" data-goal="preserve work for later" onclick="flipTask(this)">click the save button</span>, 
-      then <span class="rw-task" data-goal="find a past conversation" onclick="flipTask(this)">search the inbox using filters</span>, 
-      and finally <span class="rw-task" data-goal="know when something needs attention" onclick="flipTask(this)">check the notification badge</span>.
+  <div class="compare-wrap">
+    <div class="compare-label">Email app requirements — two ways to say the same thing</div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-head task-col">What the spec says (task)</div>
+      <div class="compare-head goal-col">What the user wants (goal)</div>
     </div>
-    <div class="rw-hint">↑ Click each highlighted phrase to rewrite it as a goal</div>
-    <div class="rw-score">Rewritten: <strong id="rwCount">0</strong> / 4</div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"User composes email using To, CC, BCC fields, subject line, and rich text editor"</div>
+      <div class="compare-cell goal-col">Send a message to someone</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"User clicks Save Draft button to preserve work"</div>
+      <div class="compare-cell goal-col">Never lose work in progress</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"User searches inbox via keyword, date range, sender, and attachment filters"</div>
+      <div class="compare-cell goal-col">Find a past conversation</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"System displays unread badge count with real-time push notification updates"</div>
+      <div class="compare-cell goal-col">Know when something needs attention</div>
+    </div>
   </div>
 
-  <div class="rewriter">
-    <div class="rw-label task">Photo app spec</div>
-    <div class="rw-scenario">
-      The user must <span class="rw-task" data-goal="get the right shot" onclick="flipTask(this)">adjust ISO, aperture, and shutter speed</span>,
-      then <span class="rw-task" data-goal="make the photo look how they remember it" onclick="flipTask(this)">apply curves, levels, and color balance adjustments</span>,
-      then <span class="rw-task" data-goal="share the moment with people they care about" onclick="flipTask(this)">export as JPEG and upload to the sharing platform</span>,
-      and <span class="rw-task" data-goal="never lose a photo" onclick="flipTask(this)">configure the backup schedule and cloud sync settings</span>.
+  <div class="compare-wrap">
+    <div class="compare-label">Camera app — same pattern</div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-head task-col">Task-flavored spec</div>
+      <div class="compare-head goal-col">Goal-directed spec</div>
     </div>
-    <div class="rw-hint">↑ Click to see what the user actually wants</div>
-    <div class="rw-score">Rewritten: <strong id="rwCount2">0</strong> / 4</div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"Adjust ISO, aperture, shutter speed via manual sliders"</div>
+      <div class="compare-cell goal-col">Get a great photo in any lighting</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"Apply curves, levels, HSL, and split-toning adjustments"</div>
+      <div class="compare-cell goal-col">Make the photo look how I remember it</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"Export JPEG at custom quality, upload via API to sharing platform"</div>
+      <div class="compare-cell goal-col">Share the moment with people I care about</div>
+    </div>
+    <div class="compare-row" onclick="this.classList.toggle('highlighted')">
+      <div class="compare-cell task-col">"Configure automatic backup schedule and cloud sync frequency"</div>
+      <div class="compare-cell goal-col">Never lose a photo</div>
+    </div>
   </div>
 
-  <p class="caption">When you write goals, the implementation becomes flexible. When you write tasks, you've already decided the UI.</p>
+  <p class="caption">The left column locks you into a specific UI. The right column leaves room for any solution.</p>
 </div>
 
-<!-- ===================== ALT B: Time Machine Dial ===================== -->
+<!-- ===================== ALT B: Time Machine ===================== -->
 <div class="alt" id="alt1">
   <h1>B: Time Machine</h1>
-  <div class="subtitle">The goal stays fixed. Drag the year and watch every task transform around it.</div>
+  <div class="subtitle">The goal never moves. Slide between two eras and compare how tasks change while goals stay fixed.</div>
 
-  <div class="dial-wrap">
-    <div class="dial-goal">Goal: <span>Get from New York to Los Angeles safely and comfortably</span></div>
-    <div class="dial-year" id="dialYear">1850</div>
-    <input type="range" class="dial-slider" id="dialSlider" min="1850" max="2030" value="1850" step="10" oninput="updateDial()">
-    
-    <div class="dial-tasks" id="dialTasks"></div>
-  </div>
-
-  <div class="dial-wrap">
-    <div class="dial-goal">Goal: <span>Hear music whenever you want</span></div>
-    <div class="dial-year" id="dialYear2">1900</div>
-    <input type="range" class="dial-slider" id="dialSlider2" min="1900" max="2030" value="1900" step="10" oninput="updateDial2()">
-    
-    <div class="dial-tasks" id="dialTasks2"></div>
-  </div>
-
-  <p class="caption">Goals are permanent. Every task is a temporary hack.</p>
-</div>
-
-<!-- ===================== ALT C: Spec Surgery ===================== -->
-<div class="alt" id="alt2">
-  <h1>C: Spec Surgery</h1>
-  <div class="subtitle">A product spec mixes goals and tasks. Cut every task — keep only goals. Can the product still be built?</div>
-
-  <div class="surgery">
-    <div class="surg-brief"><strong>Project:</strong> Design a weather app for commuters</div>
-    
-    <div id="surgLines">
-      <div class="surg-line" onclick="surgCut(this)" data-type="goal">
-        <div class="dot goal"></div>
-        <div class="text">Know if I need an umbrella today</div>
-        <span class="label-tag goal">GOAL</span>
+  <div class="era-wrap">
+    <div class="era-goal">Goal: <span>Get from New York to Los Angeles safely and comfortably</span></div>
+    <div class="era-cols">
+      <div class="era-col before" id="eraLeft1">
+        <h3 id="eraLeftLabel1">1850</h3>
       </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="task">
-        <div class="dot task"></div>
-        <div class="text">Display hourly precipitation percentages in a scrollable table</div>
-        <span class="label-tag task">TASK</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="goal">
-        <div class="dot goal"></div>
-        <div class="text">Don't get caught in bad weather on my commute</div>
-        <span class="label-tag goal">GOAL</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="task">
-        <div class="dot task"></div>
-        <div class="text">Implement pull-to-refresh to update the radar map</div>
-        <span class="label-tag task">TASK</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="goal">
-        <div class="dot goal"></div>
-        <div class="text">Feel confident about what to wear</div>
-        <span class="label-tag goal">GOAL</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="task">
-        <div class="dot task"></div>
-        <div class="text">Show temperature in both Fahrenheit and Celsius with a toggle</div>
-        <span class="label-tag task">TASK</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="task">
-        <div class="dot task"></div>
-        <div class="text">Add a hamburger menu with settings, about, and feedback options</div>
-        <span class="label-tag task">TASK</span>
-      </div>
-      <div class="surg-line" onclick="surgCut(this)" data-type="goal">
-        <div class="dot goal"></div>
-        <div class="text">Glance at my phone and know the weather in 2 seconds</div>
-        <span class="label-tag goal">GOAL</span>
+      <div class="era-divider"><span>SAME GOAL</span></div>
+      <div class="era-col after" id="eraRight1">
+        <h3 id="eraRightLabel1">2020</h3>
       </div>
     </div>
-
-    <div class="surg-result" id="surgResult">Click lines to cut them. Try to remove only tasks.</div>
+    <div class="era-slider-row">
+      <span class="yr" id="yrL1">1850</span>
+      <input type="range" id="slider1L" min="0" max="5" value="0" oninput="updateEra(1)">
+      <input type="range" id="slider1R" min="0" max="5" value="5" oninput="updateEra(1)">
+      <span class="yr" id="yrR1">2020</span>
+    </div>
   </div>
 
-  <p class="caption">If you cut every task and the spec still makes sense, you had goals. If it collapses, you only had tasks.</p>
+  <div class="era-wrap">
+    <div class="era-goal">Goal: <span>Hear music whenever I want</span></div>
+    <div class="era-cols">
+      <div class="era-col before" id="eraLeft2">
+        <h3 id="eraLeftLabel2">1900</h3>
+      </div>
+      <div class="era-divider"><span>SAME GOAL</span></div>
+      <div class="era-col after" id="eraRight2">
+        <h3 id="eraRightLabel2">2020</h3>
+      </div>
+    </div>
+    <div class="era-slider-row">
+      <span class="yr" id="yrL2">1900</span>
+      <input type="range" id="slider2L" min="0" max="5" value="0" oninput="updateEra(2)">
+      <input type="range" id="slider2R" min="0" max="5" value="5" oninput="updateEra(2)">
+      <span class="yr" id="yrR2">2020</span>
+    </div>
+  </div>
+
+  <p class="caption">Pick any two eras. The tasks are completely different. The goal is identical.</p>
+</div>
+
+<!-- ===================== ALT C: Spec Annotator ===================== -->
+<div class="alt" id="alt2">
+  <h1>C: Spec Annotator</h1>
+  <div class="subtitle">Read a product spec. Tag each line as GOAL or TASK. Everything stays visible — you're annotating, not hiding.</div>
+
+  <div class="spec-wrap">
+    <div style="font-family:'Inter',sans-serif;font-size:13px;color:#888;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #222"><strong style="color:#e0ddd5">Brief:</strong> Weather app for bike commuters. Click each line to tag it.</div>
+
+    <div class="spec-line" onclick="tagLine(this)" data-answer="goal">
+      <div class="spec-num">1</div>
+      <div class="spec-text">I need to know if I'll get rained on during my ride</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="task">
+      <div class="spec-num">2</div>
+      <div class="spec-text">Display hourly precipitation percentages in a scrollable table</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="goal">
+      <div class="spec-num">3</div>
+      <div class="spec-text">Glance at my phone and know the weather in 2 seconds</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="task">
+      <div class="spec-num">4</div>
+      <div class="spec-text">Implement pull-to-refresh to update radar data from the API</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="goal">
+      <div class="spec-num">5</div>
+      <div class="spec-text">Feel confident about what to wear for the commute</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="task">
+      <div class="spec-num">6</div>
+      <div class="spec-text">Show temperature toggle between Fahrenheit and Celsius</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="task">
+      <div class="spec-num">7</div>
+      <div class="spec-text">Add hamburger menu with settings, about, and feedback screens</div>
+      <div class="spec-badge none">?</div>
+    </div>
+    <div class="spec-line" onclick="tagLine(this)" data-answer="goal">
+      <div class="spec-num">8</div>
+      <div class="spec-text">Never get caught unprepared by a sudden weather change</div>
+      <div class="spec-badge none">?</div>
+    </div>
+
+    <div class="spec-score" id="specScore"></div>
+    <div class="spec-reveal" id="specReveal">Tag all 8 lines to see how you did.</div>
+  </div>
+
+  <p class="caption">Goals sound like desires. Tasks sound like instructions. If you can swap the implementation and the line still holds, it's a goal.</p>
 </div>
 
 <script>
-// Tab switching
 function showAlt(n) {
   document.querySelectorAll('.alt').forEach((a,i) => a.classList.toggle('active', i===n));
   document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
 }
 
-// === ALT A: Goal Rewriter ===
-let rwCounts = [0, 0];
-function flipTask(el) {
-  if (el.classList.contains('flipped')) return;
-  const goal = el.dataset.goal;
-  el.textContent = goal;
-  el.classList.add('flipped');
-  
-  // Find which rewriter this belongs to
-  const rewriter = el.closest('.rewriter');
-  const counter = rewriter.querySelector('strong');
-  const current = parseInt(counter.textContent) + 1;
-  counter.textContent = current;
-  
-  if (current === 4) {
-    const label = rewriter.querySelector('.rw-label');
-    label.textContent = 'Product requirements (goal-directed)';
-    label.classList.remove('task');
-    label.classList.add('goal');
-  }
-}
-
-// === ALT B: Time Machine Dial ===
-const travelData = [
-  { label: 'Vehicle', eras: [[1850,'Horse & wagon'],[1870,'Steam train'],[1920,'Automobile'],[1960,'Commercial jet'],[2010,'Book on phone'],[2030,'Autonomous pod']] },
-  { label: 'Safety', eras: [[1850,'Rifle + prayer'],[1870,'Armed guards on train'],[1920,'Seatbelt (optional)'],[1960,'FAA regulations'],[2010,'TSA screening'],[2030,'AI collision avoidance']] },
-  { label: 'Navigation', eras: [[1850,'Scout + landmarks'],[1870,'Railroad schedules'],[1920,'Paper road maps'],[1960,'Control tower radio'],[2010,'GPS turn-by-turn'],[2030,'Autonomous routing']] },
-  { label: 'Duration', eras: [[1850,'4-6 months'],[1870,'7 days'],[1920,'3-5 days driving'],[1960,'5 hours flying'],[2010,'5 hours flying'],[2030,'2 hours hyperloop']] },
+// === ALT B: Time Machine ===
+const eras1 = [
+  { year: 1850, tasks: ['Horse & covered wagon','Rifle + group travel','Scout & landmarks','4–6 months'] },
+  { year: 1870, tasks: ['Transcontinental railroad','Armed guards on train','Published schedules','7 days'] },
+  { year: 1920, tasks: ['Model T automobile','Seatbelt (lol, optional)','Paper road maps','5 days driving'] },
+  { year: 1960, tasks: ['Commercial Boeing 707','FAA safety regulations','Air traffic control radio','5 hours'] },
+  { year: 2000, tasks: ['Book flight on Expedia','TSA + airbags + seatbelts','GPS navigation','5 hours'] },
+  { year: 2020, tasks: ['Book on phone in 30 sec','AI collision avoidance','Real-time rerouting','4.5 hours'] },
 ];
-
-function renderTasks(container, data, year) {
-  container.innerHTML = '';
-  data.forEach(item => {
-    let current = item.eras[0];
-    for (const [y, method] of item.eras) {
-      if (year >= y) current = [y, method];
-    }
-    const div = document.createElement('div');
-    div.className = 'dial-task' + (year > 1860 ? ' changed' : '');
-    div.innerHTML = `<span>${item.label}</span><span class="method">${current[1]}</span>`;
-    container.appendChild(div);
-  });
-}
-
-function updateDial() {
-  const year = document.getElementById('dialSlider').value;
-  document.getElementById('dialYear').textContent = year;
-  renderTasks(document.getElementById('dialTasks'), travelData, parseInt(year));
-}
-
-const musicData = [
-  { label: 'Listen', eras: [[1900,'Attend live concert'],[1920,'Wind up phonograph'],[1950,'Play vinyl record'],[1980,'Insert cassette tape'],[2000,'Burn/rip a CD'],[2010,'Stream from cloud']] },
-  { label: 'Discover', eras: [[1900,'Word of mouth'],[1920,'Radio broadcast'],[1950,'Record store clerk'],[1980,'MTV / mixtapes'],[2000,'Napster / forums'],[2010,'Algorithm recommends']] },
-  { label: 'Collect', eras: [[1900,'Sheet music cabinet'],[1920,'Record shelf'],[1950,'Record shelf'],[1980,'Tape rack'],[2000,'iTunes library'],[2010,'Playlist (no ownership)']] },
-  { label: 'Share', eras: [[1900,'Play piano for friends'],[1920,'Lend the record'],[1950,'Lend the record'],[1980,'Make a mixtape'],[2000,'Burn a CD'],[2010,'Send a link']] },
+const eras2 = [
+  { year: 1900, tasks: ['Attend a live concert','Word of mouth','Sheet music cabinet','Play piano for friends'] },
+  { year: 1930, tasks: ['Wind up phonograph','Radio broadcasts','Record shelf','Lend the record'] },
+  { year: 1960, tasks: ['Vinyl turntable','Record store clerk','LP collection','Make a tape'] },
+  { year: 1985, tasks: ['Walkman + cassette','MTV & mixtapes','Tape rack','Dub a mixtape'] },
+  { year: 2003, tasks: ['iPod + iTunes','Music blogs & P2P','Digital library','Burn a CD'] },
+  { year: 2020, tasks: ['Stream from anywhere','Algorithm recommends','Playlist (no ownership)','Send a link'] },
 ];
+const taskLabels1 = ['Vehicle','Safety','Navigation','Duration'];
+const taskLabels2 = ['Listen','Discover','Collect','Share'];
 
-function updateDial2() {
-  const year = document.getElementById('dialSlider2').value;
-  document.getElementById('dialYear2').textContent = year;
-  renderTasks(document.getElementById('dialTasks2'), musicData, parseInt(year));
+function renderEraCol(el, era, labels) {
+  el.innerHTML = `<h3 style="color:inherit">${era.year}</h3>` + 
+    era.tasks.map((t,i) => `<div class="era-item"><div class="label">${labels[i]}</div>${t}</div>`).join('');
 }
 
-updateDial();
-updateDial2();
+function updateEra(n) {
+  const eras = n===1 ? eras1 : eras2;
+  const labels = n===1 ? taskLabels1 : taskLabels2;
+  const li = parseInt(document.getElementById(`slider${n}L`).value);
+  const ri = parseInt(document.getElementById(`slider${n}R`).value);
+  const left = eras[li], right = eras[ri];
+  renderEraCol(document.getElementById(`eraLeft${n}`), left, labels);
+  document.getElementById(`eraLeft${n}`).querySelector('h3').style.color = '#e87c7c';
+  renderEraCol(document.getElementById(`eraRight${n}`), right, labels);
+  document.getElementById(`eraRight${n}`).querySelector('h3').style.color = '#7ec699';
+  document.getElementById(`yrL${n}`).textContent = left.year;
+  document.getElementById(`yrR${n}`).textContent = right.year;
+}
+updateEra(1);
+updateEra(2);
 
-// === ALT C: Spec Surgery ===
-function surgCut(el) {
-  el.classList.toggle('cut');
-  updateSurgResult();
+// === ALT C: Spec Annotator ===
+function tagLine(el) {
+  const badge = el.querySelector('.spec-badge');
+  const current = badge.dataset.state || 'none';
+  const next = current === 'none' ? 'goal' : current === 'goal' ? 'task' : 'none';
+  badge.dataset.state = next;
+  badge.className = 'spec-badge ' + next;
+  badge.textContent = next === 'none' ? '?' : next.toUpperCase();
+  el.classList.toggle('tagged', next !== 'none');
+  checkSpec();
 }
 
-function updateSurgResult() {
-  const lines = document.querySelectorAll('.surg-line');
-  let goalsCut = 0, tasksCut = 0, goalsTotal = 0, tasksTotal = 0;
+function checkSpec() {
+  const lines = document.querySelectorAll('.spec-line');
+  let total = 0, correct = 0, tagged = 0;
   lines.forEach(l => {
-    if (l.dataset.type === 'goal') { goalsTotal++; if (l.classList.contains('cut')) goalsCut++; }
-    else { tasksTotal++; if (l.classList.contains('cut')) tasksCut++; }
+    total++;
+    const badge = l.querySelector('.spec-badge');
+    const state = badge.dataset.state || 'none';
+    if (state !== 'none') {
+      tagged++;
+      if (state === l.dataset.answer) correct++;
+    }
   });
   
-  const result = document.getElementById('surgResult');
-  if (goalsCut === 0 && tasksCut === tasksTotal) {
-    result.textContent = '✓ Perfect. You cut every task and kept every goal. The spec still works — now any UI could satisfy it.';
-    result.className = 'surg-result good';
-  } else if (goalsCut > 0 && tasksCut === tasksTotal) {
-    result.textContent = `✗ You cut ${goalsCut} goal(s). Without goals, what are you building toward?`;
-    result.className = 'surg-result bad';
-  } else if (goalsCut === 0 && tasksCut > 0) {
-    result.textContent = `Cutting tasks... ${tasksCut}/${tasksTotal} removed. Keep going.`;
-    result.className = 'surg-result';
-  } else if (goalsCut > 0) {
-    result.textContent = `✗ Careful — you cut a goal. Goals are the foundation. Tasks are the scaffolding.`;
-    result.className = 'surg-result bad';
+  const score = document.getElementById('specScore');
+  const reveal = document.getElementById('specReveal');
+  
+  if (tagged === total) {
+    score.innerHTML = `<span class="right">${correct} correct</span> <span class="wrong">${total - correct} wrong</span>`;
+    if (correct === total) {
+      reveal.textContent = 'Perfect. You can tell goals from tasks. Now imagine writing an entire product spec goal-first — the UI becomes a design choice, not a foregone conclusion.';
+      reveal.className = 'spec-reveal done';
+    } else {
+      reveal.textContent = `Close. The trick: goals sound like human desires ("I want...", "I need..."). Tasks sound like instructions ("click", "display", "implement", "configure"). Goals survive technology changes; tasks don't.`;
+      reveal.className = 'spec-reveal';
+      // Show correct answers
+      lines.forEach(l => {
+        const badge = l.querySelector('.spec-badge');
+        const state = badge.dataset.state;
+        if (state !== l.dataset.answer) {
+          badge.style.outline = '2px solid #e87c7c';
+          badge.style.outlineOffset = '2px';
+        }
+      });
+    }
   } else {
-    result.textContent = 'Click lines to cut them. Try to remove only tasks.';
-    result.className = 'surg-result';
+    score.innerHTML = '';
+    reveal.textContent = `Tagged ${tagged}/${total}. Click each line to cycle: ? → GOAL → TASK → ?`;
+    reveal.className = 'spec-reveal';
   }
 }
 </script>
