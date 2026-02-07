@@ -148,429 +148,298 @@ const RS = {
 window.excalidrawAPI = null;
 window.excalidrawAPI_B = null;
 
+
 // Convert our element format to Excalidraw format
-function toExcalidrawElements(elements) {
+function toExcalidrawElements(elements, prefix) {
   const result = [];
-  const seedBase = 42;
+  const seedBase = prefix === 'b' ? 10042 : 42;
   let seedCounter = 0;
   
   elements.forEach(el => {
     const seed = seedBase + (seedCounter++);
+    const idPfx = prefix ? prefix + '_' : '';
     const baseProps = {
-      groupIds: [],
-      frameId: null,
-      roundness: { type: 3 },
-      isDeleted: false,
-      version: 1,
-      versionNonce: seed,
-      updated: Date.now(),
-      link: null,
-      locked: false,
+      groupIds: [], frameId: null, roundness: { type: 3 }, isDeleted: false,
+      version: 1, versionNonce: seed, updated: Date.now(), link: null, locked: false,
     };
     
     if (el.type === 'rectangle' || el.type === 'rect') {
       const rect = {
-        ...baseProps,
-        type: "rectangle",
-        id: el.id,
-        x: el.x,
-        y: el.y,
-        width: el.w,
-        height: el.h,
+        ...baseProps, type: "rectangle", id: idPfx + el.id,
+        x: el.x, y: el.y, width: el.w, height: el.h,
         strokeColor: el.color || "#1971c2",
         backgroundColor: (el.bg && el.bg !== 'transparent') ? el.bg : "transparent",
-        fillStyle: "solid",
-        strokeWidth: 2,
-        roughness: 1,
-        opacity: 100,
-        angle: 0,
+        fillStyle: "solid", strokeWidth: 2, roughness: 1, opacity: 100, angle: 0,
         seed: seed * 1000 + 1,
-        boundElements: el.label ? [{ type: "text", id: el.id + "_label" }] : [],
+        boundElements: el.label ? [{ type: "text", id: idPfx + el.id + "_label" }] : [],
       };
       result.push(rect);
-      
       if (el.label) {
         const fontSize = 16;
         const lines = String(el.label).split('\n');
         const textHeight = lines.length * fontSize * 1.25;
         result.push({
-          ...baseProps,
-          type: "text",
-          id: el.id + "_label",
-          x: el.x + el.w / 2 - (el.w - 16) / 2,
-          y: el.y + el.h / 2 - textHeight / 2,
-          width: el.w - 16,
-          height: textHeight,
-          text: el.label,
-          originalText: el.label,
-          autoResize: true,
-          fontSize: fontSize,
-          fontFamily: 1,
-          textAlign: "center",
-          verticalAlign: "middle",
-          containerId: el.id,
-          strokeColor: "#e6edf3",
-          backgroundColor: "transparent",
-          fillStyle: "solid",
-          strokeWidth: 1,
-          roughness: 1,
-          opacity: 100,
-          angle: 0,
-          seed: seed * 1000 + 2,
-          lineHeight: 1.25,
-          boundElements: [],
+          ...baseProps, type: "text", id: idPfx + el.id + "_label",
+          x: el.x + el.w / 2 - (el.w - 16) / 2, y: el.y + el.h / 2 - textHeight / 2,
+          width: el.w - 16, height: textHeight, text: el.label, originalText: el.label,
+          autoResize: true, fontSize, fontFamily: 1, textAlign: "center", verticalAlign: "middle",
+          containerId: idPfx + el.id, strokeColor: "#e6edf3", backgroundColor: "transparent",
+          fillStyle: "solid", strokeWidth: 1, roughness: 1, opacity: 100, angle: 0,
+          seed: seed * 1000 + 2, lineHeight: 1.25, boundElements: [],
         });
       }
     } else if (el.type === 'arrow') {
       const pts = el.points || [[0, 0], [100, 0]];
-      const startX = el.x + pts[0][0];
-      const startY = el.y + pts[0][1];
-      const relativePoints = pts.map((p, i) => 
-        i === 0 ? [0, 0] : [p[0] - pts[0][0], p[1] - pts[0][1]]
-      );
+      const startX = el.x + pts[0][0], startY = el.y + pts[0][1];
+      const relativePoints = pts.map((p, i) => i === 0 ? [0, 0] : [p[0] - pts[0][0], p[1] - pts[0][1]]);
       result.push({
-        ...baseProps,
-        type: "arrow",
-        id: el.id,
-        x: startX,
-        y: startY,
+        ...baseProps, type: "arrow", id: idPfx + el.id, x: startX, y: startY,
         width: Math.abs(relativePoints[relativePoints.length - 1][0]),
         height: Math.abs(relativePoints[relativePoints.length - 1][1]),
-        points: relativePoints,
-        strokeColor: el.color || "#8b949e",
-        backgroundColor: "transparent",
-        fillStyle: "solid",
-        strokeWidth: 2,
-        roughness: 1,
-        opacity: 100,
-        angle: 0,
-        seed: seed * 1000 + 3,
-        endArrowhead: "arrow",
-        startArrowhead: null,
-        boundElements: [],
-        roundness: { type: 2 },
+        points: relativePoints, strokeColor: el.color || "#8b949e", backgroundColor: "transparent",
+        fillStyle: "solid", strokeWidth: 2, roughness: 1, opacity: 100, angle: 0,
+        seed: seed * 1000 + 3, endArrowhead: "arrow", startArrowhead: null,
+        boundElements: [], roundness: { type: 2 },
       });
     } else if (el.type === 'text') {
       const fontSize = el.size || 16;
       const text = el.label || '';
       const lines = String(text).split('\n');
       result.push({
-        ...baseProps,
-        type: "text",
-        id: el.id,
-        x: el.x,
-        y: el.y,
-        width: text.length * fontSize * 0.6,
-        height: lines.length * fontSize * 1.25,
-        text: text,
-        originalText: text,
-        autoResize: true,
-        fontSize: fontSize,
-        fontFamily: 1,
-        textAlign: "left",
-        verticalAlign: "top",
-        containerId: null,
-        strokeColor: el.color || "#e6edf3",
-        backgroundColor: "transparent",
-        fillStyle: "solid",
-        strokeWidth: 1,
-        roughness: 1,
-        opacity: 100,
-        angle: 0,
-        seed: seed * 1000 + 4,
-        lineHeight: 1.25,
-        boundElements: [],
+        ...baseProps, type: "text", id: idPfx + el.id, x: el.x, y: el.y,
+        width: text.length * fontSize * 0.6, height: lines.length * fontSize * 1.25,
+        text, originalText: text, autoResize: true, fontSize, fontFamily: 1,
+        textAlign: "left", verticalAlign: "top", containerId: null,
+        strokeColor: el.color || "#e6edf3", backgroundColor: "transparent",
+        fillStyle: "solid", strokeWidth: 1, roughness: 1, opacity: 100, angle: 0,
+        seed: seed * 1000 + 4, lineHeight: 1.25, boundElements: [],
       });
     }
   });
-  
   return result;
 }
 
-// Render elements to the Excalidraw component
-function renderElements(elements) {
-  currentExcalidrawElements = elements;
-  const excalidrawEls = toExcalidrawElements(elements);
-  
-  const api = window.excalidrawAPI;
+function renderElements_side(side, elements) {
+  const rs = RS[side];
+  rs.currentElements = elements;
+  const api = side === 'a' ? window.excalidrawAPI : window.excalidrawAPI_B;
+  const excEls = toExcalidrawElements(elements, side);
   if (api) {
-    api.updateScene({
-      elements: excalidrawEls,
-      appState: { viewBackgroundColor: "#0d1117" }
-    });
+    api.updateScene({ elements: excEls, appState: { viewBackgroundColor: "#0d1117" } });
     setTimeout(() => {
-      if (window.excalidrawAPI) {
-        window.excalidrawAPI.scrollToContent(excalidrawEls, { fitToContent: true, animate: false, duration: 0 });
-      }
+      const a2 = side === 'a' ? window.excalidrawAPI : window.excalidrawAPI_B;
+      if (a2 && excEls.length) a2.scrollToContent(excEls, { fitToContent: true, animate: false, duration: 0 });
     }, 50);
   }
-  
-  document.getElementById('canvas-label').textContent = `Canvas · ${elements.length} elements`;
+  document.getElementById('canvas-label-' + side).textContent = `${elements.length} elements`;
 }
 
-// Re-zoom canvas on resize/orientation change
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (window.excalidrawAPI) {
-      const els = window.excalidrawAPI.getSceneElements();
-      if (els && els.length) {
-        window.excalidrawAPI.scrollToContent(els, { fitToContent: true, animate: true, duration: 300 });
+    ['excalidrawAPI', 'excalidrawAPI_B'].forEach(k => {
+      const api = window[k];
+      if (api) {
+        const els = api.getSceneElements();
+        if (els && els.length) api.scrollToContent(els, { fitToContent: true, animate: true, duration: 300 });
       }
-    }
+    });
   }, 200);
 });
 
-// Get all elements accumulated up to a stage index (inclusive)
-function getElementsUpToStage(stageIndex) {
+function getElementsUpToStage_side(side, stageIndex) {
+  const m = RS[side].model;
+  if (!m) return [];
   const elMap = {};
   for (let i = 0; i <= stageIndex; i++) {
-    (model.stages[i].elements || []).forEach(el => { elMap[el.id] = el; });
+    (m.stages[i].elements || []).forEach(el => { elMap[el.id] = el; });
   }
   return Object.values(elMap);
 }
 
-function selectModel(key) {
+function initSide(side) {
+  const sel = document.getElementById('model-select-' + side);
+  const key = sel.value;
   if (!DATA[key]) return;
-  stop();
-  model = DATA[key];
-  stageIdx = 0; elapsed = 0;
-  currentExcalidrawElements = [];
-  totalDuration = model.stages.reduce((s, st) => s + st.time_ms, 0);
-  
-  const pips = document.getElementById('pips');
-  pips.innerHTML = '';
-  model.stages.forEach((st, i) => {
-    const p = document.createElement('div');
-    p.className = 'pip' + (st.is_vision ? ' vision' : st.is_intervention ? ' intervention' : '');
-    p.title = st.name;
-    p.onclick = () => jumpStage(i);
-    pips.appendChild(p);
-  });
-  
-  document.getElementById('chat').innerHTML = '';
-  
-  // Show first stage diagram immediately
-  const firstElements = model.stages[0]?.elements || [];
-  if (firstElements.length > 0) {
-    renderElements(firstElements);
-  } else {
-    renderElements([]);
-  }
-  
+  const rs = RS[side];
+  rs.model = DATA[key];
+  rs.stageIdx = 0; rs.elapsed = 0; rs.textCharIdx = 0; rs.currentElements = []; rs.done = false;
+  rs.totalDuration = rs.model.stages.reduce((s, st) => s + st.time_ms, 0);
+  document.getElementById('tag-' + side).textContent = rs.model.name || rs.model.model;
+  const firstEls = rs.model.stages[0]?.elements || [];
+  renderElements_side(side, firstEls.length > 0 ? firstEls : []);
   updateUI();
 }
 
 function fmtMs(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
 
+function maxDuration() {
+  return Math.max(RS.a.totalDuration || 0, RS.b.totalDuration || 0) || 1;
+}
+
 function updateUI() {
-  if (!model) return;
-  document.getElementById('timer').textContent = `${fmtMs(elapsed)} / ${fmtMs(totalDuration)}`;
-  document.getElementById('pfill').style.width = `${(elapsed / totalDuration) * 100}%`;
-  
-  const stg = model.stages[stageIdx];
-  const label = document.getElementById('stage-label');
-  label.textContent = `Stage ${Math.min(stageIdx + 1, model.stages.length)}/${model.stages.length} · ${stg?.name || 'Done'}`;
-  label.className = 'stage-badge ' + (stg?.is_vision ? 'vision' : stg?.is_intervention ? 'intervention' : stg?.is_text_only ? 'review' : 'normal');
-  
-  document.querySelectorAll('.pip').forEach((p, i) => {
-    const base = model.stages[i]?.is_vision ? 'pip vision' : model.stages[i]?.is_intervention ? 'pip intervention' : 'pip';
-    p.className = i < stageIdx ? base + ' done' : i === stageIdx ? base + ' current' : base;
-  });
-  
+  const maxElapsed = Math.max(RS.a.elapsed, RS.b.elapsed);
+  const maxDur = maxDuration();
+  document.getElementById('timer').textContent = `${fmtMs(maxElapsed)} / ${fmtMs(maxDur)}`;
+  document.getElementById('pfill').style.width = `${(maxElapsed / maxDur) * 100}%`;
   const b = document.getElementById('badge');
-  if (stg?.is_vision && playing) { b.textContent = '👁️ ' + stg.name; b.className = 'badge intervention'; }
-  else if (stg?.is_intervention && playing) { b.textContent = '🔧 Intervention'; b.className = 'badge intervention'; }
-  else if (playing) { b.textContent = stg?.name || 'Playing'; b.className = 'badge playing'; }
-  else if (stageIdx >= model.stages.length) { b.textContent = 'Complete'; b.className = 'badge done'; }
+  if (playing) { b.textContent = '🏁 Racing'; b.className = 'badge playing'; }
+  else if (RS.a.done && RS.b.done) { b.textContent = 'Complete'; b.className = 'badge done'; }
   else { b.textContent = 'Ready'; b.className = 'badge ready'; }
 }
 
+// Floating bubbles
+function addBubble(side, text, senderName) {
+  const layer = document.getElementById('bubbles-' + side);
+  const div = document.createElement('div');
+  div.className = 'bubble ' + side;
+  const shortText = text.length > 120 ? text.substring(0, 120) + '…' : text;
+  div.innerHTML = `<div class="bubble-sender">${senderName}</div>${shortText.replace(/</g,'&lt;').replace(/\n/g,' ')}`;
+  layer.appendChild(div);
+  setTimeout(() => div.remove(), 6500);
+}
+
 // PLAYBACK
-function togglePlay() { if (playing) stop(); else startPlay(); }
+function togglePlay() { if (playing) stopPlay(); else startPlay(); }
 
 function startPlay() {
-  if (!model) return;
-  if (stageIdx >= model.stages.length) {
-    stageIdx = 0; elapsed = 0; currentExcalidrawElements = [];
-    document.getElementById('chat').innerHTML = '';
-    renderElements([]);
+  if (!RS.a.model || !RS.b.model) {
+    // Auto-init from selectors
+    initSide('a'); initSide('b');
+    if (!RS.a.model || !RS.b.model) return;
+  }
+  if (RS.a.done && RS.b.done) {
+    ['a','b'].forEach(s => {
+      RS[s].stageIdx = 0; RS[s].elapsed = 0; RS[s].textCharIdx = 0; RS[s].currentElements = []; RS[s].done = false;
+      renderElements_side(s, []);
+    });
+    document.getElementById('bubbles-a').innerHTML = '';
+    document.getElementById('bubbles-b').innerHTML = '';
   }
   playing = true;
   document.getElementById('play-btn').textContent = '⏸';
   document.getElementById('play-btn').className = 'play-btn playing';
-  beginStage();
+  ['a','b'].forEach(s => { if (!RS[s].done) beginStage_side(s); });
 }
 
-function stop() {
+function stopPlay() {
   playing = false;
   cancelAnimationFrame(animFrame);
   document.getElementById('play-btn').textContent = '▶';
   document.getElementById('play-btn').className = 'play-btn';
-  document.querySelectorAll('.cursor').forEach(c => c.remove());
   updateUI();
 }
 
-function beginStage() {
-  if (!playing || stageIdx >= model.stages.length) { stop(); updateUI(); return; }
-  const stage = model.stages[stageIdx];
-  
-  const promptType = stage.is_vision ? 'vision-prompt' : stage.is_intervention ? 'interviewer' : 'human';
-  const promptSender = stage.is_vision ? '👁️ Vision Test' : stage.is_intervention ? '🔧 Interviewer (modifying canvas)' : '🧑 Interviewer';
-  const promptDisplay = stage.is_intervention 
-    ? stage.prompt.split('\n').slice(0, 3).join('\n') + '\n...(canvas modifications applied)'
-    : stage.is_vision ? '📷 [diagram screenshot attached]\n\n' + stage.prompt : stage.prompt;
-  addChat(promptType, promptSender, promptDisplay);
-  
-  const thinkId = addChat('model', '🤖 ' + (model.name || model.model), '', true);
-  stageStartTime = performance.now();
-  textCharIdx = 0;
-  tickStage(stage, thinkId);
+function beginStage_side(side) {
+  const rs = RS[side];
+  if (!playing || rs.stageIdx >= rs.model.stages.length) { rs.done = true; checkBothDone(); return; }
+  const stage = rs.model.stages[rs.stageIdx];
+
+  // Bubble for the prompt (only show once per stage - use side A's prompt since they're the same)
+  if (side === 'a') addBubble(side, stage.prompt.substring(0, 100), '🧑 Interviewer');
+
+  rs.stageStartTime = performance.now();
+  rs.textCharIdx = 0;
+  rs._thinkBubbleSent = false;
+  tickStage_side(side);
 }
 
-function tickStage(stage, thinkId) {
+function tickStage_side(side) {
   if (!playing) return;
-  const realElapsed = (performance.now() - stageStartTime) * speed;
+  const rs = RS[side];
+  if (rs.done) return;
+  const stage = rs.model.stages[rs.stageIdx];
+  const realElapsed = (performance.now() - rs.stageStartTime) * speed;
   const stageDuration = stage.time_ms;
   const reasoning = stage.reasoning || '';
   const elements = stage.elements || [];
-  
   const elemPhase = stage.is_text_only ? 0 : stageDuration * 0.3;
-  const textPhase = stageDuration - elemPhase;
-  
-  // Phase 1: Elements appearing progressively
+
+  // Elements appearing
   if (!stage.is_text_only && elements.length > 0 && realElapsed < elemPhase) {
     const shouldShow = Math.min(elements.length, Math.floor(realElapsed / (elemPhase / elements.length)));
-    if (shouldShow > textCharIdx) {
-      const prevEls = stageIdx > 0 ? getElementsUpToStage(stageIdx - 1) : [];
-      const currentPartial = elements.slice(0, shouldShow);
-      renderElements([...prevEls, ...currentPartial]);
-      textCharIdx = shouldShow;
+    if (shouldShow > rs.textCharIdx) {
+      const prevEls = rs.stageIdx > 0 ? getElementsUpToStage_side(side, rs.stageIdx - 1) : [];
+      renderElements_side(side, [...prevEls, ...elements.slice(0, shouldShow)]);
+      rs.textCharIdx = shouldShow;
     }
   }
-  
-  // Phase 2: Text streaming (and show all elements)
+
   if (realElapsed >= elemPhase) {
-    if (!stage.is_text_only && elements.length > 0 && textCharIdx < elements.length) {
-      const prevEls = stageIdx > 0 ? getElementsUpToStage(stageIdx - 1) : [];
-      renderElements([...prevEls, ...elements]);
-      textCharIdx = elements.length;
+    if (!stage.is_text_only && elements.length > 0 && rs.textCharIdx < elements.length) {
+      const prevEls = rs.stageIdx > 0 ? getElementsUpToStage_side(side, rs.stageIdx - 1) : [];
+      renderElements_side(side, [...prevEls, ...elements]);
+      rs.textCharIdx = elements.length;
     }
-    if (reasoning.length > 0) {
-      const textElapsed = realElapsed - elemPhase;
-      const targetChars = Math.min(reasoning.length, Math.floor(textElapsed * reasoning.length / textPhase));
-      updateStreamingMsg(thinkId, reasoning, targetChars, stage);
+    if (!rs._thinkBubbleSent && reasoning.length > 0) {
+      rs._thinkBubbleSent = true;
+      addBubble(side, reasoning.substring(0, 100), '🤖 ' + (rs.model.name || rs.model.model));
     }
   }
-  
+
   const stageProgress = Math.min(realElapsed, stageDuration);
-  const prevTime = model.stages.slice(0, stageIdx).reduce((s, st) => s + st.time_ms, 0);
-  elapsed = prevTime + stageProgress;
+  const prevTime = rs.model.stages.slice(0, rs.stageIdx).reduce((s, st) => s + st.time_ms, 0);
+  rs.elapsed = prevTime + stageProgress;
   updateUI();
-  
+
   if (realElapsed >= stageDuration) {
-    finalizeMsg(thinkId, stage);
-    stageIdx++;
-    updateUI();
-    setTimeout(() => beginStage(), 400 / speed);
+    rs.stageIdx++;
+    setTimeout(() => beginStage_side(side), 300 / speed);
     return;
   }
-  animFrame = requestAnimationFrame(() => tickStage(stage, thinkId));
+  requestAnimationFrame(() => tickStage_side(side));
 }
 
-// CHAT
-function addChat(type, sender, text, isThinking) {
-  const chat = document.getElementById('chat');
-  const div = document.createElement('div');
-  const id = `msg-${msgCounter++}`;
-  div.id = id;
-  div.className = `msg ${type}${isThinking ? ' thinking' : ''}`;
-  const senderClass = type === 'vision-prompt' ? 'vision-name' : type === 'interviewer' ? 'interviewer-name' : type === 'human' ? 'human-name' : 'model-name';
-  if (isThinking) {
-    div.innerHTML = `<div class="sender ${senderClass}">${sender}</div><span class="dots"></span>`;
-  } else {
-    const escaped = text.replace(/</g, '&lt;').replace(/\n/g, '<br>');
-    div.innerHTML = `<div class="sender ${senderClass}">${sender}</div><div class="reasoning">${escaped}</div>`;
+function checkBothDone() {
+  if (RS.a.done && RS.b.done) {
+    playing = false;
+    document.getElementById('play-btn').textContent = '▶';
+    document.getElementById('play-btn').className = 'play-btn';
+    const winner = RS.a.elapsed < RS.b.elapsed ? 'A' : RS.b.elapsed < RS.a.elapsed ? 'B' : 'Tie';
+    const badge = document.getElementById('badge');
+    const nameA = RS.a.model.name || RS.a.model.model;
+    const nameB = RS.b.model.name || RS.b.model.model;
+    if (winner === 'Tie') { badge.textContent = '🏁 Tie!'; }
+    else { badge.textContent = '🏆 ' + (winner === 'A' ? nameA : nameB) + ' wins!'; }
+    badge.className = 'badge done';
   }
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  return id;
-}
-
-function updateStreamingMsg(id, fullText, charCount, stage) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'msg model';
-  const senderName = '🤖 ' + (model.name || model.model);
-  const partial = fullText.substring(0, charCount).replace(/</g, '&lt;').replace(/\n/g, '<br>');
-  let diagramNote = '';
-  if (!stage.is_text_only && stage.element_count > 0) {
-    diagramNote = `<div class="diagram-note">📐 Canvas updated: <span class="count">${stage.element_count} elements</span></div>`;
-  }
-  el.innerHTML = `<div class="sender model-name">${senderName}</div>${diagramNote}<div class="reasoning">${partial}<span class="cursor"></span></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-}
-
-function finalizeMsg(id, stage) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'msg model';
-  const senderName = '🤖 ' + (model.name || model.model);
-  const reasoning = (stage.reasoning || '(no reasoning provided)').replace(/</g, '&lt;').replace(/\n/g, '<br>');
-  let diagramNote = '';
-  if (!stage.is_text_only && stage.element_count > 0) {
-    diagramNote = `<div class="diagram-note">📐 Canvas updated: <span class="count">${stage.element_count} elements</span></div>`;
-  }
-  const secs = (stage.time_ms / 1000).toFixed(1);
-  const tokens = stage.tokens ? ` · ${stage.tokens.completion_tokens || '?'} tokens` : '';
-  el.innerHTML = `<div class="sender model-name">${senderName}</div>${diagramNote}<div class="reasoning">${reasoning}</div><div class="meta"><span>⏱ ${secs}s${tokens}</span><span>${stage.is_vision ? '👁️ vision test' : stage.is_intervention ? '🔧 intervention response' : stage.is_text_only ? '📝 design review' : '📐 layout + reasoning'}</span></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-}
-
-// CONTROLS
-function jumpStage(target) {
-  stop();
-  document.getElementById('chat').innerHTML = '';
-  currentExcalidrawElements = [];
-  elapsed = 0;
-  
-  for (let i = 0; i <= target; i++) {
-    const stage = model.stages[i];
-    const promptType = stage.is_intervention ? 'interviewer' : 'human';
-    const promptSender = stage.is_intervention ? '🔧 Interviewer' : '🧑 Interviewer';
-    addChat(promptType, promptSender, stage.prompt.substring(0, 200) + (stage.prompt.length > 200 ? '...' : ''));
-    const msgId = addChat('model', '🤖 ' + (model.name || model.model), '');
-    finalizeMsg(msgId, stage);
-    elapsed += stage.time_ms;
-  }
-  
-  const allEls = getElementsUpToStage(target);
-  renderElements(allEls);
-  
-  stageIdx = target + 1;
   updateUI();
 }
 
 function seekTo(e) {
   const rect = e.target.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  const targetMs = pct * totalDuration;
-  let acc = 0;
-  for (let i = 0; i < model.stages.length; i++) {
-    acc += model.stages[i].time_ms;
-    if (acc >= targetMs) { jumpStage(i); return; }
-  }
+  ['a','b'].forEach(side => {
+    const rs = RS[side];
+    if (!rs.model) return;
+    const targetMs = pct * rs.totalDuration;
+    let acc = 0;
+    for (let i = 0; i < rs.model.stages.length; i++) {
+      acc += rs.model.stages[i].time_ms;
+      if (acc >= targetMs) {
+        rs.stageIdx = i + 1; rs.elapsed = acc;
+        rs.done = rs.stageIdx >= rs.model.stages.length;
+        renderElements_side(side, getElementsUpToStage_side(side, i));
+        break;
+      }
+    }
+  });
+  stopPlay(); updateUI();
 }
 
 function resetReplay() {
-  stop();
-  stageIdx = 0; elapsed = 0; currentExcalidrawElements = [];
-  document.getElementById('chat').innerHTML = '';
-  if (model) {
-    const firstElements = model.stages[0]?.elements || [];
-    renderElements(firstElements.length > 0 ? firstElements : []);
-  }
+  stopPlay();
+  ['a','b'].forEach(side => {
+    const rs = RS[side];
+    rs.stageIdx = 0; rs.elapsed = 0; rs.textCharIdx = 0; rs.currentElements = []; rs.done = false;
+    if (rs.model) {
+      const firstEls = rs.model.stages[0]?.elements || [];
+      renderElements_side(side, firstEls.length > 0 ? firstEls : []);
+    }
+  });
+  document.getElementById('bubbles-a').innerHTML = '';
+  document.getElementById('bubbles-b').innerHTML = '';
   updateUI();
 }
 
@@ -5628,17 +5497,27 @@ const EXCALIDRAW_DATA = {
     "has_vision": false
   }
 };
+
 DATA = EXCALIDRAW_DATA;
 
-// Init Excalidraw
+// Populate both selectors
 (function() {
-  const sel = document.getElementById('model-select');
-  sel.innerHTML = '';
-  Object.entries(DATA).forEach(([k, v]) => {
-    const opt = document.createElement('option');
-    opt.value = k; opt.textContent = v.name || v.model || k;
-    sel.appendChild(opt);
+  ['a','b'].forEach((side, idx) => {
+    const sel = document.getElementById('model-select-' + side);
+    sel.innerHTML = '';
+    const keys = Object.keys(DATA);
+    keys.forEach((k, ki) => {
+      const v = DATA[k];
+      const opt = document.createElement('option');
+      opt.value = k; opt.textContent = v.name || v.model || k;
+      sel.appendChild(opt);
+    });
+    // Default: A=first, B=second (or last if only one)
+    if (keys.length > 1 && idx === 1) sel.value = keys[1];
+    sel.onchange = () => { initSide(side); };
   });
+  // Auto-init both sides
+  setTimeout(() => { initSide('a'); initSide('b'); }, 200);
 })();
 </script>
 
@@ -5647,56 +5526,50 @@ import React from "https://esm.sh/react@18.3.1";
 import { createRoot } from "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1";
 import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?deps=react@18.3.1,react-dom@18.3.1";
 
-const container = document.getElementById('excalidraw-container');
-const root = createRoot(container);
+// Model A
+const containerA = document.getElementById('excalidraw-container');
+const rootA = createRoot(containerA);
 
-const App = () => {
-  const [api, setApi] = React.useState(null);
-  
+const AppA = () => {
   const handleRef = React.useCallback((ref) => {
     if (ref) {
       window.excalidrawAPI = ref;
-      setApi(ref);
-      document.getElementById('loading').classList.add('hidden');
-      
-      // Now init the model
-      const firstKey = Object.keys(DATA)[0];
-      if (firstKey) {
-        setTimeout(() => selectModel(firstKey), 100);
-      }
+      document.getElementById('loading-a').classList.add('hidden');
+      setTimeout(() => initSide('a'), 200);
+    }
+  }, []);
+  
+  return React.createElement(Excalidraw, {
+    excalidrawAPI: handleRef,
+    viewModeEnabled: true, zenModeEnabled: true, gridModeEnabled: false, theme: "dark",
+    initialData: { appState: { viewBackgroundColor: "#0d1117", theme: "dark", gridSize: null }, elements: [] },
+    UIOptions: { canvasActions: { changeViewBackgroundColor: false, clearCanvas: false, export: false, loadScene: false, saveToActiveFile: false, toggleTheme: false }, tools: { image: false } },
+  });
+};
+rootA.render(React.createElement(AppA));
+
+// Model B
+const containerB = document.getElementById('excalidraw-container-b');
+const rootB = createRoot(containerB);
+
+const AppB = () => {
+  const handleRef = React.useCallback((ref) => {
+    if (ref) {
+      window.excalidrawAPI_B = ref;
+      document.getElementById('loading-b').classList.add('hidden');
+      setTimeout(() => initSide('b'), 300);
       setSpeed();
     }
   }, []);
   
   return React.createElement(Excalidraw, {
     excalidrawAPI: handleRef,
-    viewModeEnabled: true,
-    zenModeEnabled: true,
-    gridModeEnabled: false,
-    theme: "dark",
-    initialData: {
-      appState: {
-        viewBackgroundColor: "#0d1117",
-        theme: "dark",
-        gridSize: null,
-      },
-      elements: [],
-    },
-    UIOptions: {
-      canvasActions: {
-        changeViewBackgroundColor: false,
-        clearCanvas: false,
-        export: false,
-        loadScene: false,
-        saveToActiveFile: false,
-        toggleTheme: false,
-      },
-      tools: { image: false },
-    },
+    viewModeEnabled: true, zenModeEnabled: true, gridModeEnabled: false, theme: "dark",
+    initialData: { appState: { viewBackgroundColor: "#0d1117", theme: "dark", gridSize: null }, elements: [] },
+    UIOptions: { canvasActions: { changeViewBackgroundColor: false, clearCanvas: false, export: false, loadScene: false, saveToActiveFile: false, toggleTheme: false }, tools: { image: false } },
   });
 };
-
-root.render(React.createElement(App));
+rootB.render(React.createElement(AppB));
 </script>
 </body>
 </html>
