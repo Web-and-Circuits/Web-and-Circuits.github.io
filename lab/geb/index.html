@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gödel, Escher, Bach — An Interactive Book Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --surface: #141414; --surface2: #1a1a1a; --surface3: #222;
+  --text: #e8e4df; --text2: #a09a92; --text3: #6b6560;
+  --gold: #d4a853; --gold2: #b8912e; --amber: #e8934a;
+  --blue: #5b8fd4; --purple: #9b7ed4; --green: #5bad7a; --red: #d45b5b;
+  --radius: 12px; --radius-sm: 8px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text);
+  line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+a { color: var(--gold); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Layout */
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+/* Hero */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center; padding: 60px 20px; position: relative;
+  background: radial-gradient(ellipse at 50% 30%, rgba(212,168,83,0.06) 0%, transparent 70%);
+}
+.hero h1 {
+  font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 900; letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--gold), var(--amber), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 16px;
+}
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.3rem); color: var(--text2); font-weight: 300;
+  max-width: 600px; margin-bottom: 32px;
+}
+.hero .author { font-size: 0.95rem; color: var(--text3); margin-bottom: 40px; }
+.hero .rating { font-size: 1.8rem; letter-spacing: 4px; margin-bottom: 12px; }
+.hero .scroll-hint {
+  position: absolute; bottom: 40px; color: var(--text3); font-size: 0.85rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+/* Navigation */
+nav {
+  position: sticky; top: 0; z-index: 100; background: rgba(10,10,10,0.92);
+  backdrop-filter: blur(16px); border-bottom: 1px solid rgba(212,168,83,0.15);
+  padding: 0 20px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+nav .nav-inner {
+  max-width: 900px; margin: 0 auto; display: flex; gap: 4px;
+  padding: 8px 0; min-width: max-content;
+}
+nav a {
+  padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.82rem;
+  font-weight: 500; color: var(--text2); white-space: nowrap; min-height: 44px;
+  display: flex; align-items: center; transition: all 0.2s;
+}
+nav a:hover { background: var(--surface2); color: var(--text); text-decoration: none; }
+
+/* Section */
+section {
+  padding: 80px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+section h2 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+section h3 {
+  font-size: 1.15rem; font-weight: 600; margin: 32px 0 12px;
+  color: var(--gold);
+}
+section p { color: var(--text2); margin-bottom: 16px; }
+
+/* Cards */
+.card {
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+}
+.card-accent {
+  border-left: 3px solid var(--gold); background: rgba(212,168,83,0.04);
+}
+
+/* Interactive Demo Containers */
+.demo {
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius); padding: 28px; margin: 28px 0;
+  position: relative; overflow: hidden;
+}
+.demo::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--amber), var(--purple));
+}
+.demo h3 { color: var(--gold); margin-top: 0; font-size: 1.2rem; }
+.demo p { font-size: 0.92rem; }
+
+/* Buttons */
+button, .btn {
+  min-height: 44px; min-width: 44px; padding: 10px 20px;
+  border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.12);
+  background: var(--surface2); color: var(--text); font-family: inherit;
+  font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+button:hover { background: var(--surface3); border-color: var(--gold); }
+button:active { transform: scale(0.97); }
+button.primary {
+  background: linear-gradient(135deg, var(--gold2), var(--gold));
+  color: #0a0a0a; border-color: var(--gold); font-weight: 600;
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Input */
+input, textarea, select {
+  min-height: 44px; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.12); background: var(--bg);
+  color: var(--text); font-family: inherit; font-size: 0.9rem; width: 100%;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--gold); }
+
+/* MIU specific */
+.miu-string {
+  font-family: 'Inter', monospace; font-size: 1.6rem; font-weight: 700;
+  color: var(--gold); letter-spacing: 3px; padding: 16px; text-align: center;
+  background: rgba(212,168,83,0.06); border-radius: var(--radius-sm);
+  margin: 16px 0; word-break: break-all; min-height: 60px;
+  display: flex; align-items: center; justify-content: center;
+}
+.miu-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 16px 0; }
+.miu-rule {
+  padding: 12px 16px; border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.08); background: var(--surface2);
+  font-size: 0.88rem; min-height: 44px; transition: all 0.2s;
+}
+.miu-rule:hover { border-color: var(--gold); background: rgba(212,168,83,0.08); }
+.miu-rule.disabled { opacity: 0.3; cursor: not-allowed; }
+.miu-history { font-size: 0.82rem; color: var(--text3); max-height: 200px; overflow-y: auto; margin-top: 12px; }
+.miu-history div { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+/* Strange Loop */
+.loop-container {
+  width: 100%; max-width: 500px; margin: 20px auto; position: relative;
+}
+.loop-svg { width: 100%; height: auto; }
+.loop-node {
+  cursor: pointer; transition: all 0.3s;
+}
+.loop-node:hover { filter: brightness(1.3); }
+.loop-info {
+  text-align: center; padding: 16px; margin-top: 16px;
+  background: rgba(212,168,83,0.04); border-radius: var(--radius-sm);
+  min-height: 80px; transition: all 0.3s;
+}
+
+/* Gödel encoder */
+.godel-input { font-family: monospace; font-size: 1.1rem; letter-spacing: 2px; }
+.godel-output {
+  font-family: monospace; font-size: 0.9rem; color: var(--amber);
+  background: rgba(232,147,74,0.06); padding: 16px; border-radius: var(--radius-sm);
+  margin: 12px 0; word-break: break-all; min-height: 50px;
+}
+.godel-table {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px; margin: 12px 0;
+}
+.godel-cell {
+  text-align: center; padding: 8px 4px; border-radius: 6px;
+  background: var(--surface2); font-size: 0.78rem;
+}
+.godel-cell .sym { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+.godel-cell .num { color: var(--text3); margin-top: 2px; }
+
+/* Formal System Explorer */
+.fs-theorem {
+  display: inline-block; padding: 6px 12px; margin: 4px; border-radius: 6px;
+  background: rgba(91,141,212,0.1); border: 1px solid rgba(91,141,212,0.2);
+  font-family: monospace; font-size: 0.88rem; color: var(--blue);
+}
+.fs-axiom { background: rgba(212,168,83,0.1); border-color: rgba(212,168,83,0.2); color: var(--gold); }
+.fs-workspace { min-height: 100px; margin: 12px 0; }
+
+/* Tangled Hierarchy */
+.th-canvas { width: 100%; height: 400px; border-radius: var(--radius-sm); background: var(--surface2); }
+
+/* Crab Canon */
+.crab-display {
+  display: flex; flex-direction: column; gap: 2px; margin: 16px 0;
+  font-family: monospace; font-size: 0.9rem;
+}
+.crab-row {
+  display: flex; gap: 4px; padding: 4px 8px; border-radius: 4px;
+  transition: all 0.3s;
+}
+.crab-row.active { background: rgba(212,168,83,0.1); }
+.crab-forward { color: var(--gold); flex: 1; }
+.crab-backward { color: var(--purple); flex: 1; text-align: right; }
+.crab-center { color: var(--amber); text-align: center; padding: 8px; font-weight: 600; }
+.crab-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* Quotes */
+blockquote {
+  border-left: 3px solid var(--gold); padding: 16px 20px; margin: 20px 0;
+  background: rgba(212,168,83,0.03); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic; color: var(--text);
+}
+blockquote cite { display: block; margin-top: 8px; font-style: normal; font-size: 0.85rem; color: var(--text3); }
+
+/* Chapter Navigator */
+.chapter-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px; margin: 20px 0;
+}
+.chapter-card {
+  padding: 16px; border-radius: var(--radius-sm); background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: all 0.2s;
+  min-height: 44px;
+}
+.chapter-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.chapter-card .ch-num { font-size: 0.75rem; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.chapter-card .ch-title { font-weight: 600; margin: 4px 0; font-size: 0.95rem; }
+.chapter-card .ch-desc { font-size: 0.82rem; color: var(--text3); }
+.chapter-card.dialogue { border-left: 3px solid var(--purple); }
+.chapter-card.dialogue .ch-num { color: var(--purple); }
+
+/* Tags */
+.tag {
+  display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;
+  font-weight: 500; background: rgba(212,168,83,0.1); color: var(--gold);
+  margin: 2px 4px 2px 0;
+}
+
+/* AI Section */
+.ai-prediction {
+  padding: 20px; margin: 12px 0; border-radius: var(--radius-sm);
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.06);
+}
+.ai-prediction .question { font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.ai-prediction .answer { font-size: 0.92rem; color: var(--text2); }
+.ai-prediction .verdict {
+  margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+}
+.verdict-prescient { background: rgba(91,173,122,0.1); color: var(--green); }
+.verdict-mixed { background: rgba(212,168,83,0.1); color: var(--gold); }
+.verdict-wrong { background: rgba(212,91,91,0.1); color: var(--red); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .miu-rules { grid-template-columns: 1fr; }
+  .chapter-grid { grid-template-columns: 1fr; }
+  section { padding: 50px 0; }
+  .demo { padding: 20px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 0.85rem; font-weight: 500; color: var(--text3); background: transparent;
+  border: 1px solid transparent; min-height: 44px; transition: all 0.2s;
+}
+.tab.active { color: var(--gold); border-color: var(--gold); background: rgba(212,168,83,0.06); }
+.tab:hover { color: var(--text); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="rating">★★★★★</div>
+  <h1>Gödel, Escher, Bach</h1>
+  <div class="subtitle">An Eternal Golden Braid — and an interactive exploration of self-reference, strange loops, and the tangled hierarchies of mind</div>
+  <div class="author">Douglas Hofstadter · 1979 · 777 pages</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+    <span class="tag">Self-Reference</span><span class="tag">Formal Systems</span>
+    <span class="tag">Consciousness</span><span class="tag">AI</span><span class="tag">Music</span>
+  </div>
+  <div class="scroll-hint">↓ Scroll to explore</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#overview">Overview</a>
+    <a href="#miu">MIU Puzzle</a>
+    <a href="#strange-loop">Strange Loops</a>
+    <a href="#godel">Gödel Encoder</a>
+    <a href="#formal">Formal Systems</a>
+    <a href="#tangled">Tangled Hierarchy</a>
+    <a href="#crab">Crab Canon</a>
+    <a href="#chapters">Chapters</a>
+    <a href="#ai">AI Predictions</a>
+    <a href="#quotes">Quotes</a>
+  </div>
+</nav>
+
+<!-- OVERVIEW -->
+<section id="overview">
+<div class="container">
+  <h2>The Big Idea</h2>
+  <p>GEB is about how meaning, self-reference, and consciousness arise from formal systems. Hofstadter weaves together <strong>Bach's</strong> fugues and canons, <strong>Escher's</strong> impossible drawings, and <strong>Gödel's</strong> incompleteness theorem to chase one question: <em>how can a system made of meaningless parts become aware of itself?</em></p>
+  <p>The answer is the <strong>Strange Loop</strong> — when you move through the levels of a hierarchy and unexpectedly find yourself back where you started. This one idea connects a canon that rises endlessly through keys, a lithograph of two hands drawing each other, and a mathematical statement that refers to its own unprovability.</p>
+
+  <div class="card card-accent" style="margin-top:24px">
+    <strong style="color:var(--gold)">The Architecture</strong>
+    <p style="margin-top:8px">The book alternates <strong>Chapters</strong> (theory) with <strong>Dialogues</strong> (stories between Achilles, the Tortoise, and friends). Each Dialogue previews the next Chapter metaphorically — the same concept as story, then as math. Many Dialogues mirror specific Bach compositions. The book itself is a Strange Loop: it ends where it begins.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:24px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:4px">🎵</div>
+      <strong>Bach</strong>
+      <p style="font-size:0.85rem">Canons, fugues, the Endlessly Rising Canon. Copies of a theme at different speeds, pitches, and directions — including backwards.</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:4px">🎨</div>
+      <strong>Escher</strong>
+      <p style="font-size:0.85rem">Drawing Hands, Print Gallery, Waterfall. Pictures that contain themselves, stairs that climb forever.</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:4px">🔢</div>
+      <strong>Gödel</strong>
+      <p style="font-size:0.85rem">Self-referential statements, incompleteness. A system powerful enough to describe itself will have truths it cannot prove.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- MIU PUZZLE -->
+<section id="miu">
+<div class="container">
+  <h2>🧩 MIU Puzzle Playground</h2>
+  <p>Chapter I introduces formal systems through a deceptively simple puzzle. Start with <strong>MI</strong>. Apply the four rules. Can you produce <strong>MU</strong>?</p>
+
+  <div class="demo">
+    <h3>Your String</h3>
+    <div class="miu-string" id="miu-current">MI</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:0.85rem;color:var(--text3)">I-count: <strong id="miu-icount" style="color:var(--amber)">1</strong></span>
+      <span style="font-size:0.85rem;color:var(--text3)">mod 3: <strong id="miu-mod3" style="color:var(--amber)">1</strong></span>
+      <span style="font-size:0.85rem;color:var(--text3)">Length: <strong id="miu-len" style="color:var(--text2)">2</strong></span>
+      <span style="font-size:0.85rem;color:var(--text3)">Steps: <strong id="miu-steps" style="color:var(--text2)">0</strong></span>
+    </div>
+
+    <div class="miu-rules" id="miu-rules">
+      <div class="miu-rule" data-rule="1" onclick="miuApply(1)">
+        <strong>Rule I:</strong> x<span style="color:var(--gold)">I</span> → x<span style="color:var(--gold)">IU</span><br>
+        <small style="color:var(--text3)">If string ends in I, add U</small>
+      </div>
+      <div class="miu-rule" data-rule="2" onclick="miuApply(2)">
+        <strong>Rule II:</strong> <span style="color:var(--gold)">M</span>x → <span style="color:var(--gold)">M</span>xx<br>
+        <small style="color:var(--text3)">Double everything after M</small>
+      </div>
+      <div class="miu-rule" data-rule="3" onclick="miuApply(3)">
+        <strong>Rule III:</strong> x<span style="color:var(--gold)">III</span>y → x<span style="color:var(--gold)">U</span>y<br>
+        <small style="color:var(--text3)">Replace III with U</small>
+      </div>
+      <div class="miu-rule" data-rule="4" onclick="miuApply(4)">
+        <strong>Rule IV:</strong> x<span style="color:var(--gold)">UU</span>y → xy<br>
+        <small style="color:var(--text3)">Drop UU</small>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="miuReset()">↺ Reset</button>
+      <button onclick="miuUndo()">← Undo</button>
+      <button id="miu-reveal-btn" onclick="miuReveal()">💡 Why is it impossible?</button>
+    </div>
+
+    <div id="miu-reveal" style="display:none;margin-top:16px" class="card card-accent">
+      <strong style="color:var(--gold)">The Secret: I-count mod 3</strong>
+      <p style="margin-top:8px;font-size:0.92rem">To get <strong>MU</strong> you need zero I's. But count the I's at each step:</p>
+      <ul style="font-size:0.9rem;color:var(--text2);padding-left:20px;margin:8px 0">
+        <li><strong>Start:</strong> MI has 1 I → 1 mod 3 = <strong>1</strong></li>
+        <li><strong>Rule I</strong> (add U): I-count unchanged</li>
+        <li><strong>Rule II</strong> (double after M): I-count doubles → mod 3 stays same or goes 1→2→1→2…</li>
+        <li><strong>Rule III</strong> (III→U): I-count drops by 3 → mod 3 unchanged!</li>
+        <li><strong>Rule IV</strong> (drop UU): I-count unchanged</li>
+      </ul>
+      <p style="font-size:0.92rem"><strong>No rule ever changes the I-count mod 3.</strong> Starting from 1, the count can be 1 or 2 mod 3, but <em>never</em> 0. You need 0 I's for MU. It's impossible — but proving this required <strong>stepping outside the system</strong>.</p>
+      <p style="font-size:0.88rem;color:var(--text3);margin-top:8px">This is the first taste of Gödel: the deepest truth about a system may not be provable <em>inside</em> it.</p>
+    </div>
+
+    <div class="miu-history" id="miu-history"></div>
+  </div>
+</div>
+</section>
+
+<!-- STRANGE LOOP -->
+<section id="strange-loop">
+<div class="container">
+  <h2>♾️ Strange Loop Visualizer</h2>
+  <p>A Strange Loop occurs when you traverse a hierarchy's levels and arrive back where you started. The same pattern appears in three radically different domains — music, art, and mathematics.</p>
+
+  <div class="demo">
+    <div class="tabs">
+      <div class="tab active" onclick="loopTab(this,'loop-bach')">🎵 Bach</div>
+      <div class="tab" onclick="loopTab(this,'loop-escher')">🎨 Escher</div>
+      <div class="tab" onclick="loopTab(this,'loop-godel')">🔢 Gödel</div>
+    </div>
+
+    <div class="tab-content active" id="loop-bach">
+      <h3 style="margin-top:0">The Endlessly Rising Canon</h3>
+      <p>From the Musical Offering: a canon that modulates upward through six keys, then arrives back at the starting key — one octave higher. You keep climbing, yet return to where you began.</p>
+      <div style="position:relative;height:260px;margin:20px 0;overflow:hidden" id="bach-loop-vis">
+        <canvas id="bach-canvas" style="width:100%;height:100%"></canvas>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="bachAnimate()" id="bach-play-btn">▶ Play the Loop</button>
+        <button onclick="bachReset()">↺ Reset</button>
+      </div>
+      <div id="bach-info" class="loop-info">
+        <p style="color:var(--text2);font-size:0.9rem">Click "Play the Loop" to watch the canon rise through keys and return to the start. Each level seems higher, but the spiral brings you home.</p>
+      </div>
+    </div>
+
+    <div class="tab-content" id="loop-escher">
+      <h3 style="margin-top:0">Escher's Impossible Hierarchies</h3>
+      <p>In <em>Drawing Hands</em>, a left hand draws a right hand which draws the left hand. In <em>Print Gallery</em>, a man looks at a picture of a town that contains the gallery he's standing in. Level-crossing made visible.</p>
+      <div style="margin:20px 0">
+        <div id="escher-diagram" style="display:flex;justify-content:center;align-items:center;min-height:220px">
+          <svg viewBox="0 0 400 250" width="100%" style="max-width:450px">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--gold)"/>
+              </marker>
+            </defs>
+            <!-- Three nodes in triangle -->
+            <circle cx="200" cy="40" r="35" fill="none" stroke="var(--gold)" stroke-width="2" class="loop-node" onclick="escherClick(0)"/>
+            <text x="200" y="44" text-anchor="middle" fill="var(--gold)" font-size="13" font-weight="600">Draws</text>
+            <circle cx="80" cy="200" r="35" fill="none" stroke="var(--purple)" stroke-width="2" class="loop-node" onclick="escherClick(1)"/>
+            <text x="80" y="204" text-anchor="middle" fill="var(--purple)" font-size="13" font-weight="600">Contains</text>
+            <circle cx="320" cy="200" r="35" fill="none" stroke="var(--amber)" stroke-width="2" class="loop-node" onclick="escherClick(2)"/>
+            <text x="320" y="204" text-anchor="middle" fill="var(--amber)" font-size="13" font-weight="600">Depicts</text>
+            <!-- Arrows -->
+            <path d="M 225 60 Q 290 110 310 170" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M 290 215 Q 200 230 115 215" fill="none" stroke="var(--purple)" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M 60 175 Q 50 110 175 45" fill="none" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="200" y="140" text-anchor="middle" fill="var(--text3)" font-size="11" font-style="italic">∞</text>
+          </svg>
+        </div>
+      </div>
+      <div class="loop-info">
+        <p style="color:var(--text2);font-size:0.9rem">Click each node. In Print Gallery: the picture <strong>depicts</strong> a town that <strong>contains</strong> a gallery that <strong>draws</strong> the picture. No level is "on top". At the center of Escher's Print Gallery is a blank spot — his signature. That blemish <em>must</em> be there; it's the incompleteness at the heart of self-reference.</p>
+      </div>
+    </div>
+
+    <div class="tab-content" id="loop-godel">
+      <h3 style="margin-top:0">Gödel's Self-Referential Loop</h3>
+      <p>Gödel constructed a statement G that says: <em>"This statement is not provable in TNT."</em> If the system is consistent, G must be true — but unprovable. The system talks about itself, and discovers its own limits.</p>
+      <div style="margin:20px 0">
+        <svg viewBox="0 0 400 200" width="100%" style="max-width:450px;display:block;margin:0 auto">
+          <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--blue)"/>
+            </marker>
+          </defs>
+          <!-- TNT box -->
+          <rect x="20" y="20" width="360" height="160" rx="12" fill="none" stroke="var(--surface3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="40" y="46" fill="var(--text3)" font-size="11">TNT (Formal System)</text>
+          <!-- G statement -->
+          <rect x="60" y="70" width="280" height="50" rx="8" fill="rgba(91,141,212,0.08)" stroke="var(--blue)" stroke-width="1.5"/>
+          <text x="200" y="92" text-anchor="middle" fill="var(--blue)" font-size="12" font-weight="600">G: "I am not provable in TNT"</text>
+          <text x="200" y="108" text-anchor="middle" fill="var(--text3)" font-size="10">← This is a number-theoretical statement about itself</text>
+          <!-- Self-referential arrow -->
+          <path d="M 340 95 C 380 95, 390 50, 340 40 C 280 25, 200 25, 140 40 C 90 50, 60 70, 60 80" fill="none" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#arrow2)" stroke-dasharray="4,3"/>
+          <text x="360" y="55" fill="var(--blue)" font-size="10" font-style="italic">refers to itself</text>
+          <!-- Truth label outside -->
+          <text x="200" y="196" text-anchor="middle" fill="var(--green)" font-size="11" font-weight="500">G is TRUE (from outside) but UNPROVABLE (from inside)</text>
+        </svg>
+      </div>
+      <div class="loop-info">
+        <p style="color:var(--text2);font-size:0.9rem"><strong>The Contracrostipunctus paraphrase:</strong> "For each record player there is a record which it cannot play." Every sufficiently powerful system has a blind spot — a true statement it cannot prove. Provability is a weaker notion than truth.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- GÖDEL NUMBERING -->
+<section id="godel">
+<div class="container">
+  <h2>🔢 Gödel Numbering Encoder</h2>
+  <p>Every symbol, formula, and proof in TNT can be encoded as a single number. This is how a formal system can <em>talk about itself</em> — statements about numbers become statements about the system's own strings.</p>
+
+  <div class="demo">
+    <h3>Symbol → Number Map</h3>
+    <div class="godel-table" id="godel-table"></div>
+
+    <h3>Encode a Formula</h3>
+    <p>Type TNT symbols: <code>0</code> <code>S</code> <code>=</code> <code>+</code> <code>×</code> <code>(</code> <code>)</code> <code>∀</code> <code>∃</code> <code>¬</code> <code>⊃</code> <code>∧</code> <code>∨</code> <code>a</code>-<code>e</code> <code>'</code></p>
+    <input type="text" class="godel-input" id="godel-input" placeholder="Try: Sa=SS0 or ∀a:¬∃b:(Sa×Sb)=a" value="S0=S0" oninput="godelEncode()">
+
+    <div style="margin-top:16px">
+      <strong style="color:var(--text3);font-size:0.85rem">Step 1: Symbol codes</strong>
+      <div class="godel-output" id="godel-codes"></div>
+    </div>
+    <div>
+      <strong style="color:var(--text3);font-size:0.85rem">Step 2: Gödel number (product of primes raised to codes)</strong>
+      <div class="godel-output" id="godel-number"></div>
+    </div>
+
+    <div class="card card-accent" style="margin-top:16px">
+      <strong style="color:var(--gold)">The Self-Reference Trick</strong>
+      <p style="font-size:0.9rem;margin-top:6px">When you encode a formula as a number <em>N</em>, you can substitute <em>N</em> back into the formula itself — <strong>arithmoquinification</strong>. The formula then refers to its own Gödel number. This is how G says "I am not provable": it describes the Gödel number of itself. The number refers to the string, and the string talks about the number.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- FORMAL SYSTEM EXPLORER -->
+<section id="formal">
+<div class="container">
+  <h2>⚙️ Formal System Explorer</h2>
+  <p>A formal system is just axioms + rules → theorems. The theorems are produced mechanically. Understanding what they <em>mean</em> requires stepping outside.</p>
+
+  <div class="demo">
+    <h3>Choose a System</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="primary" onclick="fsSelect('miu')">MIU System</button>
+      <button onclick="fsSelect('pq')">pq-System</button>
+      <button onclick="fsSelect('prop')">Propositional Calc</button>
+    </div>
+
+    <div id="fs-info"></div>
+
+    <h3>Axioms</h3>
+    <div class="fs-workspace" id="fs-axioms"></div>
+
+    <h3>Rules of Inference</h3>
+    <div id="fs-rules" style="font-size:0.9rem;color:var(--text2);margin-bottom:16px"></div>
+
+    <h3>Derived Theorems</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button onclick="fsDerive()">⚡ Derive Next</button>
+      <button onclick="fsDeriveMany()">⚡×10 Derive 10</button>
+      <button onclick="fsReset()">↺ Reset</button>
+    </div>
+    <div class="fs-workspace" id="fs-theorems"></div>
+
+    <div class="card card-accent" style="margin-top:16px">
+      <strong style="color:var(--gold)">Inside vs. Outside</strong>
+      <p style="font-size:0.9rem;margin-top:6px">Working <em>inside</em> the system (M-mode), you mechanically apply rules. Stepping <em>outside</em> (I-mode), you notice patterns — like the pq-system encoding addition, or the MIU system's mod-3 invariant. Intelligence is the ability to jump out.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- TANGLED HIERARCHY -->
+<section id="tangled">
+<div class="container">
+  <h2>🌀 Tangled Hierarchy</h2>
+  <p>A Tangled Hierarchy is a system where levels that "should" be cleanly separate fold back on each other. Below every tangle lies an <strong>Inviolate Level</strong> — the substrate that makes the tangle possible.</p>
+
+  <div class="demo">
+    <h3>The Authorship Triangle</h3>
+    <p>Author Z exists only in a novel by T. T exists only in a novel by E. E exists only in a novel by Z. Is this possible?</p>
+
+    <div id="th-container" style="margin:20px 0;position:relative">
+      <svg viewBox="0 0 440 380" width="100%" style="max-width:480px;display:block;margin:0 auto" id="th-svg">
+        <defs>
+          <marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--gold)"/>
+          </marker>
+        </defs>
+
+        <!-- Inviolate level -->
+        <rect x="120" y="300" width="200" height="60" rx="10" fill="rgba(91,173,122,0.08)" stroke="var(--green)" stroke-width="1.5" id="th-h" class="loop-node" onclick="thClick('h')"/>
+        <text x="220" y="325" text-anchor="middle" fill="var(--green)" font-size="14" font-weight="700">Author H</text>
+        <text x="220" y="342" text-anchor="middle" fill="var(--green)" font-size="10">INVIOLATE LEVEL</text>
+
+        <!-- Tangled level -->
+        <circle cx="220" cy="60" r="38" fill="rgba(212,168,83,0.06)" stroke="var(--gold)" stroke-width="1.5" id="th-z" class="loop-node" onclick="thClick('z')"/>
+        <text x="220" y="64" text-anchor="middle" fill="var(--gold)" font-size="14" font-weight="700">Z</text>
+
+        <circle cx="100" cy="220" r="38" fill="rgba(155,126,212,0.06)" stroke="var(--purple)" stroke-width="1.5" id="th-e" class="loop-node" onclick="thClick('e')"/>
+        <text x="100" y="224" text-anchor="middle" fill="var(--purple)" font-size="14" font-weight="700">E</text>
+
+        <circle cx="340" cy="220" r="38" fill="rgba(232,147,74,0.06)" stroke="var(--amber)" stroke-width="1.5" id="th-t" class="loop-node" onclick="thClick('t')"/>
+        <text x="340" y="224" text-anchor="middle" fill="var(--amber)" font-size="14" font-weight="700">T</text>
+
+        <!-- Tangle arrows -->
+        <path d="M 250 82 Q 310 140 335 185" fill="none" stroke="var(--gold)" stroke-width="1.5" marker-end="url(#arrow3)"/>
+        <text x="305" y="125" fill="var(--text3)" font-size="9">writes</text>
+        <path d="M 305 235 Q 220 260 138 235" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#arrow3)"/>
+        <text x="220" y="255" fill="var(--text3)" font-size="9">writes</text>
+        <path d="M 85 185 Q 80 120 190 68" fill="none" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#arrow3)"/>
+        <text x="110" y="120" fill="var(--text3)" font-size="9">writes</text>
+
+        <!-- H to all -->
+        <line x1="180" y1="300" x2="120" y2="256" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="220" y1="300" x2="220" y2="98" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="260" y1="300" x2="320" y2="256" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,3"/>
+
+        <text x="220" y="165" text-anchor="middle" fill="var(--text3)" font-size="10" font-style="italic">TANGLED LEVEL</text>
+      </svg>
+    </div>
+
+    <div class="loop-info" id="th-info">
+      <p style="color:var(--text2);font-size:0.9rem">Click any node. <strong>Z, T, E</strong> form a Strange Loop — each creates the next. But all three exist in a novel by <strong>H</strong>, who is on the Inviolate Level, outside their tangle. Similarly: your thoughts form a tangled hierarchy, but the neurons underneath are the inviolate substrate. You can't think your neurons into running differently.</p>
+    </div>
+
+    <h3>Real-World Tangles</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px">
+      <div class="card" style="font-size:0.88rem"><strong style="color:var(--gold)">Government:</strong> The Supreme Court interprets the Constitution, but the Constitution defines the Court's power. Who's on top?</div>
+      <div class="card" style="font-size:0.88rem"><strong style="color:var(--purple)">Escher:</strong> Drawing Hands — each hand draws the other. Behind them: the undrawn hand of Escher.</div>
+      <div class="card" style="font-size:0.88rem"><strong style="color:var(--amber)">Self:</strong> Your "I" is a symbol in the brain that models the brain containing it. The model is incomplete — and that incompleteness is free will.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CRAB CANON -->
+<section id="crab">
+<div class="container">
+  <h2>🦀 Crab Canon</h2>
+  <p>A crab canon is a sequence that reads the same forward and backward — named for crabs' supposed backward locomotion. Bach wrote one in the Musical Offering. Hofstadter wrote one as a Dialogue: Achilles' lines become the Tortoise's when read in reverse.</p>
+
+  <div class="demo">
+    <h3>The Dialogue Crab Canon</h3>
+    <p>Watch the lines mirror. The first half is Achilles→Tortoise; the second half reverses the speakers. The Crab appears at the exact center.</p>
+
+    <div class="crab-controls" style="margin-bottom:16px">
+      <button onclick="crabPlay()" id="crab-play-btn">▶ Play Forward</button>
+      <button onclick="crabPlayReverse()" id="crab-rev-btn">◀ Play Backward</button>
+      <button onclick="crabPause()">⏸ Pause</button>
+      <button onclick="crabReset()">↺ Reset</button>
+      <span style="font-size:0.82rem;color:var(--text3)" id="crab-pos"></span>
+    </div>
+
+    <div class="crab-display" id="crab-display"></div>
+
+    <div class="card card-accent" style="margin-top:20px">
+      <strong style="color:var(--gold)">The DNA Connection</strong>
+      <p style="font-size:0.9rem;margin-top:6px">Hofstadter includes a diagram of the Crab's DNA: <code>…TTTTTTTTTCGAAAAAAAAA…</code> paired with <code>…AAAAAAAAGCTTTTTTTTTT…</code>. The two strands are the same sequence, one forward and one backward — a biological crab canon. In molecular biology, these are called "palindromes" (a slight misnomer; "crab canon" would be more accurate).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CHAPTER NAVIGATOR -->
+<section id="chapters">
+<div class="container">
+  <h2>📖 Chapter Navigator</h2>
+  <p>Part I builds the machinery. Part II applies it to brains, minds, AI, and consciousness. Dialogues (purple border) preview each Chapter.</p>
+
+  <div style="margin-bottom:12px">
+    <div class="tabs">
+      <div class="tab active" onclick="chapTab(this,'chap-1')">Part I: GEB</div>
+      <div class="tab" onclick="chapTab(this,'chap-2')">Part II: EGB</div>
+    </div>
+  </div>
+
+  <div class="tab-content active" id="chap-1">
+    <div class="chapter-grid">
+      <div class="chapter-card"><div class="ch-num">Introduction</div><div class="ch-title">A Musico-Logical Offering</div><div class="ch-desc">Bach visits Frederick the Great. The Musical Offering. First taste of Strange Loops.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Three-Part Invention</div><div class="ch-desc">Achilles, Tortoise, and Zeno are born. Zeno's paradoxes of motion.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter I</div><div class="ch-title">The MU-puzzle</div><div class="ch-desc">Formal systems. Working inside vs. outside. Jumping out of the system.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Two-Part Invention</div><div class="ch-desc">Carroll's infinite regress paradox. Reasoning about reasoning about reasoning…</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter II</div><div class="ch-title">Meaning and Form in Mathematics</div><div class="ch-desc">The pq-system. Isomorphism as the key to meaning.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Sonata for Unaccompanied Achilles</div><div class="ch-desc">Figure and ground — you hear only one side of a phone call.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter III</div><div class="ch-title">Figure and Ground</div><div class="ch-desc">Recursive vs. recursively enumerable sets. The ground may have no pattern.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Contracrostipunctus</div><div class="ch-desc">THE central Dialogue. "For each record player there is a record it cannot play."</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter IV</div><div class="ch-title">Consistency, Completeness, and Geometry</div><div class="ch-desc">Non-Euclidean geometry. Independence of axioms.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Little Harmonic Labyrinth</div><div class="ch-desc">Stories within stories. GOD Over Djinn. Tumbolia.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter V</div><div class="ch-title">Recursive Structures and Processes</div><div class="ch-desc">Recursion everywhere. Hofstadter's Law.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Canon by Intervallic Augmentation</div><div class="ch-desc">One record, many players. B-A-C-H and C-A-G-E from the same grooves.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter VI</div><div class="ch-title">The Location of Meaning</div><div class="ch-desc">Where does meaning reside? In the message, the decoder, or the receiver?</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Chromatic Fantasy, And Feud</div><div class="ch-desc">Can the word "and" be formally governed?</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter VII</div><div class="ch-title">The Propositional Calculus</div><div class="ch-desc">Formal logic with Zen sentences ("Zentences").</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Crab Canon</div><div class="ch-desc">Reads the same forwards and backwards. The densest Dialogue in the book.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter VIII</div><div class="ch-title">Typographical Number Theory</div><div class="ch-desc">TNT: a formal system for all of number theory. Peano axioms.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">A Mu Offering</div><div class="ch-desc">Zen meets molecular biology. Does a string have "Buddha-nature"?</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter IX</div><div class="ch-title">Mumon and Gödel</div><div class="ch-desc">Gödel numbering. First pass through the Incompleteness Theorem.</div></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="chap-2">
+    <div class="chapter-grid">
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Prelude…</div><div class="ch-desc">Bach's WTC. Holism vs. reductionism: how to hear a fugue?</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter X</div><div class="ch-title">Levels of Description</div><div class="ch-desc">Machine code → assembly → compiler. The right level of description.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">…Ant Fugue</div><div class="ch-desc">Aunt Hillary, the conscious ant colony. HOLISM/REDUCTIONISM/MU.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XI</div><div class="ch-title">Brains and Thoughts</div><div class="ch-desc">Neurons as hardware, symbols as software. The Prototype Principle.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">English French German Suite</div><div class="ch-desc">Jabberwocky in three languages. Can minds be mapped onto each other?</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XII</div><div class="ch-title">Minds and Thoughts</div><div class="ch-desc">Communication between brains. The geographic analogy.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Aria with Diverse Variations</div><div class="ch-desc">Goldbach conjecture, twin primes. Searching infinite spaces.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XIII</div><div class="ch-title">BlooP and FlooP and GlooP</div><div class="ch-desc">Bounded vs. unbounded computation. Primitive recursive functions.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Air on G's String</div><div class="ch-desc">Quine's self-reference: "yields falsehood when preceded by its quotation"</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XIV</div><div class="ch-title">On Formally Undecidable Propositions</div><div class="ch-desc">The full Gödel proof. Arithmoquinification. Essential incompleteness.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Birthday Cantatatata…</div><div class="ch-desc">The Tortoise won't believe it's Achilles' birthday. Gödel's argument repeats.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XV</div><div class="ch-title">Jumping out of the System</div><div class="ch-desc">Essential incompleteness. The Lucas argument demolished.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Edifying Thoughts of a Tobacco Smoker</div><div class="ch-desc">TV cameras filming TV screens. Self-replication.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XVI</div><div class="ch-title">Self-Ref and Self-Rep</div><div class="ch-desc">Self-reproducing programs, DNA, the bootstrap problem of life.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">The Magnificrab, Indeed</div><div class="ch-desc">Can beauty distinguish theorems from non-theorems? A letter from "Najunamar."</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XVII</div><div class="ch-title">Church, Turing, Tarski, and Others</div><div class="ch-desc">Church-Turing Thesis. The halting problem. Tarski's Truth Theorem.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">SHRDLU, Toy of Man's Designing</div><div class="ch-desc">Winograd's blocks-world program. Impressive but shallow understanding.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XVIII</div><div class="ch-title">AI: Retrospects</div><div class="ch-desc">Turing test, chess programs, Eliza. Each advance reveals new depths.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Contrafactus</div><div class="ch-desc">Counterfactual reasoning. The Sloth hates hypotheticals.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XIX</div><div class="ch-title">AI: Prospects</div><div class="ch-desc">Frames, Bongard problems, creativity. The extraordinary "Ten Questions."</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Sloth Canon</div><div class="ch-desc">The Sloth negates the Tortoise at half speed. An upside-down, slowed canon.</div></div>
+      <div class="chapter-card"><div class="ch-num">Chapter XX</div><div class="ch-title">Strange Loops, Or Tangled Hierarchies</div><div class="ch-desc">The grand synthesis. Consciousness, free will, the Inviolate Level.</div></div>
+      <div class="chapter-card dialogue"><div class="ch-num">Dialogue</div><div class="ch-title">Six-Part Ricercar</div><div class="ch-desc">The finale. The Musical Offering retold. The book loops back to its beginning.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- AI PREDICTIONS -->
+<section id="ai">
+<div class="container">
+  <h2>🤖 Hofstadter's AI Predictions (1979)</h2>
+  <p>In Chapter XIX, Hofstadter posed "Ten Questions and Speculations" about AI. Writing 45+ years before GPT-4, his insights are startlingly prescient — and sometimes startlingly wrong.</p>
+
+  <div class="ai-prediction">
+    <div class="question">Will a computer program ever write beautiful music?</div>
+    <div class="answer">"Yes, but not soon. Music is a language of emotions, and until programs have emotions as complex as ours, there is no way a program will write anything beautiful." He rails against the idea of a "twenty-dollar desk-model music box" producing Chopin — a program would need to "wander around the world on its own, fighting its way through the maze of life and feeling every moment of it."</div>
+    <div class="verdict verdict-mixed">🤔 Mixed — AI now produces music many find moving, but the "wander the world" criterion remains unmet. Beautiful syntax, debatable soul.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Will emotions be explicitly programmed?</div>
+    <div class="answer">"No. That is ridiculous. Any direct simulation of emotions cannot approach the complexity of human emotions, which arise indirectly from the organization of our minds. Nobody will write a 'falling-in-love' subroutine."</div>
+    <div class="verdict verdict-prescient">✅ Prescient — LLMs have something like emergent "moods" from training, not hardcoded emotion modules. Exactly as he predicted.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Will a thinking computer add fast?</div>
+    <div class="answer">"Perhaps not. We ourselves are composed of hardware which does fancy calculations but that doesn't mean our symbol level knows how to carry out the same fancy calculations." A truly intelligent program would represent "2" as a rich concept with associations, not just bits — making it <em>slower</em> at arithmetic.</div>
+    <div class="verdict verdict-prescient">✅ Prescient — LLMs infamously struggle with arithmetic despite running on GPUs that do billions of calculations per second. The symbol level can't access the hardware level.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Will there be chess programs that beat everyone?</div>
+    <div class="answer">"No. There may be programs which can beat anyone at chess, but they will not be exclusively chess players. They will be programs of general intelligence, and they will be just as temperamental as people." He imagined the program saying: "No, I'm bored with chess. Let's talk about poetry."</div>
+    <div class="verdict verdict-wrong">❌ Wrong — Deep Blue and AlphaZero beat everyone via specialized computation, not general intelligence. Narrow AI surprised Hofstadter.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Can you "tune" a program's personality?</div>
+    <div class="answer">"No. An intelligent program will not be chameleon-like. It will rely on the constancy of its memories. The idea of changing internal parameters to 'tune to a new personality' reveals a ridiculous underestimation of the complexity of personality."</div>
+    <div class="verdict verdict-mixed">🤔 Mixed — System prompts and RLHF can dramatically shift LLM personality. But the resulting "personalities" may be exactly the shallow chameleonism he warned against.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Will there be a "heart" to an AI program?</div>
+    <div class="answer">"When we create a program that passes the Turing test, we will see a 'heart' even though we know it's not there." The program's depth will be such that we can't peer to the bottom — loops invisible, like electrons to a programmer.</div>
+    <div class="verdict verdict-prescient">✅ Prescient — This is exactly the experience people report with modern LLMs: they feel like they're talking to someone, even knowing it's statistical patterns. We see a heart.</div>
+  </div>
+
+  <div class="ai-prediction">
+    <div class="question">Will AI become "superintelligent"?</div>
+    <div class="answer">"I don't know. A creature with a radically different view of the world may simply not have many points of contact with us. I have wondered if there could be pieces of music which are to Bach as Bach is to folk tunes: 'Bach squared'. Would I be able to understand them?"</div>
+    <div class="verdict verdict-mixed">🤔 Open question — The concept of "Bach squared" remains one of the most haunting thought experiments in AI philosophy.</div>
+  </div>
+</div>
+</section>
+
+<!-- QUOTES -->
+<section id="quotes">
+<div class="container">
+  <h2>💬 Essential Quotes</h2>
+
+  <blockquote>
+    "It is an inherent property of intelligence that it can jump out of the task which it is performing, and survey what it has done; it is always looking for, and often finding, patterns."
+    <cite>— Chapter I: The MU-puzzle</cite>
+  </blockquote>
+
+  <blockquote>
+    "The 'Strange Loop' phenomenon occurs whenever, by moving upwards (or downwards) through the levels of some hierarchical system, we unexpectedly find ourselves right back where we started."
+    <cite>— Introduction: A Musico-Logical Offering</cite>
+  </blockquote>
+
+  <blockquote>
+    "Gödel showed that provability is a weaker notion than truth, no matter what axiomatic system is involved."
+    <cite>— Introduction</cite>
+  </blockquote>
+
+  <blockquote>
+    "Hofstadter's Law: It always takes longer than you expect, even when you take into account Hofstadter's Law."
+    <cite>— Chapter V: Recursive Structures and Processes</cite>
+  </blockquote>
+
+  <blockquote>
+    "It is such perceptions of isomorphism which create meanings in the minds of people."
+    <cite>— Chapter II: Meaning and Form in Mathematics</cite>
+  </blockquote>
+
+  <blockquote>
+    "A 'program' which could produce music as they did would have to wander around the world on its own, fighting its way through the maze of life and feeling every moment of it. It would have to understand the joy and loneliness of a chilly night wind, the longing for a cherished hand, the inaccessibility of a distant town, the heartbreak and regeneration after a human death."
+    <cite>— Chapter XIX: Artificial Intelligence: Prospects</cite>
+  </blockquote>
+
+  <blockquote>
+    "For each record player there is a record which it cannot play."
+    <cite>— Contracrostipunctus (paraphrase of Gödel's Theorem)</cite>
+  </blockquote>
+
+  <blockquote>
+    "In the end, we are self-perceiving, self-inventing, locked-in mirages that are little miracles of self-reference."
+    <cite>— Chapter XX: Strange Loops, Or Tangled Hierarchies</cite>
+  </blockquote>
+
+  <blockquote>
+    "When we create a program that passes the Turing test, we will see a 'heart' even though we know it's not there."
+    <cite>— Chapter XIX: Artificial Intelligence: Prospects</cite>
+  </blockquote>
+
+  <blockquote>
+    "Nature feels quite comfortable in mixing levels which we tend to see as quite distinct."
+    <cite>— Chapter XVI: Self-Ref and Self-Rep</cite>
+  </blockquote>
+
+  <blockquote>
+    "The Musical Offering is a fugue of fugues, a Tangled Hierarchy like those of Escher and Gödel, an intellectual construction which reminds me, in ways I cannot express, of the beautiful many-voiced fugue of the human mind."
+    <cite>— Chapter XX: Strange Loops, Or Tangled Hierarchies</cite>
+  </blockquote>
+</div>
+</section>
+
+<!-- FINAL -->
+<section style="text-align:center;padding:80px 20px">
+<div class="container">
+  <h2 style="margin-bottom:20px">The Deepest Takeaway</h2>
+  <p style="font-size:1.1rem;max-width:680px;margin:0 auto;color:var(--text)">You are a Strange Loop. Your sense of "I" is a self-referential symbol in a brain made of neurons that know nothing of "I." The gap between the meaningless substrate and the meaningful whole is the same gap Gödel found between provability and truth — and that gap is where consciousness lives.</p>
+  <div style="margin-top:32px;font-size:2rem;letter-spacing:8px;color:var(--gold)">∞</div>
+  <p style="margin-top:16px;font-size:0.85rem;color:var(--text3)">This book report is itself a Strange Loop — it ends where it begins, with three letters: <strong style="color:var(--gold)">G, E, B</strong>.</p>
+</div>
+</section>
+
+<!-- ============ SCRIPTS ============ -->
+<script>
+// ===== MIU PUZZLE =====
+let miuState = { current: 'MI', history: ['MI'], steps: 0 };
+
+function miuUpdate() {
+  const s = miuState.current;
+  document.getElementById('miu-current').textContent = s;
+  const iCount = (s.match(/I/g) || []).length;
+  document.getElementById('miu-icount').textContent = iCount;
+  document.getElementById('miu-mod3').textContent = iCount % 3;
+  document.getElementById('miu-len').textContent = s.length;
+  document.getElementById('miu-steps').textContent = miuState.steps;
+
+  // Update rule availability
+  const rules = document.querySelectorAll('.miu-rule');
+  rules[0].classList.toggle('disabled', !s.endsWith('I'));
+  rules[2].classList.toggle('disabled', !s.includes('III'));
+  rules[3].classList.toggle('disabled', !s.includes('UU'));
+
+  // History
+  const hist = document.getElementById('miu-history');
+  hist.innerHTML = miuState.history.map((h, i) =>
+    `<div><span style="color:var(--text3)">${i}.</span> ${h}</div>`
+  ).join('');
+  hist.scrollTop = hist.scrollHeight;
+}
+
+function miuApply(rule) {
+  let s = miuState.current;
+  let result = null;
+  switch(rule) {
+    case 1:
+      if (s.endsWith('I')) result = s + 'U';
+      break;
+    case 2:
+      result = 'M' + s.slice(1) + s.slice(1);
+      break;
+    case 3:
+      if (s.includes('III')) {
+        const idx = s.indexOf('III');
+        result = s.slice(0, idx) + 'U' + s.slice(idx + 3);
+      }
+      break;
+    case 4:
+      if (s.includes('UU')) {
+        const idx = s.indexOf('UU');
+        result = s.slice(0, idx) + s.slice(idx + 2);
+      }
+      break;
+  }
+  if (result && result.length < 500) {
+    miuState.current = result;
+    miuState.history.push(result);
+    miuState.steps++;
+    miuUpdate();
+  }
+}
+
+function miuReset() {
+  miuState = { current: 'MI', history: ['MI'], steps: 0 };
+  miuUpdate();
+}
+
+function miuUndo() {
+  if (miuState.history.length > 1) {
+    miuState.history.pop();
+    miuState.current = miuState.history[miuState.history.length - 1];
+    miuState.steps = Math.max(0, miuState.steps - 1);
+    miuUpdate();
+  }
+}
+
+function miuReveal() {
+  const el = document.getElementById('miu-reveal');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+miuUpdate();
+
+// ===== STRANGE LOOP TABS =====
+function loopTab(btn, id) {
+  btn.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.demo').querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'loop-bach') bachSetup();
+}
+
+// Bach spiral visualization
+let bachAnim = null;
+function bachSetup() {
+  const canvas = document.getElementById('bach-canvas');
+  if (!canvas) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * 2;
+  canvas.height = rect.height * 2;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  bachDraw(0);
+}
+
+const KEYS = ['C', 'D', 'E', 'F♯', 'G♯', 'A♯', 'C\''];
+
+function bachDraw(progress) {
+  const canvas = document.getElementById('bach-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H * 0.55;
+  const rx = W * 0.35, ry = H * 0.3;
+
+  // Draw spiral path
+  ctx.beginPath();
+  for (let i = 0; i <= 360; i++) {
+    const a = (i - 90) * Math.PI / 180;
+    const x = cx + rx * Math.cos(a);
+    const y = cy + ry * Math.sin(a) - (i / 360) * H * 0.25;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = 'rgba(212,168,83,0.2)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw key markers
+  for (let i = 0; i < 7; i++) {
+    const frac = i / 6;
+    const a = (frac * 360 - 90) * Math.PI / 180;
+    const x = cx + rx * Math.cos(a);
+    const y = cy + ry * Math.sin(a) - frac * H * 0.25;
+    const active = progress >= frac;
+
+    ctx.beginPath();
+    ctx.arc(x, y, active ? 16 : 10, 0, Math.PI * 2);
+    ctx.fillStyle = active ? 'rgba(212,168,83,0.3)' : 'rgba(255,255,255,0.05)';
+    ctx.fill();
+    ctx.strokeStyle = active ? '#d4a853' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = active ? 2.5 : 1;
+    ctx.stroke();
+
+    ctx.fillStyle = active ? '#d4a853' : '#6b6560';
+    ctx.font = `${active ? 'bold ' : ''}${active ? 22 : 18}px Inter`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(KEYS[i], x, y);
+  }
+
+  // Progress dot
+  if (progress > 0) {
+    const a = (progress * 360 - 90) * Math.PI / 180;
+    const x = cx + rx * Math.cos(a);
+    const y = cy + ry * Math.sin(a) - progress * H * 0.25;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8934a';
+    ctx.fill();
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#e8934a';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function bachAnimate() {
+  if (bachAnim) cancelAnimationFrame(bachAnim);
+  let start = null;
+  const duration = 4000;
+  const info = document.getElementById('bach-info');
+
+  function step(ts) {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / duration, 1);
+    const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    bachDraw(eased);
+
+    const keyIdx = Math.min(Math.floor(eased * 7), 6);
+    if (eased >= 0.98) {
+      info.innerHTML = '<p style="color:var(--gold);font-weight:600">The canon returns to C — one octave higher. You\'ve risen through every key and arrived where you started. A Strange Loop in music.</p>';
+    } else {
+      info.innerHTML = `<p style="color:var(--text2);font-size:0.9rem">Modulating through: <strong style="color:var(--gold)">${KEYS[keyIdx]}</strong> — key ${keyIdx + 1} of 6…</p>`;
+    }
+
+    if (p < 1) bachAnim = requestAnimationFrame(step);
+  }
+  bachAnim = requestAnimationFrame(step);
+}
+
+function bachReset() {
+  if (bachAnim) cancelAnimationFrame(bachAnim);
+  bachDraw(0);
+  document.getElementById('bach-info').innerHTML = '<p style="color:var(--text2);font-size:0.9rem">Click "Play the Loop" to watch the canon rise through keys and return to the start.</p>';
+}
+
+function escherClick(i) {
+  const msgs = [
+    'The picture <strong>draws</strong> itself — it depicts the very gallery that displays it.',
+    'The gallery <strong>contains</strong> the picture, which contains the town, which contains the gallery…',
+    'The town <strong>depicts</strong> the gallery. Each level claims to be "above" the other. The hierarchy is tangled.'
+  ];
+  document.querySelector('#loop-escher .loop-info').innerHTML = `<p style="color:var(--text2);font-size:0.9rem">${msgs[i]}</p>`;
+}
+
+// ===== GÖDEL NUMBERING =====
+const GODEL_MAP = {
+  '0': 1, 'S': 2, '=': 3, '+': 4, '×': 5, '(': 6, ')': 7,
+  '∀': 8, '∃': 9, '¬': 10, '⊃': 11, '∧': 12, '∨': 13,
+  'a': 14, 'b': 15, 'c': 16, 'd': 17, 'e': 18, "'": 19,
+  ':': 20, ' ': 0
+};
+
+const PRIMES = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113];
+
+function godelInit() {
+  const table = document.getElementById('godel-table');
+  table.innerHTML = Object.entries(GODEL_MAP).filter(([k,v]) => v > 0).map(([k,v]) =>
+    `<div class="godel-cell"><div class="sym">${k}</div><div class="num">${v}</div></div>`
+  ).join('');
+  godelEncode();
+}
+
+function godelEncode() {
+  const input = document.getElementById('godel-input').value;
+  const chars = [...input].filter(c => c in GODEL_MAP && GODEL_MAP[c] > 0);
+  const codes = chars.map(c => GODEL_MAP[c] || 0);
+
+  document.getElementById('godel-codes').innerHTML = chars.map((c, i) =>
+    `<span style="color:var(--gold)">${c}</span><span style="color:var(--text3)">→${codes[i]}</span>`
+  ).join('  ');
+
+  if (codes.length === 0) {
+    document.getElementById('godel-number').textContent = '(type a formula above)';
+    return;
+  }
+
+  // Show the product representation (actual number would be astronomical)
+  const factors = codes.map((c, i) => i < PRIMES.length ? `${PRIMES[i]}^${c}` : `p${i+1}^${c}`);
+  document.getElementById('godel-number').innerHTML =
+    `<span style="color:var(--text3)">Gödel number = </span>${factors.join(' × ')}<br>` +
+    `<span style="color:var(--text3);font-size:0.82rem">= an astronomically large number that uniquely encodes this formula. Every formula gets a different number. Every proof gets a different number. TNT can talk about these numbers — and therefore about itself.</span>`;
+}
+
+godelInit();
+
+// ===== FORMAL SYSTEM EXPLORER =====
+let fsState = { system: 'miu', axioms: [], theorems: [], rules: [], step: 0 };
+
+const FS_SYSTEMS = {
+  miu: {
+    name: 'MIU System',
+    axioms: ['MI'],
+    ruleDesc: ['xI → xIU', 'Mx → Mxx', 'xIIIy → xUy', 'xUUy → xy'],
+    info: 'The MIU system. Start with MI, apply 4 rules. Can you make MU? (No — I-count mod 3 never reaches 0.)',
+    derive(theorems) {
+      const results = [];
+      for (const s of theorems) {
+        if (s.endsWith('I')) results.push(s + 'U');
+        results.push('M' + s.slice(1) + s.slice(1));
+        let idx = s.indexOf('III');
+        if (idx >= 0) results.push(s.slice(0, idx) + 'U' + s.slice(idx + 3));
+        idx = s.indexOf('UU');
+        if (idx >= 0) results.push(s.slice(0, idx) + s.slice(idx + 2));
+      }
+      return results.filter(r => r.length > 0 && r.length < 60);
+    }
+  },
+  pq: {
+    name: 'pq-System (Addition)',
+    axioms: ['xp-qx-', 'where x is any hyphen-string'],
+    ruleDesc: ['If xpyqz is a theorem, then xpy-qz- is a theorem'],
+    info: 'Axiom schema: -p-q-- , --p-q--- , etc. (x hyphens, then p, then one hyphen, then q, then x+1 hyphens). Rule: add a hyphen to y and z. Secretly encodes addition: x + y = z.',
+    genAxioms() {
+      const ax = [];
+      for (let x = 1; x <= 5; x++) {
+        ax.push('-'.repeat(x) + 'p-q' + '-'.repeat(x + 1));
+      }
+      return ax;
+    },
+    derive(theorems) {
+      const results = [];
+      for (const s of theorems) {
+        const m = s.match(/^(-+)p(-+)q(-+)$/);
+        if (m) results.push(m[1] + 'p' + m[2] + '-' + 'q' + m[3] + '-');
+      }
+      return results.filter(r => r.length < 40);
+    }
+  },
+  prop: {
+    name: 'Propositional Calculus',
+    axioms: ['P⊃(Q⊃P)', '(P⊃(Q⊃R))⊃((P⊃Q)⊃(P⊃R))', '(¬P⊃¬Q)⊃(Q⊃P)'],
+    ruleDesc: ['Modus Ponens: from P and P⊃Q, derive Q'],
+    info: 'The foundation of logical reasoning. Three axiom schemas + one rule. From these, all propositional tautologies can be derived.',
+    derive(theorems) {
+      // Simplified: just show some tautologies
+      const extra = ['P⊃P', '¬¬P⊃P', 'P⊃¬¬P', '(P⊃Q)⊃(¬Q⊃¬P)', 'P∨¬P'];
+      return [extra[Math.min(fsState.step, extra.length - 1)]];
+    }
+  }
+};
+
+function fsSelect(sys) {
+  fsState.system = sys;
+  fsState.step = 0;
+  const S = FS_SYSTEMS[sys];
+  document.getElementById('fs-info').innerHTML = `<p style="font-size:0.9rem">${S.info}</p>`;
+
+  const axioms = sys === 'pq' ? S.genAxioms() : S.axioms;
+  fsState.axioms = [...axioms];
+  fsState.theorems = [...axioms];
+
+  document.getElementById('fs-axioms').innerHTML = axioms.map(a =>
+    `<span class="fs-theorem fs-axiom">${a}</span>`
+  ).join('');
+
+  document.getElementById('fs-rules').innerHTML = S.ruleDesc.map(r =>
+    `<div style="padding:4px 0">• ${r}</div>`
+  ).join('');
+
+  fsRender();
+
+  // Update button styles
+  document.querySelectorAll('#formal .demo > div:first-of-type button').forEach(b => b.classList.remove('primary'));
+  event.target.classList.add('primary');
+}
+
+function fsDerive() {
+  const S = FS_SYSTEMS[fsState.system];
+  const newTheorems = S.derive(fsState.theorems);
+  const unique = newTheorems.filter(t => !fsState.theorems.includes(t));
+  if (unique.length > 0) {
+    const added = unique[0];
+    fsState.theorems.push(added);
+    fsState.step++;
+  }
+  fsRender();
+}
+
+function fsDeriveMany() {
+  for (let i = 0; i < 10; i++) fsDerive();
+}
+
+function fsReset() {
+  fsState.theorems = [...fsState.axioms];
+  fsState.step = 0;
+  fsRender();
+}
+
+function fsRender() {
+  const derived = fsState.theorems.filter(t => !fsState.axioms.includes(t));
+  document.getElementById('fs-theorems').innerHTML = derived.length === 0
+    ? '<p style="font-size:0.85rem;color:var(--text3)">Click "Derive Next" to produce theorems.</p>'
+    : derived.map(t => `<span class="fs-theorem">${t}</span>`).join('');
+}
+
+fsSelect('miu');
+
+// ===== TANGLED HIERARCHY =====
+function thClick(node) {
+  const msgs = {
+    z: '<strong style="color:var(--gold)">Z</strong> writes a novel featuring E. E writes a novel featuring T. T writes a novel featuring Z. A perfect loop — but who started it?',
+    t: '<strong style="color:var(--amber)">T</strong> creates Z in fiction. Z creates E. E creates T. Each author is simultaneously creator and creation.',
+    e: '<strong style="color:var(--purple)">E</strong> invents Z — who invents T — who invents E. The hierarchy is tangled. But all three live in H\'s novel.',
+    h: '<strong style="color:var(--green)">Author H</strong> is on the <em>Inviolate Level</em>. Z, T, and E can do anything to each other, but they can\'t touch H. Just as your thoughts form tangles, but neurons underneath are the inviolate substrate.'
+  };
+  document.getElementById('th-info').innerHTML = `<p style="color:var(--text2);font-size:0.9rem">${msgs[node]}</p>`;
+}
+
+// ===== CRAB CANON =====
+const CRAB_LINES = [
+  { a: "Good day, Mr. A.", t: "Good day, Mr. T." },
+  { a: "So nice to run into you.", t: "So nice to run into you." },
+  { a: "That echoes my thoughts.", t: "That echoes my thoughts." },
+  { a: "And it's a perfect day for a walk. I think I'll be walking home soon.", t: "Oh, really? I guess there's nothing better for you than a walk." },
+  { a: "Incidentally, you're looking in very fine fettle these days, I must say.", t: "Thank you very much." },
+  { a: "Not at all. Here, care for one of my cigars?", t: "Oh, you are such a philistine. In this area, the Dutch contributions are of markedly inferior taste, don't you think?" },
+  { a: "I disagree, in this case. But speaking of taste, I finally saw that Crab Canon by your favorite artist, M. C. Escher…", t: "I disagree, in this case. But speaking of taste, I finally heard that Crab Canon by your favorite composer, J. S. Bach…" },
+  { a: "I don't know. But one thing for certain is that I don't worry about arguments of taste.", t: "I don't know. But one thing for certain is that I don't worry about arguments of taste." },
+  { a: "To be precise, one has no frets.", t: "Tell me, what's it like to be your age? Is it true that one has no worries at all?" },
+  { a: "Fiddle. It makes a big difference, you know.", t: "Oh, well, it's all the same to me." },
+  { a: "Say, don't you play the guitar?", t: "That's my good friend. He often plays the fool." },
+  { a: "That's my good friend. He often plays, the fool. But I myself wouldn't touch a guitar with a ten-foot pole!", t: "Say, don't you play the guitar?" }
+];
+
+const CRAB_CENTER = "Hallo! Hulloo! What's up? What's new? … I'm always turning things round and round, you know. It's in our genes, after all. Which came first — the Crab, or the Gene?";
+
+let crabInterval = null;
+let crabPos = -1;
+
+function crabRender() {
+  const el = document.getElementById('crab-display');
+  const total = CRAB_LINES.length * 2 + 1;
+  let html = '';
+
+  for (let i = 0; i < CRAB_LINES.length; i++) {
+    const active = i === crabPos;
+    html += `<div class="crab-row ${active ? 'active' : ''}">
+      <span class="crab-forward">Achilles: ${CRAB_LINES[i].a}</span>
+    </div>`;
+  }
+
+  const centerActive = crabPos === CRAB_LINES.length;
+  html += `<div class="crab-center ${centerActive ? 'active' : ''}" style="${centerActive ? 'background:rgba(232,147,74,0.1);border-radius:8px' : ''}">🦀 Crab: ${CRAB_CENTER}</div>`;
+
+  for (let i = CRAB_LINES.length - 1; i >= 0; i--) {
+    const revIdx = CRAB_LINES.length + (CRAB_LINES.length - i);
+    const active = crabPos === revIdx;
+    html += `<div class="crab-row ${active ? 'active' : ''}">
+      <span class="crab-backward">Tortoise: ${CRAB_LINES[i].t}</span>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+  document.getElementById('crab-pos').textContent = crabPos >= 0 ? `Line ${crabPos + 1} of ${total}` : '';
+
+  // Scroll active into view
+  const activeEl = el.querySelector('.active');
+  if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function crabPlay() {
+  crabPause();
+  const total = CRAB_LINES.length * 2 + 1;
+  crabInterval = setInterval(() => {
+    crabPos++;
+    if (crabPos >= total) { crabPause(); crabPos = total - 1; }
+    crabRender();
+  }, 1200);
+}
+
+function crabPlayReverse() {
+  crabPause();
+  if (crabPos < 0) crabPos = CRAB_LINES.length * 2;
+  crabInterval = setInterval(() => {
+    crabPos--;
+    if (crabPos < 0) { crabPause(); crabPos = 0; }
+    crabRender();
+  }, 1200);
+}
+
+function crabPause() {
+  if (crabInterval) { clearInterval(crabInterval); crabInterval = null; }
+}
+
+function crabReset() {
+  crabPause();
+  crabPos = -1;
+  crabRender();
+}
+
+crabRender();
+
+// ===== CHAPTER TABS =====
+function chapTab(btn, id) {
+  btn.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#chapters .tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Init Bach canvas on load
+window.addEventListener('load', () => { setTimeout(bachSetup, 100); });
+window.addEventListener('resize', bachSetup);
+</script>
+
+</body>
+</html>

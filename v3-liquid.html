@@ -221,39 +221,13 @@ h1 {
 
 <div class="content">
   <div class="logo-container">
-    <svg class="blob-logo" viewBox="0 0 100 100">
-      <defs>
-        <filter id="goo">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
-          <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo"/>
-        </filter>
-        <linearGradient id="blob-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#ff6b6b"/>
-          <stop offset="50%" style="stop-color:#a855f7"/>
-          <stop offset="100%" style="stop-color:#3b82f6"/>
-        </linearGradient>
-      </defs>
-      <g filter="url(#goo)">
-        <circle class="blob-circle" cx="35" cy="35" r="20">
-          <animate attributeName="cx" values="35;45;35;25;35" dur="4s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="35;25;45;35;35" dur="4s" repeatCount="indefinite"/>
-        </circle>
-        <circle class="blob-circle" cx="65" cy="35" r="18">
-          <animate attributeName="cx" values="65;55;65;75;65" dur="3.5s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="35;45;25;35;35" dur="3.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle class="blob-circle" cx="50" cy="65" r="22">
-          <animate attributeName="cx" values="50;60;40;50;50" dur="4.5s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="65;55;65;75;65" dur="4.5s" repeatCount="indefinite"/>
-        </circle>
-      </g>
-    </svg>
+    <img src="logo.svg" alt="Web and Circuits" style="width:100px;height:100px;filter:brightness(0) invert(1) drop-shadow(0 0 30px rgba(168,85,247,0.4));animation:float-orb 6s ease-in-out infinite;">
   </div>
   
   <h1>Web &<br>Circuits LLC</h1>
   
   <p class="tagline">
-    Software, demos, and experiments — always in motion.
+    <span style="color:#ff6b6b">Make</span> the best of things. Have <span style="color:#ff6b6b">your fun</span>.
   </p>
   
   <div class="buttons">

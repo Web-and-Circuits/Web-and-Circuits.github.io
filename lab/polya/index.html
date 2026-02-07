@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Solve It — Interactive Book Report v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--border:#2a2a2a;--text:#e8e4df;--dim:#8a8580;--accent:#d4a056;--accent2:#6ba3be;--green:#5cb85c;--red:#c44;--phase1:#d4a056;--phase2:#6ba3be;--phase3:#b07cc6;--phase4:#5cb85c;--font-d:'Playfair Display',serif;--font-b:'EB Garamond',serif;--font-u:'Inter',sans-serif;--font-m:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:19px;line-height:1.7;overflow-x:hidden}
+#progress{position:fixed;top:0;left:0;height:3px;z-index:999;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .15s}
+.back-link{position:fixed;top:16px;left:20px;z-index:998;font-family:var(--font-u);font-size:14px;color:var(--dim);text-decoration:none;min-height:44px;display:flex;align-items:center}
+.back-link:hover{color:var(--accent)}
+section{max-width:740px;margin:0 auto;padding:80px 24px}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.hero{max-width:100%;text-align:center;padding:140px 24px 80px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.4rem,6vw,4rem);font-weight:700;line-height:1.15;margin-bottom:12px}
+.hero .author{font-family:var(--font-d);font-style:italic;font-size:1.3rem;color:var(--dim);margin-bottom:24px}
+.hero .tagline{font-family:var(--font-u);font-size:.85rem;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;margin-bottom:20px}
+.stars{font-size:2rem;letter-spacing:4px;margin-bottom:16px}
+h2{font-family:var(--font-d);font-size:1.8rem;margin-bottom:24px;color:var(--accent)}
+h3{font-family:var(--font-d);font-size:1.3rem;margin:24px 0 12px;color:var(--text)}
+blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:var(--surface);border-radius:0 8px 8px 0;font-style:italic;color:var(--dim)}
+blockquote em{color:var(--text);font-style:normal}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0}
+button,.btn{font-family:var(--font-u);font-size:.9rem;min-height:44px;min-width:44px;padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;user-select:none}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:active{transform:scale(.97)}
+button.active,button.selected{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.divider{width:60px;height:2px;background:var(--border);margin:48px auto}
+.tag{display:inline-block;font-family:var(--font-m);font-size:.75rem;padding:3px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--dim);margin:2px 4px 2px 0}
+textarea{font-family:var(--font-b);font-size:1rem;width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);min-height:44px;resize:vertical}
+textarea:focus{outline:none;border-color:var(--accent)}
+.flex{display:flex;gap:12px;flex-wrap:wrap}
+.flex.col{flex-direction:column}
+/* Nav sidebar */
+#nav-toggle{position:fixed;top:16px;right:20px;z-index:998;font-size:1.2rem;padding:8px 14px;border-radius:8px}
+#sidenav{position:fixed;top:0;right:-320px;width:300px;height:100%;z-index:1000;background:var(--surface);border-left:1px solid var(--border);padding:60px 24px 24px;overflow-y:auto;transition:right .3s ease}
+#sidenav.open{right:0}
+#sidenav a{display:block;font-family:var(--font-u);font-size:.9rem;color:var(--dim);text-decoration:none;padding:10px 0;border-bottom:1px solid var(--border);min-height:44px;display:flex;align-items:center}
+#sidenav a:hover{color:var(--accent)}
+#sidenav .close-btn{position:absolute;top:12px;right:16px;font-size:1.5rem;background:none;border:none;color:var(--dim);cursor:pointer;min-height:44px;min-width:44px}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+#overlay.open{display:block}
+/* Phase cards */
+.phase-cards{display:grid;gap:16px;margin:24px 0}
+.phase-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;cursor:pointer;transition:all .3s;min-height:44px}
+.phase-card:hover{border-color:var(--accent)}
+.phase-card.open{border-color:var(--accent2)}
+.phase-card .pnum{font-family:var(--font-m);font-size:.8rem;margin-bottom:4px}
+.phase-card .ptitle{font-family:var(--font-d);font-size:1.15rem;margin-bottom:8px}
+.phase-card .pdetail{display:none;margin-top:12px;font-size:.95rem;color:var(--dim);line-height:1.6}
+.phase-card.open .pdetail{display:block}
+/* Workshop */
+.ws-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.ws-tabs button{font-size:.85rem;padding:8px 16px}
+.ws-problem{display:none}
+.ws-problem.active{display:block}
+.ws-phase{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:12px 0;display:none}
+.ws-phase.active{display:block}
+.ws-phase .label{font-family:var(--font-m);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.hint-btn{font-size:.85rem;padding:6px 14px;margin:6px 4px 6px 0}
+.hint-content{display:none;margin-top:12px;padding:14px;background:var(--bg);border-radius:8px;color:var(--dim);font-size:.95rem;line-height:1.6}
+.hint-content.show{display:block}
+.ws-nav{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+/* Heuristic Toolkit */
+.toolkit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin:20px 0}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .3s;min-height:44px}
+.tool-card:hover,.tool-card.active{border-color:var(--accent);transform:translateY(-2px)}
+.tool-card .icon{font-size:1.8rem;margin-bottom:8px}
+.tool-card .name{font-family:var(--font-u);font-size:.8rem;font-weight:500}
+.tool-detail{display:none;margin:16px 0}
+.tool-detail.show{display:block}
+/* Analysis/Synthesis */
+.chain{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.chain-node{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-family:var(--font-m);font-size:.85rem;opacity:.3;transition:all .4s;cursor:pointer}
+.chain-node.lit{opacity:1;border-color:var(--accent)}
+.chain-arrow{text-align:center;color:var(--dim);font-size:1.2rem;padding:4px 0;opacity:.3;transition:opacity .4s}
+.chain-arrow.lit{opacity:1}
+.as-controls{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap}
+/* Inventor's Paradox */
+.ip-panel{display:flex;gap:20px;margin:20px 0;flex-wrap:wrap}
+.ip-side{flex:1;min-width:260px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.ip-side h4{font-family:var(--font-m);font-size:.8rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.ip-step{padding:8px 0;border-bottom:1px solid var(--border);font-size:.9rem;opacity:.3;transition:opacity .4s}
+.ip-step.lit{opacity:1}
+.ip-step:last-child{border-bottom:none}
+/* Unknown Explorer */
+.ue-grid{display:grid;grid-template-columns:180px 1fr;gap:16px;margin:20px 0}
+.ue-list{display:flex;flex-direction:column;gap:8px}
+.ue-item{padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--font-u);font-size:.85rem;min-height:44px;display:flex;align-items:center;transition:all .2s}
+.ue-item:hover,.ue-item.active{border-color:var(--accent);color:var(--accent)}
+.ue-detail{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+/* Teacher dialogue */
+.dialogue{max-width:500px;margin:0 auto}
+.msg{padding:14px 18px;border-radius:16px;margin:8px 0;max-width:85%;font-size:.95rem;line-height:1.5}
+.msg.teacher{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 16px 4px;margin-right:auto;color:var(--dim)}
+.msg.teacher .who{font-family:var(--font-m);font-size:.7rem;color:var(--accent);margin-bottom:4px}
+.msg.student{background:var(--accent);color:var(--bg);border-radius:16px 16px 4px 16px;margin-left:auto;cursor:pointer;transition:all .2s}
+.msg.student:hover{filter:brightness(1.1)}
+.dialogue-choices{display:flex;flex-direction:column;gap:8px;margin:12px 0;align-items:flex-end}
+/* Dictionary nav */
+.dict-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:16px 0}
+.dict-entry{padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--font-u);font-size:.85rem;min-height:44px;display:flex;align-items:center;transition:all .2s}
+.dict-entry:hover,.dict-entry.active{border-color:var(--accent);color:var(--accent)}
+.dict-detail{display:none;margin:16px 0}
+.dict-detail.show{display:block}
+footer{text-align:center;padding:60px 24px;font-family:var(--font-u);font-size:.85rem;color:var(--dim)}
+@media(max-width:600px){
+section{padding:60px 16px}
+.ip-panel{flex-direction:column}
+.ue-grid{grid-template-columns:1fr}
+.toolkit-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a href="../" class="back-link">← Back</a>
+<button id="nav-toggle" onclick="toggleNav()">☰</button>
+
+<div id="overlay" onclick="toggleNav()"></div>
+<div id="sidenav">
+<button class="close-btn" onclick="toggleNav()">×</button>
+<a href="#hero">Overview</a>
+<a href="#phases">The Four Phases</a>
+<a href="#workshop">Problem Workshop</a>
+<a href="#toolkit">Heuristic Toolkit</a>
+<a href="#analysis">Analysis vs Synthesis</a>
+<a href="#paradox">Inventor's Paradox</a>
+<a href="#unknown">Look at the Unknown</a>
+<a href="#teacher">Teacher's Questions</a>
+<a href="#dictionary">Dictionary Navigator</a>
+<a href="#opinion">Rating & Opinion</a>
+</div>
+
+<!-- HERO -->
+<div class="hero reveal" id="hero">
+<div class="stars">★★★★★</div>
+<h1>How to Solve It</h1>
+<p class="author">George Pólya, 1945</p>
+<p class="tagline">An interactive exploration</p>
+<p style="color:var(--dim);font-size:.95rem;max-width:520px;margin:0 auto">Four publishers rejected this book. It sold over a million copies. Pólya took the messy, human process of solving problems and made it <em>teachable</em>.</p>
+</div>
+
+<section>
+<div class="reveal">
+<blockquote>"A great discovery solves a great problem but there is a grain of discovery in the solution of any problem. Your problem may be modest; but if it challenges your curiosity and brings into play your inventive faculties, and if you solve it by your own means, you may experience the tension and enjoy the triumph of discovery."</blockquote>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOUR PHASES -->
+<section id="phases">
+<div class="reveal">
+<h2>The Four Phases</h2>
+<p>Every problem — crossword puzzle, research theorem, or debugging session — passes through four phases. Click each to explore.</p>
+<div class="phase-cards">
+<div class="phase-card" onclick="this.classList.toggle('open')">
+<div class="pnum" style="color:var(--phase1)">Phase 1</div>
+<div class="ptitle">Understanding the Problem</div>
+<div class="pdetail">
+<p>"It is foolish to answer a question that you do not understand." Most failures happen here — rushing into computation without grasping what you're looking for.</p>
+<p style="font-family:var(--font-m);font-size:.85rem;color:var(--accent2);margin-top:12px;line-height:1.8">→ What is the unknown?<br>→ What are the data?<br>→ What is the condition?<br>→ Draw a figure. Introduce notation.<br>→ Is it possible to satisfy the condition?</p>
+</div>
+</div>
+<div class="phase-card" onclick="this.classList.toggle('open')">
+<div class="pnum" style="color:var(--phase2)">Phase 2</div>
+<div class="ptitle">Devising a Plan</div>
+<div class="pdetail">
+<p>Where the magic happens. You don't invent solutions from nothing — you connect to problems you've already solved. The gap between "stuck" and "eureka" is bridged by systematic exploration.</p>
+<p style="font-family:var(--font-m);font-size:.85rem;color:var(--accent2);margin-top:12px;line-height:1.8">→ Do you know a related problem?<br>→ Look at the unknown! Think of a familiar problem with the same unknown.<br>→ Could you restate the problem?<br>→ If you can't solve it, solve a simpler related problem first.</p>
+</div>
+</div>
+<div class="phase-card" onclick="this.classList.toggle('open')">
+<div class="pnum" style="color:var(--phase3)">Phase 3</div>
+<div class="ptitle">Carrying Out the Plan</div>
+<div class="pdetail">
+<p>The creative work was Phase 2. Phase 3 is patience and rigor. Check each step. The heuristic reasoning that got you here must now give way to strict argument.</p>
+<p style="font-family:var(--font-m);font-size:.85rem;color:var(--accent2);margin-top:12px;line-height:1.8">→ Check each step.<br>→ Can you see clearly that the step is correct?<br>→ Can you prove that it is correct?</p>
+</div>
+</div>
+<div class="phase-card" onclick="this.classList.toggle('open')">
+<div class="pnum" style="color:var(--phase4)">Phase 4</div>
+<div class="ptitle">Looking Back</div>
+<div class="pdetail">
+<p>The most skipped, most valuable phase. Reviewing consolidates knowledge. One solved problem becomes a tool for solving ten more.</p>
+<p style="font-family:var(--font-m);font-size:.85rem;color:var(--accent2);margin-top:12px;line-height:1.8">→ Can you check the result?<br>→ Can you derive the result differently?<br>→ Can you see it at a glance?<br>→ Can you use the result, or the method, for some other problem?</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROBLEM WORKSHOP -->
+<section id="workshop">
+<div class="reveal">
+<h2>Problem Workshop</h2>
+<p>Work through real problems using Pólya's four phases as scaffolding. Each phase offers guiding questions and reveal-on-demand hints — not answers.</p>
+<blockquote>"Solving problems is a practical skill like, let us say, swimming. We acquire any practical skill by imitation and practice."</blockquote>
+<div class="ws-tabs" id="ws-tabs"></div>
+<div id="ws-container"></div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HEURISTIC TOOLKIT -->
+<section id="toolkit">
+<div class="reveal">
+<h2>Heuristic Toolkit</h2>
+<p>Pólya's toolbox of strategies for when you're stuck. Click a tool to see how it works and when to reach for it.</p>
+<blockquote>"No idea is really bad, unless we are uncritical. What is really bad is to have no idea at all."</blockquote>
+<div class="toolkit-grid" id="toolkit-grid"></div>
+<div class="tool-detail" id="tool-detail"></div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ANALYSIS VS SYNTHESIS -->
+<section id="analysis">
+<div class="reveal">
+<h2>Analysis vs Synthesis</h2>
+<p>Pólya's discussion of Pappus: <strong>analysis</strong> works backwards from the desired result to find the path; <strong>synthesis</strong> presents the solution forwards. Click nodes to trace reasoning in each direction.</p>
+<blockquote>"Mathematics presented in the Euclidean way appears as a systematic, deductive science; but mathematics in the making appears as an experimental, inductive science."</blockquote>
+
+<p style="margin:16px 0;color:var(--dim);font-size:.95rem"><strong>Problem:</strong> Inscribe a square in a given triangle (one side of the square on a side of the triangle).</p>
+
+<div class="as-controls">
+<button onclick="runChain('analysis')" id="btn-analysis">▶ Analysis (backwards)</button>
+<button onclick="runChain('synthesis')" id="btn-synthesis">▶ Synthesis (forwards)</button>
+<button onclick="resetChain()">Reset</button>
+</div>
+
+<div class="chain" id="chain-analysis" style="display:none">
+<div class="chain-node" data-i="0">Goal: inscribe a square in triangle ABC</div>
+<div class="chain-arrow">↑ what would give us this?</div>
+<div class="chain-node" data-i="1">Need: a point P on BC such that the perpendicular at height h = |PQ| makes a square</div>
+<div class="chain-arrow">↑ what determines the height?</div>
+<div class="chain-node" data-i="2">The square's side length s depends on where P is on BC</div>
+<div class="chain-arrow">↑ but the top corners must lie on AB and AC...</div>
+<div class="chain-node" data-i="3">Relax the constraint! Let s vary freely — trace the locus of top corners</div>
+<div class="chain-arrow">↑ what shape is that locus?</div>
+<div class="chain-node" data-i="4">The locus is a straight line through A — intersect it with AB, AC to find s</div>
+<div class="chain-arrow">↑ this we can construct!</div>
+<div class="chain-node" data-i="5">✓ Reduced to: line intersection — a known construction</div>
+</div>
+
+<div class="chain" id="chain-synthesis" style="display:none">
+<div class="chain-node" data-i="0">Start: draw any square on BC (ignoring triangle sides)</div>
+<div class="chain-arrow">↓</div>
+<div class="chain-node" data-i="1">Connect A to the top corners of this trial square</div>
+<div class="chain-arrow">↓</div>
+<div class="chain-node" data-i="2">The lines through A and the top corners intersect BC at two points</div>
+<div class="chain-arrow">↓</div>
+<div class="chain-node" data-i="3">These intersection points define the base of the true inscribed square</div>
+<div class="chain-arrow">↓</div>
+<div class="chain-node" data-i="4">Erect perpendiculars to get the correct square</div>
+<div class="chain-arrow">↓</div>
+<div class="chain-node" data-i="5">✓ Square inscribed in triangle — done</div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- INVENTOR'S PARADOX -->
+<section id="paradox">
+<div class="reveal">
+<h2>The Inventor's Paradox</h2>
+<p>"The more ambitious plan may have more chances of success." Sometimes a <em>more general</em> problem is <em>easier</em> than a specific one, because the general structure reveals the mechanism.</p>
+<blockquote>"If you will sail without danger, you must never put to sea."</blockquote>
+
+<p style="color:var(--dim);margin:16px 0;font-size:.95rem"><strong>Example:</strong> Sum of cubes. Can you find a formula for 1³ + 2³ + 3³ + ... + n³?</p>
+
+<div class="ip-panel">
+<div class="ip-side" id="ip-specific">
+<h4>Specific: try n = 5</h4>
+<div class="ip-step" data-i="0">1³ + 2³ + 3³ + 4³ + 5³ = ?</div>
+<div class="ip-step" data-i="1">= 1 + 8 + 27 + 64 + 125</div>
+<div class="ip-step" data-i="2">= 225</div>
+<div class="ip-step" data-i="3">Hmm, 225 = 15². Coincidence? 🤔</div>
+<div class="ip-step" data-i="4">No obvious pattern from one case...</div>
+<div class="ip-step" data-i="5" style="color:var(--red)">Stuck — need more data</div>
+</div>
+<div class="ip-side" id="ip-general">
+<h4>General: tabulate several n</h4>
+<div class="ip-step" data-i="0">n=1: 1 = 1²</div>
+<div class="ip-step" data-i="1">n=2: 9 = 3²</div>
+<div class="ip-step" data-i="2">n=3: 36 = 6²</div>
+<div class="ip-step" data-i="3">n=4: 100 = 10²</div>
+<div class="ip-step" data-i="4">Pattern: 1, 3, 6, 10... = triangular numbers!</div>
+<div class="ip-step" data-i="5" style="color:var(--green)">∑k³ = (n(n+1)/2)² ✓</div>
+</div>
+</div>
+
+<div class="flex" style="margin-top:12px">
+<button onclick="animateIP('specific')">▶ Try specific</button>
+<button onclick="animateIP('general')">▶ Try general</button>
+<button onclick="resetIP()">Reset</button>
+</div>
+<p style="color:var(--dim);font-size:.9rem;margin-top:16px">The single case gives you a number. The general approach gives you the <em>pattern</em>. Generalizing made the problem easier, not harder.</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LOOK AT THE UNKNOWN -->
+<section id="unknown">
+<div class="reveal">
+<h2>"Look at the Unknown"</h2>
+<p>Pólya's most actionable advice: focus on what you're trying to find, then recall problems with the same type of unknown. This narrows the search space from "all of mathematics" to a tractable set.</p>
+
+<div class="ue-grid">
+<div class="ue-list" id="ue-list"></div>
+<div class="ue-detail" id="ue-detail">
+<p style="color:var(--dim);font-family:var(--font-u);font-size:.9rem">← Select an unknown type</p>
+</div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TEACHER'S QUESTIONS -->
+<section id="teacher">
+<div class="reveal">
+<h2>Teacher's Questions</h2>
+<p>Pólya's core pedagogical insight: <strong>help the student, but not too much</strong>. The teacher asks questions that <em>could have occurred to the student</em>. Play the student — choose your responses.</p>
+<blockquote>"If he fills his allotted time with drilling his students in routine operations he kills their interest, hampers their intellectual development, and misuses his opportunity."</blockquote>
+
+<p style="color:var(--dim);font-size:.95rem;margin:16px 0"><strong>Scenario:</strong> Find the diagonal of a rectangular box with sides a, b, c.</p>
+
+<div class="dialogue" id="dialogue"></div>
+<div class="dialogue-choices" id="dialogue-choices"></div>
+<button onclick="resetDialogue()" style="margin-top:16px;font-size:.85rem">Restart dialogue</button>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DICTIONARY NAVIGATOR -->
+<section id="dictionary">
+<div class="reveal">
+<h2>Dictionary of Heuristic</h2>
+<p>Pólya's book contains 67 alphabetically arranged articles — a "Short Dictionary of Heuristic." Here are the standout entries.</p>
+<blockquote>"Nothing is more important than to see the sources of invention which are, in my opinion, more interesting than the inventions themselves." — Leibniz</blockquote>
+<div class="dict-grid" id="dict-grid"></div>
+<div class="dict-detail" id="dict-detail"></div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OPINION -->
+<section id="opinion">
+<div class="reveal">
+<h2>Rating & Opinion</h2>
+<div class="stars">★★★★★</div>
+<p>This book is a <strong>tool</strong>, not a decoration. Pólya didn't write a philosophy of problem-solving — he wrote a manual. The four phases are obvious once stated, which is the hallmark of a great insight. You can't unsee them.</p>
+<p style="margin-top:16px">What surprised me most: how much Pólya emphasizes <em>emotion</em>. Determination, hope, the thrill of a bright idea, the dejection of being stuck. Problem-solving is not a cold logical exercise — it's a deeply human struggle.</p>
+<blockquote>"The first rule of discovery is to have brains and good luck. The second rule is to sit tight and wait till you get a bright idea."</blockquote>
+<p><strong>What dates it:</strong> Gendered language, deep Euclidean assumptions. <strong>What doesn't:</strong> Everything else. The framework works for debugging code, writing essays, or designing systems — not just geometric proofs.</p>
+<p style="margin-top:16px"><strong>Who should read it:</strong> Everyone who solves problems — which is everyone. Especially teachers, students, engineers, anyone who has ever been stuck and wanted a systematic (but not mechanical) way to get unstuck.</p>
+<blockquote>"Solving problems is a practical skill like, let us say, swimming. We acquire any practical skill by imitation and practice."</blockquote>
+<p style="margin-top:20px;color:var(--dim);font-family:var(--font-u);font-size:.9rem">Read this book. Then solve something hard.</p>
+</div>
+</section>
+
+<footer>
+<p>Reviewed by 🐑 · February 2026</p>
+<p style="margin-top:8px"><a href="../" style="color:var(--dim)">← Back to Lab</a></p>
+</footer>
+
+<script>
+// === DATA ===
+const PROBLEMS = [
+{
+  title: "The Room Diagonal",
+  domain: "Geometry",
+  statement: "A rectangular room has length a, width b, and height c. Find the length of the diagonal from one corner of the floor to the opposite corner of the ceiling.",
+  phases: [
+    {
+      label: "Understand",
+      color: "var(--phase1)",
+      prompts: ["What exactly is the unknown? Describe it in your own words.", "What are you given? List the data.", "Can you draw this? Imagine (or sketch) the room — where does the diagonal go?"],
+      hints: [
+        {title:"The unknown",content:"A length — specifically, the straight-line distance between two opposite corners of a 3D box."},
+        {title:"Visualization",content:"The diagonal goes from a bottom corner to the diagonally opposite top corner. It cuts through the interior of the room."},
+        {title:"Is the data sufficient?",content:"Three dimensions fully determine a rectangular box, so yes — three numbers should determine the diagonal."}
+      ]
+    },
+    {
+      label: "Plan",
+      color: "var(--phase2)",
+      prompts: ["Do you know a related problem?", "The unknown is a length. What theorem gives you lengths from other lengths?", "Can you introduce a right triangle into the figure?"],
+      hints: [
+        {title:"Related problem",content:"Finding the diagonal of a rectangle — that's a 2D version of this! You know how to do that with the Pythagorean theorem."},
+        {title:"The bridge",content:"The room diagonal is the hypotenuse of a right triangle. One leg is the height c, the other is... the floor diagonal! And the floor diagonal is √(a² + b²)."},
+        {title:"The full plan",content:"Apply Pythagoras twice: first to the floor (getting √(a²+b²)), then to the triangle formed by the floor diagonal and the height."}
+      ]
+    },
+    {
+      label: "Execute",
+      color: "var(--phase3)",
+      prompts: ["Carry out the plan. Compute step by step.", "Floor diagonal: y = √(a² + b²)", "Room diagonal: x = √(y² + c²) = √(a² + b² + c²)"],
+      hints: [
+        {title:"With numbers (12, 4, 3)",content:"y² = 144 + 16 = 160, then x² = 160 + 9 = 169, so x = 13."},
+        {title:"Check each step",content:"Is √(a² + b² + c²) correct? Each step uses Pythagoras on a genuine right triangle — yes."}
+      ]
+    },
+    {
+      label: "Look Back",
+      color: "var(--phase4)",
+      prompts: ["Does the formula make sense? Check it with special cases.", "What if c = 0? What if a = b = c?", "Can you use this result or method elsewhere?"],
+      hints: [
+        {title:"Special cases",content:"If c=0: reduces to √(a²+b²) — 2D Pythagorean theorem ✓. If a=b=c: gives a√3, the space diagonal of a cube ✓."},
+        {title:"Symmetry",content:"The formula is symmetric in a, b, c — swapping any two gives the same result. Makes sense: a box doesn't care which dimension you call 'length.'"},
+        {title:"Generalization",content:"This method generalizes to 4D, 5D... The distance formula in n dimensions: √(x₁² + x₂² + ... + xₙ²). One problem solved, infinitely many answered."}
+      ]
+    }
+  ]
+},
+{
+  title: "Checkerboard Tiling",
+  domain: "Combinatorics / Logic",
+  statement: "An 8×8 checkerboard has two diagonally opposite corners removed. Can you tile the remaining 62 squares with 31 dominoes (each covering exactly 2 adjacent squares)?",
+  phases: [
+    {
+      label: "Understand",
+      color: "var(--phase1)",
+      prompts: ["What is the unknown? (Not a number this time — what type of answer?)", "What are the data and constraints?", "Try to visualize: what does the mutilated board look like?"],
+      hints: [
+        {title:"Type of unknown",content:"This is a yes/no question: is it possible? That's different from 'find a value.' Often 'is it possible?' problems are solved by proving impossibility."},
+        {title:"The board",content:"62 squares remain. 31 dominoes would cover exactly 62 squares. The count works — but does the geometry?"},
+        {title:"Key observation to make",content:"What colors are the removed corners? On a real checkerboard, diagonally opposite corners are the SAME color."}
+      ]
+    },
+    {
+      label: "Plan",
+      color: "var(--phase2)",
+      prompts: ["If you've been trying to construct a tiling and failing — why?", "Think about the coloring. How many black squares? White squares?", "What does each domino cover in terms of colors?"],
+      hints: [
+        {title:"The coloring argument",content:"Each domino covers exactly one black and one white square. So 31 dominoes cover 31 black + 31 white."},
+        {title:"The punchline",content:"We removed two squares of the SAME color. So we have 30 of one color and 32 of the other. But any tiling needs equal numbers!"},
+        {title:"Therefore...",content:"It's impossible. No tiling exists. A simple coloring argument proves it without testing a single arrangement."}
+      ]
+    },
+    {
+      label: "Execute",
+      color: "var(--phase3)",
+      prompts: ["Write the proof clearly.", "Each domino covers one black + one white square. 31 dominoes need 31 black + 31 white. But we have 30 + 32. Contradiction."],
+      hints: [
+        {title:"The proof",content:"Suppose a tiling exists. Each domino covers one black, one white square. So 31 dominoes cover 31 black and 31 white. But the mutilated board has 30 black and 32 white (or vice versa). Contradiction. ∎"}
+      ]
+    },
+    {
+      label: "Look Back",
+      color: "var(--phase4)",
+      prompts: ["What made this problem hard at first? What made it easy once you saw the trick?", "What general technique did we use?", "Can you use this for other problems?"],
+      hints: [
+        {title:"The meta-lesson",content:"We used an INVARIANT — a quantity (color balance) that any valid tiling must preserve. Finding the right invariant is a powerful general technique."},
+        {title:"Generalization",content:"This technique works for many impossibility proofs: find a property that the goal state must have, show the starting state doesn't have it, and show the allowed operations preserve it."}
+      ]
+    }
+  ]
+},
+{
+  title: "River Crossing",
+  domain: "Logic / Working Backwards",
+  statement: "You have two jugs: one holds exactly 5 liters, the other exactly 3 liters. Neither has markings. How do you measure exactly 4 liters of water from a river?",
+  phases: [
+    {
+      label: "Understand",
+      color: "var(--phase1)",
+      prompts: ["What is the unknown? What does 'measure 4 liters' mean concretely?", "What operations can you perform?", "Is the condition sufficient — can you actually do this with just these two jugs?"],
+      hints: [
+        {title:"The unknown",content:"A sequence of operations (fill, pour, empty) that leaves exactly 4 liters in the 5-liter jug."},
+        {title:"Operations",content:"Fill a jug completely from the river. Empty a jug completely. Pour from one jug into the other (stopping when source is empty or target is full)."},
+        {title:"Sufficiency",content:"Not obvious yet! We need to figure out if 4 is achievable. Notice: 5 - 3 = 2, and 3 + 3 - 5 = 1. So we can measure 1 and 2..."}
+      ]
+    },
+    {
+      label: "Plan",
+      color: "var(--phase2)",
+      prompts: ["Try working backwards. If the 5-jug has 4 liters... what just happened?", "4 = 5 - 1. Can you measure 1 liter?", "Or: 4 = 3 + 1. Or: think about what states you can reach."],
+      hints: [
+        {title:"Working backwards",content:"If the 5-jug has 4L, we just poured something out or in. If we poured 1L out — where did it go? Into the 3-jug. So the 3-jug had 2L free space, meaning it contained 1L."},
+        {title:"Measuring 1 liter",content:"Fill the 3-jug, pour into the 5-jug. Fill the 3-jug again, pour into the 5-jug until full. The 5-jug takes 2 more liters, leaving 1 liter in the 3-jug!"},
+        {title:"Full plan",content:"Get 1L in the 3-jug (via the above). Empty the 5-jug. Pour the 1L into the 5-jug. Fill the 3-jug. Pour into the 5-jug. Result: 4L."}
+      ]
+    },
+    {
+      label: "Execute",
+      color: "var(--phase3)",
+      prompts: ["Step through it carefully. Track both jugs at each step."],
+      hints: [
+        {title:"Full sequence",content:"(0,0) → fill 5: (5,0) → pour into 3: (2,3) → empty 3: (2,0) → pour 5→3: (0,2) → fill 5: (5,2) → pour into 3: (4,3) ✓"},
+        {title:"Check",content:"6 operations. At the end: 4L in the 5-jug, 3L in the 3-jug. Every step is a legal operation. ✓"}
+      ]
+    },
+    {
+      label: "Look Back",
+      color: "var(--phase4)",
+      prompts: ["Is there a shorter solution?", "What other volumes can you measure with 5 and 3?", "What's the general principle?"],
+      hints: [
+        {title:"Shorter?",content:"This 6-step solution is already quite short. There's also: (0,0)→(0,3)→(3,0)→(3,3)→(5,1)→(0,1)→(1,0)→(1,3)→(4,0). Same length but different path."},
+        {title:"General principle",content:"With jugs of size a and b (where gcd(a,b)=1), you can measure ANY integer from 1 to max(a,b). This connects to Bézout's identity in number theory!"},
+        {title:"Working backwards",content:"Pólya: 'There is a certain psychological repugnance to this reverse order.' But it's one of the most powerful heuristics — the dog goes around the fence, the hen cannot."}
+      ]
+    }
+  ]
+},
+{
+  title: "The Handshake Problem",
+  domain: "Combinatorics / Generalization",
+  statement: "At a party of 20 people, everyone shakes hands with everyone else exactly once. How many handshakes occur?",
+  phases: [
+    {
+      label: "Understand",
+      color: "var(--phase1)",
+      prompts: ["What is the unknown? What type of quantity?", "What are the data and constraints?", "Can you try a simpler case first?"],
+      hints: [
+        {title:"The unknown",content:"A count — the total number of handshakes. We're counting unordered pairs of people."},
+        {title:"Simpler cases",content:"2 people: 1 handshake. 3 people: 3 handshakes. 4 people: 6 handshakes. See a pattern?"},
+        {title:"Why 'unordered'",content:"Alice shaking hands with Bob is the same as Bob shaking hands with Alice. We don't double-count."}
+      ]
+    },
+    {
+      label: "Plan",
+      color: "var(--phase2)",
+      prompts: ["Each person shakes hands with how many others?", "If you add up all those numbers, have you counted each handshake once or twice?", "Can you find a formula?"],
+      hints: [
+        {title:"Overcounting",content:"Each of 20 people shakes 19 hands → 20 × 19 = 380. But each handshake was counted twice (once for each participant)."},
+        {title:"The formula",content:"Total = 20 × 19 / 2 = 190. In general: n(n-1)/2."},
+        {title:"Alternative",content:"This is also 'n choose 2' = C(20,2) = 190. Choosing a handshake = choosing 2 people from 20."}
+      ]
+    },
+    {
+      label: "Execute",
+      color: "var(--phase3)",
+      prompts: ["Compute: 20 × 19 / 2"],
+      hints: [
+        {title:"Calculation",content:"20 × 19 = 380. 380 / 2 = 190 handshakes."}
+      ]
+    },
+    {
+      label: "Look Back",
+      color: "var(--phase4)",
+      prompts: ["Check with small cases. Does n(n-1)/2 give 1, 3, 6 for n = 2, 3, 4?", "Where else does this formula appear?", "What if the problem were 'how many games in a round-robin tournament?'"],
+      hints: [
+        {title:"Verification",content:"n=2: 1 ✓. n=3: 3 ✓. n=4: 6 ✓. n=5: 10 ✓. These are the triangular numbers!"},
+        {title:"Connections",content:"Edges in a complete graph. Entries in an upper-triangular matrix. Lines determined by n points. The same structure appears everywhere — one solution, many problems."},
+        {title:"The Inventor's Paradox",content:"Solving 'how many handshakes for n people?' was easier than solving 'how many for 20 people?' — because the general problem reveals the structure."}
+      ]
+    }
+  ]
+}
+];
+
+const TOOLS = [
+  {icon:"🔗",name:"Analogy",desc:"Solve a simpler analogous problem first, then extend the method.",example:"Can't find the center of gravity of a tetrahedron? First find it for a triangle. The method transfers: medians → median planes, centroid of 3 → centroid of 4. \"Analogy pervades all our thinking.\"",when:"When facing an unfamiliar problem in N dimensions, try N-1 first."},
+  {icon:"🔭",name:"Generalization",desc:"Replace specific values with variables. The general case often reveals structure the specific case hides.",example:"Finding 1³+2³+...+5³ is hard. Finding 1³+2³+...+n³ for general n is easier — because tabulating several values reveals the triangular-number pattern.",when:"When a specific case feels like a dead end (Inventor's Paradox)."},
+  {icon:"🔬",name:"Specialization",desc:"Try specific values, boundary cases, extreme cases to build intuition.",example:"Prove something for all n? Try n=1, n=2, n=3. Does c=0 reduce your 3D formula to 2D? Test the edges of your domain.",when:"When the general statement feels too abstract to grasp."},
+  {icon:"✂️",name:"Decompose",desc:"Break the problem into parts. Solve each part. Recombine.",example:"The room diagonal decomposes into two Pythagorean-theorem problems: floor diagonal, then space diagonal.",when:"When the problem has too many moving parts to handle at once."},
+  {icon:"⏪",name:"Work Backwards",desc:"Start from the desired result and ask: what would give me this?",example:"Need 4 liters? What operation produces 4 in a 5-liter jug? Pouring out 1 liter. How to get 1 liter? Now THAT's a subproblem you can solve.",when:"When the goal is clear but the starting point isn't."},
+  {icon:"🌉",name:"Auxiliary Problem",desc:"Can't solve this problem? Solve a related one that gets you closer.",example:"\"Human superiority consists in going around an obstacle that cannot be overcome directly.\" An insect rams the window repeatedly; a human finds the open door.",when:"When direct attack fails — introduce a stepping stone."},
+  {icon:"✏️",name:"Draw a Figure",desc:"Visualization makes hidden structure visible.",example:"The room diagonal problem becomes obvious once you draw the box and see the two right triangles hiding inside it.",when:"Almost always. Even non-geometric problems benefit from diagrams."},
+  {icon:"📝",name:"Notation",desc:"Good notation does half the thinking for you. Bad notation hides the answer.",example:"Call the sides a, b, c instead of 'length, width, height.' Now the formula x=√(a²+b²+c²) reveals its symmetry instantly.",when:"When the problem description is wordy or has many quantities."}
+];
+
+const UNKNOWNS = [
+  {type:"A length",problems:["Diagonal of a rectangle","Diagonal of a box","Distance between two points","Perimeter of a polygon","Circumference of a circle"],technique:"Pythagorean theorem, distance formula, integration of arc length. Look for right triangles hiding in the figure."},
+  {type:"A count",problems:["Handshakes at a party","Paths through a grid","Arrangements of objects","Subsets of a set","Games in a tournament"],technique:"Combinatorial formulas: C(n,k), P(n,k), inclusion-exclusion. Ask: am I overcounting? Use bijections."},
+  {type:"A yes/no",problems:["Can the board be tiled?","Is the number prime?","Does a solution exist?","Is the graph connected?"],technique:"For 'yes': construct an example. For 'no': find an invariant or use contradiction. Coloring arguments are powerful."},
+  {type:"A sequence",problems:["Water jug solutions","Tower of Hanoi moves","Sorting algorithms","Proof steps"],technique:"Work backwards from goal state. Build a state graph. Look for recursive structure."},
+  {type:"A formula",problems:["Sum of first n cubes","Area of a region","General term of a sequence","Closed form for a recurrence"],technique:"Compute small cases, tabulate, look for patterns. Then prove by induction. Check special cases."},
+  {type:"A construction",problems:["Inscribe a square in a triangle","Bisect an angle","Find a shortest path","Construct a regular polygon"],technique:"Analysis (work backwards from the desired figure) then synthesis (construct forwards). Locus methods."}
+];
+
+const DIALOGUE_TREE = {
+  start: {
+    teacher: "What is the unknown?",
+    choices: [
+      {text:"The diagonal of the room.",next:"good1"},
+      {text:"I'm not sure... it's about a room?",next:"help1"}
+    ]
+  },
+  help1: {
+    teacher: "Read the problem again. What are you asked to FIND?",
+    choices: [
+      {text:"Oh — the length of the diagonal.",next:"good1"},
+      {text:"The dimensions of the room?",next:"help1b"}
+    ]
+  },
+  help1b: {
+    teacher: "No, the dimensions are GIVEN to you. The unknown is what you must FIND. What is it?",
+    choices: [
+      {text:"The diagonal — the distance from one corner to the opposite corner.",next:"good1"}
+    ]
+  },
+  good1: {
+    teacher: "Good. What are the data?",
+    choices: [
+      {text:"Length a, width b, height c.",next:"good2"},
+      {text:"The room is rectangular.",next:"good1b"}
+    ]
+  },
+  good1b: {
+    teacher: "Yes, but more specifically — what QUANTITIES are given?",
+    choices: [
+      {text:"Three dimensions: a, b, c.",next:"good2"}
+    ]
+  },
+  good2: {
+    teacher: "Good. Do you know a related problem?",
+    choices: [
+      {text:"The Pythagorean theorem — finding a hypotenuse!",next:"great"},
+      {text:"Hmm, not sure.",next:"hint2"},
+      {text:"Distance formula?",next:"great"}
+    ]
+  },
+  hint2: {
+    teacher: "Look at the unknown. It is a LENGTH. What theorem gives you a length from other lengths?",
+    choices: [
+      {text:"Pythagorean theorem!",next:"great"},
+      {text:"Still stuck...",next:"hint2b"}
+    ]
+  },
+  hint2b: {
+    teacher: "a² + b² = c². Does that ring a bell? Could you find a right triangle in the room?",
+    choices: [
+      {text:"Yes! The floor diagonal makes a right triangle with the sides.",next:"great"}
+    ]
+  },
+  great: {
+    teacher: "Excellent! Could you use it? Can you introduce a right triangle into the figure?",
+    choices: [
+      {text:"The floor diagonal is √(a²+b²), then the room diagonal is √(floor² + c²).",next:"done"},
+      {text:"I see a triangle but I'm not sure which one.",next:"hint3"}
+    ]
+  },
+  hint3: {
+    teacher: "There are TWO right triangles hiding in this box. The first is on the floor. The second stands upright, using the floor diagonal as its base. Can you see them?",
+    choices: [
+      {text:"Got it — apply Pythagoras twice!",next:"done"}
+    ]
+  },
+  done: {
+    teacher: "That is the plan. Now carry it out — and when you are done, LOOK BACK. Can you check it? Can you use it elsewhere? \"By looking back at the completed solution, by reconsidering and reexamining the result and the path that led to it, they could consolidate their knowledge and develop their ability to solve problems.\"",
+    choices: []
+  }
+};
+
+const DICT_ENTRIES = [
+  {name:"Analogy",text:"The triangle-to-tetrahedron analogy: medians meet at one point (centroid). In 2D, 3 medians; in 3D, 6 median planes. The center of gravity = average of vertices. The method transfers perfectly across dimensions."},
+  {name:"Auxiliary Problems",text:"\"Human superiority consists in going around an obstacle that cannot be overcome directly.\" An insect tries the same approach repeatedly; a human devises auxiliary problems and goes around."},
+  {name:"Bright Idea",text:"Aristotle's 'sagacity': hitting upon the essential connection in an inappreciable time. Example: the ancients realizing the moon shines by reflected sunlight. Not magic — pattern recognition under pressure."},
+  {name:"Decomposing & Recombining",text:"Keep the unknown, change the data. Keep the data, change the unknown. Change both. The crossword puzzle method: 'rotor' — a word starting with R, ending with R, with O in the middle..."},
+  {name:"Definition",text:"\"Go back to definitions.\" The parabola problem: eliminating technical terms by returning to their definitions transforms an intimidating problem into a tractable one."},
+  {name:"Determination & Hope",text:"\"You can undertake without hope and persevere without success\" — but the scientist needs some hope. Will and emotion are not separate from problem-solving; they are essential."},
+  {name:"Induction",text:"1³ + 2³ + ... + n³ = (1 + 2 + ... + n)². Discovered by observation, proved by mathematical induction. The gap between discovery (experimental) and proof (deductive) is the heart of mathematics."},
+  {name:"Reductio ad Absurdum",text:"Euclid's proof of infinite primes: assume finitely many, multiply them all, add 1. The result has no prime factor from the list — contradiction. Indirect proof as creative tool."},
+  {name:"Signs of Progress",text:"The Columbus metaphor: watching for signs of approaching land. In problem-solving: using previously unused data, satisfying parts of the condition, recognizing analogous problems. Trust the signs."},
+  {name:"Working Backwards",text:"The water-measuring puzzle. Pólya's psychology observation: a dog navigates around a fence quickly; a hen cannot. \"There is a certain psychological repugnance to this reverse order.\""}
+];
+
+// === INITIALIZATION ===
+document.addEventListener('DOMContentLoaded', () => {
+  initWorkshop();
+  initToolkit();
+  initUnknowns();
+  initDialogue();
+  initDictionary();
+  initReveal();
+  initProgress();
+});
+
+// === PROGRESS ===
+function initProgress() {
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+}
+
+// === REVEAL ===
+function initReveal() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+}
+
+// === NAV ===
+function toggleNav() {
+  document.getElementById('sidenav').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+document.querySelectorAll('#sidenav a').forEach(a => a.addEventListener('click', () => toggleNav()));
+
+// === WORKSHOP ===
+let wsActive = 0;
+function initWorkshop() {
+  const tabs = document.getElementById('ws-tabs');
+  const container = document.getElementById('ws-container');
+  PROBLEMS.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = `${i+1}. ${p.title}`;
+    btn.className = i === 0 ? 'active' : '';
+    btn.onclick = () => showProblem(i);
+    tabs.appendChild(btn);
+  });
+  PROBLEMS.forEach((p, pi) => {
+    let html = `<div class="ws-problem${pi===0?' active':''}" id="ws-p${pi}">`;
+    html += `<div class="box"><span class="tag">${p.domain}</span><p style="margin-top:12px;font-size:1.05rem">${p.statement}</p></div>`;
+    p.phases.forEach((ph, phi) => {
+      html += `<div class="ws-phase${phi===0?' active':''}" id="ws-p${pi}-ph${phi}">`;
+      html += `<div class="label" style="color:${ph.color}">Phase ${phi+1}: ${ph.label}</div>`;
+      ph.prompts.forEach(q => {
+        html += `<p style="margin:8px 0;color:var(--dim)">${q}</p>`;
+      });
+      if (phi < 3) html += `<textarea rows="2" placeholder="Think about it... write your thoughts here"></textarea>`;
+      html.hints = '';
+      ph.hints.forEach((h, hi) => {
+        html += `<button class="hint-btn" onclick="toggleHint('ws-p${pi}-ph${phi}-h${hi}')">💡 ${h.title}</button>`;
+        html += `<div class="hint-content" id="ws-p${pi}-ph${phi}-h${hi}">${h.content}</div>`;
+      });
+      html += `<div class="ws-nav">`;
+      if (phi > 0) html += `<button onclick="showPhase(${pi},${phi-1})">← Back</button>`;
+      if (phi < 3) html += `<button onclick="showPhase(${pi},${phi+1})">Next Phase →</button>`;
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+    container.innerHTML += html;
+  });
+}
+
+function showProblem(i) {
+  document.querySelectorAll('.ws-tabs button').forEach((b,j) => b.className = j===i?'active':'');
+  document.querySelectorAll('.ws-problem').forEach((p,j) => p.className = 'ws-problem'+(j===i?' active':''));
+  showPhase(i, 0);
+}
+
+function showPhase(pi, phi) {
+  const problem = document.getElementById(`ws-p${pi}`);
+  problem.querySelectorAll('.ws-phase').forEach((p,j) => p.className = 'ws-phase'+(j===phi?' active':''));
+}
+
+function toggleHint(id) {
+  document.getElementById(id).classList.toggle('show');
+}
+
+// === TOOLKIT ===
+function initToolkit() {
+  const grid = document.getElementById('toolkit-grid');
+  TOOLS.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'tool-card';
+    card.innerHTML = `<div class="icon">${t.icon}</div><div class="name">${t.name}</div>`;
+    card.onclick = () => showTool(i);
+    grid.appendChild(card);
+  });
+}
+
+function showTool(i) {
+  const t = TOOLS[i];
+  document.querySelectorAll('.tool-card').forEach((c,j) => c.className = 'tool-card'+(j===i?' active':''));
+  const detail = document.getElementById('tool-detail');
+  detail.className = 'tool-detail show';
+  detail.innerHTML = `<div class="box"><h3>${t.icon} ${t.name}</h3><p>${t.desc}</p><p style="margin-top:12px;color:var(--dim);font-size:.95rem"><strong>Example:</strong> ${t.example}</p><p style="margin-top:8px;font-family:var(--font-m);font-size:.85rem;color:var(--accent2)">When to use: ${t.when}</p></div>`;
+}
+
+// === ANALYSIS / SYNTHESIS ===
+let chainTimer = null;
+function runChain(mode) {
+  resetChain();
+  const el = document.getElementById('chain-' + mode);
+  el.style.display = 'flex';
+  const nodes = el.querySelectorAll('.chain-node');
+  const arrows = el.querySelectorAll('.chain-arrow');
+  let i = 0;
+  chainTimer = setInterval(() => {
+    if (i < nodes.length) { nodes[i].classList.add('lit'); }
+    if (i > 0 && i-1 < arrows.length) { arrows[i-1].classList.add('lit'); }
+    i++;
+    if (i >= nodes.length + 1) clearInterval(chainTimer);
+  }, 600);
+}
+
+function resetChain() {
+  if (chainTimer) clearInterval(chainTimer);
+  document.querySelectorAll('.chain').forEach(c => {
+    c.style.display = 'none';
+    c.querySelectorAll('.chain-node,.chain-arrow').forEach(n => n.classList.remove('lit'));
+  });
+}
+
+// Click individual nodes
+document.addEventListener('click', e => {
+  const node = e.target.closest('.chain-node');
+  if (node) node.classList.toggle('lit');
+});
+
+// === INVENTOR'S PARADOX ===
+let ipTimer = null;
+function animateIP(side) {
+  const el = document.getElementById('ip-' + (side === 'specific' ? 'specific' : 'general'));
+  const steps = el.querySelectorAll('.ip-step');
+  steps.forEach(s => s.classList.remove('lit'));
+  let i = 0;
+  if (ipTimer) clearInterval(ipTimer);
+  ipTimer = setInterval(() => {
+    if (i < steps.length) steps[i].classList.add('lit');
+    i++;
+    if (i >= steps.length) clearInterval(ipTimer);
+  }, 500);
+}
+
+function resetIP() {
+  if (ipTimer) clearInterval(ipTimer);
+  document.querySelectorAll('.ip-step').forEach(s => s.classList.remove('lit'));
+}
+
+// === LOOK AT THE UNKNOWN ===
+function initUnknowns() {
+  const list = document.getElementById('ue-list');
+  UNKNOWNS.forEach((u, i) => {
+    const item = document.createElement('div');
+    item.className = 'ue-item';
+    item.textContent = u.type;
+    item.onclick = () => showUnknown(i);
+    list.appendChild(item);
+  });
+}
+
+function showUnknown(i) {
+  const u = UNKNOWNS[i];
+  document.querySelectorAll('.ue-item').forEach((item,j) => item.className = 'ue-item'+(j===i?' active':''));
+  const detail = document.getElementById('ue-detail');
+  let html = `<h3 style="color:var(--accent);margin-top:0">${u.type}</h3>`;
+  html += `<p style="color:var(--dim);font-size:.9rem;margin-bottom:12px">Related problems sharing this unknown type:</p>`;
+  html += `<ul style="list-style:none;padding:0">`;
+  u.problems.forEach(p => { html += `<li style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.95rem">→ ${p}</li>`; });
+  html += `</ul>`;
+  html += `<p style="margin-top:16px;font-family:var(--font-m);font-size:.85rem;color:var(--accent2)">${u.technique}</p>`;
+  detail.innerHTML = html;
+}
+
+// === TEACHER DIALOGUE ===
+let dialogueState = 'start';
+function initDialogue() { renderDialogue('start'); }
+
+function renderDialogue(state) {
+  dialogueState = state;
+  const node = DIALOGUE_TREE[state];
+  const container = document.getElementById('dialogue');
+  const choicesEl = document.getElementById('dialogue-choices');
+
+  // Add teacher message
+  const msg = document.createElement('div');
+  msg.className = 'msg teacher';
+  msg.innerHTML = `<div class="who">Pólya:</div>${node.teacher}`;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+
+  // Clear and add choices
+  choicesEl.innerHTML = '';
+  node.choices.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'msg student';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      // Show student's message in the dialogue
+      const smsg = document.createElement('div');
+      smsg.className = 'msg student';
+      smsg.style.cursor = 'default';
+      smsg.textContent = c.text;
+      container.appendChild(smsg);
+      choicesEl.innerHTML = '';
+      setTimeout(() => renderDialogue(c.next), 400);
+    };
+    choicesEl.appendChild(btn);
+  });
+}
+
+function resetDialogue() {
+  document.getElementById('dialogue').innerHTML = '';
+  document.getElementById('dialogue-choices').innerHTML = '';
+  renderDialogue('start');
+}
+
+// === DICTIONARY ===
+function initDictionary() {
+  const grid = document.getElementById('dict-grid');
+  DICT_ENTRIES.forEach((d, i) => {
+    const entry = document.createElement('div');
+    entry.className = 'dict-entry';
+    entry.textContent = d.name;
+    entry.onclick = () => showDict(i);
+    grid.appendChild(entry);
+  });
+}
+
+function showDict(i) {
+  const d = DICT_ENTRIES[i];
+  document.querySelectorAll('.dict-entry').forEach((e,j) => e.className = 'dict-entry'+(j===i?' active':''));
+  const detail = document.getElementById('dict-detail');
+  detail.className = 'dict-detail show';
+  detail.innerHTML = `<div class="box"><h3 style="margin-top:0;color:var(--accent)">${d.name}</h3><p style="color:var(--dim);font-size:.95rem;line-height:1.7">${d.text}</p></div>`;
+}
+</script>
+</body>
+</html>

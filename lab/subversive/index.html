@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching As a Subversive Activity — Interactive Review</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1410;--surface:#231e18;--surface2:#2d261e;--amber:#e8a849;--orange:#d4713b;--warm:#f5d6a0;--text:#e8dcc8;--muted:#9a8b76;--accent:#ff6b35;--green:#6bbf59;--red:#d44;--dim:#5a4e3f}
+body{font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+h1,h2,h3{font-family:'Palatino Linotype',Palatino,Georgia,serif;font-weight:700}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+
+/* Hero */
+.hero{text-align:center;padding:80px 20px 60px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at center,rgba(232,168,73,.08) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2.2rem,5vw,3.5rem);color:var(--amber);letter-spacing:-.02em;line-height:1.15;margin-bottom:12px}
+.hero .subtitle{font-size:clamp(1rem,2.5vw,1.3rem);color:var(--muted);font-style:italic;margin-bottom:8px}
+.hero .authors{font-size:1rem;color:var(--orange);margin-bottom:30px}
+.hero .tagline{font-size:1.1rem;color:var(--warm);max-width:600px;margin:0 auto;padding:20px;border-top:1px solid var(--dim);border-bottom:1px solid var(--dim)}
+.hero .tagline q{font-style:italic}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--dim);padding:10px 0;backdrop-filter:blur(10px)}
+nav .container{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+nav .container::-webkit-scrollbar{display:none}
+nav button{background:var(--surface);border:1px solid var(--dim);color:var(--muted);padding:6px 14px;border-radius:20px;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
+nav button:hover,nav button.active{background:var(--orange);color:var(--bg);border-color:var(--orange)}
+
+/* Sections */
+section{padding:60px 0;display:none}
+section.active{display:block}
+section h2{font-size:clamp(1.6rem,4vw,2.2rem);color:var(--amber);margin-bottom:8px}
+section .section-intro{color:var(--muted);font-style:italic;margin-bottom:30px;font-size:.95rem;max-width:640px}
+
+/* Blockquote */
+blockquote{border-left:3px solid var(--orange);padding:12px 20px;margin:20px 0;background:var(--surface);border-radius:0 6px 6px 0;font-style:italic;color:var(--warm)}
+blockquote cite{display:block;margin-top:8px;font-size:.85rem;color:var(--muted);font-style:normal}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:20px;margin:12px 0;cursor:pointer;transition:all .25s}
+.card:hover{border-color:var(--orange);transform:translateY(-1px)}
+.card h3{color:var(--amber);font-size:1.05rem;margin-bottom:6px}
+.card p{color:var(--muted);font-size:.9rem}
+.card .detail{display:none;margin-top:12px;color:var(--text);font-size:.9rem;line-height:1.7;border-top:1px solid var(--dim);padding-top:12px}
+.card.open .detail{display:block}
+.card .toggle{color:var(--orange);font-size:.8rem;margin-top:4px}
+
+/* Crap Detector */
+.crap-game .statement-card{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:24px;margin:16px 0;text-align:center}
+.crap-game .statement-card .stmt{font-size:1.15rem;color:var(--warm);margin-bottom:16px;line-height:1.5}
+.crap-game .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.crap-game .btn-row button{padding:10px 24px;border:2px solid;border-radius:6px;font-size:.95rem;cursor:pointer;font-family:inherit;font-weight:600;transition:all .2s;background:transparent}
+.btn-fact{color:var(--green);border-color:var(--green)}
+.btn-fact:hover{background:var(--green);color:var(--bg)}
+.btn-crap{color:var(--red);border-color:var(--red)}
+.btn-crap:hover{background:var(--red);color:#fff}
+.btn-nuanced{color:var(--amber);border-color:var(--amber)}
+.btn-nuanced:hover{background:var(--amber);color:var(--bg)}
+.crap-result{margin-top:14px;padding:14px;border-radius:6px;display:none;font-size:.9rem;line-height:1.6}
+.crap-result.correct{background:rgba(107,191,89,.12);border:1px solid var(--green);color:var(--green)}
+.crap-result.wrong{background:rgba(221,68,68,.12);border:1px solid var(--red);color:var(--red)}
+.crap-score{text-align:center;font-size:1.1rem;color:var(--amber);margin:16px 0}
+
+/* Classroom Analyzer */
+.classroom-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+@media(max-width:640px){.classroom-grid{grid-template-columns:1fr}}
+.classroom-col h3{text-align:center;padding:10px;border-radius:6px 6px 0 0;font-size:1rem}
+.classroom-col.trad h3{background:var(--red);color:#fff}
+.classroom-col.inquiry h3{background:var(--green);color:var(--bg)}
+.behavior{background:var(--surface);border:1px solid var(--dim);padding:12px 14px;margin:4px 0;border-radius:4px;cursor:pointer;font-size:.88rem;transition:all .2s}
+.behavior:hover{border-color:var(--orange)}
+.behavior .why{display:none;margin-top:8px;font-size:.82rem;color:var(--warm);border-top:1px solid var(--dim);padding-top:8px;font-style:italic}
+.behavior.open .why{display:block}
+
+/* Question Wall */
+.q-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:20px}
+.q-card{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px;cursor:pointer;transition:all .25s;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.q-card:hover{border-color:var(--amber);transform:translateY(-2px)}
+.q-card .q{color:var(--warm);font-size:.95rem;font-style:italic}
+.q-card .a{display:none;margin-top:10px;font-size:.82rem;color:var(--muted);border-top:1px solid var(--dim);padding-top:10px}
+.q-card.open .a{display:block}
+.q-card.open{grid-column:span 1}
+
+/* Medium comparison */
+.medium-tabs{display:flex;gap:8px;margin:20px 0}
+.medium-tabs button{flex:1;padding:12px;border:2px solid var(--dim);background:var(--surface);color:var(--muted);border-radius:6px;cursor:pointer;font-family:inherit;font-size:.95rem;transition:all .2s}
+.medium-tabs button.active{border-color:var(--orange);color:var(--orange);background:var(--surface2)}
+.medium-content{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:24px;margin:12px 0;min-height:200px}
+.medium-content h4{color:var(--amber);margin-bottom:12px}
+.medium-content .lecture{font-size:.9rem;color:var(--muted);line-height:1.8}
+.medium-content .inquiry-style{font-size:.95rem;color:var(--warm)}
+.medium-content .inquiry-style .q-prompt{color:var(--orange);margin:10px 0;font-weight:600}
+.medium-content .meta-note{margin-top:16px;padding:12px;background:var(--bg);border-radius:6px;font-size:.82rem;color:var(--amber);font-style:italic}
+
+/* Languaging */
+.lang-exercise{margin:16px 0}
+.lang-pair{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px;margin:10px 0;cursor:pointer;transition:all .2s}
+.lang-pair:hover{border-color:var(--orange)}
+.lang-pair .before{color:var(--red);font-size:.95rem}
+.lang-pair .after{color:var(--green);font-size:.95rem;display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--dim)}
+.lang-pair .insight{display:none;margin-top:8px;font-size:.82rem;color:var(--muted);font-style:italic}
+.lang-pair.open .after,.lang-pair.open .insight{display:block}
+.lang-pair .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.lang-pair .label.l-before{color:var(--red)}
+.lang-pair .label.l-after{color:var(--green)}
+
+/* Proposals */
+.proposals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:20px}
+.proposal{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px;cursor:pointer;transition:all .25s}
+.proposal:hover{border-color:var(--orange);transform:translateY(-1px)}
+.proposal .num{color:var(--orange);font-size:.8rem;font-weight:700;margin-bottom:4px}
+.proposal .title{color:var(--warm);font-size:.95rem;font-weight:600;margin-bottom:4px}
+.proposal .reasoning{display:none;margin-top:10px;font-size:.85rem;color:var(--muted);border-top:1px solid var(--dim);padding-top:10px;line-height:1.6}
+.proposal.open .reasoning{display:block}
+
+/* Review */
+.review-section{margin:20px 0}
+.rating{font-size:2rem;color:var(--amber);margin:10px 0}
+.connection{background:var(--surface);border-left:3px solid var(--orange);padding:12px 16px;margin:10px 0;border-radius:0 6px 6px 0}
+.connection h4{color:var(--amber);font-size:.95rem;margin-bottom:4px}
+.connection p{color:var(--muted);font-size:.88rem}
+
+/* Footer */
+footer{padding:40px 20px;text-align:center;color:var(--dim);font-size:.8rem;border-top:1px solid var(--dim);margin-top:40px}
+footer q{color:var(--muted);font-style:italic;display:block;margin-bottom:12px;max-width:500px;margin-left:auto;margin-right:auto}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<h1>Teaching As a<br>Subversive Activity</h1>
+<p class="subtitle">Neil Postman & Charles Weingartner, 1969</p>
+<p class="authors">An Interactive Book Review</p>
+<div class="tagline">
+<q>In order to be a great writer a person must have a built-in, shockproof crap detector.</q>
+<cite style="display:block;margin-top:8px;font-size:.85rem;color:var(--muted)">— Ernest Hemingway</cite>
+</div>
+</div>
+
+<nav>
+<div class="container">
+<button class="active" onclick="showSection('crap')">💩 Crap Detector</button>
+<button onclick="showSection('classroom')">🎓 Classroom</button>
+<button onclick="showSection('questions')">❓ Worth Knowing</button>
+<button onclick="showSection('medium')">🔄 Medium</button>
+<button onclick="showSection('language')">🗣️ Languaging</button>
+<button onclick="showSection('proposals')">🏫 16 Proposals</button>
+<button onclick="showSection('review')">📖 Review</button>
+</div>
+</nav>
+
+<!-- CRAP DETECTOR -->
+<section id="crap" class="active">
+<div class="container">
+<h2>💩 The Crap Detector</h2>
+<p class="section-intro">The book's central metaphor: intellectual progress is a history of "crap detecting" — identifying misconceptions, propaganda, and faulty assumptions. The most subversive skill: viewing your own culture as an anthropologist would.</p>
+<blockquote>None of us is free of prejudice, but it is the sign of a competent 'crap detector' that he is not completely captivated by the arbitrary abstractions of the community in which he happened to grow up.<cite>— Postman & Weingartner</cite></blockquote>
+<div class="crap-score">Score: <span id="crap-right">0</span> / <span id="crap-total">0</span></div>
+<div class="crap-game" id="crap-game"></div>
+<div style="text-align:center;margin-top:20px">
+<button onclick="resetCrap()" style="background:var(--orange);color:var(--bg);border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.9rem">↻ New Statements</button>
+</div>
+</div>
+</section>
+
+<!-- CLASSROOM ANALYZER -->
+<section id="classroom">
+<div class="container">
+<h2>🎓 The Classroom Analyzer</h2>
+<p class="section-intro">The book catalogs what students actually <em>do</em> in traditional classrooms vs. inquiry classrooms. Since "we learn what we do" (Dewey), the medium IS the message. Click any behavior to see why it matters.</p>
+<div class="classroom-grid">
+<div class="classroom-col trad">
+<h3>🚫 Traditional Classroom</h3>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Teacher talks; students listen
+<div class="why">Message learned: Passive acceptance is more desirable than active criticism. Your role is to absorb, not to think.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Teacher asks "Guess what I'm thinking" questions
+<div class="why">Only convergent questions with predetermined Right Answers. Students learn that discovering knowledge is not their business — it belongs to authorities.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Students work to supply The Right Answer
+<div class="why">Message: there is always a single correct answer to every question. This produces adults who can't say "I don't know" and politicians who give instant answers to questions they don't understand.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Subjects are discrete, segmented things
+<div class="why">You "take" English and "have had" History — vaccinated against needing to think about them again. Knowledge comes in disconnected packages with no relationship to each other.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Students never make observations or formulate definitions
+<div class="why">They never perform any real intellectual operations. Recall is presented as the highest form of intellectual achievement.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Students' own ideas and feelings are irrelevant
+<div class="why">The hidden curriculum teaches that your feelings don't matter and your classmates' ideas are inconsequential. Authority trumps independent judgment — always.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Students ask only administrative questions
+<div class="why">"How long should the paper be?" "Will this be on the test?" — never substantive questions. The most important intellectual ability humans have developed (question-asking) is actively suppressed.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Autocratic atmosphere prevails
+<div class="why">Goodwin Watson: autocratic environments produce apathetic conformity, defiance, scapegoating, escape, and dependence on authority. Students learn they cannot learn.</div>
+</div>
+</div>
+<div class="classroom-col inquiry">
+<h3>✅ Inquiry Classroom</h3>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Teacher rarely tells students what they "ought to know"
+<div class="why">Telling deprives students of the chance to find out for themselves. The teacher's silence is not neglect — it's respect for the student's capacity to discover.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Teacher's basic mode is questioning — divergent questions
+<div class="why">Not "Guess what I'm thinking" but genuinely open questions. The nature of a question determines the nature of its answer. Divergent questions produce divergent thinking.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Teacher does not accept a single answer
+<div class="why">Pluralizes everything: not THE reason but THE reasons. Not THE meaning but THE meanings. Cultivates "It depends" thinking — the mark of a flexible mind.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Encourages student-student interaction
+<div class="why">Avoids being the sole judge/mediator of idea quality. Students learn to evaluate ideas themselves — which is what they'll need to do for the rest of their lives.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Rarely summarizes or provides "closure"
+<div class="why">Summaries terminate thought. Instead, the inquiry teacher states hypotheses, leaving the conversation alive. Learning doesn't end when the bell rings.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Lessons develop from student responses
+<div class="why">Not from a predetermined logical structure. "Wrong answers" and false starts are the stuff of the best lessons. Psychological continuity replaces logical sequence.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Students define, question, observe, classify, generalize, verify
+<div class="why">Real intellectual operations — the things actual thinkers do. Success is measured by the frequency and quality of questions asked, not answers memorized.</div>
+</div>
+<div class="behavior" onclick="this.classList.toggle('open')">
+Open, non-authoritarian atmosphere
+<div class="why">Watson: open environments produce self-confidence, originality, self-reliance, enterprise, and independence. This IS learning how to learn.</div>
+</div>
+</div>
+</div>
+<blockquote style="margin-top:30px">There can be no significant innovation in education that does not have at its center the attitudes of teachers, and it is an illusion to think otherwise.<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- WHAT'S WORTH KNOWING -->
+<section id="questions">
+<div class="container">
+<h2>❓ What's Worth Knowing?</h2>
+<p class="section-intro">Suppose all syllabi, curricula, textbooks, and standardized tests disappeared. What if the entire curriculum consisted of questions — questions worth seeking answers to from the students' point of view? "Children enter school as question marks and leave as periods."</p>
+<div class="q-wall" id="q-wall"></div>
+<blockquote style="margin-top:30px">Once you have learned how to ask questions — relevant and appropriate and substantial questions — you have learned how to learn and no one can keep you from learning whatever you want or need to know.<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- MEDIUM IS THE MESSAGE -->
+<section id="medium">
+<div class="container">
+<h2>🔄 The Medium Is the Message</h2>
+<p class="section-intro">McLuhan's insight applied to education: the invention of a dichotomy between "content" and "method" is both naïve and dangerous. The critical content of any learning experience is the method through which learning occurs. Not what you say to people but what you have them DO.</p>
+<p style="margin-bottom:16px;color:var(--warm)">Experience the same topic — <strong>"What is democracy?"</strong> — delivered two ways:</p>
+<div class="medium-tabs">
+<button class="active" onclick="showMedium('lecture')">📖 Lecture Style</button>
+<button onclick="showMedium('inquiry')">❓ Inquiry Style</button>
+</div>
+<div class="medium-content" id="medium-lecture">
+<h4>The Lecture on Democracy</h4>
+<div class="lecture">
+<p>Democracy is a form of government in which power is vested in the people. The word derives from the Greek <em>dēmokratía</em>, meaning "rule of the people." Key features include: (1) free and fair elections, (2) rule of law, (3) protection of individual rights, (4) separation of powers.</p>
+<p style="margin-top:10px">Please memorize these four features. They will be on the test Friday. The correct answer to "What is democracy?" is: "A form of government in which power is vested in the people through free elections, rule of law, individual rights, and separation of powers."</p>
+<p style="margin-top:10px">Chapter 7, pages 142-168. Minimum 500-word essay due Monday.</p>
+</div>
+<div class="meta-note">
+<strong>What you just learned:</strong> That democracy is a set of facts handed down by authority. That your job is to memorize and reproduce them. That the "right answer" already exists. That your own experience of (or questions about) democracy is irrelevant. <em>The medium taught you to be passive.</em>
+</div>
+</div>
+<div class="medium-content" id="medium-inquiry" style="display:none">
+<h4>The Inquiry on Democracy</h4>
+<div class="inquiry-style">
+<p class="q-prompt">Who decides what happens in this classroom?</p>
+<p style="color:var(--muted);font-size:.88rem">[Students look around. Some point at the teacher. Some say "You do."]</p>
+<p class="q-prompt">How did I get that power? Did you vote for me?</p>
+<p style="color:var(--muted);font-size:.88rem">[Laughter. "No." "The school assigned you."]</p>
+<p class="q-prompt">So you spend 6 hours a day in a system where you have no vote, no voice in the rules, and no ability to leave. What would we call that system if it were a country?</p>
+<p style="color:var(--muted);font-size:.88rem">[Silence. Then: "A dictatorship?" More silence. "Wait — is school a dictatorship?"]</p>
+<p class="q-prompt">Is it? What would have to change for this classroom to be democratic? And what would we lose?</p>
+<p style="color:var(--muted);font-size:.88rem">[Now everyone is talking.]</p>
+</div>
+<div class="meta-note">
+<strong>What you just learned:</strong> That democracy is not a definition but a lived problem. That you can evaluate systems you're inside of. That your experience matters. That there might not be a single "right answer." <em>The medium taught you to think.</em>
+</div>
+</div>
+<blockquote style="margin-top:30px">"The medium is the message" implies that the critical content of any learning experience is the method or process through which the learning occurs.<cite>— Postman & Weingartner, extending McLuhan</cite></blockquote>
+<div class="card" onclick="this.classList.toggle('open')" style="margin-top:20px">
+<h3>The Hidden Curriculum: 8 Messages Every Classroom Teaches</h3>
+<p>Click to reveal what students actually learn from classroom structure…</p>
+<div class="detail">
+<ol style="padding-left:20px;color:var(--warm)">
+<li style="margin:8px 0">Passive acceptance is more desirable than active criticism</li>
+<li style="margin:8px 0">Discovering knowledge is beyond the power of students</li>
+<li style="margin:8px 0">Recall is the highest form of intellectual achievement</li>
+<li style="margin:8px 0">The voice of authority is to be trusted more than independent judgment</li>
+<li style="margin:8px 0">Your own ideas and your classmates' ideas are inconsequential</li>
+<li style="margin:8px 0">Feelings are irrelevant in education</li>
+<li style="margin:8px 0">There is always a single, unambiguous Right Answer to a question</li>
+<li style="margin:8px 0">Each "subject" exists independently of all other subjects</li>
+</ol>
+<p style="margin-top:12px;color:var(--muted);font-style:italic">These messages are learned not from what teachers say, but from what students are made to DO. The ostensible "content" is forgotten by the next quiz. The structural lessons last a lifetime.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- LANGUAGING -->
+<section id="language">
+<div class="container">
+<h2>🗣️ Languaging</h2>
+<p class="section-intro">Based on Sapir-Whorf, Korzybski, and Ames: language doesn't just express thought — it shapes perception. "Whatever we say something is, it is not." But also: "whatever we say something is, it IS — because we have said it." Click each pair to see the transformation.</p>
+
+<h3 style="color:var(--amber);margin:20px 0 10px">E-Prime: Removing "To Be"</h3>
+<p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">Korzybski noted that "is" statements project our perceptions onto reality as if they were facts. Rewriting without "to be" forces us to reveal the perceiver.</p>
+
+<div class="lang-exercise">
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Standard English</div>
+<div class="before">"John is stupid."</div>
+<div class="label l-after" style="display:none">E-Prime</div>
+<div class="after">"John performed poorly on the test I designed."</div>
+<div class="insight">The "is" version pretends to describe John. The E-Prime version reveals: whose test? whose criteria? whose judgment? "Stupidity" is a grammatical category — it does not exist in nature.</div>
+</div>
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Standard English</div>
+<div class="before">"That painting is ugly."</div>
+<div class="label l-after" style="display:none">E-Prime</div>
+<div class="after">"I find that painting displeasing based on my aesthetic training."</div>
+<div class="insight">The perceiver reappears. We don't GET perceptions from things around us — our perceptions come from US.</div>
+</div>
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Standard English</div>
+<div class="before">"This is a free country."</div>
+<div class="label l-after" style="display:none">E-Prime</div>
+<div class="after">"The government permits certain actions and restricts others, and I experience more permission than restriction in my daily life."</div>
+<div class="insight">The cliché dissolves into something examinable. A person in prison and a person on Wall Street both live in "a free country" — but the word "is" hides the difference.</div>
+</div>
+</div>
+
+<h3 style="color:var(--amber);margin:30px 0 10px">Framing: Same Event, Different Language</h3>
+<p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">How language selects what we "see" from the infinite complexity of reality.</p>
+
+<div class="lang-exercise">
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Framing A</div>
+<div class="before">"The police officer neutralized the threat."</div>
+<div class="label l-after" style="display:none">Framing B</div>
+<div class="after">"The police officer shot and killed an unarmed 17-year-old."</div>
+<div class="insight">Same event. Completely different perceptions. Korzybski: "The word is not the thing" — but we respond to words as if they are the thing. Both framings abstract selectively from reality.</div>
+</div>
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Framing A</div>
+<div class="before">"Students failed the standardized test."</div>
+<div class="label l-after" style="display:none">Framing B</div>
+<div class="after">"The standardized test failed to measure what students know."</div>
+<div class="insight">P&W: "We have to remember that what we observe children doing in schools is not what they ARE, but children exposed to us by our methods of teaching." The label tells us about the labeler.</div>
+</div>
+<div class="lang-pair" onclick="this.classList.toggle('open')">
+<div class="label l-before">Framing A</div>
+<div class="before">"He's a school dropout."</div>
+<div class="label l-after" style="display:none">Framing B</div>
+<div class="after">"He was pushed out by a school that had no use for him."</div>
+<div class="insight">P&W on city schools: students who "drop out" actually comprise "an endless and growing population dedicated to 'getting even' with the society that has reviled and rejected them." Who dropped whom?</div>
+</div>
+</div>
+
+<blockquote style="margin-top:30px">We dissect nature along lines laid down by our native language.… We cut nature up, organize it into concepts, and ascribe significance as we do largely because we are parties to an agreement to organize it in this way.<cite>— Benjamin Lee Whorf</cite></blockquote>
+</div>
+</section>
+
+<!-- 16 PROPOSALS -->
+<section id="proposals">
+<div class="container">
+<h2>🏫 The 16 Proposals</h2>
+<p class="section-intro">"Bizarre" proposals designed to make it impossible for teachers to function with old assumptions. Each one disrupts the perception that school-as-it-is is inevitable. Click to expand.</p>
+<div class="proposals-grid" id="proposals-grid"></div>
+<blockquote style="margin-top:30px">The trouble ain't that people are ignorant; it's that they 'know' so much that ain't so.<cite>— Josh Billings, quoted by P&W</cite></blockquote>
+</div>
+</section>
+
+<!-- REVIEW -->
+<section id="review">
+<div class="container">
+<h2>📖 Review</h2>
+<div class="rating">★★★★☆</div>
+<p style="color:var(--amber);font-size:1.1rem;margin-bottom:20px">A flamethrower disguised as an education book.</p>
+
+<div class="review-section">
+<h3 style="color:var(--amber);margin-bottom:12px">The Arc</h3>
+<p style="margin-bottom:12px">The book moves in three clean stages: <strong>diagnosis</strong> (schools are broken — they teach passivity, obedience, and crap-absorption in a world that demands active, critical, crap-detecting minds), <strong>theory</strong> (the inquiry method, meaning-making, languaging — how people actually learn when you stop interfering), and <strong>practice</strong> (what to actually do Monday morning, from the 16 proposals to the 11 survival strategies).</p>
+<p style="margin-bottom:12px">The diagnosis is ferocious and still accurate. The theory is deeply grounded — Korzybski, Sapir-Whorf, Ames' perception studies, Dewey's transactional psychology. The practice sections are uneven but contain genuine brilliance (the "Quo Vadimus High School" method, Miceli's reality curriculum, the question-based curriculum).</p>
+<p style="color:var(--muted);font-style:italic">It's from 1969. Some examples are dated — Vietnam, the specific racial politics, the gendered language. But the core argument is MORE relevant now, not less. In a world of algorithmic feeds, AI-generated content, and institutional collapse, "crap detecting" has gone from important to existential.</p>
+</div>
+
+<div class="review-section">
+<h3 style="color:var(--amber);margin:24px 0 12px">What Holds Up</h3>
+<ul style="padding-left:20px;color:var(--warm)">
+<li style="margin:8px 0">The hidden curriculum analysis — students learn what they DO, not what they're told</li>
+<li style="margin:8px 0">Questions > Answers as a pedagogical principle</li>
+<li style="margin:8px 0">The environment/medium IS the curriculum</li>
+<li style="margin:8px 0">Language shapes perception — not metaphorically but literally</li>
+<li style="margin:8px 0">The Pygmalion effect / self-fulfilling prophecy research</li>
+<li style="margin:8px 0">The "seven obsolete concepts" still being taught (absolute truth, certainty, fixed identity, simple causality…)</li>
+</ul>
+</div>
+
+<div class="review-section">
+<h3 style="color:var(--amber);margin:24px 0 12px">What Doesn't</h3>
+<ul style="padding-left:20px;color:var(--muted)">
+<li style="margin:8px 0">Sometimes too polemical — the Dr. Gillupsie satire is funny but heavy-handed</li>
+<li style="margin:8px 0">Vague on implementation beyond "be a different kind of person"</li>
+<li style="margin:8px 0">The educational games chapter aged poorly</li>
+<li style="margin:8px 0">Occasionally romanticizes student rebellion</li>
+<li style="margin:8px 0">The "every teacher is a language teacher" chapter needed to be the whole book</li>
+</ul>
+</div>
+
+<div class="review-section">
+<h3 style="color:var(--amber);margin:24px 0 12px">Connections</h3>
+<div class="connection">
+<h4>→ Mindstorms (Papert, 1980)</h4>
+<p>Papert built on this foundation. Where P&W made the political/cultural argument for inquiry learning, Papert provided the technological instrument (Logo, the computer as "object to think with"). Mindstorms gestures at the subversive argument but never makes it this explicitly. P&W are the political theory; Papert is the engineering.</p>
+</div>
+<div class="connection">
+<h4>→ The Little Schemer (Friedman & Felleisen)</h4>
+<p>The Socratic method in action — pure inquiry pedagogy applied to computer science. No declarative sentences. Only questions. Exactly what P&W prescribed. The Little Schemer IS a crap-detector training manual for programmers.</p>
+</div>
+<div class="connection">
+<h4>→ About Face (Cooper)</h4>
+<p>Design thinking = inquiry thinking. Cooper's insistence on understanding users before building = P&W's insistence on understanding learners before teaching. The "Dr. Gillupsie" satire could describe most software built without user research.</p>
+</div>
+<div class="connection">
+<h4>→ How to Solve It (Pólya)</h4>
+<p>Heuristics vs. algorithms. Pólya's method IS the inquiry method applied to mathematics: ask questions, look for patterns, work backward, check your assumptions. P&W want every subject taught the way Pólya teaches math.</p>
+</div>
+<div class="connection">
+<h4>→ Gödel, Escher, Bach (Hofstadter)</h4>
+<p>Systems thinking, self-reference, the limits of formal systems. GEB demonstrates what P&W's "open systems" look like intellectually — where every answer generates new questions, and the boundary between observer and observed dissolves.</p>
+</div>
+</div>
+
+<div class="review-section">
+<h3 style="color:var(--amber);margin:24px 0 12px">The Bottom Line</h3>
+<blockquote>The purpose of education is to help all students develop built-in, shockproof crap detectors as basic equipment in their survival kits.<cite>— Postman & Weingartner, final chapter</cite></blockquote>
+<p style="margin-top:16px">In 1969, this was radical. In 2025, when every feed is an algorithm, every headline is optimized for outrage, and AI can generate infinite plausible-sounding nonsense — it's a survival manual. The fact that schools STILL haven't listened is the strongest argument in the book's favor.</p>
+<p style="margin-top:12px;color:var(--muted);font-style:italic">Read it alongside Mindstorms. One tells you why the revolution is necessary. The other shows you how to build the weapons.</p>
+</div>
+</div>
+</section>
+
+<footer>
+<q>Thank God there are no free schools or printing; … for learning has brought disobedience and heresy into the world, and printing has divulged them.… God keep us from both.</q>
+<cite style="color:var(--dim)">— Sir William Berkeley, Governor of Virginia, d. 1677</cite>
+<p style="margin-top:16px">Built with no external dependencies, no frameworks, no permission.</p>
+</footer>
+
+<script>
+// Navigation
+function showSection(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  window.scrollTo({top:document.querySelector('nav').offsetTop-10,behavior:'smooth'});
+}
+
+// Medium tabs
+function showMedium(type){
+  document.getElementById('medium-lecture').style.display=type==='lecture'?'block':'none';
+  document.getElementById('medium-inquiry').style.display=type==='inquiry'?'block':'none';
+  document.querySelectorAll('.medium-tabs button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Crap Detector Game
+const crapStatements=[
+  {stmt:"We only use 10% of our brains.",answer:"crap",explain:"A persistent myth with no neuroscientific basis. Brain imaging shows all areas are active. This is the kind of 'common knowledge' that a good crap detector catches — it sounds scientific but has never been true."},
+  {stmt:"The average human swallows 8 spiders per year in their sleep.",answer:"crap",explain:"Fabricated in 1993 by a magazine columnist specifically to demonstrate how easily false 'facts' spread. The perfect crap-detection test case — it sounds specific enough to be real."},
+  {stmt:"Reading improves cognitive empathy and theory of mind.",answer:"fact",explain:"Supported by multiple studies (e.g., Kidd & Castano, 2013). Reading literary fiction correlates with improved ability to understand others' mental states. Though the effect size is debated, the basic finding holds."},
+  {stmt:"Hard work always leads to success.",answer:"crap",explain:"A culturally powerful myth that ignores systemic factors — class, race, luck, timing, health. P&W would call this a prime example of ideological captivity: people in successful positions NEED to believe this to justify their position."},
+  {stmt:"Einstein failed math as a child.",answer:"crap",explain:"He excelled at math from a young age. This myth persists because it's comforting — 'even geniuses struggled!' It's a cliché that substitutes for understanding how learning actually works."},
+  {stmt:"The tongue has distinct taste zones for sweet, salty, sour, and bitter.",answer:"crap",explain:"Based on a misreading of a 1901 German thesis. All taste receptors exist across the entire tongue. This was taught in schools for decades — a perfect example of how curricula perpetuate errors through sheer inertia."},
+  {stmt:"Exposed to identical information, different people will perceive different things.",answer:"fact",explain:"This is Ames' core finding, central to the book: perception comes from us, not from things. What we perceive is a function of our previous experiences, assumptions, and purposes."},
+  {stmt:"Students learn best when material is delivered in their preferred 'learning style' (visual, auditory, kinesthetic).",answer:"crap",explain:"Despite enormous popularity, learning styles theory has been repeatedly debunked. No credible evidence supports matching instruction to supposed styles. A textbook case of educational crap that persists because it FEELS true."},
+  {stmt:"Language influences how we categorize and perceive reality.",answer:"fact",explain:"The Sapir-Whorf hypothesis (in its weak form) is well-supported. Different languages carve up color, time, space, and causality differently, and speakers' perceptions follow. Central to the book's 'Languaging' chapter."},
+  {stmt:"The Great Wall of China is visible from space.",answer:"crap",explain:"Multiple astronauts have confirmed it is not. But it's been repeated so often it feels like established fact. Hemingway's crap detector: does it pass the smell test? (Have you seen how thin a wall is from an airplane?)"},
+  {stmt:"Children enter school as question marks and leave as periods.",answer:"fact",explain:"This is P&W's own devastating observation — backed by research showing question-asking drops precipitously from kindergarten through high school. Schools literally train curiosity out of children."},
+  {stmt:"Competition is human nature and the best motivator for learning.",answer:"nuanced",explain:"Nuanced. Humans are both competitive and cooperative — 'human nature' is a term P&W would ban. Competition motivates in narrow contexts but research (Alfie Kohn, etc.) consistently shows cooperation produces better learning outcomes. The statement smuggles ideology through the phrase 'human nature.'"},
+  {stmt:"Antibiotics are effective against viral infections like the common cold.",answer:"crap",explain:"Antibiotics only work against bacteria. This misconception drives antibiotic overuse and resistance — a public health crisis. Scientific literacy is crap detection applied to medicine."},
+  {stmt:"The autocratic classroom teaches students they cannot learn.",answer:"fact",explain:"Watson's research, cited extensively by P&W: closed authoritarian environments produce 'soul murder' (Whitehead). Students in such environments learn apathetic conformity, dependence on authority, and the conviction that they are incapable of independent thought."},
+  {stmt:"Technology in the classroom automatically improves learning outcomes.",answer:"crap",explain:"P&W anticipated this: 'The enthusiasm that community leaders display for an educational innovation is in inverse proportion to its significance to the learning process.' TVs, overhead projectors, tablets, AI — the medium only changes things if the METHOD changes."},
+  {stmt:"Standardized tests objectively measure student intelligence.",answer:"crap",explain:"If each perceiver is unique (Ames, Korzybski), standardized testing is philosophically incoherent. Tests measure compliance with a particular set of abstractions — which is not the same thing as intelligence, creativity, or learning capacity."},
+  {stmt:"The printing press was initially met with fear and resistance by established institutions.",answer:"fact",explain:"Absolutely. Sir William Berkeley (the book's closing epigraph): 'Thank God there are no free schools or printing; for learning has brought disobedience and heresy into the world.' Socrates opposed writing for similar reasons."},
+  {stmt:"Most of what you learn in school, you'll use in real life.",answer:"crap",explain:"P&W's devastating point: students know this is false, which is why the whole system runs on 'Let's Pretend.' Torres: 'You study for the big day and then you take the test and then you forget what you studied.' The curriculum is 'a strategy of distraction.'"},
+];
+
+let crapRight=0,crapTotal=0,usedStatements=[];
+
+function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function renderCrap(){
+  const game=document.getElementById('crap-game');
+  game.innerHTML='';
+  let available=crapStatements.filter((_,i)=>!usedStatements.includes(i));
+  if(available.length<5){usedStatements=[];available=crapStatements.slice()}
+  const indices=[];
+  const pool=[...available];
+  shuffleArray(pool);
+  const batch=pool.slice(0,Math.min(5,pool.length));
+  batch.forEach(s=>{
+    const idx=crapStatements.indexOf(s);
+    usedStatements.push(idx);
+    const div=document.createElement('div');
+    div.className='statement-card';
+    div.innerHTML=`
+      <div class="stmt">"${s.stmt}"</div>
+      <div class="btn-row">
+        <button class="btn-fact" onclick="checkCrap(this,'fact','${s.answer}')">✓ Legit</button>
+        <button class="btn-nuanced" onclick="checkCrap(this,'nuanced','${s.answer}')">🤔 It's Complicated</button>
+        <button class="btn-crap" onclick="checkCrap(this,'crap','${s.answer}')">💩 Crap</button>
+      </div>
+      <div class="crap-result">${s.explain}</div>
+    `;
+    game.appendChild(div);
+  });
+}
+
+function checkCrap(btn,choice,answer){
+  const card=btn.closest('.statement-card');
+  const result=card.querySelector('.crap-result');
+  const correct=choice===answer;
+  crapTotal++;
+  if(correct)crapRight++;
+  result.className='crap-result '+(correct?'correct':'wrong');
+  result.style.display='block';
+  result.innerHTML=(correct?'<strong>✓ Good detecting!</strong> ':'<strong>✗ Missed this one.</strong> ')+result.textContent;
+  card.querySelectorAll('button').forEach(b=>b.disabled=true);
+  document.getElementById('crap-right').textContent=crapRight;
+  document.getElementById('crap-total').textContent=crapTotal;
+}
+
+function resetCrap(){renderCrap()}
+
+// Questions Wall
+const questions=[
+  {q:"What do you worry about most?",a:"Not 'What year did Columbus sail?' but what keeps you up at night. P&W argue that starting from students' real anxieties connects learning to survival — the only honest purpose of education."},
+  {q:"What are the dumbest and most dangerous ideas that are 'popular' today?",a:"This is crap detection as curriculum. Students learn to evaluate the ideas their culture takes for granted — the most subversive intellectual act possible."},
+  {q:"How do you know when something is 'true'?",a:"The epistemological question that every subject depends on but none teach. Without this, students accumulate information with no way to evaluate it."},
+  {q:"What does 'progress' mean and who decides?",a:"Forces examination of assumptions embedded in language itself. 'Progress' smuggles in a value judgment disguised as a neutral description."},
+  {q:"What's worth dying for? What's worth living for? How did you come to believe this?",a:"Goes straight to values — the thing schools avoid most carefully and students need most urgently. The 'how did you come to believe this' makes it epistemological, not just emotional."},
+  {q:"How can you tell 'good guys' from 'bad guys'?",a:"Deceptively simple. Leads to: Who writes the history? What criteria are we using? Are those criteria universal? This is the anthropological perspective P&W call the most 'subversive' intellectual instrument."},
+  {q:"Where does meaning come from?",a:"The question Chapter VI is built around. Meaning is made, not found. It comes from perceivers, not from things. Understanding this changes everything."},
+  {q:"What does it mean to 'know' something?",a:"Is knowing the same as remembering? As understanding? As being able to do? Schools treat these as identical. They are profoundly different."},
+  {q:"In what ways are you different from when you were born?",a:"Forces students to see themselves as processes, not fixed things. The 'thing' metaphor for human identity is one of the seven obsolete concepts P&W want to retire."},
+  {q:"How much of what you 'know' is actually something someone told you?",a:"The beginning of intellectual independence. Most 'knowledge' is received, not discovered. Recognizing this is the first step toward crap detection."},
+  {q:"What would you change if you could?",a:"Implies agency. Most of school teaches that the world is a fixed given. This question treats the student as someone who could alter it."},
+  {q:"What's the relationship between language and reality?",a:"The Sapir-Whorf question. Do we describe the world or create it with our words? This is the most important question in the book, and it's never asked in school."},
+  {q:"What are the purposes of school?",a:"The meta-question. P&W: if you can't ask about the system you're inside, you're trapped in it. Asking this in school is the most subversive act possible."},
+  {q:"When was the last time you changed your mind about something important?",a:"Tests intellectual flexibility — the core survival trait. People who can't change their minds can't learn. 'Once we judge someone or something, we tend to stop thinking about them or it.'"},
+  {q:"How is the world you live in different from the world your parents grew up in?",a:"The change question. If the answer is 'very different' (it always is), then why would the same education work for both generations? The driving question of the entire book."},
+  {q:"What's the difference between a question and an answer?",a:"A question opens; an answer closes. P&W: questions are instruments of perception. The most important intellectual ability humans have developed is not taught in school."},
+];
+
+function renderQuestions(){
+  const wall=document.getElementById('q-wall');
+  questions.forEach(q=>{
+    const div=document.createElement('div');
+    div.className='q-card';
+    div.onclick=function(){this.classList.toggle('open')};
+    div.innerHTML=`<div class="q">${q.q}</div><div class="a">${q.a}</div>`;
+    wall.appendChild(div);
+  });
+}
+
+// 16 Proposals
+const proposals=[
+  {n:1,t:"Five-year moratorium on all textbooks",r:"Textbooks assume that knowledge exists prior to, independent of, and outside the learner. They create the false impression that learning means absorbing pre-existing content rather than making meaning."},
+  {n:2,t:"Have teachers teach each other's subjects",r:"Forces teachers to become learners again. An English teacher teaching math must experience not-knowing — the condition of their students. You can't model inquiry if you've forgotten what ignorance feels like."},
+  {n:3,t:"Transfer elementary teachers to high school and vice versa",r:"Elementary teachers tend to understand children; high school teachers tend to understand subjects. Each group needs what the other has. The transfer disrupts comfortable expertise."},
+  {n:4,t:"Require teachers who 'know' their subject to write a book on it",r:"Most couldn't do it — revealing that their 'knowledge' consists of someone else's textbook, not genuine understanding. If you can't write the book, how deeply do you know the subject?"},
+  {n:5,t:"Dissolve all subjects, courses, and course requirements",r:"Would wreck every educational bureaucracy in the country. Which is exactly the point. The structure of subjects IS the structure of the problem. You can't solve a structural problem with content changes."},
+  {n:6,t:"Limit teachers to 3 declarative sentences and 15 questions per class",r:"25¢ fine per violation. Forces the shift from telling to asking. If you can only make 3 statements, you'd better make them count — and the rest of the time, students are doing the intellectual work."},
+  {n:7,t:"Prohibit teachers from asking questions they already know the answers to",r:"This single rule would revolutionize education. If the teacher already knows the answer, it's not a real question — it's a test. Real questions create real inquiry. Fake questions create the shell game."},
+  {n:8,t:"Moratorium on all tests and grades",r:"Testing makes the student the problem rather than the system. P&W: 'the only creative intellectual activity available to students — cheating.' If your measurement system incentivizes cheating, the system is broken."},
+  {n:9,t:"Require psychotherapy as in-service training",r:"Most teachers have never examined their own assumptions, fears, and motivations. If perception comes from us (Ames), then unexamined teachers project unexamined biases. Therapy = structured self-inquiry."},
+  {n:10,t:"Classify teachers by ability and publish the lists",r:"Bluebirds, Robins, and Sandpipers — just like schools do to children. The proposal's cruelty is the point: if ability-grouping is damaging to teachers, why do we assume it's fine for students?"},
+  {n:11,t:"Require teachers to pass a test prepared by students",r:"A test on what STUDENTS know — their culture, concerns, language, reality. Teachers who can't pass it have no business teaching those students. You can't help a learner you don't understand."},
+  {n:12,t:"Make every class elective; withhold pay if students don't return",r:"The market test. If students had real choice, which classes would survive? The answer reveals which teachers are actually teaching and which are just running a captive audience through motions."},
+  {n:13,t:"One-year leave every fourth year to work outside education",r:"As a bartender, cab driver, anything. Teachers who have only ever been in schools have only ever been in schools. The insularity of education is part of its dysfunction."},
+  {n:14,t:"Require evidence of a loving relationship with at least one person",r:"P&W: 'Which is more bizarre — requiring evidence of love, or requiring a list of courses taken?' A teacher who cannot love has no business in a classroom. Rogers: love IS how you teach."},
+  {n:15,t:"Reproduce all school-toilet graffiti in the hallways",r:"The gap between what students say in hallways and what they say in classrooms IS the measure of the school's failure. Real thoughts happen in bathrooms because classrooms don't permit them."},
+  {n:16,t:"Ban these words: teach, syllabus, covering ground, I.Q., test, disadvantaged, gifted, grade, score, human nature, dumb, college material",r:"Korzybski: language shapes perception. Remove the words and you remove the conceptual framework that makes the old system feel natural. 'Of such small language shifts, revolutions can be made.'"},
+];
+
+function renderProposals(){
+  const grid=document.getElementById('proposals-grid');
+  proposals.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='proposal';
+    div.onclick=function(){this.classList.toggle('open')};
+    div.innerHTML=`<div class="num">#${p.n}</div><div class="title">${p.t}</div><div class="reasoning">${p.r}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+// Languaging — show labels on open
+document.querySelectorAll('.lang-pair').forEach(el=>{
+  const obs=new MutationObserver(()=>{
+    const afterLabel=el.querySelector('.label.l-after');
+    if(afterLabel)afterLabel.style.display=el.classList.contains('open')?'block':'none';
+  });
+  obs.observe(el,{attributes:true,attributeFilter:['class']});
+});
+
+// Init
+renderCrap();
+renderQuestions();
+renderProposals();
+</script>
+</body>
+</html>

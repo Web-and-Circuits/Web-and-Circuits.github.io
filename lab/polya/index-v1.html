@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Solve It — Interactive Book Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #e8e4df;
+  --text-dim: #8a8580;
+  --accent: #d4a056;
+  --accent2: #6ba3be;
+  --success: #5cb85c;
+  --danger: #c44;
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'EB Garamond', serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+/* Progress bar */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px; z-index: 999;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  width: 0%; transition: width 0.15s;
+}
+/* Back link */
+.back-link {
+  position: fixed; top: 16px; left: 20px; z-index: 998;
+  font-family: var(--font-ui); font-size: 14px;
+  color: var(--text-dim); text-decoration: none;
+  min-height: 44px; min-width: 44px;
+  display: flex; align-items: center;
+}
+.back-link:hover { color: var(--accent); }
+/* Sections */
+section {
+  max-width: 720px; margin: 0 auto; padding: 80px 24px;
+}
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+/* Hero */
+.hero {
+  max-width: 100%; text-align: center; padding: 140px 24px 100px;
+}
+.hero h1 {
+  font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700; line-height: 1.15; margin-bottom: 12px;
+}
+.hero .author {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 1.3rem; color: var(--text-dim); margin-bottom: 32px;
+}
+.hero .tagline {
+  font-family: var(--font-ui); font-size: 0.95rem; color: var(--text-dim);
+  letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 40px;
+}
+.stars { font-size: 2rem; letter-spacing: 4px; margin-bottom: 16px; }
+h2 {
+  font-family: var(--font-display); font-size: 1.8rem;
+  margin-bottom: 24px; color: var(--accent);
+}
+h3 {
+  font-family: var(--font-display); font-size: 1.3rem;
+  margin: 28px 0 12px; color: var(--text);
+}
+blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 12px 20px; margin: 24px 0;
+  background: var(--surface); border-radius: 0 8px 8px 0;
+  font-style: italic; color: var(--text-dim);
+}
+blockquote em { color: var(--text); font-style: normal; }
+/* Interactive boxes */
+.interact-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 32px 0;
+}
+.interact-box h3 { margin-top: 0; color: var(--accent); }
+/* Buttons */
+button, .btn {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  min-height: 44px; min-width: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button:active { transform: scale(0.97); }
+button.selected {
+  background: var(--accent); color: var(--bg);
+  border-color: var(--accent); font-weight: 600;
+}
+/* Phase cards */
+.phase-cards { display: grid; gap: 16px; margin: 24px 0; }
+.phase-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-height: 44px;
+}
+.phase-card:hover { border-color: var(--accent); }
+.phase-card.open { border-color: var(--accent2); }
+.phase-card .phase-num {
+  font-family: var(--font-mono); font-size: 0.8rem;
+  color: var(--accent); margin-bottom: 4px;
+}
+.phase-card .phase-title {
+  font-family: var(--font-display); font-size: 1.15rem;
+  margin-bottom: 8px;
+}
+.phase-card .phase-detail {
+  display: none; margin-top: 12px;
+  font-size: 0.95rem; color: var(--text-dim);
+  line-height: 1.6;
+}
+.phase-card.open .phase-detail { display: block; }
+.phase-card .phase-questions {
+  display: none; margin-top: 12px;
+  font-family: var(--font-mono); font-size: 0.85rem;
+  color: var(--accent2); line-height: 1.8;
+}
+.phase-card.open .phase-questions { display: block; }
+/* Problem solver */
+.solver-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  margin: 16px 0; display: none;
+}
+.solver-step.active { display: block; }
+.solver-step .step-label {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--accent); text-transform: uppercase;
+  letter-spacing: 0.1em; margin-bottom: 8px;
+}
+textarea, input[type="text"] {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  width: 100%; padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  min-height: 44px;
+  resize: vertical;
+}
+textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+.step-nav {
+  display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
+}
+/* Analogy explorer */
+.analogy-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;
+}
+.analogy-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.analogy-col h4 {
+  font-family: var(--font-mono); font-size: 0.8rem;
+  color: var(--accent2); text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 12px;
+}
+.analogy-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.analogy-row:last-child { border-bottom: none; }
+.analogy-row.highlight { background: rgba(212,160,86,0.1); border-radius: 4px; }
+/* Quiz */
+.quiz-option {
+  display: block; width: 100%;
+  text-align: left; margin: 8px 0;
+  padding: 14px 18px;
+}
+.quiz-option.correct { background: rgba(92,184,92,0.15); border-color: var(--success); color: var(--success); }
+.quiz-option.wrong { background: rgba(204,68,68,0.15); border-color: var(--danger); color: var(--danger); }
+.quiz-feedback {
+  margin-top: 12px; padding: 12px 16px;
+  border-radius: 8px; font-family: var(--font-ui);
+  font-size: 0.9rem; display: none;
+}
+/* Proverb matcher */
+.proverb-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.proverb-text {
+  flex: 1; min-width: 200px;
+  font-style: italic; color: var(--text-dim);
+}
+.proverb-phase {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  padding: 4px 10px; border-radius: 20px;
+  background: var(--surface2); border: 1px solid var(--border);
+  cursor: pointer; min-height: 44px;
+  display: flex; align-items: center;
+  transition: all 0.2s; user-select: none;
+}
+.proverb-phase.correct-reveal { border-color: var(--success); color: var(--success); }
+.proverb-phase.wrong-reveal { border-color: var(--danger); color: var(--danger); }
+/* Footer */
+footer {
+  text-align: center; padding: 60px 24px;
+  font-family: var(--font-ui); font-size: 0.85rem;
+  color: var(--text-dim);
+}
+/* Responsive */
+@media (max-width: 600px) {
+  .analogy-grid { grid-template-columns: 1fr; }
+  section { padding: 60px 16px; }
+}
+.divider {
+  width: 60px; height: 2px;
+  background: var(--border);
+  margin: 48px auto;
+}
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 0.75rem;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-dim); margin: 2px 4px 2px 0;
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a href="../" class="back-link">← Back to Lab</a>
+
+<!-- HERO -->
+<div class="hero reveal">
+  <div class="stars">★★★★★</div>
+  <h1>How to Solve It</h1>
+  <p class="author">George Pólya, 1945</p>
+  <p class="tagline">An interactive book report</p>
+</div>
+
+<!-- INTRO -->
+<section>
+  <div class="reveal">
+    <p>Four publishers rejected this book before Princeton University Press picked it up. It went on to sell over a million copies. The reason is simple: Pólya did something nobody had done clearly before. He took the messy, intuitive, deeply human process of solving problems and made it <em>teachable</em>.</p>
+    <p>This isn't a summary. It's an attempt to let you <em>experience</em> Pólya's ideas by doing, not just reading. Click things. Try the exercises. Solve the problems. That's what Pólya would want.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- THE FOUR PHASES -->
+<section>
+  <div class="reveal">
+    <h2>The Four Phases</h2>
+    <p>The heart of the book: every problem, from a crossword puzzle to a research-level theorem, passes through four phases. Click each to explore.</p>
+    <div class="phase-cards">
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-num">Phase 1</div>
+        <div class="phase-title">Understanding the Problem</div>
+        <div class="phase-detail">
+          "It is foolish to answer a question that you do not understand." Most failures in problem-solving happen here — students rush into computation without grasping what they're even looking for. Pólya insists: before anything else, you must be able to state the problem in your own words.
+        </div>
+        <div class="phase-questions">
+          → What is the unknown?<br>
+          → What are the data?<br>
+          → What is the condition?<br>
+          → Draw a figure. Introduce notation.<br>
+          → Is it possible to satisfy the condition?
+        </div>
+      </div>
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-num">Phase 2</div>
+        <div class="phase-title">Devising a Plan</div>
+        <div class="phase-detail">
+          This is where the magic happens — and where most people get stuck. Pólya's key insight: you don't invent solutions from nothing. You connect your problem to problems you've already solved. The gap between "stuck" and "eureka" is bridged by systematic exploration, not divine inspiration.
+        </div>
+        <div class="phase-questions">
+          → Do you know a related problem?<br>
+          → Look at the unknown! Think of a familiar problem with the same unknown.<br>
+          → Here is a related problem, solved before. Could you use it?<br>
+          → Could you restate the problem?<br>
+          → If you can't solve it, solve a simpler related problem first.
+        </div>
+      </div>
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-num">Phase 3</div>
+        <div class="phase-title">Carrying Out the Plan</div>
+        <div class="phase-detail">
+          The creative work was Phase 2. Phase 3 is patience and rigor. Check each step — can you see it's correct? Can you <em>prove</em> it's correct? The heuristic reasoning that got you here must now give way to strict argument. "We use scaffolding to support a bridge during construction; when the work is done, we take off the scaffolding."
+        </div>
+        <div class="phase-questions">
+          → Check each step.<br>
+          → Can you see clearly that the step is correct?<br>
+          → Can you prove that it is correct?
+        </div>
+      </div>
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-num">Phase 4</div>
+        <div class="phase-title">Looking Back</div>
+        <div class="phase-detail">
+          The most skipped and most valuable phase. Students "shut their books and look for something else." But reviewing the solution consolidates knowledge and builds problem-solving ability. Can you check it differently? Can you use the method elsewhere? This is where one solved problem becomes a tool for solving ten more.
+        </div>
+        <div class="phase-questions">
+          → Can you check the result?<br>
+          → Can you derive the result differently?<br>
+          → Can you see it at a glance?<br>
+          → Can you use the result, or the method, for some other problem?
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TRY IT: GUIDED PROBLEM-SOLVING -->
+<section>
+  <div class="reveal">
+    <h2>Try It: Pólya's Method in Action</h2>
+    <p>Pólya's favorite example: find the diagonal of a rectangular room, given its length, width, and height. Walk through the four phases yourself.</p>
+
+    <div class="solver-step active" id="step1">
+      <div class="step-label">Phase 1 — Understand</div>
+      <p><strong>What is the unknown?</strong></p>
+      <textarea id="s1-unknown" rows="2" placeholder="Describe the unknown in your own words..."></textarea>
+      <p style="margin-top:16px"><strong>What are the data?</strong></p>
+      <textarea id="s1-data" rows="2" placeholder="What are you given?"></textarea>
+      <p style="margin-top:16px"><strong>Is the condition sufficient?</strong> If you know all three dimensions, is the diagonal determined?</p>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button onclick="this.classList.toggle('selected')">Yes</button>
+        <button onclick="this.classList.toggle('selected')">No</button>
+        <button onclick="this.classList.toggle('selected')">Not sure</button>
+      </div>
+      <div class="step-nav">
+        <button onclick="showStep(2)">Next: Devise a Plan →</button>
+      </div>
+    </div>
+
+    <div class="solver-step" id="step2">
+      <div class="step-label">Phase 2 — Plan</div>
+      <p><strong>Do you know a related problem?</strong></p>
+      <p style="color:var(--text-dim)">Hint: The diagonal is a line segment. What familiar problems have "find the length of a line" as their unknown?</p>
+      <textarea id="s2-related" rows="2" placeholder="What related problem comes to mind?"></textarea>
+      <p style="margin-top:16px"><strong>Could you use it?</strong> The Pythagorean theorem finds the hypotenuse of a right triangle. Can you introduce a right triangle into the figure?</p>
+      <div id="plan-reveal" style="display:none;margin-top:16px;padding:16px;background:var(--bg);border-radius:8px">
+        <p style="color:var(--accent)">💡 The key idea:</p>
+        <p>The diagonal of the room is the hypotenuse of a right triangle whose legs are: (1) the height of the room, and (2) the diagonal of the floor. The floor diagonal itself is the hypotenuse of a right triangle formed by the length and width.</p>
+        <p style="font-family:var(--font-mono);margin-top:12px;color:var(--accent2)">
+          y² = a² + b² (floor diagonal)<br>
+          x² = y² + c² = a² + b² + c²
+        </p>
+      </div>
+      <div class="step-nav">
+        <button onclick="showStep(1)">← Back</button>
+        <button onclick="document.getElementById('plan-reveal').style.display='block'">Show the plan</button>
+        <button onclick="showStep(3)">Next: Carry Out →</button>
+      </div>
+    </div>
+
+    <div class="solver-step" id="step3">
+      <div class="step-label">Phase 3 — Execute</div>
+      <p>Given a room with length = 12, width = 4, height = 3, compute the diagonal.</p>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);color:var(--accent2)">x = √(12² + 4² + 3²) = √(</span>
+        <input type="text" id="calc-sum" style="width:80px" placeholder="?">
+        <span style="font-family:var(--font-mono);color:var(--accent2)">) =</span>
+        <input type="text" id="calc-result" style="width:80px" placeholder="?">
+      </div>
+      <button style="margin-top:12px" onclick="checkCalc()">Check</button>
+      <div id="calc-feedback" style="margin-top:8px;font-family:var(--font-ui);font-size:0.9rem"></div>
+      <div class="step-nav">
+        <button onclick="showStep(2)">← Back</button>
+        <button onclick="showStep(4)">Next: Look Back →</button>
+      </div>
+    </div>
+
+    <div class="solver-step" id="step4">
+      <div class="step-label">Phase 4 — Look Back</div>
+      <p><strong>Can you check the result?</strong> Pólya suggests several tests:</p>
+      <div class="interact-box" style="margin-top:16px;padding:20px">
+        <p><strong>Symmetry test:</strong> Does the formula x = √(a² + b² + c²) treat a, b, c symmetrically?</p>
+        <p style="color:var(--text-dim);margin-top:4px">Yes — swapping any two dimensions gives the same diagonal. ✓</p>
+        <p style="margin-top:16px"><strong>Specialization test:</strong> If c = 0, the room becomes a flat rectangle. Does the formula reduce correctly?</p>
+        <p style="color:var(--text-dim);margin-top:4px">x = √(a² + b²) — the 2D Pythagorean theorem. ✓</p>
+        <p style="margin-top:16px"><strong>Dimension test:</strong> If a, b, c are in feet, is x in feet?</p>
+        <p style="color:var(--text-dim);margin-top:4px">√(ft² + ft² + ft²) = ft. ✓</p>
+        <p style="margin-top:16px"><strong>Can you use this for another problem?</strong></p>
+        <textarea rows="2" placeholder="What other problems could this method or result help with?"></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ANALOGY EXPLORER -->
+<section>
+  <div class="reveal">
+    <h2>The Power of Analogy</h2>
+    <p>One of Pólya's most powerful heuristics: solve a simpler analogous problem first, then extend the method. Hover over each row to see the correspondence.</p>
+    <div class="analogy-grid">
+      <div class="analogy-col">
+        <h4>2D: Triangle</h4>
+        <div class="analogy-row" data-pair="1">Bounded by 3 sides</div>
+        <div class="analogy-row" data-pair="2">3 vertices, 3 sides</div>
+        <div class="analogy-row" data-pair="3">3 medians meet at one point</div>
+        <div class="analogy-row" data-pair="4">Center of gravity = center of 3 vertices</div>
+        <div class="analogy-row" data-pair="5">Diagonal of rectangle: √(a² + b²)</div>
+      </div>
+      <div class="analogy-col">
+        <h4>3D: Tetrahedron</h4>
+        <div class="analogy-row" data-pair="1">Bounded by 4 faces</div>
+        <div class="analogy-row" data-pair="2">4 vertices, 6 edges, 4 faces</div>
+        <div class="analogy-row" data-pair="3">6 median planes meet at one point</div>
+        <div class="analogy-row" data-pair="4">Center of gravity = center of 4 vertices</div>
+        <div class="analogy-row" data-pair="5">Diagonal of box: √(a² + b² + c²)</div>
+      </div>
+    </div>
+    <p style="font-size:0.9rem;color:var(--text-dim);margin-top:8px">Pólya: "The more ambitious plan may have more chances of success" — the <em>Inventor's Paradox</em>. Sometimes generalizing makes a problem <em>easier</em>, because the structure becomes visible.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUIZ: WHICH PHASE? -->
+<section>
+  <div class="reveal">
+    <h2>Quiz: Which Phase?</h2>
+    <p>Pólya's questions belong to specific phases. Can you place them?</p>
+
+    <div class="interact-box" id="quiz-box">
+      <p id="quiz-question" style="font-family:var(--font-display);font-size:1.15rem;margin-bottom:16px"></p>
+      <div id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <button id="quiz-next" style="display:none;margin-top:12px" onclick="nextQuiz()">Next Question →</button>
+      <div id="quiz-score" style="display:none;margin-top:16px;font-family:var(--font-mono);color:var(--accent)"></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROVERBS -->
+<section>
+  <div class="reveal">
+    <h2>Wisdom of Proverbs</h2>
+    <p>Pólya noticed that folk proverbs capture heuristic wisdom. Click the phase label to cycle through guesses, then reveal the answer.</p>
+    <div style="margin-top:20px">
+      <div class="proverb-item">
+        <div class="proverb-text">"A fool looks to the beginning, a wise man regards the end."</div>
+        <div class="proverb-phase" data-answer="1" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+      <div class="proverb-item">
+        <div class="proverb-text">"Try all the keys in the bunch."</div>
+        <div class="proverb-phase" data-answer="2" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+      <div class="proverb-item">
+        <div class="proverb-text">"Step after step the ladder is ascended."</div>
+        <div class="proverb-phase" data-answer="3" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+      <div class="proverb-item">
+        <div class="proverb-text">"Second thoughts are best."</div>
+        <div class="proverb-phase" data-answer="4" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+      <div class="proverb-item">
+        <div class="proverb-text">"Where there is a will there is a way."</div>
+        <div class="proverb-phase" data-answer="1" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+      <div class="proverb-item">
+        <div class="proverb-text">"It is safe riding at two anchors."</div>
+        <div class="proverb-phase" data-answer="4" data-current="0" onclick="cycleProverb(this)">Phase ?</div>
+      </div>
+    </div>
+    <button style="margin-top:16px" onclick="revealProverbs()">Reveal All Answers</button>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OPINION -->
+<section>
+  <div class="reveal">
+    <h2>My Take</h2>
+    <p>This book is a <strong>tool</strong>, not a decoration. Pólya didn't write a philosophy of problem-solving — he wrote a manual. The four phases are obvious once stated, which is the hallmark of a great insight. You can't unsee them.</p>
+    <p>What surprised me most: how much Pólya emphasizes <em>emotion</em>. Determination, hope, the thrill of a bright idea, the dejection of being stuck. He understands that problem-solving is not a cold logical exercise — it's a deeply human struggle. "Teaching to solve problems is education of the will."</p>
+    <p>What dates it: the gendered language, the assumption of deep Euclidean geometry knowledge. What doesn't date: everything else. The framework is as useful for debugging code or writing essays as it is for geometric proofs.</p>
+    <blockquote>"A great discovery solves a great problem but there is a grain of discovery in the solution of any problem. Your problem may be modest; but if it challenges your curiosity and brings into play your inventive faculties, and if you solve it by your own means, you may experience the tension and enjoy the triumph of discovery."</blockquote>
+    <p>Read this book. Then solve something hard.</p>
+    <div class="stars" style="margin-top:24px">★★★★★</div>
+  </div>
+</section>
+
+<footer>
+  <p>Reviewed by 🐑 · February 2026</p>
+  <p style="margin-top:8px"><a href="../" style="color:var(--text-dim)">← Back to Lab</a></p>
+</footer>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+});
+
+// Scroll reveal
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// Phase cards
+function togglePhase(el) { el.classList.toggle('open'); }
+
+// Solver steps
+function showStep(n) {
+  document.querySelectorAll('.solver-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+}
+
+// Calculator check
+function checkCalc() {
+  const sum = document.getElementById('calc-sum').value.trim();
+  const res = document.getElementById('calc-result').value.trim();
+  const fb = document.getElementById('calc-feedback');
+  if (sum === '169' && res === '13') {
+    fb.innerHTML = '<span style="color:var(--success)">✓ Correct! 144 + 16 + 9 = 169, √169 = 13.</span>';
+  } else if (sum === '169') {
+    fb.innerHTML = '<span style="color:var(--accent)">Sum is right! Now what\'s √169?</span>';
+  } else {
+    fb.innerHTML = '<span style="color:var(--danger)">Not quite. 12² = 144, 4² = 16, 3² = 9. Try again.</span>';
+  }
+}
+
+// Analogy hover
+document.querySelectorAll('.analogy-row').forEach(row => {
+  row.addEventListener('mouseenter', () => {
+    const pair = row.dataset.pair;
+    document.querySelectorAll(`.analogy-row[data-pair="${pair}"]`).forEach(r => r.classList.add('highlight'));
+  });
+  row.addEventListener('mouseleave', () => {
+    document.querySelectorAll('.analogy-row').forEach(r => r.classList.remove('highlight'));
+  });
+});
+
+// Quiz
+const quizData = [
+  { q: '"What is the unknown?"', a: 0, explain: 'Phase 1 — Understanding the problem starts with identifying what you seek.' },
+  { q: '"Do you know a related problem?"', a: 1, explain: 'Phase 2 — Connecting to prior knowledge is the core of devising a plan.' },
+  { q: '"Can you see clearly that the step is correct?"', a: 2, explain: 'Phase 3 — Checking each step belongs to carrying out the plan.' },
+  { q: '"Can you derive the result differently?"', a: 3, explain: 'Phase 4 — Finding alternate derivations strengthens your understanding.' },
+  { q: '"Could you restate the problem?"', a: 1, explain: 'Phase 2 — Restating is a way of varying the problem to find a plan.' },
+  { q: '"Did you use all the data?"', a: 3, explain: 'Phase 4 — This is a powerful check on the completed solution (also useful earlier).' },
+  { q: '"Draw a figure. Introduce suitable notation."', a: 0, explain: 'Phase 1 — Visualization aids understanding of the problem.' },
+  { q: '"Can you use the result for some other problem?"', a: 3, explain: 'Phase 4 — Exploiting your success is the final step.' },
+];
+const phases = ['1: Understand', '2: Plan', '3: Execute', '4: Look Back'];
+let qIdx = 0, score = 0, answered = false;
+
+function renderQuiz() {
+  if (qIdx >= quizData.length) {
+    document.getElementById('quiz-question').textContent = 'Done!';
+    document.getElementById('quiz-options').innerHTML = '';
+    document.getElementById('quiz-feedback').style.display = 'none';
+    document.getElementById('quiz-next').style.display = 'none';
+    document.getElementById('quiz-score').style.display = 'block';
+    document.getElementById('quiz-score').textContent = `Score: ${score}/${quizData.length}`;
+    return;
+  }
+  answered = false;
+  const q = quizData[qIdx];
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('quiz-feedback').style.display = 'none';
+  document.getElementById('quiz-next').style.display = 'none';
+  let html = '';
+  phases.forEach((p, i) => {
+    html += `<button class="quiz-option" onclick="answerQuiz(${i})">${p}</button>`;
+  });
+  document.getElementById('quiz-options').innerHTML = html;
+}
+
+function answerQuiz(choice) {
+  if (answered) return;
+  answered = true;
+  const q = quizData[qIdx];
+  const btns = document.querySelectorAll('.quiz-option');
+  btns[q.a].classList.add('correct');
+  if (choice !== q.a) btns[choice].classList.add('wrong');
+  else score++;
+  const fb = document.getElementById('quiz-feedback');
+  fb.style.display = 'block';
+  fb.style.background = choice === q.a ? 'rgba(92,184,92,0.1)' : 'rgba(204,68,68,0.1)';
+  fb.style.color = choice === q.a ? 'var(--success)' : 'var(--text-dim)';
+  fb.textContent = q.explain;
+  document.getElementById('quiz-next').style.display = 'inline-block';
+}
+
+function nextQuiz() { qIdx++; renderQuiz(); }
+renderQuiz();
+
+// Proverbs
+function cycleProverb(el) {
+  let cur = parseInt(el.dataset.current);
+  cur = cur >= 4 ? 0 : cur + 1;
+  el.dataset.current = cur;
+  el.textContent = cur === 0 ? 'Phase ?' : 'Phase ' + cur;
+  el.classList.remove('correct-reveal', 'wrong-reveal');
+}
+
+function revealProverbs() {
+  document.querySelectorAll('.proverb-phase').forEach(el => {
+    const ans = el.dataset.answer;
+    const cur = el.dataset.current;
+    el.textContent = 'Phase ' + ans;
+    el.classList.add(cur === ans ? 'correct-reveal' : 'wrong-reveal');
+  });
+}
+</script>
+</body>
+</html>

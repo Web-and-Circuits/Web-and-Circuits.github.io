@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Little Schemer — Interactive Review</title>
+<style>
+:root { --bg: #0a0e14; --bg2: #111820; --bg3: #1a2230; --fg: #c8d6e5; --fg2: #8899aa; --accent: #00d4aa; --accent2: #00a888; --red: #ff6b6b; --yellow: #ffd93d; --orange: #ff9f43; --pink: #ff6b9d; --border: #1e2d3d; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: 'Menlo', 'Consolas', 'Monaco', monospace; line-height: 1.6; }
+.container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+
+/* Header */
+.header { text-align: center; padding: 3rem 1rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+.header h1 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+.header .subtitle { color: var(--fg2); font-size: 0.9rem; }
+.header .authors { color: var(--yellow); margin: 0.5rem 0; }
+.stars { color: var(--yellow); font-size: 1.5rem; letter-spacing: 2px; }
+.food { color: var(--orange); font-style: italic; font-size: 0.85rem; margin-top: 0.5rem; }
+
+/* Nav */
+nav { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 2rem; position: sticky; top: 0; background: var(--bg); padding: 0.75rem 0; z-index: 10; border-bottom: 1px solid var(--border); }
+nav button { background: var(--bg3); border: 1px solid var(--border); color: var(--fg); padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.8rem; transition: all 0.2s; }
+nav button:hover, nav button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+/* Sections */
+.section { display: none; animation: fadeIn 0.3s; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section h2 { color: var(--accent); margin-bottom: 1rem; font-size: 1.4rem; }
+.section h3 { color: var(--yellow); margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+
+/* REPL */
+.repl-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.repl-header { background: var(--bg3); padding: 0.5rem 1rem; color: var(--accent); font-size: 0.85rem; display: flex; justify-content: space-between; }
+.repl-output { height: 300px; overflow-y: auto; padding: 1rem; font-size: 0.9rem; }
+.repl-output .prompt-line { color: var(--accent); }
+.repl-output .result-line { color: var(--yellow); }
+.repl-output .error-line { color: var(--red); }
+.repl-output .info-line { color: var(--fg2); font-style: italic; }
+.repl-input-row { display: flex; border-top: 1px solid var(--border); }
+.repl-input-row span { padding: 0.75rem; color: var(--accent); }
+#repl-input { flex: 1; background: var(--bg3); border: none; color: var(--fg); padding: 0.75rem 0.5rem; font-family: inherit; font-size: 0.9rem; outline: none; }
+.examples { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.examples button { background: var(--bg2); border: 1px solid var(--border); color: var(--accent); padding: 0.3rem 0.7rem; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+.examples button:hover { background: var(--bg3); border-color: var(--accent); }
+
+/* Cards */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: border-color 0.2s; }
+.card:hover { border-color: var(--accent2); }
+.card-header { padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+.card-header .num { color: var(--accent); font-weight: bold; margin-right: 0.75rem; }
+.card-header .arrow { color: var(--fg2); transition: transform 0.2s; }
+.card.open .card-header .arrow { transform: rotate(90deg); }
+.card-body { display: none; padding: 0 1rem 1rem; border-top: 1px solid var(--border); }
+.card.open .card-body { display: block; }
+code, .code { background: var(--bg3); padding: 0.15rem 0.4rem; border-radius: 3px; color: var(--accent); font-size: 0.85rem; }
+pre { background: var(--bg3); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 0.5rem 0; font-size: 0.85rem; line-height: 1.5; }
+.chapter-tag { background: var(--accent2); color: var(--bg); padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.75rem; }
+
+/* Trace */
+.trace-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+.trace-controls input, .trace-controls select { background: var(--bg3); border: 1px solid var(--border); color: var(--fg); padding: 0.4rem 0.6rem; border-radius: 4px; font-family: inherit; }
+.trace-controls button { background: var(--accent); color: var(--bg); border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold; }
+.trace-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 0.5rem; transition: all 0.3s; }
+.trace-step.current { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,170,0.2); }
+.trace-step .label { color: var(--accent); font-weight: bold; margin-bottom: 0.25rem; }
+.trace-step .detail { color: var(--fg2); font-size: 0.85rem; }
+.hl { color: var(--yellow); font-weight: bold; }
+
+/* Flow diagram */
+.flow-node { display: inline-block; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
+.flow-node:hover, .flow-node.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 8px rgba(0,212,170,0.3); }
+.flow-arrow { color: var(--accent); margin: 0 0.25rem; }
+.flow-detail { background: var(--bg2); border: 1px solid var(--accent2); border-radius: 6px; padding: 1rem; margin-top: 1rem; display: none; }
+.flow-detail.visible { display: block; }
+
+/* Halting */
+.path-box { background: var(--bg2); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 3px solid var(--accent); }
+.path-box.contradiction { border-left-color: var(--red); }
+.path-box .verdict { color: var(--red); font-weight: bold; font-size: 1.1rem; }
+
+/* Review */
+.review-section { margin-bottom: 2rem; }
+.trajectory { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0; }
+.trajectory .node { background: var(--bg3); border: 1px solid var(--border); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.85rem; }
+.trajectory .arr { color: var(--accent); }
+.connection { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.connection strong { color: var(--accent); }
+.connection em { color: var(--yellow); }
+
+/* Halting step buttons */
+.halting-nav { display: flex; gap: 0.5rem; margin: 1rem 0; }
+.halting-nav button { background: var(--bg3); border: 1px solid var(--border); color: var(--fg); padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-family: inherit; }
+.halting-nav button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 1.4rem; }
+  nav button { font-size: 0.7rem; padding: 0.3rem 0.5rem; }
+  .repl-output { height: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>🐚 The Little Schemer</h1>
+  <div class="authors">Daniel P. Friedman & Matthias Felleisen</div>
+  <div class="subtitle">4th Edition, 1996 · MIT Press</div>
+  <div class="stars">★★★★★</div>
+  <div class="food">🥜 Is it true that this is a book about peanut butter and jelly?</div>
+</div>
+
+<nav>
+  <button class="active" onclick="showSection('repl')">🐚 REPL</button>
+  <button onclick="showSection('commandments')">📜 Commandments</button>
+  <button onclick="showSection('trace')">🔄 Trace</button>
+  <button onclick="showSection('ycomb')">🧬 Y Combinator</button>
+  <button onclick="showSection('meta')">🪞 Metacircular</button>
+  <button onclick="showSection('halting')">🛑 Halting</button>
+  <button onclick="showSection('review')">📖 Review</button>
+</nav>
+
+<!-- ==================== REPL ==================== -->
+<div id="repl" class="section active">
+  <h2>🐚 The Scheme REPL</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">Type S-expressions and press Enter. The book teaches by doing — so do!</p>
+
+  <div class="repl-container">
+    <div class="repl-header">
+      <span>little-schemer v1.0</span>
+      <span style="color:var(--fg2)">car · cdr · cons · quote · null? · atom? · eq? · + · - · * · cond · lambda · define</span>
+    </div>
+    <div class="repl-output" id="repl-output">
+      <div class="info-line">; Welcome to The Little Schemer REPL!</div>
+      <div class="info-line">; Try: (car '(a b c))  or click an example below</div>
+      <div class="info-line">; 🥜 What is (car '(peanut butter and jelly))?</div>
+    </div>
+    <div class="repl-input-row">
+      <span>λ&gt;</span>
+      <input type="text" id="repl-input" placeholder="(car '(a b c))" autofocus>
+    </div>
+  </div>
+
+  <div class="examples">
+    <button onclick="replRun(`(car '(a b c))`)">(car '(a b c))</button>
+    <button onclick="replRun(`(cdr '(a b c))`)">(cdr '(a b c))</button>
+    <button onclick="replRun(`(cons 'peanut '(butter and jelly))`)">(cons 'peanut '(butter ...))</button>
+    <button onclick="replRun(`(null? '())`)">(null? '())</button>
+    <button onclick="replRun(`(atom? 'spaghetti)`)">(atom? 'spaghetti)</button>
+    <button onclick="replRun(`(eq? 'pizza 'pizza)`)">(eq? 'pizza 'pizza)</button>
+    <button onclick="replRun(`(+ 1 2 3)`)">(+ 1 2 3)</button>
+    <button onclick="replRun(`(car (cdr '(a b c)))`)">(car (cdr '(a b c)))</button>
+    <button onclick="replRun(`(cons '(a) '(b c))`)">(cons '(a) '(b c))</button>
+    <button onclick="replRun(`((lambda (x) (+ x 1)) 41)`)">(lambda (x) (+ x 1)) 41</button>
+    <button onclick="replRun(`(define lat? (lambda (l) (cond ((null? l) #t) ((atom? (car l)) (lat? (cdr l))) (else #f))))`);replRun(`(lat? '(a b c))`)">define lat?</button>
+    <button onclick="replRun(`(define rember (lambda (a lat) (cond ((null? lat) '()) ((eq? a (car lat)) (cdr lat)) (else (cons (car lat) (rember a (cdr lat)))))))`);replRun(`(rember 'and '(peanut butter and jelly))`)">define rember</button>
+  </div>
+</div>
+
+<!-- ==================== TEN COMMANDMENTS ==================== -->
+<div id="commandments" class="section">
+  <h2>📜 The Ten Commandments</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">Click each commandment to explore. These are the heuristics that make recursion tractable — like Pólya's problem-solving strategies, but for code.</p>
+  <div id="commandments-list"></div>
+</div>
+
+<!-- ==================== TRACE ==================== -->
+<div id="trace" class="section">
+  <h2>🔄 Trace the Recursion</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">The book's signature move: follow a function call by call. Watch <code>member?</code> peel the list like an onion. 🧅</p>
+
+  <pre style="margin-bottom:1rem;">(define member?
+  (lambda (a lat)
+    (cond
+      ((null? lat) #f)
+      ((eq? (car lat) a) #t)
+      (else (member? a (cdr lat))))))</pre>
+
+  <div class="trace-controls">
+    <label style="color:var(--fg2)">Atom:</label>
+    <input type="text" id="trace-atom" value="butter" style="width:80px;">
+    <label style="color:var(--fg2)">List:</label>
+    <input type="text" id="trace-list" value="peanut butter and jelly" style="width:200px;">
+    <button onclick="runTrace()">▶ Trace</button>
+    <button onclick="stepTrace()">⏭ Step</button>
+    <button onclick="resetTrace()">⏮ Reset</button>
+  </div>
+
+  <div id="trace-output"></div>
+</div>
+
+<!-- ==================== Y COMBINATOR ==================== -->
+<div id="ycomb" class="section">
+  <h2>🧬 The Y Combinator Derivation</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">Chapter 9's masterpiece: deriving recursion from nothing. Click each step to see the code evolve. 🍝 (Like building spaghetti from flour.)</p>
+  <div id="ycomb-cards"></div>
+</div>
+
+<!-- ==================== METACIRCULAR ==================== -->
+<div id="meta" class="section">
+  <h2>🪞 The Metacircular Mirror</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">Chapter 10: Scheme interpreting Scheme. The strange loop that would make Hofstadter proud. Click a node to see how it works.</p>
+
+  <div style="text-align:center; margin: 2rem 0; line-height: 2.5;">
+    <div class="flow-node" onclick="showFlow('value')">value</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node" onclick="showFlow('meaning')">meaning</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node" onclick="showFlow('actions')">actions</div>
+    <br>
+    <div style="margin: 0.5rem 0; color: var(--fg2);">↙ dispatches to ↘</div>
+    <div class="flow-node" onclick="showFlow('const')">*const</div>
+    <div class="flow-node" onclick="showFlow('quote')">*quote</div>
+    <div class="flow-node" onclick="showFlow('identifier')">*identifier</div>
+    <div class="flow-node" onclick="showFlow('lambda')">*lambda</div>
+    <div class="flow-node" onclick="showFlow('cond')">*cond</div>
+    <div class="flow-node" onclick="showFlow('application')">*application</div>
+    <br>
+    <div style="margin: 0.5rem 0; color: var(--fg2);">↓ *application calls ↓</div>
+    <div class="flow-node" onclick="showFlow('apply2')">apply</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node" onclick="showFlow('meaning')" style="border-color: var(--accent); color: var(--accent);">meaning</div>
+    <span style="color: var(--red); margin-left: 0.5rem;">∞ the loop!</span>
+  </div>
+
+  <div class="flow-detail" id="flow-detail"></div>
+</div>
+
+<!-- ==================== HALTING ==================== -->
+<div id="halting" class="section">
+  <h2>🛑 The Halting Problem</h2>
+  <p style="color:var(--fg2); margin-bottom:1rem;">Can we write a function that decides if any function halts? The book proves: no. Walk through the paradox.</p>
+
+  <div class="halting-nav">
+    <button class="active" onclick="showHaltStep(0)">1. Setup</button>
+    <button onclick="showHaltStep(1)">2. will-stop?</button>
+    <button onclick="showHaltStep(2)">3. last-try</button>
+    <button onclick="showHaltStep(3)">4. If #t...</button>
+    <button onclick="showHaltStep(4)">5. If #f...</button>
+    <button onclick="showHaltStep(5)">6. 💥</button>
+  </div>
+  <div id="halting-content"></div>
+</div>
+
+<!-- ==================== REVIEW ==================== -->
+<div id="review" class="section">
+  <h2>📖 Review — ★★★★★</h2>
+
+  <div class="review-section">
+    <h3>The Trajectory</h3>
+    <p style="color:var(--fg2); margin-bottom:0.5rem;">From the simplest atom to self-interpreting code, in 200 pages:</p>
+    <div class="trajectory">
+      <span class="node">atoms</span><span class="arr">→</span>
+      <span class="node">lists</span><span class="arr">→</span>
+      <span class="node">recursion</span><span class="arr">→</span>
+      <span class="node">★ & lat</span><span class="arr">→</span>
+      <span class="node">higher-order fn</span><span class="arr">→</span>
+      <span class="node">collectors</span><span class="arr">→</span>
+      <span class="node">halting problem</span><span class="arr">→</span>
+      <span class="node">Y combinator</span><span class="arr">→</span>
+      <span class="node" style="border-color:var(--accent); color:var(--accent);">metacircular evaluator</span>
+    </div>
+  </div>
+
+  <div class="review-section">
+    <h3>The Assessment</h3>
+    <p>This is the most elegant programming book ever written. Through nothing but questions and answers — a Socratic dialogue about lists — Friedman and Felleisen smuggle in the deepest ideas in computer science. You arrive thinking about <code>(car '(a b c))</code> and leave understanding why some problems are undecidable and how a language can interpret itself.</p>
+    <p style="margin-top:0.75rem;">The food metaphors aren't decoration. They're pedagogical: by using <em>peanut butter</em>, <em>jelly</em>, and <em>spaghetti</em> as data, the book keeps abstraction grounded. You never forget that these are just things in lists.</p>
+    <p style="margin-top:0.75rem;">The Ten Commandments are genius. Like Pólya's heuristics for math, they give you handles for thinking about recursion. After this book, you don't fear recursion — you <em>see</em> it.</p>
+  </div>
+
+  <div class="review-section">
+    <h3>Connections</h3>
+    <div class="connection">
+      <strong>Gödel, Escher, Bach</strong> — The metacircular evaluator in Chapter 10 <em>is</em> a Strange Loop. Code that reads code that reads code. The Intermission even recommends GEB. <em>We've been here.</em>
+    </div>
+    <div class="connection">
+      <strong>How to Solve It (Pólya)</strong> — The Ten Commandments are heuristics for recursion, just as Pólya's method is heuristics for proofs. Also recommended in the Intermission. <em>We've been here too.</em>
+    </div>
+    <div class="connection">
+      <strong>Mindstorms (Papert)</strong> — This book <em>is</em> a microworld. The REPL is the Turtle. Kids (and adults) learn by building, testing, failing, adjusting. Papert would weep with joy.
+    </div>
+    <div class="connection">
+      <strong>Vehicles (Braitenberg)</strong> — Complex behavior from simple rules. <code>car</code>, <code>cdr</code>, <code>cons</code>, <code>null?</code>, <code>eq?</code> — five primitives, and you get a self-interpreting language.
+    </div>
+    <div class="connection">
+      <strong>The Art of Unix Programming</strong> — Composition. Small functions combined into larger ones. The Unix philosophy, expressed in S-expressions.
+    </div>
+  </div>
+
+  <div class="review-section">
+    <h3>The Verdict</h3>
+    <p>Five stars. No hesitation. This book respects your intelligence by never telling you the answer — it asks you questions until you discover it yourself. That's not just good pedagogy. That's love.</p>
+    <p style="margin-top:0.75rem; color: var(--orange); font-style: italic;">🥜 Now go make yourself a peanut butter and jelly sandwich. You've earned it.</p>
+  </div>
+</div>
+
+</div><!-- container -->
+
+<script>
+// ==================== SCHEME INTERPRETER ====================
+function parse(src) {
+  const tokens = tokenize(src);
+  let pos = 0;
+  function peek() { return tokens[pos]; }
+  function next() { return tokens[pos++]; }
+  function parseExpr() {
+    const t = next();
+    if (t === undefined) throw 'Unexpected end of input';
+    if (t === '(') {
+      const list = [];
+      while (peek() !== ')') {
+        if (peek() === undefined) throw 'Missing )';
+        list.push(parseExpr());
+      }
+      next(); // consume )
+      return list;
+    }
+    if (t === ')') throw 'Unexpected )';
+    if (t === "'") return ['quote', parseExpr()];
+    if (t === '#t') return true;
+    if (t === '#f') return false;
+    const n = Number(t);
+    if (!isNaN(n) && t !== '') return n;
+    return t; // symbol
+  }
+  const exprs = [];
+  while (pos < tokens.length) exprs.push(parseExpr());
+  return exprs;
+}
+
+function tokenize(s) {
+  const tokens = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === ';') { while (i < s.length && s[i] !== '\n') i++; continue; }
+    if (/\s/.test(s[i])) { i++; continue; }
+    if (s[i] === '(' || s[i] === ')') { tokens.push(s[i++]); continue; }
+    if (s[i] === "'") { tokens.push("'"); i++; continue; }
+    let tok = '';
+    while (i < s.length && !/[\s()]/.test(s[i])) tok += s[i++];
+    tokens.push(tok);
+  }
+  return tokens;
+}
+
+function schemeToString(val) {
+  if (val === true) return '#t';
+  if (val === false) return '#f';
+  if (val === null || val === undefined) return '()';
+  if (typeof val === 'number' || typeof val === 'string') return String(val);
+  if (Array.isArray(val)) {
+    if (val.length === 0) return '()';
+    // Check for dotted pair (not used but safe)
+    const items = val.map(schemeToString);
+    return '(' + items.join(' ') + ')';
+  }
+  if (typeof val === 'function') return '#<procedure>';
+  return String(val);
+}
+
+const globalEnv = {};
+function makeEnv(parent) { return Object.create(parent); }
+
+function initGlobal() {
+  const g = globalEnv;
+  g['car'] = (args) => { if (!Array.isArray(args[0]) || args[0].length === 0) throw 'car: not a non-empty list'; return args[0][0]; };
+  g['cdr'] = (args) => { if (!Array.isArray(args[0]) || args[0].length === 0) throw 'cdr: not a non-empty list'; return args[0].slice(1); };
+  g['cons'] = (args) => { if (!Array.isArray(args[1])) throw 'cons: second arg must be a list'; return [args[0], ...args[1]]; };
+  g['null?'] = (args) => Array.isArray(args[0]) && args[0].length === 0;
+  g['atom?'] = (args) => !Array.isArray(args[0]);
+  g['eq?'] = (args) => args[0] === args[1];
+  g['number?'] = (args) => typeof args[0] === 'number';
+  g['zero?'] = (args) => args[0] === 0;
+  g['add1'] = (args) => args[0] + 1;
+  g['sub1'] = (args) => args[0] - 1;
+  g['+'] = (args) => args.reduce((a, b) => a + b, 0);
+  g['-'] = (args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b);
+  g['*'] = (args) => args.reduce((a, b) => a * b, 1);
+  g['='] = (args) => args[0] === args[1];
+  g['>'] = (args) => args[0] > args[1];
+  g['<'] = (args) => args[0] < args[1];
+  g['list'] = (args) => args;
+  g['not'] = (args) => args[0] === false;
+  g['or'] = 'special'; // handled in eval
+  g['and'] = 'special';
+  g['else'] = true;
+}
+initGlobal();
+
+function schemeEval(expr, env) {
+  if (typeof expr === 'number' || typeof expr === 'boolean') return expr;
+  if (typeof expr === 'string') {
+    // symbol lookup
+    if (expr in env) {
+      const v = env[expr];
+      return v;
+    }
+    if (expr in globalEnv) return globalEnv[expr];
+    throw `Undefined: ${expr}`;
+  }
+  if (!Array.isArray(expr)) throw `Cannot eval: ${expr}`;
+  if (expr.length === 0) return [];
+
+  const head = expr[0];
+
+  if (head === 'quote') return expr[1];
+  if (head === 'if') {
+    return schemeEval(expr[1], env) !== false ? schemeEval(expr[2], env) : schemeEval(expr[3], env);
+  }
+  if (head === 'cond') {
+    for (let i = 1; i < expr.length; i++) {
+      const clause = expr[i];
+      const test = schemeEval(clause[0], env);
+      if (test !== false) return schemeEval(clause[1], env);
+    }
+    throw 'cond: no matching clause';
+  }
+  if (head === 'and') {
+    let result = true;
+    for (let i = 1; i < expr.length; i++) {
+      result = schemeEval(expr[i], env);
+      if (result === false) return false;
+    }
+    return result;
+  }
+  if (head === 'or') {
+    for (let i = 1; i < expr.length; i++) {
+      const v = schemeEval(expr[i], env);
+      if (v !== false) return v;
+    }
+    return false;
+  }
+  if (head === 'define') {
+    const val = schemeEval(expr[2], env);
+    globalEnv[expr[1]] = val;
+    return `; defined ${expr[1]}`;
+  }
+  if (head === 'lambda') {
+    const params = expr[1];
+    const body = expr[2];
+    const closure = makeEnv(env);
+    const fn = (args) => {
+      const local = makeEnv(closure);
+      for (let i = 0; i < params.length; i++) local[params[i]] = args[i];
+      return schemeEval(body, local);
+    };
+    fn._isLambda = true;
+    return fn;
+  }
+  if (head === 'let') {
+    const local = makeEnv(env);
+    for (const [k, v] of expr[1]) local[k] = schemeEval(v, env);
+    return schemeEval(expr[2], local);
+  }
+
+  // Application
+  const fn = schemeEval(head, env);
+  const args = expr.slice(1).map(a => schemeEval(a, env));
+  if (typeof fn === 'function') {
+    return fn._isLambda ? fn(args) : fn(args);
+  }
+  throw `Not a function: ${schemeToString(head)}`;
+}
+
+// ==================== REPL UI ====================
+const replOutput = document.getElementById('repl-output');
+const replInput = document.getElementById('repl-input');
+
+function addLine(text, cls) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  replOutput.appendChild(d);
+  replOutput.scrollTop = replOutput.scrollHeight;
+}
+
+function replRun(src) {
+  replInput.value = '';
+  addLine(`λ> ${src}`, 'prompt-line');
+  try {
+    const exprs = parse(src);
+    for (const expr of exprs) {
+      const result = schemeEval(expr, makeEnv(globalEnv));
+      const s = typeof result === 'string' && result.startsWith(';') ? result : schemeToString(result);
+      addLine(s, 'result-line');
+    }
+  } catch(e) {
+    addLine(`Error: ${e}`, 'error-line');
+  }
+}
+
+replInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { replRun(replInput.value); }
+});
+
+// ==================== NAVIGATION ====================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ==================== TEN COMMANDMENTS ====================
+const commandments = [
+  { num: 1, title: 'Always ask null? as the first question in expressing any function', chapter: 'Ch. 2',
+    before: `(define lat?\n  (lambda (l)\n    (cond\n      ((atom? (car l)) ...)\n      ; forgot null? — crashes on '()!`,
+    after: `(define lat?\n  (lambda (l)\n    (cond\n      ((null? l) #t)           ; ← FIRST!\n      ((atom? (car l)) (lat? (cdr l)))\n      (else #f))))`,
+    why: 'Without the null? check, you crash on empty lists. Every recursive list function bottoms out at null.' },
+  { num: 2, title: 'Use cons to build lists', chapter: 'Ch. 3',
+    before: `; trying to build (a b c)\n(list 'a 'b 'c)  ; works but isn't recursive`,
+    after: `(cons 'a (cons 'b (cons 'c '())))\n; cons is the builder, car/cdr the unbuilders`,
+    why: 'cons is to lists what + is to numbers. Every list is built by consing onto another list.' },
+  { num: 3, title: 'When building a list, describe the first typical element, then cons it onto the natural recursion', chapter: 'Ch. 3',
+    before: `; How to add 1 to each number?\n; Hmm...`,
+    after: `(define add1* (lambda (l)\n  (cond\n    ((null? l) '())\n    (else (cons (add1 (car l))   ; first element\n                (add1* (cdr l)))))))  ; natural recursion`,
+    why: 'The pattern: handle (car l), cons onto recursive call on (cdr l). This is the bread and butter.' },
+  { num: 4, title: 'Always change at least one argument while recurring', chapter: 'Ch. 3',
+    before: `(define bad (lambda (l)\n  (cond\n    ((null? l) '())\n    (else (bad l)))))  ; infinite loop! l never changes`,
+    after: `(define good (lambda (l)\n  (cond\n    ((null? l) '())\n    (else (good (cdr l))))))  ; l gets smaller each time`,
+    why: 'If no argument changes, you recur forever. Use cdr for lists, sub1 for numbers.' },
+  { num: 5, title: 'When building a value with +, always use 0 for the value of the terminating line', chapter: 'Ch. 4',
+    before: `(define length (lambda (l)\n  (cond\n    ((null? l) 1)   ; wrong base case!\n    (else (+ 1 (length (cdr l)))))))`,
+    after: `(define length (lambda (l)\n  (cond\n    ((null? l) 0)   ; 0 is identity for +\n    (else (+ 1 (length (cdr l)))))))`,
+    why: '0 + anything = anything. It\'s the identity element. Using anything else shifts your answer.' },
+  { num: 6, title: 'When building a value with ×, always use 1 for the value of the terminating line', chapter: 'Ch. 4',
+    before: `; What's the product of an empty list of numbers?\n; 0? No!`,
+    after: `; 1 is the identity for multiplication\n; 1 × anything = anything\n; So the base case for × is 1`,
+    why: 'Same logic as the Fifth: 1 is the identity element for multiplication.' },
+  { num: 7, title: 'Recur on the subparts that are of the same nature', chapter: 'Ch. 5',
+    before: `; Processing nested lists — only recur on cdr?\n(define count (lambda (l)\n  (cond ((null? l) 0)\n    (else (+ 1 (count (cdr l)))))))  ; misses nested lists!`,
+    after: `(define count* (lambda (l)\n  (cond ((null? l) 0)\n    ((atom? (car l)) (+ 1 (count* (cdr l))))\n    (else (+ (count* (car l))     ; recur into sublists!\n             (count* (cdr l)))))))`,
+    why: 'If your data has lists inside lists, recur on both (car l) and (cdr l). Match your recursion to your data.' },
+  { num: 8, title: 'Use help functions to abstract from representations', chapter: 'Ch. 6',
+    before: `; Arithmetic expressions everywhere:\n(eq? (car e) '+)\n(car (cdr e))\n(car (cdr (cdr e)))  ; what is this??`,
+    after: `(define operator car)\n(define 1st-sub-exp (lambda (e) (car (cdr e))))\n(define 2nd-sub-exp (lambda (e) (car (cdr (cdr e)))))\n; Now: (operator e), (1st-sub-exp e) — readable!`,
+    why: 'Name your operations. If the representation changes, you only fix the helpers, not every function.' },
+  { num: 9, title: 'Abstract common patterns with a new function', chapter: 'Ch. 8',
+    before: `; rember, insertL, insertR, subst... all look the same\n; They all walk a list and do something at a match`,
+    after: `; Abstract the pattern into a higher-order function!\n(define insert-g (lambda (test? action)\n  (lambda (a l)\n    (cond ((null? l) '())\n      ((test? (car l) a) (action (car l) l))\n      (else (cons (car l)\n        ((insert-g test? action) a (cdr l)))))))`,
+    why: 'When you see the same shape repeated, extract it. Pass the varying parts as functions. This is the birth of higher-order programming.' },
+  { num: 10, title: 'Build functions to collect a value from two or more arguments simultaneously using continuations', chapter: 'Ch. 8',
+    before: `; Need to return TWO things from a recursion?\n; Can't do that with just car/cdr...`,
+    after: `(define multi (lambda (l col)\n  (cond ((null? l) (col '() '()))\n    (else (multi (cdr l)\n      (lambda (evens odds)\n        (cond ((even? (car l))\n               (col (cons (car l) evens) odds))\n              (else\n               (col evens (cons (car l) odds))))))))))`,
+    why: 'Collectors (continuations) let you accumulate multiple results through recursion. Mind-bending but powerful.' },
+];
+
+function initCommandments() {
+  const container = document.getElementById('commandments-list');
+  commandments.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+        <div><span class="num">#${c.num}</span> ${c.title}</div>
+        <div><span class="chapter-tag">${c.chapter}</span> <span class="arrow">▶</span></div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--fg2); margin-bottom:0.75rem;">${c.why}</p>
+        <h3 style="color:var(--red); font-size:0.9rem;">✗ Before</h3>
+        <pre>${c.before}</pre>
+        <h3 style="color:var(--accent); font-size:0.9rem;">✓ After</h3>
+        <pre>${c.after}</pre>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+initCommandments();
+
+// ==================== TRACE ====================
+let traceSteps = [];
+let tracePos = -1;
+
+function runTrace() {
+  const atom = document.getElementById('trace-atom').value.trim();
+  const listStr = document.getElementById('trace-list').value.trim().split(/\s+/);
+  traceSteps = [];
+  let lat = [...listStr];
+
+  // Build steps
+  let step = 0;
+  let found = false;
+  while (lat.length > 0) {
+    const current = lat[0];
+    traceSteps.push({
+      label: `Call ${step + 1}: (member? '${atom} '(${lat.join(' ')}))`,
+      detail: current === atom
+        ? `(eq? (car '(${lat.join(' ')})) '${atom}) → (eq? '${current} '${atom}) → <span class="hl">#t — Found it!</span>`
+        : `(null? '(${lat.join(' ')})) → #f\n(eq? '${current} '${atom}) → #f\nRecur with (cdr '(${lat.join(' ')})) = '(${lat.slice(1).join(' ') || ''})`
+    });
+    if (current === atom) { found = true; break; }
+    lat = lat.slice(1);
+    step++;
+  }
+  if (!found && lat.length === 0) {
+    traceSteps.push({
+      label: `Call ${step + 1}: (member? '${atom} '())`,
+      detail: `(null? '()) → <span class="hl">#t — Not found. Return #f.</span>`
+    });
+  }
+
+  // Add unwind steps
+  const nCalls = traceSteps.length;
+  if (found) {
+    traceSteps.push({ label: 'Unwind', detail: `<span class="hl">#t</span> bubbles up through ${nCalls - 1} return${nCalls > 2 ? 's' : ''} → <span class="hl">#t</span>` });
+  } else {
+    traceSteps.push({ label: 'Unwind', detail: `<span class="hl">#f</span> bubbles up through ${nCalls - 1} return${nCalls > 2 ? 's' : ''} → <span class="hl">#f</span>` });
+  }
+
+  tracePos = -1;
+  renderTrace();
+}
+
+function stepTrace() {
+  if (traceSteps.length === 0) runTrace();
+  if (tracePos < traceSteps.length - 1) tracePos++;
+  renderTrace();
+}
+
+function resetTrace() {
+  tracePos = -1;
+  renderTrace();
+}
+
+function renderTrace() {
+  const out = document.getElementById('trace-output');
+  out.innerHTML = '';
+  traceSteps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'trace-step' + (i === tracePos ? ' current' : '');
+    div.style.opacity = tracePos === -1 || i <= tracePos ? '1' : '0.3';
+    div.innerHTML = `<div class="label">${s.label}</div><div class="detail">${s.detail}</div>`;
+    out.appendChild(div);
+  });
+}
+
+// ==================== Y COMBINATOR ====================
+const ySteps = [
+  { title: 'Step 0: length₀ — handles nothing', code: `(lambda (l)\n  (cond\n    ((null? l) 0)\n    (else (add1 (eternity (cdr l))))))`, note: 'This "length" only works for the empty list. For anything else, it calls eternity (which loops forever). It computes length for lists of length ≤ 0.' },
+  { title: 'Step 1: length≤1 — handles one element', code: `(lambda (l)\n  (cond\n    ((null? l) 0)\n    (else (add1\n      ((lambda (l)           ; length₀ inlined!\n         (cond\n           ((null? l) 0)\n           (else (add1 (eternity (cdr l))))))\n       (cdr l))))))`, note: 'Now we can handle lists of length 0 or 1. But the pattern is ugly — we\'re copy-pasting length₀ inside itself.' },
+  { title: 'Step 2: length≤2 — see the pattern?', code: `; length₀ nested inside length≤1 nested inside length≤2...\n; We're manually unrolling recursion!\n; Each level handles one more element.\n; This can't go on forever. Can it?`, note: 'We could keep going: length≤3, length≤4... but we\'d need infinitely many copies. There must be a better way.' },
+  { title: 'Step 3: Abstract! Extract the repeated part', code: `(lambda (length)\n  (lambda (l)\n    (cond\n      ((null? l) 0)\n      (else (add1 (length (cdr l)))))))`, note: 'Call this mk-length. It takes a "length" function and returns a new one that handles one more element. The key insight: length is a PARAMETER now.' },
+  { title: 'Step 4: mk-length passing mk-length to itself', code: `((lambda (mk-length)\n   (mk-length mk-length))\n (lambda (mk-length)\n   (lambda (l)\n     (cond\n       ((null? l) 0)\n       (else (add1\n         ((mk-length mk-length) (cdr l))))))))`, note: 'The trick: instead of an infinite tower of functions, we pass mk-length to ITSELF. (mk-length mk-length) generates a new length function on demand. Recursion without define!' },
+  { title: 'Step 5: Extract the self-application', code: `((lambda (mk-length)\n   (mk-length mk-length))\n (lambda (mk-length)\n   ((lambda (length)          ; ← extracted!\n      (lambda (l)\n        (cond\n          ((null? l) 0)\n          (else (add1 (length (cdr l)))))))\n    (lambda (x) ((mk-length mk-length) x)))))`, note: 'We pull out the (mk-length mk-length) call into a separate lambda. Now the inner function looks exactly like our original mk-length from Step 3!' },
+  { title: '🎆 Step 6: Y — The Applicative-Order Y Combinator', code: `(define Y\n  (lambda (le)\n    ((lambda (f) (f f))\n     (lambda (f)\n       (le (lambda (x) ((f f) x)))))))`, note: 'Y takes any "almost-recursive" function and makes it truly recursive — without define, without naming. It\'s recursion from thin air. The fixed-point combinator. The book\'s climax.' },
+];
+
+function initYComb() {
+  const container = document.getElementById('ycomb-cards');
+  ySteps.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const isLast = i === ySteps.length - 1;
+    card.innerHTML = `
+      <div class="card-header" onclick="this.parentElement.classList.toggle('open')" style="${isLast ? 'color:var(--yellow);' : ''}">
+        <div>${s.title}</div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <pre>${s.code}</pre>
+        <p style="color:var(--fg2); margin-top:0.75rem;">${s.note}</p>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+initYComb();
+
+// ==================== METACIRCULAR ====================
+const flowData = {
+  value: { title: 'value', code: `(define value\n  (lambda (e)\n    (meaning e '())))`, desc: 'The entry point. Takes an expression e and evaluates it in an empty table (environment). Calls meaning.' },
+  meaning: { title: 'meaning', code: `(define meaning\n  (lambda (e table)\n    ((expression-to-action e) e table)))`, desc: 'The dispatcher. Looks at the expression e, determines its type (is it an atom? a list?), gets the corresponding action function, and calls it. This is where expression meets interpretation.' },
+  actions: { title: 'expression-to-action', code: `(define expression-to-action\n  (lambda (e)\n    (cond\n      ((atom? e) (atom-to-action e))\n      (else (list-to-action e)))))`, desc: 'Classifies expressions into actions. Atoms might be constants, identifiers. Lists might be quotes, conds, lambdas, or applications.' },
+  const: { title: '*const', code: `(define *const\n  (lambda (e table)\n    (cond\n      ((number? e) e)\n      ((eq? e #t) #t)\n      ((eq? e #f) #f)\n      (else (build 'primitive e)))))`, desc: 'Numbers evaluate to themselves. Booleans too. Built-in names like car, cdr become tagged primitives.' },
+  quote: { title: '*quote', code: `(define *quote\n  (lambda (e table)\n    (text-of e)))  ; just return the quoted thing`, desc: 'The simplest action: (quote x) → x. Don\'t evaluate, just return.' },
+  identifier: { title: '*identifier', code: `(define *identifier\n  (lambda (e table)\n    (lookup-in-table e table)))`, desc: 'Look up the name in the environment table. This is how variables get their values.' },
+  lambda: { title: '*lambda', code: `(define *lambda\n  (lambda (e table)\n    (build 'non-primitive\n      (cons table (cdr e)))))`, desc: 'Don\'t evaluate the body yet! Package the table (closure!), formals, and body together. This is how closures are born.' },
+  cond: { title: '*cond', code: `(define *cond\n  (lambda (e table)\n    (evcon (cond-lines-of e) table)))`, desc: 'Walk through the cond lines. Evaluate each question; when one is true, evaluate and return its answer.' },
+  application: { title: '*application', code: `(define *application\n  (lambda (e table)\n    (apply\n      (meaning (function-of e) table)\n      (evlis (arguments-of e) table))))`, desc: 'Evaluate the function (via meaning!), evaluate all arguments (via meaning!), then apply. This is where the loop closes — apply will call meaning again for the body.' },
+  apply2: { title: 'apply (the loop closes)', code: `(define apply\n  (lambda (fun vals)\n    (cond\n      ((primitive? fun) (apply-primitive ...))\n      ((non-primitive? fun)\n       (meaning (body-of fun)    ; ← calls meaning!\n         (extend-table ...))))))`, desc: 'For primitives, just call the built-in. For non-primitives (lambdas), evaluate the body with meaning — in the extended environment. THE LOOP CLOSES. meaning → *application → apply → meaning → ...' },
+};
+
+function showFlow(key) {
+  const d = flowData[key];
+  const el = document.getElementById('flow-detail');
+  el.className = 'flow-detail visible';
+  el.innerHTML = `<h3 style="color:var(--accent);">${d.title}</h3><pre>${d.code}</pre><p style="color:var(--fg2); margin-top:0.75rem;">${d.desc}</p>`;
+  document.querySelectorAll('.flow-node').forEach(n => n.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ==================== HALTING ====================
+const haltSteps = [
+  { html: `<h3>The Question</h3><p>Can we write a function <code>will-stop?</code> that takes any function and tells us whether it halts?</p><pre>(will-stop? f)  →  #t if f halts\n                →  #f if f runs forever</pre><p style="color:var(--fg2); margin-top:1rem;">Seems useful! Let's assume we can, and see what happens...</p>` },
+  { html: `<h3>Assume will-stop? exists</h3><pre>(define will-stop?\n  (lambda (f)\n    ...magical oracle...))\n\n; It always gives the right answer:\n(will-stop? (lambda () 42))        → #t  (halts)\n(will-stop? (lambda () (eternity))) → #f  (loops)</pre><p style="color:var(--fg2); margin-top:1rem;">So far so good. Now let's build something devious...</p>` },
+  { html: `<h3>Define last-try</h3><pre>(define last-try\n  (lambda ()\n    (and (will-stop? last-try)\n         (eternity))))</pre><p style="color:var(--fg2); margin-top:1rem;">Read it carefully: last-try asks "will <em>I</em> stop?" and then does the <em>opposite</em>.</p><p style="margin-top:0.5rem;">If will-stop? says I halt → loop forever (call eternity)</p><p>If will-stop? says I loop → return #f (halt!)</p>` },
+  { html: `<h3>Path 1: Suppose (will-stop? last-try) → #t</h3><div class="path-box"><p>will-stop? says: "last-try halts"</p><p>So last-try evaluates: <code>(and #t (eternity))</code></p><p>Which calls <code>eternity</code>...</p><p>Which <strong>loops forever</strong>.</p></div><div class="path-box contradiction"><p class="verdict">💥 Contradiction! will-stop? said it halts, but it doesn't!</p></div>` },
+  { html: `<h3>Path 2: Suppose (will-stop? last-try) → #f</h3><div class="path-box"><p>will-stop? says: "last-try loops forever"</p><p>So last-try evaluates: <code>(and #f (eternity))</code></p><p>and short-circuits, returning <code>#f</code></p><p>Which means last-try <strong>halts</strong>.</p></div><div class="path-box contradiction"><p class="verdict">💥 Contradiction! will-stop? said it loops, but it halts!</p></div>` },
+  { html: `<h3>💥 will-stop? cannot exist</h3><p style="font-size:1.1rem;">Both paths lead to contradiction. No matter what will-stop? returns, it's <strong>wrong</strong>.</p><p style="margin-top:1rem; color:var(--fg2);">Therefore: <strong>will-stop? cannot exist.</strong> There is no general procedure that decides whether an arbitrary function halts.</p><p style="margin-top:1rem; color:var(--yellow);">This is the Halting Problem, proved by diagonalization — the same trick Gödel and Cantor used. The Little Schemer puts it in 2 pages. 🎤⬇️</p><pre style="margin-top:1rem; color:var(--fg2);">\n; "What does this mean?"\n; It means there are limits to what functions can do.\n; Even in a world of pure computation,\n; some questions have no answers.\n;\n; 🥜 Time for a snack.</pre>` },
+];
+
+function showHaltStep(n) {
+  document.getElementById('halting-content').innerHTML = haltSteps[n].html;
+  document.querySelectorAll('.halting-nav button').forEach((b, i) => {
+    b.classList.toggle('active', i === n);
+  });
+}
+showHaltStep(0);
+
+</script>
+</body>
+</html>

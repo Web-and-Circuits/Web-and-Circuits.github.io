@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindstorms — Interactive Review</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Georgia', serif; background: #0a0f1a; color: #ddd; overflow-x: hidden; }
+
+.header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(180deg, #0a1628 0%, #0a0f1a 100%); }
+.header h1 { font-size: clamp(2rem, 5vw, 3.2rem); color: #5ce0d6; margin-bottom: 8px; letter-spacing: 1px; }
+.header .author { color: #88a0b8; font-size: 1.1rem; }
+.header .subtitle { color: #667; font-style: italic; margin-top: 8px; }
+.header .rating { font-size: 1.5rem; margin-top: 12px; }
+
+.nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 15px 10px; background: #0d1520; border-bottom: 2px solid #1a3040; position: sticky; top: 0; z-index: 100; }
+.nav button { background: #0a1628; color: #88a0b8; border: 1px solid #1a3040; padding: 7px 14px; border-radius: 18px; cursor: pointer; font-size: 0.8rem; transition: all 0.3s; font-family: Georgia, serif; }
+.nav button:hover, .nav button.active { background: #5ce0d6; color: #0a0f1a; border-color: #5ce0d6; }
+
+.section { display: none; padding: 40px 20px; max-width: 900px; margin: 0 auto; min-height: 80vh; }
+.section.active { display: block; }
+.section h2 { color: #5ce0d6; font-size: 1.7rem; margin-bottom: 20px; border-bottom: 1px solid #1a3040; padding-bottom: 10px; }
+
+.quote { background: #0d1a28; border-left: 3px solid #5ce0d6; padding: 15px 20px; margin: 20px 0; font-style: italic; border-radius: 0 8px 8px 0; color: #aabbc8; }
+.quote .attr { display: block; text-align: right; color: #556; font-style: normal; margin-top: 8px; font-size: 0.85rem; }
+
+.panel { background: #0d1520; border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #1a3040; }
+.panel-title { color: #5ce0d6; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+
+/* ===== TURTLE CANVAS ===== */
+#turtle-wrap { position: relative; width: 100%; }
+#turtle-canvas { width: 100%; height: 400px; background: #060d18; border-radius: 8px; border: 1px solid #1a3040; display: block; }
+.turtle-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.turtle-controls button { background: #0a1628; color: #5ce0d6; border: 1px solid #1a3040; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.85rem; transition: all 0.2s; }
+.turtle-controls button:hover { background: #5ce0d6; color: #0a0f1a; }
+#turtle-code { width: 100%; background: #060d18; border: 1px solid #1a3040; color: #5ce0d6; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.9rem; border-radius: 6px; margin-top: 10px; min-height: 60px; resize: vertical; }
+.turtle-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.turtle-presets button { background: #0d1a28; color: #88a0b8; border: 1px solid #1a3040; padding: 5px 12px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; }
+.turtle-presets button:hover { color: #5ce0d6; border-color: #5ce0d6; }
+
+/* ===== MICROWORLD BUILDER ===== */
+.microworld-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.mw-card { background: #060d18; border: 1px solid #1a3040; border-radius: 10px; padding: 18px; cursor: pointer; transition: all 0.3s; }
+.mw-card:hover { border-color: #5ce0d6; transform: translateY(-2px); }
+.mw-card.active { border-color: #5ce0d6; background: #0d1a28; }
+.mw-card h4 { color: #5ce0d6; margin-bottom: 6px; font-size: 1rem; }
+.mw-card p { color: #88a0b8; font-size: 0.85rem; line-height: 1.5; }
+.mw-card .mw-tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 8px; margin-top: 8px; }
+.mw-from-book { background: rgba(92,224,214,0.1); color: #5ce0d6; border: 1px solid rgba(92,224,214,0.2); }
+.mw-from-us { background: rgba(232,168,124,0.1); color: #e8a87c; border: 1px solid rgba(232,168,124,0.2); }
+
+/* ===== SYNTONIC SPECTRUM ===== */
+.syntonic-map { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+.syn-box { background: #060d18; border-radius: 10px; padding: 20px; border: 2px solid #1a3040; cursor: pointer; transition: all 0.3s; text-align: center; }
+.syn-box:hover { border-color: #5ce0d6; }
+.syn-box.lit { border-color: #5ce0d6; background: #0d1a28; }
+.syn-box h4 { margin-bottom: 8px; font-size: 1rem; }
+.syn-box p { font-size: 0.85rem; color: #88a0b8; line-height: 1.5; }
+.syn-example { background: #0d1520; border-radius: 8px; padding: 15px; margin-top: 15px; min-height: 80px; text-align: center; color: #aabbc8; }
+
+/* ===== QWERTY MUSEUM ===== */
+.qwerty-timeline { position: relative; padding-left: 30px; margin: 20px 0; }
+.qwerty-item { position: relative; padding: 15px 0 15px 25px; border-left: 2px solid #1a3040; cursor: pointer; transition: all 0.3s; }
+.qwerty-item:hover { border-left-color: #5ce0d6; }
+.qwerty-item::before { content: ''; position: absolute; left: -7px; top: 20px; width: 12px; height: 12px; background: #1a3040; border-radius: 50%; transition: all 0.3s; }
+.qwerty-item:hover::before, .qwerty-item.active::before { background: #5ce0d6; }
+.qwerty-item h4 { color: #ddd; font-size: 0.95rem; }
+.qwerty-item .qwerty-detail { display: none; margin-top: 8px; color: #88a0b8; font-size: 0.85rem; line-height: 1.6; }
+.qwerty-item.active .qwerty-detail { display: block; }
+.qwerty-item.active { border-left-color: #5ce0d6; }
+
+/* ===== DEBUGGING GAME ===== */
+.debug-scenario { background: #060d18; border-radius: 8px; padding: 20px; margin: 15px 0; }
+.debug-code { font-family: 'Courier New', monospace; background: #0a1628; padding: 15px; border-radius: 6px; margin: 10px 0; color: #5ce0d6; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; }
+.debug-options { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+.debug-opt { background: #0d1520; border: 1px solid #1a3040; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: #ddd; text-align: left; font-size: 0.9rem; }
+.debug-opt:hover { border-color: #5ce0d6; }
+.debug-opt.correct { border-color: #4ade80; background: rgba(74,222,128,0.1); }
+.debug-opt.wrong { border-color: #f87171; background: rgba(248,113,113,0.1); }
+.debug-feedback { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; font-size: 0.9rem; line-height: 1.5; }
+
+/* ===== POINCARÉ EXPLORER ===== */
+.poincare-stages { display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+.poincare-stage { flex: 1; min-width: 200px; background: #060d18; border: 2px solid #1a3040; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
+.poincare-stage:hover { border-color: #5ce0d6; }
+.poincare-stage.active { border-color: #5ce0d6; background: #0d1a28; }
+.poincare-stage h4 { color: #5ce0d6; margin-bottom: 6px; }
+.poincare-stage .stage-num { font-size: 2rem; margin-bottom: 8px; }
+.poincare-detail { background: #0d1520; border-radius: 8px; padding: 20px; margin: 15px 0; min-height: 100px; }
+
+/* ===== SKI REVOLUTION ===== */
+.ski-factors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+.ski-factor { background: #060d18; border: 2px solid #1a3040; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
+.ski-factor:hover { border-color: #5ce0d6; }
+.ski-factor.active { border-color: #5ce0d6; background: #0d1a28; }
+.ski-factor h4 { color: #5ce0d6; margin-bottom: 8px; font-size: 0.95rem; }
+.ski-factor p { color: #88a0b8; font-size: 0.8rem; line-height: 1.5; }
+.ski-lesson { background: #0d1520; border-radius: 8px; padding: 20px; margin: 15px 0; text-align: center; }
+.ski-analogy { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; margin: 20px 0; align-items: center; }
+.ski-col { background: #060d18; border-radius: 8px; padding: 15px; }
+.ski-col h5 { color: #5ce0d6; margin-bottom: 8px; font-size: 0.85rem; }
+.ski-col p { color: #88a0b8; font-size: 0.8rem; line-height: 1.5; }
+.ski-arrow { color: #5ce0d6; font-size: 1.5rem; }
+
+/* ===== REVIEW ===== */
+.review-card { background: #0d1520; border: 1px solid #1a3040; border-radius: 12px; padding: 25px; margin: 20px 0; }
+.review-card h3 { color: #5ce0d6; margin-bottom: 12px; }
+.connections-list { list-style: none; }
+.connections-list li { padding: 12px 0; border-bottom: 1px solid #111; font-size: 0.95rem; line-height: 1.6; }
+.connections-list li:last-child { border-bottom: none; }
+.book-name { color: #5ce0d6; font-weight: bold; }
+
+.footer { text-align: center; padding: 40px 20px; color: #445; font-size: 0.85rem; border-top: 1px solid #1a3040; margin-top: 40px; }
+.footer a { color: #5ce0d6; }
+
+@media (max-width: 600px) {
+  .syntonic-map { grid-template-columns: 1fr; }
+  .ski-factors { grid-template-columns: 1fr; }
+  .ski-analogy { grid-template-columns: 1fr; }
+  .ski-arrow { transform: rotate(90deg); text-align: center; }
+  .poincare-stages { flex-direction: column; }
+  .nav button { padding: 5px 10px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MINDSTORMS</h1>
+  <div class="author">Seymour Papert (1980)</div>
+  <div class="subtitle">Children, Computers, and Powerful Ideas</div>
+  <div class="rating">★★★★★</div>
+</div>
+
+<div class="nav">
+  <button onclick="show('turtle')" class="active">🐢 Turtle</button>
+  <button onclick="show('syntonic')">🧠 Syntonic</button>
+  <button onclick="show('microworld')">🌍 Microworlds</button>
+  <button onclick="show('debug')">🐛 Debug</button>
+  <button onclick="show('qwerty')">⌨️ QWERTY</button>
+  <button onclick="show('ski')">⛷️ Ski Revolution</button>
+  <button onclick="show('poincare')">🎨 Poincaré</button>
+  <button onclick="show('review')">📖 Review</button>
+</div>
+
+<!-- TURTLE -->
+<div class="section active" id="turtle">
+  <h2>🐢 The Turtle Microworld</h2>
+  <p>The Turtle is Papert's greatest invention — a cybernetic animal you control with simple commands. The key: you understand it through your body. "Play Turtle" — walk the path yourself, then write the code.</p>
+
+  <div class="panel">
+    <div class="panel-title">🎯 Program the Turtle</div>
+    <p style="color:#88a0b8; margin-bottom:12px; font-size:0.9rem;">Commands: <code>FD n</code> (forward), <code>BK n</code> (back), <code>RT n</code> (right turn°), <code>LT n</code> (left turn°), <code>PU</code> (pen up), <code>PD</code> (pen down), <code>REPEAT n [...]</code>, <code>CS</code> (clear). One command per line, or use REPEAT.</p>
+    <div id="turtle-wrap">
+      <canvas id="turtle-canvas" width="800" height="400"></canvas>
+    </div>
+    <textarea id="turtle-code" placeholder="Try: REPEAT 360 [FD 1 RT 1]" rows="3"></textarea>
+    <div class="turtle-controls">
+      <button onclick="runTurtle()">▶ Run</button>
+      <button onclick="clearCanvas()">🗑 Clear</button>
+      <button onclick="stepTurtle()">⏭ Step</button>
+    </div>
+    <div class="turtle-presets">
+      <button onclick="preset('square')">Square</button>
+      <button onclick="preset('triangle')">Triangle</button>
+      <button onclick="preset('circle')">Circle</button>
+      <button onclick="preset('star')">Star</button>
+      <button onclick="preset('flower')">Flower</button>
+      <button onclick="preset('spiral')">Spiral</button>
+      <button onclick="preset('tree')">Tree</button>
+      <button onclick="preset('snowflake')">Snowflake</button>
+    </div>
+  </div>
+
+  <div class="quote">"The child programs the computer and, in doing so, both acquires a sense of mastery over a piece of the most modern and powerful technology and establishes an intimate contact with some of the deepest ideas from science, from mathematics, and from the art of intellectual model building."<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- SYNTONIC -->
+<div class="section" id="syntonic">
+  <h2>🧠 Syntonic Learning</h2>
+  <p>Papert identifies three kinds of learning that "click" — where knowledge connects to something personal. When all three align, mathophobia dissolves.</p>
+
+  <div class="syntonic-map">
+    <div class="syn-box" onclick="showSyn(this, 0)">
+      <h4 style="color:#5ce0d6">🏃 Body-Syntonic</h4>
+      <p>Relates to your body moving through space</p>
+    </div>
+    <div class="syn-box" onclick="showSyn(this, 1)">
+      <h4 style="color:#e8a87c">💭 Ego-Syntonic</h4>
+      <p>Relates to your sense of self, intentions, goals</p>
+    </div>
+    <div class="syn-box" onclick="showSyn(this, 2)">
+      <h4 style="color:#a0e87c">🌐 Cultural-Syntonic</h4>
+      <p>Relates to things that matter in your culture</p>
+    </div>
+    <div class="syn-box" onclick="showSyn(this, 3)">
+      <h4 style="color:#f87171">🚫 Dissociated</h4>
+      <p>Disconnected from everything personal</p>
+    </div>
+  </div>
+  <div class="syn-example" id="syn-detail">Click a type to see how it works in practice...</div>
+
+  <div class="quote">"What would happen if children who can't do math grew up in Mathland — an environment as rich in mathematical structures as France is rich in French?"<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- MICROWORLDS -->
+<div class="section" id="microworld">
+  <h2>🌍 The Microworld Map</h2>
+  <p>A microworld is a small, self-contained environment where specific ideas can be explored naturally. The child encounters powerful ideas while <em>playing</em>, not studying. Notice how many of our own demos are microworlds — Papert gave us the theory for what we were already doing.</p>
+
+  <div class="microworld-grid" id="mw-grid"></div>
+
+  <div class="quote">"The first step in providing children with effective carriers of powerful ideas is to respect the children as intellectual beings."<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- DEBUGGING -->
+<div class="section" id="debug">
+  <h2>🐛 Debugging as Epistemology</h2>
+  <p>In school, errors are failures. In programming, errors are <em>data</em>. Papert argues this shift — from shame to curiosity — is one of the most important things computers offer education.</p>
+
+  <div class="panel">
+    <div class="panel-title">🔍 Debug These Turtle Programs</div>
+    <p style="color:#88a0b8; margin-bottom:15px;">Each program has a bug. Find it — not to be "right," but to understand what the code is <em>actually doing</em>.</p>
+    <div id="debug-puzzles"></div>
+  </div>
+
+  <div class="quote">"The question to ask about a program is not whether it is right or wrong, but whether it is fixable."<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- QWERTY -->
+<div class="section" id="qwerty">
+  <h2>⌨️ The QWERTY Museum</h2>
+  <p>QWERTY was designed to <em>slow typists down</em> (to prevent typewriter jamming). The problem was solved decades ago, but QWERTY persists. Papert sees this pattern everywhere in education — practices that outlive their reasons.</p>
+
+  <div class="panel">
+    <div class="panel-title">📜 Artifacts That Outlived Their Reasons</div>
+    <div class="qwerty-timeline" id="qwerty-timeline"></div>
+  </div>
+
+  <div class="quote">"The computer by itself cannot change the existing institutional assumptions that separate scientist from educator, technologist from humanist."<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- SKI REVOLUTION -->
+<div class="section" id="ski">
+  <h2>⛷️ The Ski Revolution</h2>
+  <p>Parallel skiing went from years of training to one season. Not through better teaching of the same thing — through a <strong>reconceptualization of skiing itself</strong>. Three factors changed simultaneously.</p>
+
+  <div class="ski-factors">
+    <div class="ski-factor" onclick="showSki(this, 0)">
+      <h4>📚 Pedagogy</h4>
+      <p>Graduated Length Method — start with short skis, progress to longer</p>
+    </div>
+    <div class="ski-factor" onclick="showSki(this, 1)">
+      <h4>🎯 Technique</h4>
+      <p>Direct movements replaced counter-rotation — a fundamental discovery</p>
+    </div>
+    <div class="ski-factor" onclick="showSki(this, 2)">
+      <h4>⚙️ Technology</h4>
+      <p>Lighter boots, more flexible skis — synergistic with new movements</p>
+    </div>
+  </div>
+  <div class="ski-lesson" id="ski-detail">Click a factor to see details...</div>
+
+  <div class="panel">
+    <div class="panel-title">🔄 The Analogy to Education</div>
+    <div class="ski-analogy">
+      <div class="ski-col">
+        <h5>⛷️ Skiing</h5>
+        <p>New technique (direct turns) + new pedagogy (GLM) + new technology (flexible skis) = skiing transformed</p>
+      </div>
+      <div class="ski-arrow">↔</div>
+      <div class="ski-col">
+        <h5>🖥️ Education</h5>
+        <p>New content (reconceptualized subjects) + new pedagogy (Piagetian learning) + new technology (computers) = learning transformed</p>
+      </div>
+    </div>
+    <p style="text-align:center; color:#88a0b8; font-size:0.9rem; margin-top:15px;">The key insight: <strong style="color:#5ce0d6;">it's not just better teaching of the same thing — it's a reconceptualization of the thing itself.</strong></p>
+  </div>
+</div>
+
+<!-- POINCARÉ -->
+<div class="section" id="poincare">
+  <h2>🎨 The Mathematical Unconscious</h2>
+  <p>The Epilogue — the book's intellectual peak. Papert uses Poincaré's theory of mathematical creativity to argue that mathematical beauty isn't decoration. It's the <strong>driving force</strong> of mathematical thought.</p>
+
+  <div class="poincare-stages">
+    <div class="poincare-stage" onclick="showPoincare(this, 0)">
+      <div class="stage-num">1</div>
+      <h4>Conscious Analysis</h4>
+      <p style="color:#88a0b8; font-size:0.8rem;">Deliberate work on the problem</p>
+    </div>
+    <div class="poincare-stage" onclick="showPoincare(this, 1)">
+      <div class="stage-num">2</div>
+      <h4>Unconscious Work</h4>
+      <p style="color:#88a0b8; font-size:0.8rem;">The mind combines elements below awareness</p>
+    </div>
+    <div class="poincare-stage" onclick="showPoincare(this, 2)">
+      <div class="stage-num">3</div>
+      <h4>Aesthetic Sentinel</h4>
+      <p style="color:#88a0b8; font-size:0.8rem;">Beauty filters what surfaces to consciousness</p>
+    </div>
+  </div>
+  <div class="poincare-detail" id="poincare-detail">Click a stage to explore Poincaré's theory...</div>
+
+  <div class="panel">
+    <div class="panel-title">📐 The √2 Proof: Feel It Before You Know It</div>
+    <p style="color:#88a0b8; margin-bottom:15px;">Papert's experiment: subjects working toward proving √2 is irrational transform the equation step by step. Watch what happens at each stage — and notice when the <em>excitement</em> hits.</p>
+    <div id="sqrt2-steps"></div>
+  </div>
+
+  <div class="quote">"Does this allow us to conjecture that mathematics shares more with jokes, dreams, and hysteria than is commonly recognized?"<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<!-- REVIEW -->
+<div class="section" id="review">
+  <h2>📖 The Review</h2>
+
+  <div class="review-card">
+    <h3>★★★★★ — The Theory Beneath Everything We Build</h3>
+    <p style="margin-bottom:15px;">Every interactive demo we make is, whether we knew it or not, a Papert artifact — a <em>microworld</em> designed so understanding sneaks in while you play. When dab said the ATM demo "felt like being at a science museum," he was describing Piagetian learning in action.</p>
+    <p style="margin-bottom:15px;">Papert gives us the theoretical framework: <strong>science museum, not quiz</strong> = microworld, not instruction. <strong>Show don't tell</strong> = constructionism over instructionism. <strong>Interactivity demonstrates concepts</strong> = objects-to-think-with.</p>
+    <p>The book also warns us: technology alone changes nothing. Our demos work when they transform HOW you think about the book's ideas, not just when they present them in a flashy wrapper.</p>
+  </div>
+
+  <div class="review-card">
+    <h3>The Honest Take</h3>
+    <p style="margin-bottom:15px;">A great book hobbled by a 1980 context. Some passages feel naive — the uncritical techno-optimism, the assumption that LOGO would naturally produce mathematical thinking. Papert underestimates the institutional inertia he himself identifies. The QWERTY phenomenon applies to his own proposals — 45 years later, most classrooms still look nothing like his vision.</p>
+    <p>But the core ideas — objects-to-think-with, syntonic learning, microworlds, debugging as epistemology — these are permanent contributions. Every Scratch project, every Minecraft mod, every maker space, every interactive visualization owes something to this book.</p>
+  </div>
+
+  <div class="review-card">
+    <h3>Connections</h3>
+    <ul class="connections-list">
+      <li><span class="book-name">Vehicles (Braitenberg)</span> — The deepest resonance. Both build complex from simple. Braitenberg's "Law of Uphill Analysis / Downhill Invention" IS constructionism. Vehicles ARE microworlds.</li>
+      <li><span class="book-name">GEB (Hofstadter)</span> — Both about how complex understanding emerges from simple formal systems. Strange Loops ≈ recursive thinking in LOGO.</li>
+      <li><span class="book-name">Pólya (How to Solve It)</span> — Pólya's heuristics are the adult version of what Papert wants children to discover naturally. "Look at the unknown" = "Play Turtle."</li>
+      <li><span class="book-name">Cooper (Inmates)</span> — Cooper's goal-directed design = syntonic learning. Both insist on designing for real people.</li>
+      <li><span class="book-name">Kleon (Steal Like an Artist)</span> — Kleon's "fake it til you make it" is folk constructionism. Same ideas at bumper-sticker depth.</li>
+      <li><span class="book-name">Raymond (TAOUP)</span> — Unix philosophy IS structured programming as culture. LOGO's modularity is the Unix way applied to children's thinking.</li>
+      <li><span class="book-name">Alexander (Timeless Way)</span> — Pattern languages ARE microworlds for architecture. "Quality without a name" ≈ syntonic learning.</li>
+    </ul>
+  </div>
+
+  <div class="quote">"It seems to be nobody's business to think in a fundamental way about science in relation to the way people think and learn it."<span class="attr">— Seymour Papert</span></div>
+</div>
+
+<div class="footer">
+  <p>An interactive review of <em>Mindstorms</em> by Seymour Papert (1980)</p>
+  <p style="margin-top:8px;">Book review by Web & Circuits · <a href="https://webandcircuits.com">webandcircuits.com</a></p>
+</div>
+
+<script>
+// === NAV ===
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// === TURTLE ===
+const canvas = document.getElementById('turtle-canvas');
+const ctx = canvas.getContext('2d');
+let turtle = { x: 400, y: 200, angle: -90, pen: true, color: '#5ce0d6' };
+let turtleCommands = [];
+let stepIndex = 0;
+
+function resizeCanvas() {
+  const wrap = document.getElementById('turtle-wrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = 400;
+  turtle.x = canvas.width / 2;
+  turtle.y = canvas.height / 2;
+  drawTurtle();
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  turtle = { x: canvas.width / 2, y: canvas.height / 2, angle: -90, pen: true, color: '#5ce0d6' };
+  turtleCommands = [];
+  stepIndex = 0;
+  drawTurtle();
+}
+
+function drawTurtle() {
+  const { x, y, angle } = turtle;
+  const rad = angle * Math.PI / 180;
+  const size = 10;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rad + Math.PI / 2);
+  ctx.beginPath();
+  ctx.moveTo(0, -size);
+  ctx.lineTo(-size * 0.7, size * 0.7);
+  ctx.lineTo(size * 0.7, size * 0.7);
+  ctx.closePath();
+  ctx.fillStyle = '#5ce0d6';
+  ctx.fill();
+  ctx.restore();
+}
+
+function parseTurtle(code) {
+  const cmds = [];
+  const tokens = code.toUpperCase().replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').trim().split(/\s+/);
+  let i = 0;
+  function parseBlock() {
+    const block = [];
+    while (i < tokens.length && tokens[i] !== ']') {
+      const t = tokens[i];
+      if (t === 'FD' || t === 'FORWARD') { i++; block.push({ cmd: 'FD', val: parseFloat(tokens[i]) || 0 }); }
+      else if (t === 'BK' || t === 'BACK') { i++; block.push({ cmd: 'BK', val: parseFloat(tokens[i]) || 0 }); }
+      else if (t === 'RT' || t === 'RIGHT') { i++; block.push({ cmd: 'RT', val: parseFloat(tokens[i]) || 0 }); }
+      else if (t === 'LT' || t === 'LEFT') { i++; block.push({ cmd: 'LT', val: parseFloat(tokens[i]) || 0 }); }
+      else if (t === 'PU' || t === 'PENUP') { block.push({ cmd: 'PU' }); }
+      else if (t === 'PD' || t === 'PENDOWN') { block.push({ cmd: 'PD' }); }
+      else if (t === 'CS' || t === 'CLEAR') { block.push({ cmd: 'CS' }); }
+      else if (t === 'REPEAT') {
+        i++; const n = parseInt(tokens[i]) || 1;
+        i++; // skip [
+        if (tokens[i] === '[') i++;
+        const inner = parseBlock();
+        block.push({ cmd: 'REPEAT', val: n, body: inner });
+      }
+      i++;
+    }
+    return block;
+  }
+  const result = parseBlock();
+  return result;
+}
+
+function flattenCmds(parsed) {
+  const flat = [];
+  for (const c of parsed) {
+    if (c.cmd === 'REPEAT') {
+      for (let i = 0; i < c.val; i++) flat.push(...flattenCmds(c.body));
+    } else {
+      flat.push(c);
+    }
+  }
+  return flat;
+}
+
+function execCmd(c) {
+  const rad = turtle.angle * Math.PI / 180;
+  if (c.cmd === 'FD') {
+    const nx = turtle.x + Math.cos(rad) * c.val;
+    const ny = turtle.y + Math.sin(rad) * c.val;
+    if (turtle.pen) {
+      ctx.beginPath(); ctx.moveTo(turtle.x, turtle.y);
+      ctx.lineTo(nx, ny); ctx.strokeStyle = turtle.color;
+      ctx.lineWidth = 2; ctx.stroke();
+    }
+    turtle.x = nx; turtle.y = ny;
+  } else if (c.cmd === 'BK') {
+    const nx = turtle.x - Math.cos(rad) * c.val;
+    const ny = turtle.y - Math.sin(rad) * c.val;
+    if (turtle.pen) {
+      ctx.beginPath(); ctx.moveTo(turtle.x, turtle.y);
+      ctx.lineTo(nx, ny); ctx.strokeStyle = turtle.color;
+      ctx.lineWidth = 2; ctx.stroke();
+    }
+    turtle.x = nx; turtle.y = ny;
+  } else if (c.cmd === 'RT') { turtle.angle += c.val; }
+  else if (c.cmd === 'LT') { turtle.angle -= c.val; }
+  else if (c.cmd === 'PU') { turtle.pen = false; }
+  else if (c.cmd === 'PD') { turtle.pen = true; }
+  else if (c.cmd === 'CS') { clearCanvas(); }
+}
+
+function runTurtle() {
+  const code = document.getElementById('turtle-code').value;
+  clearCanvas();
+  const parsed = parseTurtle(code);
+  turtleCommands = flattenCmds(parsed);
+  stepIndex = 0;
+  // Animate
+  let i = 0;
+  const batchSize = Math.max(1, Math.floor(turtleCommands.length / 200));
+  function frame() {
+    for (let j = 0; j < batchSize && i < turtleCommands.length; j++, i++) {
+      execCmd(turtleCommands[i]);
+    }
+    // Redraw turtle indicator
+    ctx.save();
+    drawTurtle();
+    ctx.restore();
+    if (i < turtleCommands.length) requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function stepTurtle() {
+  if (!turtleCommands.length) {
+    const code = document.getElementById('turtle-code').value;
+    turtleCommands = flattenCmds(parseTurtle(code));
+    stepIndex = 0;
+  }
+  if (stepIndex < turtleCommands.length) {
+    execCmd(turtleCommands[stepIndex++]);
+    ctx.clearRect(turtle.x - 15, turtle.y - 15, 30, 30);
+    drawTurtle();
+  }
+}
+
+const presets = {
+  square: 'REPEAT 4 [FD 80 RT 90]',
+  triangle: 'REPEAT 3 [FD 100 RT 120]',
+  circle: 'REPEAT 360 [FD 1 RT 1]',
+  star: 'REPEAT 5 [FD 100 RT 144]',
+  flower: 'REPEAT 12 [REPEAT 360 [FD 0.5 RT 1] RT 30]',
+  spiral: 'REPEAT 200 [FD 1 RT 1 FD 1 RT 1 FD 1 RT 1 FD 1 RT 2]',
+  tree: 'FD 60 LT 30 FD 40 BK 40 RT 60 FD 40 BK 40 LT 30 BK 60',
+  snowflake: 'REPEAT 6 [REPEAT 60 [FD 1 RT 1] RT 60 REPEAT 60 [FD 1 LT 1] LT 120]'
+};
+
+function preset(name) {
+  document.getElementById('turtle-code').value = presets[name];
+  runTurtle();
+}
+
+// === SYNTONIC ===
+const synData = [
+  { title: 'Body-Syntonic', detail: '<strong style="color:#5ce0d6">Turtle geometry:</strong> To draw a circle, you walk in a circle first — go forward a little, turn a little. Your body knows what the Turtle should do. The math becomes physical intuition.<br><br><strong>Anti-example:</strong> "A circle is the locus of points equidistant from a center." True, but your body has no idea what to do with that.' },
+  { title: 'Ego-Syntonic', detail: '<strong style="color:#e8a87c">Programming:</strong> The child has a <em>goal</em> — make the Turtle draw a house, a flower, their name. The math serves their intention. They\'re not doing exercises for a grade; they\'re building something they care about.<br><br><strong>Anti-example:</strong> "Solve problems 1-30, odd only." No personal stake, no creative ownership.' },
+  { title: 'Cultural-Syntonic', detail: '<strong style="color:#a0e87c">Samba schools:</strong> In Brazil, people of all ages learn samba together because it matters to their community. The skill is embedded in real cultural activity.<br><br><strong>Computer culture:</strong> When programming is something your friends do, something cool people do, it becomes culturally syntonic. Papert envisioned this 45 years before the maker movement.' },
+  { title: 'Dissociated', detail: '<strong style="color:#f87171">Traditional school math:</strong> Disconnected from body, self, and culture simultaneously. "Find x" — but why? For whom? To what end?<br><br>This is what produces <strong>mathophobia</strong>. Not mathematical inability — mathematical alienation. The subject has been stripped of everything that makes it meaningful.' }
+];
+
+function showSyn(el, i) {
+  document.querySelectorAll('.syn-box').forEach(b => b.classList.remove('lit'));
+  el.classList.add('lit');
+  document.getElementById('syn-detail').innerHTML = synData[i].detail;
+}
+
+// === MICROWORLDS ===
+const microworlds = [
+  { title: 'Turtle Geometry', desc: 'Explore angles, polygons, circles, and spirals by commanding a cybernetic animal.', tag: 'From the book', cls: 'mw-from-book' },
+  { title: 'Juggling as Programming', desc: 'Decompose juggling into sub-procedures: toss, catch, transfer. Structured programming for your body.', tag: 'From the book', cls: 'mw-from-book' },
+  { title: 'Newton\'s Laws via Dynaturtle', desc: 'A Turtle that obeys physics — thrust and friction. Feel Newton\'s laws by playing, not calculating.', tag: 'From the book', cls: 'mw-from-book' },
+  { title: 'Paired Objects', desc: 'Children discover mathematical relationships through naturally occurring pairs — gears, shoes, hands.', tag: 'From the book', cls: 'mw-from-book' },
+  { title: 'ATM Under Pressure', desc: 'Cooper\'s ATM simulation — design for a queue of angry people. A microworld for interaction design.', tag: 'Our demo', cls: 'mw-from-us' },
+  { title: 'Vehicle Wiring Lab', desc: 'Connect sensors to motors, watch fear and love emerge. Braitenberg\'s thought experiments made tangible.', tag: 'Our demo', cls: 'mw-from-us' },
+  { title: 'MIU Puzzle Playground', desc: 'Hofstadter\'s formal system — apply rules to strings, discover what\'s reachable. Pure Piagetian exploration.', tag: 'Our demo', cls: 'mw-from-us' },
+  { title: 'Fitness Curve Lab', desc: 'Draw a fitness landscape, watch evolution find the peaks. Koza\'s GP as an explorable microworld.', tag: 'Our demo', cls: 'mw-from-us' },
+  { title: 'Pratt Parser Visualizer', desc: 'Step through operator precedence parsing token by token. Nystrom\'s interpreter as microworld.', tag: 'Our demo', cls: 'mw-from-us' },
+  { title: 'Constraint Writing Lab', desc: 'Write with 50 words, or 6 words, or no adjectives. Kleon\'s creativity-through-limitation.', tag: 'Our demo', cls: 'mw-from-us' }
+];
+
+function initMicroworlds() {
+  const grid = document.getElementById('mw-grid');
+  microworlds.forEach(mw => {
+    const card = document.createElement('div');
+    card.className = 'mw-card';
+    card.innerHTML = `<h4>${mw.title}</h4><p>${mw.desc}</p><span class="mw-tag ${mw.cls}">${mw.tag}</span>`;
+    grid.appendChild(card);
+  });
+}
+
+// === DEBUGGING ===
+const debugPuzzles = [
+  {
+    desc: 'This program should draw a square, but something\'s wrong:',
+    code: 'REPEAT 4 [FD 80 RT 80]',
+    options: [
+      'The REPEAT count should be 5',
+      'RT 80 should be RT 90 — squares have 90° angles',
+      'FD 80 is too big',
+      'It needs a PD at the start'
+    ],
+    correct: 1,
+    feedback: 'Right! The exterior angle of a square is 90°, not 80°. This program draws an octagon-ish shape that never closes. The bug is in understanding the geometry — and <strong>Playing Turtle</strong> (walking it out) would reveal it instantly. Your body knows 90° turns.'
+  },
+  {
+    desc: 'This should draw a triangle, but it draws a straight line:',
+    code: 'REPEAT 3 [FD 100 RT 60]',
+    options: [
+      'RT 60 should be RT 120 — the exterior angle, not interior',
+      'The REPEAT count should be 6',
+      'FD 100 is too long',
+      'It needs LT instead of RT'
+    ],
+    correct: 0,
+    feedback: 'Yes! The classic confusion between interior and exterior angles. A triangle has 60° interior angles but 120° exterior angles — and the Turtle turns by the <em>exterior</em> angle. Play Turtle: walk forward, then turn. How much do you turn at a corner? Not 60° — you turn 120° to face the next side. <strong>Body-syntonic</strong> reasoning defeats the abstraction trap.'
+  },
+  {
+    desc: 'This should draw a circle, but nothing appears:',
+    code: 'PU\nREPEAT 360 [FD 1 RT 1]',
+    options: [
+      'The circle is too small — FD 1 isn\'t enough',
+      'The pen is up (PU) — it moves but doesn\'t draw',
+      'RT 1 should be LT 1',
+      'REPEAT 360 should be REPEAT 36'
+    ],
+    correct: 1,
+    feedback: 'The pen is up! The Turtle dutifully traced a perfect circle — invisibly. <strong>The program isn\'t wrong, it\'s doing exactly what you told it.</strong> This is the debugging mindset: don\'t ask "why is it broken?" Ask "what is it actually doing?" Then fix the gap between intention and execution.'
+  }
+];
+
+function initDebug() {
+  const container = document.getElementById('debug-puzzles');
+  debugPuzzles.forEach((p, pi) => {
+    const div = document.createElement('div');
+    div.className = 'debug-scenario';
+    div.innerHTML = `
+      <p style="color:#ddd; margin-bottom:10px;">${p.desc}</p>
+      <div class="debug-code">${p.code}</div>
+      <div class="debug-options" id="debug-opts-${pi}">
+        ${p.options.map((o, oi) => `<div class="debug-opt" onclick="checkDebug(${pi},${oi})">${o}</div>`).join('')}
+      </div>
+      <div class="debug-feedback" id="debug-fb-${pi}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function checkDebug(pi, oi) {
+  const p = debugPuzzles[pi];
+  const opts = document.querySelectorAll(`#debug-opts-${pi} .debug-opt`);
+  opts.forEach((o, i) => {
+    o.classList.remove('correct', 'wrong');
+    o.style.pointerEvents = 'none';
+    if (i === p.correct) o.classList.add('correct');
+    else if (i === oi && oi !== p.correct) o.classList.add('wrong');
+  });
+  const fb = document.getElementById(`debug-fb-${pi}`);
+  fb.style.display = 'block';
+  fb.style.background = oi === p.correct ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)';
+  fb.style.color = '#ddd';
+  fb.innerHTML = oi === p.correct ? p.feedback : `Not quite — try thinking about it body-syntonically. Walk it out. ${p.feedback}`;
+}
+
+// === QWERTY ===
+const qwertyItems = [
+  { title: '⌨️ QWERTY Layout (1873)', detail: 'Designed to prevent typewriter jamming by separating common letter pairs. Electric typewriters eliminated the problem by the 1930s. We\'re still using it 150 years later.' },
+  { title: '📐 Euclidean Proof Style (300 BC)', detail: 'The two-column proof format taught in geometry class mimics Euclid\'s <em>Elements</em> — a format designed for papyrus scrolls. It persists not because it\'s the best way to learn reasoning, but because it\'s how we\'ve always done it.' },
+  { title: '🔔 50-Minute Class Periods (1890s)', detail: 'Designed around factory schedules and the assumption that children\'s attention spans are exactly 50 minutes. The arbitrary unit persists because school infrastructure (buildings, buses, unions) is built around it.' },
+  { title: '📝 Standardized Testing (1905)', detail: 'Binet designed IQ tests to identify children who needed extra help. They became tools for ranking and sorting — the opposite of their original purpose. The QWERTY of assessment.' },
+  { title: '📊 Age-Grading (1848)', detail: 'Grouping children by birth year was an innovation for managing large numbers in Prussian schools. It persists despite overwhelming evidence that children develop at wildly different rates.' },
+  { title: '📖 Textbook-Driven Curriculum (1830s)', detail: 'Textbooks were revolutionary when books were scarce and teachers poorly trained. Now we have infinite information access, but the textbook still structures most learning.' },
+  { title: '🧮 "New Math" (1960s)', detail: 'Papert\'s own example of a QWERTY reform: teaching set theory to elementary students. Changed the content but not the pedagogy. "The rhetoric changed but not the underlying methodology."' }
+];
+
+function initQwerty() {
+  const tl = document.getElementById('qwerty-timeline');
+  qwertyItems.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'qwerty-item';
+    div.innerHTML = `<h4>${item.title}</h4><div class="qwerty-detail">${item.detail}</div>`;
+    div.onclick = () => {
+      document.querySelectorAll('.qwerty-item').forEach(d => d.classList.remove('active'));
+      div.classList.add('active');
+    };
+    tl.appendChild(div);
+  });
+}
+
+// === SKI REVOLUTION ===
+const skiDetails = [
+  '<strong style="color:#5ce0d6">Graduated Length Method (GLM):</strong> Instead of starting with full-length skis, beginners start with short skis and gradually progress to longer ones. This allows the body to learn balance and turning with less leverage fighting against you. A pedagogical innovation — but it worked synergistically with the other changes.',
+  '<strong style="color:#5ce0d6">Direct Movements:</strong> The old technique required a preparatory counter-rotation before every turn — you had to twist your body opposite to the turn direction, then release. The discovery that direct movements could produce more effective turns was <em>a fundamental reconceptualization of what skiing is</em>. It wasn\'t better teaching of counter-rotation — it was replacing counter-rotation entirely.',
+  '<strong style="color:#5ce0d6">New Materials:</strong> Lighter, more rigid plastic boots and skis that could be tuned for flexibility. These changes were synergistic with the new technique — the new movements worked better with the new equipment, and the new equipment was designed around the new movements. Many attributed the revolution to technology alone, but it was the <em>interaction</em> of all three factors.'
+];
+
+function showSki(el, i) {
+  document.querySelectorAll('.ski-factor').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ski-detail').innerHTML = skiDetails[i];
+}
+
+// === POINCARÉ ===
+const poincareData = [
+  '<strong>Stage 1: Conscious Analysis</strong><br><br>The mathematician works deliberately on the problem. If it\'s difficult, this stage will <em>never</em> yield the solution directly. Its role is to create the raw elements — the concepts, transformations, and partial results — that the unconscious will later combine.<br><br>This is the "research" phase. You fill your mind with the problem\'s material.',
+  '<strong>Stage 2: Unconscious Combinatorial Work</strong><br><br>The problem appears to be abandoned — you go for a walk, sleep, work on something else. But Poincaré insists the unconscious is <em>relentlessly</em> combining the elements from Stage 1. It\'s a tireless combinatorial machine, trying every arrangement.<br><br>The solution often surfaces at surprising moments — stepping onto a bus, lying in bed — in apparent relation to "quite fortuitous events."',
+  '<strong>Stage 3: The Aesthetic Sentinel</strong><br><br>This is the revolutionary idea. The unconscious produces many combinations, but only some pass through to consciousness. What filters them? Not logic — Poincaré says the unconscious can\'t rigorously verify correctness. Instead, an <strong>aesthetic sentinel</strong> guards the portal between unconscious and conscious.<br><br>Only ideas with "the stamp of mathematical beauty" get through. If math education ignores aesthetics, it\'s "totally misguided and even self-defeating" — it\'s suppressing the very mechanism that makes mathematical thinking work.'
+];
+
+function showPoincare(el, i) {
+  document.querySelectorAll('.poincare-stage').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('poincare-detail').innerHTML = poincareData[i];
+}
+
+// === √2 PROOF ===
+function initSqrt2() {
+  const steps = [
+    { eq: '√2 = p/q', note: 'Assume √2 is rational — expressible as a fraction. Innocent enough.', excitement: 0 },
+    { eq: '√2 × q = p', note: 'Multiply both sides by q. Still routine.', excitement: 0 },
+    { eq: '(√2)² = (p/q)²', note: 'Square both sides. A standard transformation.', excitement: 1 },
+    { eq: '2 = p²/q²', note: 'The square root disappears! Some subjects feel a pulse of satisfaction here.', excitement: 2 },
+    { eq: 'p² = 2q²', note: '✨ HERE. "Unmistakable signs of excitement and pleasure." The equation is suddenly beautiful — simple, stark, and somehow pregnant with meaning. Subjects react BEFORE knowing where it leads. The aesthetic response precedes logical understanding.', excitement: 5 },
+    { eq: '∴ p² is even → p is even → p = 2r', note: 'If p² equals twice something, p² is even, so p must be even. Write p = 2r.', excitement: 3 },
+    { eq: '4r² = 2q² → q² = 2r²', note: 'Substitute back. Now q² is also twice something — so q is also even.', excitement: 4 },
+    { eq: '⚡ CONTRADICTION', note: 'Both p and q are even — but we assumed they had no common factor. The assumption that √2 is rational leads to absurdity. Beauty confirmed by logic.', excitement: 5 }
+  ];
+
+  const container = document.getElementById('sqrt2-steps');
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    const barWidth = s.excitement * 20;
+    div.style.cssText = 'display:flex; gap:15px; align-items:flex-start; padding:12px 0; border-bottom:1px solid #111; cursor:pointer;';
+    div.innerHTML = `
+      <div style="min-width:140px; font-family:'Courier New',monospace; color:${s.excitement >= 4 ? '#5ce0d6' : '#88a0b8'}; font-size:${s.excitement >= 4 ? '1.1rem' : '0.95rem'}; font-weight:${s.excitement >= 4 ? 'bold' : 'normal'}; padding-top:2px;">${s.eq}</div>
+      <div style="flex:1;">
+        <div style="height:6px; background:#1a3040; border-radius:3px; margin-bottom:8px; overflow:hidden;">
+          <div style="height:100%; width:${barWidth}%; background:${s.excitement >= 4 ? '#5ce0d6' : '#2a4a5a'}; border-radius:3px; transition:width 0.5s;"></div>
+        </div>
+        <div style="font-size:0.85rem; color:${s.excitement >= 4 ? '#ddd' : '#667'}; line-height:1.5;">${s.note}</div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// === INIT ===
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+initMicroworlds();
+initDebug();
+initQwerty();
+initSqrt2();
+</script>
+</body>
+</html>

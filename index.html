@@ -17,6 +17,34 @@ iframe { display: block; }
 </style>
 </head>
 <body>
-<iframe src="v4-arcade.html" allowfullscreen></iframe>
+<script>
+// Weighted random: v4-arcade ~30%, others ~7% each
+const variants = [
+  'v1-threejs-cosmos.html',
+  'v2-terminal.html',
+  'v3-liquid.html',
+  'v4-arcade.html',
+  'v5-kinetic.html',
+  'v6-brutalist.html',
+  'v7-isometric.html',
+  'v8-editorial.html',
+  'v9-vaporwave.html',
+  'v10-generative.html',
+  'v11-noir.html'
+];
+// weights: arcade=30, others=7 each (total=100)
+const weights = [7,7,7,30,7,7,7,7,7,7,7];
+const total = weights.reduce((a,b)=>a+b,0);
+let r = Math.random() * total;
+let pick = variants[0];
+for (let i = 0; i < weights.length; i++) {
+  r -= weights[i];
+  if (r <= 0) { pick = variants[i]; break; }
+}
+const iframe = document.createElement('iframe');
+iframe.src = pick;
+iframe.allowFullscreen = true;
+document.body.appendChild(iframe);
+</script>
 </body>
 </html>

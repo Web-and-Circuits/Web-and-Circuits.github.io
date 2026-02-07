@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invisible Cities — An Interactive Exploration</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#d4a853;--pale-gold:#f5e6c4;--cream:#faf3e3;--navy:#1a1a3e;--deep-navy:#0d0d24;--mid-navy:#2a2a5e;--text:#2c2c4a;--light-text:#8888aa;--accent:#c49b3c;--glow:rgba(212,168,83,0.15)}
+@font-face{font-family:'serif-fallback';src:local('Georgia'),local('Times New Roman')}
+body{font-family:Georgia,'Times New Roman',serif;background:var(--cream);color:var(--text);line-height:1.7;overflow-x:hidden}
+h1,h2,h3{font-family:Georgia,'Times New Roman',serif;font-weight:normal;letter-spacing:0.02em}
+nav{position:sticky;top:0;z-index:100;background:var(--deep-navy);border-bottom:1px solid var(--gold);padding:0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+nav a{display:inline-block;color:var(--pale-gold);text-decoration:none;padding:12px 16px;font-size:0.85rem;opacity:0.7;transition:opacity 0.3s}
+nav a:hover,nav a.active{opacity:1;background:rgba(212,168,83,0.1)}
+.hero{background:var(--deep-navy);color:var(--pale-gold);text-align:center;padding:80px 20px 60px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at center,rgba(212,168,83,0.08) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);margin-bottom:0.3em;letter-spacing:0.05em}
+.hero .subtitle{font-size:clamp(0.9rem,2vw,1.1rem);opacity:0.7;font-style:italic;max-width:600px;margin:0 auto}
+section{padding:60px 20px;max-width:900px;margin:0 auto}
+section h2{font-size:clamp(1.5rem,3vw,2rem);color:var(--navy);margin-bottom:0.5em;border-bottom:1px solid var(--gold);padding-bottom:0.3em}
+section .intro{color:var(--light-text);font-style:italic;margin-bottom:1.5em;font-size:0.95rem}
+.dark-section{background:var(--deep-navy);color:var(--pale-gold);max-width:none;padding:60px 20px}
+.dark-section .inner{max-width:900px;margin:0 auto}
+.dark-section h2{color:var(--gold);border-color:rgba(212,168,83,0.3)}
+.dark-section .intro{color:rgba(245,230,196,0.6)}
+
+/* Cities Grid */
+.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.cat-tab{padding:6px 14px;border:1px solid var(--gold);background:transparent;color:var(--navy);cursor:pointer;font-family:inherit;font-size:0.8rem;border-radius:2px;transition:all 0.2s}
+.cat-tab:hover,.cat-tab.active{background:var(--navy);color:var(--pale-gold)}
+.cities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.city-card{padding:14px;border:1px solid rgba(212,168,83,0.3);background:white;cursor:pointer;transition:all 0.3s;position:relative}
+.city-card:hover{border-color:var(--gold);box-shadow:0 2px 12px var(--glow)}
+.city-card .city-name{font-size:0.95rem;color:var(--navy);font-weight:bold}
+.city-card .city-cat{font-size:0.7rem;color:var(--light-text);margin-top:2px}
+.city-detail{background:white;border:1px solid var(--gold);padding:24px;margin-top:16px;display:none;line-height:1.8}
+.city-detail.visible{display:block;animation:fadeIn 0.3s}
+.city-detail h3{color:var(--navy);margin-bottom:4px}
+.city-detail .proposition{color:var(--accent);font-style:italic;margin-bottom:12px;font-size:0.9rem}
+.city-detail .description{font-size:0.9rem;color:var(--text)}
+
+/* Chessboard */
+.chess-stage{text-align:center;padding:40px 20px;min-height:300px;position:relative}
+.chess-text{font-size:clamp(1rem,2.5vw,1.2rem);line-height:1.8;max-width:650px;margin:0 auto 24px;transition:opacity 0.5s}
+.chess-btn{padding:12px 32px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:inherit;font-size:1rem;letter-spacing:0.05em;transition:all 0.3s}
+.chess-btn:hover{background:var(--gold);color:var(--deep-navy)}
+.chess-indicator{display:flex;justify-content:center;gap:8px;margin-top:20px}
+.chess-dot{width:10px;height:10px;border-radius:50%;border:1px solid var(--gold);transition:all 0.3s}
+.chess-dot.active{background:var(--gold)}
+.chess-label{font-size:0.75rem;opacity:0.5;margin-top:8px}
+
+/* City Generator */
+.gen-row{display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.gen-row label{min-width:100px;font-size:0.85rem;color:var(--light-text)}
+.gen-select{flex:1;min-width:200px;padding:10px;border:1px solid rgba(212,168,83,0.4);background:white;font-family:inherit;font-size:0.9rem;color:var(--text)}
+.gen-output{background:white;border:1px solid var(--gold);padding:24px;margin-top:20px;min-height:120px;font-style:italic;line-height:1.9;display:none}
+.gen-output.visible{display:block;animation:fadeIn 0.4s}
+.gen-btn{padding:10px 28px;border:1px solid var(--gold);background:var(--navy);color:var(--pale-gold);cursor:pointer;font-family:inherit;font-size:0.95rem;margin-top:12px;transition:all 0.2s}
+.gen-btn:hover{background:var(--gold);color:var(--navy)}
+
+/* Venice Paradox */
+.venice-area{position:relative}
+.venice-input{width:100%;min-height:150px;padding:20px;border:1px solid rgba(212,168,83,0.4);font-family:inherit;font-size:1rem;line-height:1.8;color:var(--text);background:white;resize:vertical}
+.venice-input:focus{outline:none;border-color:var(--gold)}
+.venice-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;padding:20px;font-family:inherit;font-size:1rem;line-height:1.8;white-space:pre-wrap;word-wrap:break-word;color:transparent}
+.venice-ghost{color:rgba(212,168,83,0.6);font-style:italic}
+.venice-counter{text-align:right;font-size:0.8rem;color:var(--light-text);margin-top:8px}
+.venice-quote{margin-top:16px;padding:16px;background:rgba(212,168,83,0.08);border-left:3px solid var(--gold);font-style:italic;font-size:0.9rem;color:var(--light-text)}
+
+/* Fugue Structure */
+.fugue-container{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fugue-grid{display:grid;grid-template-columns:140px repeat(9,1fr);gap:2px;min-width:700px;margin-bottom:20px}
+.fugue-header{background:var(--navy);color:var(--pale-gold);padding:8px 6px;font-size:0.7rem;text-align:center;font-weight:bold}
+.fugue-cat{background:var(--navy);color:var(--pale-gold);padding:6px 8px;font-size:0.7rem;white-space:nowrap}
+.fugue-cell{padding:6px;text-align:center;font-size:0.65rem;cursor:pointer;border:1px solid transparent;transition:all 0.2s;min-height:32px;display:flex;align-items:center;justify-content:center}
+.fugue-cell.filled{background:rgba(212,168,83,0.15);color:var(--navy)}
+.fugue-cell.filled:hover{background:var(--gold);color:white;border-color:var(--accent)}
+.fugue-cell.empty{background:rgba(0,0,0,0.02)}
+.fugue-cell.highlighted{background:var(--gold)!important;color:white!important}
+.fugue-detail{background:white;border:1px solid var(--gold);padding:16px;margin-top:12px;display:none;font-size:0.9rem}
+.fugue-detail.visible{display:block;animation:fadeIn 0.3s}
+.fugue-legend{font-size:0.8rem;color:var(--light-text);margin-top:12px}
+
+/* Nested Cities */
+.nest-tabs{display:flex;gap:8px;margin-bottom:20px}
+.nest-tab{padding:8px 18px;border:1px solid rgba(212,168,83,0.4);background:transparent;color:var(--navy);cursor:pointer;font-family:inherit;font-size:0.85rem;transition:all 0.2s}
+.nest-tab:hover,.nest-tab.active{background:var(--navy);color:var(--pale-gold)}
+.nest-display{min-height:300px;position:relative}
+.nest-berenice{text-align:center;padding:20px}
+.berenice-ring{border:2px solid;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all 0.5s;cursor:pointer;position:relative}
+.berenice-ring .ring-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:0.65rem;white-space:nowrap;padding:2px 8px;border-radius:2px}
+.berenice-just{border-color:var(--gold);background:rgba(212,168,83,0.05)}
+.berenice-unjust{border-color:var(--navy);background:rgba(26,26,62,0.05)}
+.berenice-just .ring-label{background:var(--gold);color:white}
+.berenice-unjust .ring-label{background:var(--navy);color:var(--pale-gold)}
+.nest-olinda{text-align:center;padding:20px}
+.olinda-ring{border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;transition:all 1s}
+.olinda-ring .olinda-label{position:absolute;font-size:0.6rem;color:var(--accent);top:4px}
+.nest-eusapia{text-align:center;padding:20px}
+.eusapia-row{display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.eusapia-city{padding:16px 24px;border:2px solid;min-width:140px;text-align:center;transition:all 0.5s;font-size:0.85rem}
+.eusapia-living{border-color:var(--gold);background:rgba(212,168,83,0.05)}
+.eusapia-dead{border-color:var(--navy);background:rgba(26,26,62,0.05)}
+.eusapia-arrow{font-size:1.5rem;color:var(--light-text);transition:all 0.5s}
+.nest-instructions{font-size:0.85rem;color:var(--light-text);text-align:center;margin-top:16px;font-style:italic}
+
+/* Review */
+.review-rating{font-size:2rem;color:var(--gold);margin-bottom:16px;letter-spacing:4px}
+.review-text{line-height:1.9;margin-bottom:20px}
+.review-text p{margin-bottom:1em}
+.connections{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:20px}
+.connection{padding:14px;border:1px solid rgba(212,168,83,0.3);background:white}
+.connection strong{color:var(--navy);font-size:0.9rem}
+.connection p{font-size:0.8rem;color:var(--light-text);margin-top:4px;line-height:1.5}
+
+footer{background:var(--deep-navy);color:rgba(245,230,196,0.4);text-align:center;padding:30px 20px;font-size:0.8rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){
+  .cities-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .gen-row{flex-direction:column;align-items:stretch}
+  .gen-row label{min-width:auto}
+  .connections{grid-template-columns:1fr}
+  nav a{padding:10px 12px;font-size:0.75rem}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#cities">🏛️ 55 Cities</a>
+  <a href="#chessboard">♟️ Chessboard</a>
+  <a href="#generator">🔮 Generator</a>
+  <a href="#venice">🪞 Venice</a>
+  <a href="#fugue">📐 Fugue</a>
+  <a href="#nested">🌀 Nested</a>
+  <a href="#review">📖 Review</a>
+</nav>
+
+<div class="hero">
+  <h1>Invisible Cities</h1>
+  <p class="subtitle">An interactive exploration of Italo Calvino's philosophical atlas — 55 cities, each a proposition disguised as a postcard</p>
+</div>
+
+<!-- SECTION 1: The 55 Cities -->
+<section id="cities">
+  <h2>🏛️ The 55 Cities</h2>
+  <p class="intro">Marco Polo describes 55 cities to Kublai Khan. Each is a philosophical proposition wearing the mask of a travel report. Click any category, then any city.</p>
+  <div class="cat-tabs" id="catTabs"></div>
+  <div class="cities-grid" id="citiesGrid"></div>
+  <div class="city-detail" id="cityDetail"></div>
+</section>
+
+<!-- SECTION 2: The Khan's Chessboard -->
+<section class="dark-section" id="chessboard">
+  <div class="inner">
+    <h2>♟️ The Khan's Chessboard</h2>
+    <p class="intro">The book's thesis in four clicks. Watch understanding transform.</p>
+    <div class="chess-stage" id="chessStage">
+      <div class="chess-text" id="chessText"></div>
+      <button class="chess-btn" id="chessBtn" onclick="advanceChess()">Begin</button>
+      <div class="chess-indicator" id="chessDots"></div>
+      <div class="chess-label" id="chessLabel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: City Generator -->
+<section id="generator">
+  <h2>🔮 City Generator</h2>
+  <p class="intro">Calvino's method: take one structural rule, one human behavior, one paradox — push them to their logical extreme. Combine elements to generate a new invisible city.</p>
+  <div class="gen-row">
+    <label>Structure:</label>
+    <select class="gen-select" id="genStructure">
+      <option value="">— choose a structural rule —</option>
+    </select>
+  </div>
+  <div class="gen-row">
+    <label>Behavior:</label>
+    <select class="gen-select" id="genBehavior">
+      <option value="">— choose a human behavior —</option>
+    </select>
+  </div>
+  <div class="gen-row">
+    <label>Paradox:</label>
+    <select class="gen-select" id="genParadox">
+      <option value="">— choose a paradox —</option>
+    </select>
+  </div>
+  <button class="gen-btn" onclick="generateCity()">Generate City</button>
+  <div class="gen-output" id="genOutput"></div>
+</section>
+
+<!-- SECTION 4: The Venice Paradox -->
+<section class="dark-section" id="venice">
+  <div class="inner">
+    <h2>🪞 The Venice Paradox</h2>
+    <p class="intro">Try to describe a city you love. Watch what happens to your words.</p>
+    <div class="venice-area">
+      <textarea class="venice-input" id="veniceInput" placeholder="Begin describing a city you know well..."></textarea>
+    </div>
+    <div class="venice-counter" id="veniceCounter"></div>
+    <div class="venice-quote" id="veniceQuote" style="display:none"></div>
+  </div>
+</section>
+
+<!-- SECTION 5: The Fugue Structure -->
+<section id="fugue">
+  <h2>📐 The Fugue Structure</h2>
+  <p class="intro">The 11 categories rise and fall across 9 chapters in a precise mathematical pattern — not random, but music. Click any cell to read that city.</p>
+  <div class="fugue-container">
+    <div class="fugue-grid" id="fugueGrid"></div>
+  </div>
+  <div class="fugue-detail" id="fugueDetail"></div>
+  <p class="fugue-legend">Each category enters one at a time, peaks, then exits — like voices in a fugue. Chapter 1 introduces 4 categories; by chapter 5, five are active; chapter 9 resolves the final 4. The total is always 5 cities per chapter (except chapter 1 with 10 and chapter 9 with 10).</p>
+</section>
+
+<!-- SECTION 6: Nested Cities -->
+<section class="dark-section" id="nested">
+  <div class="inner">
+    <h2>🌀 Nested Cities</h2>
+    <p class="intro">Some cities contain themselves. Click to go deeper.</p>
+    <div class="nest-tabs" id="nestTabs">
+      <button class="nest-tab active" onclick="showNest('berenice')">Berenice</button>
+      <button class="nest-tab" onclick="showNest('olinda')">Olinda</button>
+      <button class="nest-tab" onclick="showNest('eusapia')">Eusapia</button>
+    </div>
+    <div class="nest-display" id="nestDisplay"></div>
+  </div>
+</section>
+
+<!-- SECTION 7: Review -->
+<section id="review">
+  <h2>📖 Review</h2>
+  <div class="review-rating">★★★★★</div>
+  <div class="review-text">
+    <p>Every city in this book is a philosophical proposition wearing a travel report's clothing. Calvino doesn't describe places — he describes <em>ideas about places</em>, and in doing so reveals that all places are ideas. The genius is in the compression: each city is a single concept taken to its logical extreme, explored in two pages, then abandoned before it can become doctrine.</p>
+    <p>The frame narrative — Khan trying to understand his empire through Polo's stories — is itself about the limits of models. The chess passage (Section 2 above) contains the entire epistemology of the book in one arc: we abstract reality to understand it, the abstraction consumes reality, then reality reasserts itself in the grain of the abstraction. This is GEB's strange loop wearing a Venetian mask.</p>
+    <p>The structure is not decorative. The mathematical interweaving of categories (Section 5) means you never read two cities of the same type consecutively — the ideas cross-pollinate whether you want them to or not. It's a pattern language in Alexander's sense: each city is a pattern, and the book is the language they form together.</p>
+    <p>What stays with you is the ending: <em>"Seek and learn to recognize who and what, in the midst of the inferno, are not inferno, then make them endure, give them space."</em> This is not optimism. It's a practice.</p>
+  </div>
+  <h3 style="color:var(--navy);margin:20px 0 12px">Connections</h3>
+  <div class="connections">
+    <div class="connection"><strong>GEB (Hofstadter)</strong><p>Strange loops everywhere — cities containing themselves, models that model the modeler, the chess passage as a tangled hierarchy of abstraction.</p></div>
+    <div class="connection"><strong>How to Solve It (Pólya)</strong><p>"The bridge is not supported by one stone or another, but by the line of the arch." Understanding through multiple approaches — the bridge supported by no single stone.</p></div>
+    <div class="connection"><strong>A Pattern Language (Alexander)</strong><p>Each city IS a pattern — a living relationship between structure and human behavior. The book is a pattern language for philosophical ideas.</p></div>
+    <div class="connection"><strong>About Face (Cooper)</strong><p>Zoe (where anything can be anything) is Cooper's nightmare — no affordances, no constraints, no possibility of understanding. Anti-design.</p></div>
+    <div class="connection"><strong>Vehicles (Braitenberg)</strong><p>Simple rules → complex behavior. Each city is a thought experiment: one rule, pushed to its conclusion, producing an entire world.</p></div>
+    <div class="connection"><strong>Mindstorms (Papert)</strong><p>Each city is a microworld — a constrained environment where exactly one idea can be explored fully. Learning through immersion in a concept-space.</p></div>
+    <div class="connection"><strong>The Little Schemer</strong><p>Recursive structure — Berenice contains Berenice contains Berenice. Olinda grows inside Olinda. The book itself recurses: every city is Venice.</p></div>
+  </div>
+</section>
+
+<footer>
+  <p>"The catalogue of forms is endless: until every shape has found its city, new cities will continue to be born."</p>
+  <p style="margin-top:8px">Italo Calvino, <em>Invisible Cities</em> (1972)</p>
+</footer>
+
+<script>
+// ============ DATA ============
+const categories = [
+  "Cities & Memory","Cities & Desire","Cities & Signs","Thin Cities","Trading Cities",
+  "Cities & Eyes","Cities & Names","Cities & the Dead","Cities & the Sky","Continuous Cities","Hidden Cities"
+];
+const catShort = ["Memory","Desire","Signs","Thin","Trading","Eyes","Names","Dead","Sky","Continuous","Hidden"];
+
+const cities = [
+  // Memory 1-5
+  {name:"Diomira",cat:0,num:1,ch:1,prop:"You remember a city by the feelings it evokes, not the things you see. Nostalgia is envy for happiness you're not sure you had.",desc:"A city of sixty silver domes and bronze statues. Its special quality: the arriving traveler feels envy toward those who believe they once lived an identical evening and think they were happy, that time."},
+  {name:"Isidora",cat:0,num:2,ch:1,prop:"The city of your dreams exists, but you arrive too late. Desires are already memories.",desc:"Spiral staircases, perfect telescopes, cockfights. The dreamed city contained him as a young man; he arrives in old age. He sits with the old men watching the young go by."},
+  {name:"Zaira",cat:0,num:3,ch:1,prop:"A city is not its measurements but the relationships between its spaces and its past. The city contains its history like the lines of a hand.",desc:"High bastions, streets like stairways. The height of a lamppost and the distance from the ground of a hanged usurper's feet — every segment marked with scratches, indentations, scrolls."},
+  {name:"Zora",cat:0,num:4,ch:1,prop:"Perfect memory requires perfect stillness. What cannot change cannot live. The art of memory kills its subject.",desc:"A city that can be remembered point by point, like a musical score. Scholars memorize it as a mnemonic palace. But forced to remain the same, Zora has languished, disintegrated, disappeared."},
+  {name:"Maurilia",cat:0,num:5,ch:2,prop:"The old city in postcards and the present city share a name but nothing else. Identity is a name stretched over discontinuity.",desc:"Visitors compare old postcards to the metropolis. The magnificence cannot compensate for a lost grace appreciated only now — and invisible when it was present."},
+  // Desire 1-5
+  {name:"Dorothea",cat:1,num:1,ch:1,prop:"A city can be described by its facts or by the moment it opened your life to possibility. Both are true; only one matters.",desc:"Four aluminum towers, seven gates, nine quarters. Or: 'I arrived in my first youth, and I know this path is only one of the many that opened before me that morning.'"},
+  {name:"Anastasia",cat:1,num:2,ch:1,prop:"The city's pleasures are also its trap. Desire and servitude are the same thing. Labor gives form to desire and takes from desire its form.",desc:"Concentric canals, kites flying. Agate, onyx, chrysoprase. Desires waken all at once and surround you — you believe you enjoy Anastasia wholly when you are only its slave."},
+  {name:"Despina",cat:1,num:3,ch:1,prop:"What you desire depends on what you lack. Each city receives its form from the desert it opposes.",desc:"A ship to the camel driver; a caravan to the sailor. A border city between two deserts, showing each traveler the opposite of what he knows."},
+  {name:"Fedora",cat:1,num:4,ch:2,prop:"Every possible future, once imagined, becomes a toy in a glass globe. The museum of unlived lives.",desc:"A gray stone metropolis with crystal globes in a museum. Each globe holds the ideal city someone imagined — but Fedora was already different by the time they built the model."},
+  {name:"Zobeide",cat:1,num:5,ch:3,prop:"Men build cities to recapture a dream. The city becomes a trap for the dream and then a trap for the dreamers.",desc:"A white city built by men who dreamed of pursuing a woman. They arranged streets so she couldn't escape. None of them ever saw the woman again."},
+  // Signs 1-5
+  {name:"Tamara",cat:2,num:1,ch:1,prop:"Everything is a sign for something else. You never arrive at the thing itself. You leave without having discovered the city.",desc:"Streets thick with signboards. Pincers for the tooth-drawer, tankard for the tavern. Your gaze scans streets as written pages — you believe you visit Tamara but only record her self-descriptions."},
+  {name:"Zirma",cat:2,num:2,ch:1,prop:"The city is redundant: it repeats itself so something sticks. Memory is redundant: it repeats signs so the city can begin to exist.",desc:"Distinct memories — a blind man, a lunatic, a girl with a puma. Actually many blind men, many lunatics. Memory selects and multiplies."},
+  {name:"Zoe",cat:2,num:3,ch:2,prop:"When anything can be anything, nothing can be distinguished. Indivisible existence is indistinguishable from nonexistence.",desc:"Any pyramid roof could cover the leprosarium or the baths. The traveler cannot distinguish features. If existence in all its moments is all of itself, what line separates inside from outside?"},
+  {name:"Hypatia",cat:2,num:4,ch:3,prop:"Signs and meanings shuffle. The language of a city has its own grammar independent of your expectations. There is no language without deceit.",desc:"A magnolia garden reflects in lagoons — but crabs bite drowned suicides below. Philosophers sit in children's gardens. Beautiful women are in stables. Music is in cemeteries."},
+  {name:"Olivia",cat:2,num:5,ch:4,prop:"To describe truthfully, you must lie. To describe literally is to miss entirely. Falsehood is never in words; it is in things.",desc:"Filigree palaces describe Olivia's soot; saddlers' shops describe its factories. If the ornate Olivia existed, it would be a wretched hole, and you'd need the soot metaphors to describe it."},
+  // Thin Cities 1-5
+  {name:"Isaura",cat:3,num:1,ch:1,prop:"An invisible landscape conditions the visible one. Two religions: gods in the depths, or gods in the mechanisms that draw water up. Same source, opposite metaphysics.",desc:"City of a thousand wells above a subterranean lake. Its green border traces the buried lake's outline. Everything in sunlight is driven by the wave enclosed beneath rock."},
+  {name:"Zenobia",cat:3,num:2,ch:2,prop:"A city shapes your vision of happiness to match itself. The question is not happy or unhappy, but: does the city give form to desires, or erase them?",desc:"Set on high pilings with bamboo houses, platforms, ladders, hanging sidewalks. Ask any inhabitant to describe happiness — always a city like Zenobia."},
+  {name:"Armilla",cat:3,num:3,ch:3,prop:"Reduce a city to its essence (water, nymphs, pipes) and it becomes more alive than the complete version ever was.",desc:"No walls, ceilings, or floors — only water pipes rising where houses should be, forest of taps and showers. Young women luxuriating in bathtubs suspended in the void. In the morning, singing."},
+  {name:"Sophronia",cat:3,num:4,ch:4,prop:"The permanent half is the carnival; the temporary half is banks, factories, schools. What we think is solid is what gets packed up and moved.",desc:"Two half-cities: roller coaster and Ferris wheel are permanent. Stone palaces, ministries, the petroleum refinery — those are dismantled and carted away each year."},
+  {name:"Octavia",cat:3,num:5,ch:5,prop:"Life suspended over the void, certain the net will not last. This certainty, paradoxically, makes life less uncertain than elsewhere.",desc:"A spider-web city between two mountains, rope ladders and hammocks over a precipice. Houses like sacks. The inhabitants know the net will only last so long."},
+  // Trading Cities 1-5
+  {name:"Euphemia",cat:4,num:1,ch:2,prop:"The real commerce is in stories. By trading memories, you change your own past. Every exchange transforms both parties.",desc:"Merchants of seven nations gather at solstice. By the fires they trade tales of wolves, sisters, battles. On your return, your wolf has become another wolf."},
+  {name:"Chloe",cat:4,num:2,ch:3,prop:"A city of pure potential contact. If fantasies were acted on, the carousel of possibility would stop. Desire lives only in unrealization.",desc:"All strangers. Eyes lock for a second, then dart away. Meetings, seductions consummated without word or touch. The most chaste of cities vibrates with voluptuous potential."},
+  {name:"Eutropia",cat:4,num:3,ch:4,prop:"Change everything — job, spouse, scenery — and discover that repetition is structural, not circumstantial. The same play with different actors.",desc:"Not one city but many on a plateau. When weariness strikes, all citizens move to the next empty city, take new jobs, new wives. Yet the city repeats its life, identical."},
+  {name:"Ersilia",cat:4,num:4,ch:5,prop:"Relationships outlast the buildings they connect. The city IS the web of connections, not the structures. When connections thicken, inhabitants leave — the strings remain.",desc:"Inhabitants stretch strings between houses — blood, trade, authority. When strings choke passage, they leave. Only the strings and poles remain. Spider-webs of intricate relationships seeking a form."},
+  {name:"Esmeralda",cat:4,num:5,ch:6,prop:"When routes multiply beyond counting, the most fixed life becomes unrepeatable. Complexity breeds uniqueness without intention.",desc:"A city of water where canals and streets intersect at every level. The most fixed lives are spent without repetition. Cats and thieves follow higher routes; rats and smugglers, lower."},
+  // Eyes 1-5
+  {name:"Valdrada",cat:5,num:1,ch:3,prop:"Every action is also its reflection. The mirror sometimes increases value, sometimes denies it. The twin cities live for each other but there is no love between them.",desc:"Built on a lake, every point reflected. Inhabitants know each action is both itself and its mirror-image. Not everything valuable above maintains force when mirrored."},
+  {name:"Zemrude",cat:5,num:2,ch:4,prop:"The city takes its form from the beholder's mood. Look up: window sills, fountains. Look down: gutters, manhole covers. Sooner or later, everyone looks down.",desc:"If you whistle, nose tilted: window sills, curtains. If head hangs: gutters, wastepaper. For everyone, the day comes when the gaze sinks to the cobblestones."},
+  {name:"Baucis",cat:5,num:3,ch:5,prop:"A city on stilts above the clouds. Three hypotheses: they hate the earth, they revere it, or they love contemplating their own absence from it.",desc:"Slender stilts lost above the clouds. Inhabitants rarely descend. With spyglasses aimed downward, they never tire of examining leaf by leaf, stone by stone, contemplating their own absence."},
+  {name:"Phyllis",cat:5,num:4,ch:6,prop:"Stay anywhere long enough and you stop seeing it. You navigate by buried memories, not by what's before your eyes. The visible city becomes invisible.",desc:"Rejoice at bridges, windows, pavements — then stay, and the city fades. Routes drawn between points in the void. One arcade seems joyous because a girl walked there thirty years ago."},
+  {name:"Moriana",cat:5,num:5,ch:7,prop:"Every city has a front and a back. No thickness, only a face and an obverse, like a sheet of paper that can neither be separated nor look at each other.",desc:"Alabaster gates, coral columns, glass villas — walk in a semicircle and find rusting metal, sackcloth, blind walls. The city has no thickness."},
+  // Names 1-5
+  {name:"Aglaura",cat:6,num:1,ch:4,prop:"A city's reputation imprisons all description. The spoken city has more substance than the visible one. The name devours the place.",desc:"An array of proverbial virtues and faults. The city that people speak of exists more than the city on its site. What was bizarre became usual; what seemed normal, now odd."},
+  {name:"Leandra",cat:6,num:2,ch:5,prop:"Two species of household gods — those who travel with families and those who stay with houses — argue endlessly about what the 'real' city is. Both are wrong. Both only criticize.",desc:"Penates travel with families, Lares stay with houses. Each claims to be the city's soul. Both daydream of the future and complain about the present. At night, murmuring, laughing."},
+  {name:"Pyrrha",cat:6,num:3,ch:6,prop:"The name creates an imagined city that the real city destroys on arrival. Then the name devours the real city. You cannot hold both in mind.",desc:"Imagined as a fortified city on a bay — arrived to find invisible sea, sawmills, dust. The name now means only this. The imagined city has lost its name."},
+  {name:"Clarice",cat:6,num:4,ch:7,prop:"A city remakes itself endlessly from its own fragments. The order of eras is lost. Perhaps it has always been only a confusion of chipped gimcracks.",desc:"Decays and burgeons. Survivors repurpose brocade curtains as sheets, funerary urns as flower pots. Each Clarice destroys and preserves the previous. The first Clarice may never have existed."},
+  {name:"Irene",cat:6,num:5,ch:8,prop:"A city seen from a distance is one thing; entered, it becomes another. The name designates the distant vision, never the experience. Perhaps I have spoken only of Irene.",desc:"Visible from the plateau — pink glow, signal fires, music. But entered, it would be different. A name for a city in the distance, changing as you approach."},
+  // Dead 1-5
+  {name:"Melania",cat:7,num:1,ch:5,prop:"The dialogues outlive the speakers. Roles persist across generations. The script is immortal; the actors are disposable.",desc:"In the square, the same dialogues continue across generations — braggart soldier, parasite, young wastrel. People die but roles persist. Three thousand hypocrites, a hundred thousand fallen princes."},
+  {name:"Adelma",cat:7,num:2,ch:6,prop:"Reach a moment when the dead outnumber the living in memory. Every new face becomes a mask for someone gone. Perhaps Adelma is the city where you arrive dying.",desc:"Every face resembles someone dead — the sailor, the fisherman, grandmother. The mind refuses new faces, printing old forms on each. 'Perhaps the beyond is not happy.'"},
+  {name:"Eusapia",cat:7,num:3,ch:7,prop:"The living copy the dead who copy the living. Eventually no one knows who is alive and who is dead, or which city came first.",desc:"An identical copy underground for the dead. The dead innovate; the living copy them. Perhaps the dead built the upper city. No way to know who is alive and who is dead."},
+  {name:"Argia",cat:7,num:4,ch:8,prop:"A city filled with earth instead of air. Dark, still, invisible from above. We can only believe it exists. At night, a door slams.",desc:"Streets filled with dirt, clay to the ceiling. We don't know if inhabitants can move. It is dark. From above, the place is deserted. At night, putting your ear to the ground, a door slams."},
+  {name:"Laudomia",cat:7,num:5,ch:9,prop:"A triple city — living, dead, unborn. The living interrogate the unborn about themselves. Either the unborn are infinite (horror of compression) or finite (horror of the last grain of sand).",desc:"The living, the dead in the cemetery, and the unborn in an empty residence. Whichever way you think — infinite generations or a last inhabitant — anguish awaits."},
+  // Sky 1-5
+  {name:"Eudoxia",cat:8,num:1,ch:6,prop:"A carpet maps the city perfectly, or the city maps the carpet. One is divine order, one human chaos — but which is which? The oracle doesn't clarify.",desc:"A winding city and a symmetrical carpet. Each place in the carpet corresponds to a place in the city. The oracle says one reflects the starry sky — but doesn't say which one."},
+  {name:"Beersheba",cat:8,num:2,ch:7,prop:"The celestial city is made of potato peels and eggshells. The infernal city is designed by the best architects. Virtue is in letting go, not accumulating.",desc:"Believes virtue is above, waste below. Actually reversed — the celestial Beersheba is aflutter with cast-off things. The city's only generous moments are when it lets go."},
+  {name:"Thekla",cat:8,num:3,ch:8,prop:"Construction that can never finish because completion means destruction can begin. The blueprint is the stars — infinite, unreachable, always above.",desc:"Perpetually under construction. 'So that its destruction cannot begin.' The blueprint? They point to the stars. Work stops at sunset; the sky fills with stars. 'There is the blueprint.'"},
+  {name:"Perinthia",cat:8,num:4,ch:9,prop:"Built to mirror the stars perfectly. The result: monsters. Perfect alignment with cosmic order produces horror. Either the calculations were wrong, or the gods' order IS monstrous.",desc:"Astronomers established every detail by the stars. The result: cripples, dwarfs, children with three heads. Either the calculations were wrong, or the order of the gods IS the city of monsters."},
+  {name:"Andria",cat:8,num:5,ch:9,prop:"The city and the sky correspond so perfectly that any change in one affects the other. Self-confidence and prudence: every decision ripples into the cosmos.",desc:"Streets follow planets' orbits, buildings repeat constellations. 'Any change in Andria involves some novelty among the stars.' Two virtues: self-confidence and prudence."},
+  // Continuous 1-5
+  {name:"Leonia",cat:9,num:1,ch:7,prop:"Renewal through disposal. The city defines itself by what it throws away. Its passion is not new things but the joy of expelling. It is buried by its own refuse.",desc:"Refashions itself every day. Yesterday's Leonia in spotless plastic bags. The more it expels, the more accumulates. A fortress of indestructible leftovers surrounds it like mountains."},
+  {name:"Trude",cat:9,num:2,ch:8,prop:"Every city is the same city. You can leave but arrive at another Trude, absolutely identical. The world is covered by a sole Trude without beginning or end.",desc:"Same airport, same houses, same hotel. 'You can resume your flight but you will arrive at another Trude, absolutely the same. Only the name of the airport changes.'"},
+  {name:"Procopia",cat:9,num:3,ch:9,prop:"Each year more faces fill the window until the view is only faces. The world doesn't expand; it fills. Population devours landscape.",desc:"Each year, raising the curtain: more round faces — 16, 29, 47, then uncountable. This year the window frames only faces. Even the sky has disappeared. Twenty-six of us in my room."},
+  {name:"Cecilia",cat:9,num:4,ch:9,prop:"Cities expand until they merge. The herdsman and the city-dweller are both lost in the same endless city. Places have mingled.",desc:"Met a goatherd who couldn't tell cities apart. Years later, found him again — in Cecilia, or what was once many cities. 'The places have mingled. Cecilia is everywhere.'"},
+  {name:"Penthesilea",cat:9,num:5,ch:9,prop:"A city with no boundary, no center, no inside. You cannot tell if you've entered, if you're in the middle, or if you've left. Perhaps there is no outside.",desc:"Miles of soupy suburbs, no clear city. 'Where is Penthesilea?' — 'Here,' or 'Farther on,' or 'All around you.' Outside Penthesilea, does an outside exist?"},
+  // Hidden 1-5
+  {name:"Olinda",cat:10,num:1,ch:8,prop:"The new city grows from the center outward, pushing the old city to the edges. Growth from within. Each Olinda contains all previous Olindas.",desc:"A point no bigger than a pin reveals roofs and gardens. It grows to full-size, forcing the earlier city outward. Within the innermost circle, the next Olinda is already blossoming."},
+  {name:"Raissa",cat:10,num:2,ch:9,prop:"In the city of sadness, an invisible thread of happiness connects all living beings for a moment, unravels, stretches again. The unhappy city contains a happy city unaware of its existence.",desc:"Life is not happy — wring hands, curse children. And yet: a child laughs, a dog leaps, a stonemason shouts to a serving-maid — an invisible thread binding one being to another."},
+  {name:"Marozia",cat:10,num:3,ch:9,prop:"The city of the rat and the city of the swallow coexist. The swallow city can only appear in cracks, by accident, without insisting on its own importance.",desc:"The sibyl saw two cities: rat and swallow. The century of the swallow came — but people fly with suspicious umbrellas. Yet sometimes a crack opens and a crystalline city appears, then vanishes."},
+  {name:"Theodora",cat:10,num:4,ch:9,prop:"Exterminate all animals, and the imaginary ones return — sphinxes, dragons, unicorns. You cannot eliminate the other; you can only change which others you face.",desc:"Species by species exterminated. The aseptic city, great cemetery. Then from the library's basements: sphinxes, griffons, chimeras, dragons resuming possession."},
+  {name:"Berenice",cat:10,num:5,ch:9,prop:"The just and unjust cities are nested infinitely inside each other. Justice contains the seed of injustice contains the seed of justice. All future Berenices exist in this instant.",desc:"The unjust city crowns its meat-grinders with triglyphs. Hidden: the just city links wires and pulleys. Inside the just, a malignant seed. Inside that, a new justice. Wrapped one within the other, inextricable."}
+];
+
+// Chapter structure (which cities appear in which chapter)
+const chapterStructure = [
+  // Ch1: Mem1,Mem2,Des1,Mem3,Des2,Sgn1,Mem4,Des3,Sgn2,Thin1
+  [[0,1],[1,1],[2,1],[0,2],[1,2],[2,2],[0,3],[1,3],[2,3],[3,1]],
+  // Ch2: Mem5,Des4,Sgn3,Thin2,Trad1
+  [[0,5],[1,4],[2,4],[3,2],[4,1]],
+  // Ch3: Des5,Sgn4,Thin3,Trad2,Eyes1
+  [[1,5],[2,5],[3,3],[4,2],[5,1]],
+  // Ch4: Sgn5,Thin4,Trad3,Eyes2,Names1
+  [[2,5],[3,4],[4,3],[5,2],[6,1]],
+  // Ch5: Thin5,Trad4,Eyes3,Names2,Dead1
+  [[3,5],[4,4],[5,3],[6,2],[7,1]],
+  // Ch6: Trad5,Eyes4,Names3,Dead2,Sky1
+  [[4,5],[5,4],[6,3],[7,2],[8,1]],
+  // Ch7: Eyes5,Names4,Dead3,Sky2,Cont1
+  [[5,5],[6,4],[7,3],[8,2],[9,1]],
+  // Ch8: Names5,Dead4,Sky3,Cont2,Hidden1
+  [[6,5],[7,4],[8,3],[9,2],[10,1]],
+  // Ch9: Dead5,Sky4,Cont3,Hidden2,Sky5,Cont4,Hidden3,Cont5,Hidden4,Hidden5
+  [[7,5],[8,4],[9,3],[10,2],[8,5],[9,4],[10,3],[9,5],[10,4],[10,5]]
+];
+
+// ============ SECTION 1: 55 Cities ============
+let activeCat = -1;
+function buildCities() {
+  const tabs = document.getElementById('catTabs');
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-tab active';
+  allBtn.textContent = 'All (55)';
+  allBtn.onclick = () => filterCities(-1);
+  tabs.appendChild(allBtn);
+  categories.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-tab';
+    btn.textContent = catShort[i];
+    btn.onclick = () => filterCities(i);
+    tabs.appendChild(btn);
+  });
+  filterCities(-1);
+}
+
+function filterCities(cat) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-tab').forEach((t, i) => t.classList.toggle('active', cat === i - 1));
+  const grid = document.getElementById('citiesGrid');
+  const filtered = cat === -1 ? cities : cities.filter(c => c.cat === cat);
+  grid.innerHTML = filtered.map((c, i) => `<div class="city-card" onclick="showCity(${cities.indexOf(c)})"><div class="city-name">${c.name}</div><div class="city-cat">${categories[c.cat]} ${c.num}</div></div>`).join('');
+  document.getElementById('cityDetail').classList.remove('visible');
+  document.getElementById('cityDetail').style.display = 'none';
+}
+
+function showCity(idx) {
+  const c = cities[idx];
+  const d = document.getElementById('cityDetail');
+  d.innerHTML = `<h3>${c.name} — ${categories[c.cat]} ${c.num}</h3><div class="proposition">${c.prop}</div><div class="description">${c.desc}</div>`;
+  d.style.display = 'block';
+  d.classList.add('visible');
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ============ SECTION 2: Chessboard ============
+let chessStep = -1;
+const chessSteps = [
+  {text:"Marco Polo describes a city: spiral staircases encrusted with seashells, perfect telescopes and violins, a foreigner hesitating between two women who always encounters a third. Cocklights that degenerate into brawls. The city of his dreams — with one difference. He arrives in old age.", label:"CONCRETE — The city as experienced", phase:"concrete"},
+  {text:"Kublai Khan grasps the system. If each city is like a game of chess, he need only learn the rules. A knight stands for a horseman, a procession, an army. A queen: a lady, a fountain, a church. The Great Khan keeps Marco playing endless games. Knowledge of the empire is hidden in the angular shifts of the knight, the diagonal passages of the bishop.", label:"ABSTRACT — The city as chess", phase:"abstract"},
+  {text:"Now it was the game's purpose that eluded him. Each game ends in a gain or a loss — but of what? At checkmate, beneath the foot of the king, knocked aside by the winner's hand, a black or a white square remains. The empire's treasures were only illusory envelopes. It was reduced to a square of planed wood: nothingness.", label:"VOID — The square of planed wood", phase:"void"},
+  {text:"\"Your chessboard, sire, is inlaid with two woods: ebony and maple. This square was cut from a ring of trunk that grew in a year of drought — see how its fibers are arranged? Here a barely hinted knot: a bud tried to burgeon on a premature spring day, but the night's frost forced it to desist. This edge was scored by the carver's gouge...\" The quantity of things that could be read in a little piece of smooth and empty wood overwhelmed Kublai. Polo was already talking about ebony forests, rafts on rivers, docks, women at windows...", label:"CONCRETE AGAIN — The universe in the grain of wood", phase:"concrete-again"}
+];
+
+function advanceChess() {
+  chessStep++;
+  if (chessStep >= chessSteps.length) chessStep = 0;
+  const s = chessSteps[chessStep];
+  const txt = document.getElementById('chessText');
+  const btn = document.getElementById('chessBtn');
+  const lbl = document.getElementById('chessLabel');
+  txt.style.opacity = 0;
+  setTimeout(() => {
+    txt.textContent = s.text;
+    txt.style.opacity = 1;
+  }, 300);
+  btn.textContent = chessStep < chessSteps.length - 1 ? 'Continue →' : 'Start Over';
+  lbl.textContent = s.label;
+  // dots
+  const dots = document.getElementById('chessDots');
+  dots.innerHTML = chessSteps.map((_, i) => `<div class="chess-dot ${i <= chessStep ? 'active' : ''}"></div>`).join('');
+}
+// Initialize
+document.getElementById('chessText').textContent = 'The book\'s central arc in four stages: how Kublai Khan tries to understand his empire — and what happens when understanding succeeds too well.';
+document.getElementById('chessDots').innerHTML = chessSteps.map(() => '<div class="chess-dot"></div>').join('');
+
+// ============ SECTION 3: City Generator ============
+const genStructures = [
+  {name:"Vertical stratification",rule:"The city is layered — each level obeys different laws",gen:"a city built in vertical strata, where each floor operates under different physics"},
+  {name:"Mirroring",rule:"Every element has its double",gen:"a city where every building casts not a shadow but a second building, identical and inverted"},
+  {name:"Centripetal growth",rule:"The city grows inward, not outward",gen:"a city that expands by growing smaller — each new district materializes inside the previous one"},
+  {name:"Network without nodes",rule:"Only connections exist, not places",gen:"a city of bridges with no banks, corridors with no rooms, roads that connect only to other roads"},
+  {name:"Temporal architecture",rule:"Buildings exist only at certain times",gen:"a city whose buildings are visible only during the hour they were built — at noon the medieval quarter appears, at dusk the modern towers"},
+  {name:"Inversion",rule:"Inside and outside are reversed",gen:"a city where all rooms face outward and all streets are enclosed — citizens live in the open and walk through buildings"},
+  {name:"Accumulation",rule:"Nothing is ever removed",gen:"a city that has never demolished anything — every version persists, occupying the same space in different transparencies"},
+  {name:"Suspension",rule:"The city touches nothing",gen:"a city suspended between opposing magnets, touching neither earth nor sky, maintained by the tension between two forces that would destroy it if either prevailed"}
+];
+
+const genBehaviors = [
+  {name:"Nostalgia for the unlived",b:"inhabitants mourn futures they never chose",gen:"whose citizens keep detailed journals of the lives they did not live, and these alternate biographies are considered more real than their actual days"},
+  {name:"Compulsive exchange",b:"people trade everything, including identities",gen:"where every seven years the inhabitants exchange names, houses, and memories — after enough cycles, no one can distinguish their original self from the accumulated others"},
+  {name:"Perfectionist destruction",b:"they destroy anything imperfect",gen:"whose artisans smash every work that falls short of their vision — the city is paved with magnificent rubble, and its greatest museum houses only fragments"},
+  {name:"Anticipatory grief",b:"they mourn things before losing them",gen:"where funerals are held for the living, celebrations for the dead — every birth is an occasion for condolence, every death for congratulation on a life completed"},
+  {name:"Radical hospitality",b:"strangers are treated as the city's true citizens",gen:"that belongs only to those passing through — permanent residents are considered guests of the travelers, maintaining the city on their behalf"},
+  {name:"Obsessive cartography",b:"they map everything, including the maps",gen:"whose inhabitants spend their days mapping the city, but each map must include all other maps, creating an infinite regression of atlases within atlases"},
+  {name:"Silence as currency",b:"words cost, silence enriches",gen:"where speech is taxed by the syllable and silence accrues wealth — the richest citizens have not spoken in decades, and poets are either paupers or revolutionaries"}
+];
+
+const genParadoxes = [
+  {name:"To preserve it, you must let it change",p:"fixity is death",gen:"And so the city's guardians face their dilemma: every act of preservation freezes what it touches, and every frozen thing begins to die. The most protected quarter is always the most ruined."},
+  {name:"The map is more real than the territory",p:"the description devours the described",gen:"And so the visitors discover that the city described in guidebooks has more substance than the city they walk through — until they realize they have been walking through the guidebook all along."},
+  {name:"The copy outlasts the original",p:"imitation is the only immortality",gen:"And so each generation discovers that what they thought was the original was itself a copy, and what they dismissed as a copy was the only remaining trace of something that never quite existed."},
+  {name:"Freedom and prison are the same architecture",p:"the open door is also a wall",gen:"And so the citizens who celebrate their freedom do not notice they are celebrating within walls, and those who lament their imprisonment do not notice the walls are made of doors."},
+  {name:"Understanding destroys its object",p:"to know fully is to consume",gen:"And so the scholars who finally decode the city's secret find that the city, decoded, is no longer the city — it has become a theorem, elegant and empty, and they must build a new city to house their longing for the old."},
+  {name:"The invisible sustains the visible",p:"what you cannot see is load-bearing",gen:"And so the architects discover that removing the city's hidden infrastructure — its rumors, its ghosts, its unanswered letters — causes the visible buildings to collapse. The city is held up by what it cannot acknowledge."}
+];
+
+function populateGen() {
+  const s = document.getElementById('genStructure');
+  const b = document.getElementById('genBehavior');
+  const p = document.getElementById('genParadox');
+  genStructures.forEach((x, i) => { const o = document.createElement('option'); o.value = i; o.textContent = x.name; s.appendChild(o); });
+  genBehaviors.forEach((x, i) => { const o = document.createElement('option'); o.value = i; o.textContent = x.name; b.appendChild(o); });
+  genParadoxes.forEach((x, i) => { const o = document.createElement('option'); o.value = i; o.textContent = x.name; p.appendChild(o); });
+}
+
+const cityNames = ["Adelina","Bersalia","Calixta","Drusilla","Eleanora","Floriana","Ginevra","Hesperia","Illaria","Jessamine","Kalista","Luminara","Melisande","Nerissa","Ophira","Paloma","Quintara","Rosalba","Seraphina","Thalassa","Undina","Valentina","Xanthe","Yolanda","Zenara"];
+
+function generateCity() {
+  const si = document.getElementById('genStructure').value;
+  const bi = document.getElementById('genBehavior').value;
+  const pi = document.getElementById('genParadox').value;
+  if (si === '' || bi === '' || pi === '') { alert('Choose one of each element.'); return; }
+  const st = genStructures[si];
+  const bh = genBehaviors[bi];
+  const px = genParadoxes[pi];
+  const name = cityNames[Math.floor(Math.random() * cityNames.length)];
+  const out = document.getElementById('genOutput');
+  out.innerHTML = `<strong>${name}</strong><br><br>Proceeding for many days through regions where ${['the horizon retreats with each step','the rivers flow uphill toward their sources','the trees cast shadows that move against the sun','the wind carries fragments of conversations from cities not yet built'][Math.floor(Math.random()*4)]}, you arrive at ${name}, ${st.gen}, ${bh.gen}.<br><br>${px.gen}<br><br><span style="color:var(--light-text);font-size:0.8rem">Structure: ${st.rule} · Behavior: ${bh.b} · Paradox: ${px.p}</span>`;
+  out.classList.add('visible');
+  out.style.display = 'block';
+}
+
+// ============ SECTION 4: Venice Paradox ============
+const veniceQuotes = [
+  "Memory's images, once they are fixed in words, are erased.",
+  "Perhaps I am afraid of losing Venice all at once, if I speak of it.",
+  "Perhaps, speaking of other cities, I have already lost it, little by little.",
+  "Every time I describe a city I am saying something about Venice.",
+  "It is not the voice that commands the story: it is the ear.",
+  "The description of the world to which you lend a benevolent ear is one thing; the description that will go the rounds of the stevedores on the street outside my house is another."
+];
+
+let veniceTimer = null;
+const veniceInput = document.getElementById('veniceInput');
+const veniceCounter = document.getElementById('veniceCounter');
+const veniceQuote = document.getElementById('veniceQuote');
+let dissolveLevel = 0;
+
+veniceInput.addEventListener('input', function() {
+  const len = this.value.length;
+  veniceCounter.textContent = `${len} characters — ${len > 200 ? 'the city recedes further with each word' : len > 100 ? 'you grasp at details but they shift' : len > 50 ? 'the outlines begin to blur' : len > 0 ? 'you begin to describe...' : ''}`;
+
+  // Show quotes at thresholds
+  if (len > 50 && dissolveLevel < 1) {
+    dissolveLevel = 1;
+    showVeniceQuote(0);
+  } else if (len > 120 && dissolveLevel < 2) {
+    dissolveLevel = 2;
+    showVeniceQuote(1);
+  } else if (len > 200 && dissolveLevel < 3) {
+    dissolveLevel = 3;
+    showVeniceQuote(2);
+  } else if (len > 300 && dissolveLevel < 4) {
+    dissolveLevel = 4;
+    showVeniceQuote(3);
+  }
+
+  // Progressive text transformation
+  if (len > 100) {
+    this.style.color = `rgba(44,44,74,${Math.max(0.15, 1 - (len - 100) / 500)})`;
+    this.style.letterSpacing = `${Math.min(4, (len - 100) / 80)}px`;
+  } else {
+    this.style.color = '';
+    this.style.letterSpacing = '';
+  }
+
+  // At high word counts, start replacing characters
+  if (len > 350) {
+    clearTimeout(veniceTimer);
+    veniceTimer = setTimeout(() => {
+      const val = this.value;
+      const pos = this.selectionStart;
+      // Replace a random word with a different one
+      const words = val.split(/\s+/);
+      if (words.length > 5) {
+        const replacements = ['perhaps','shadow','elsewhere','memory','forgotten','once','vanishing','another','distance','silence','lost','unnamed','invisible'];
+        const ri = Math.floor(Math.random() * (words.length - 2)) + 1;
+        if (words[ri].length > 3 && Math.random() > 0.5) {
+          words[ri] = replacements[Math.floor(Math.random() * replacements.length)];
+          this.value = words.join(' ');
+          this.selectionStart = this.selectionEnd = pos;
+        }
+      }
+    }, 800);
+  }
+});
+
+function showVeniceQuote(idx) {
+  veniceQuote.style.display = 'block';
+  veniceQuote.textContent = '— "' + veniceQuotes[idx] + '"';
+  veniceQuote.style.animation = 'none';
+  veniceQuote.offsetHeight;
+  veniceQuote.style.animation = 'fadeIn 0.5s';
+}
+
+// ============ SECTION 5: Fugue Structure ============
+function buildFugue() {
+  const grid = document.getElementById('fugueGrid');
+  // Header row
+  grid.innerHTML = '<div class="fugue-header"></div>';
+  for (let ch = 1; ch <= 9; ch++) {
+    grid.innerHTML += `<div class="fugue-header">Ch ${ch}</div>`;
+  }
+  // Build lookup: which city is at [cat][chapter]
+  const lookup = {};
+  cities.forEach(c => {
+    const key = `${c.cat}-${c.ch || 0}`;
+    // We need to map cities to chapters properly using the structure
+  });
+
+  // Map each city to its chapter using the chapter structure data
+  // Actually let's use the pattern directly
+  // The pattern: category i enters at chapter where it first appears and exits at chapter where its 5th city appears
+  // Cat 0 (Memory): ch1(1,2,3,4), ch2(5)
+  // Cat 1 (Desire): ch1(1,2,3), ch2(4), ch3(5)
+  // etc.
+
+  // Build from the known pattern
+  const fugueData = Array.from({length:11}, () => Array(9).fill(null));
+
+  // Memory: 1,2,3,4 in ch1; 5 in ch2
+  fugueData[0][0] = [{n:"Diomira",i:0},{n:"Isidora",i:1},{n:"Zaira",i:2},{n:"Zora",i:3}];
+  fugueData[0][1] = [{n:"Maurilia",i:4}];
+  // Desire: 1,2,3 in ch1; 4 in ch2; 5 in ch3
+  fugueData[1][0] = [{n:"Dorothea",i:5},{n:"Anastasia",i:6},{n:"Despina",i:7}];
+  fugueData[1][1] = [{n:"Fedora",i:8}];
+  fugueData[1][2] = [{n:"Zobeide",i:9}];
+  // Signs: 1,2 in ch1; 3 in ch2; 4 in ch3; 5 in ch4
+  fugueData[2][0] = [{n:"Tamara",i:10},{n:"Zirma",i:11}];
+  fugueData[2][1] = [{n:"Zoe",i:12}];
+  fugueData[2][2] = [{n:"Hypatia",i:13}];
+  fugueData[2][3] = [{n:"Olivia",i:14}];
+  // Thin: 1 in ch1; 2 in ch2; 3 in ch3; 4 in ch4; 5 in ch5
+  fugueData[3][0] = [{n:"Isaura",i:15}];
+  fugueData[3][1] = [{n:"Zenobia",i:16}];
+  fugueData[3][2] = [{n:"Armilla",i:17}];
+  fugueData[3][3] = [{n:"Sophronia",i:18}];
+  fugueData[3][4] = [{n:"Octavia",i:19}];
+  // Trading: ch2-ch6
+  fugueData[4][1] = [{n:"Euphemia",i:20}];
+  fugueData[4][2] = [{n:"Chloe",i:21}];
+  fugueData[4][3] = [{n:"Eutropia",i:22}];
+  fugueData[4][4] = [{n:"Ersilia",i:23}];
+  fugueData[4][5] = [{n:"Esmeralda",i:24}];
+  // Eyes: ch3-ch7
+  fugueData[5][2] = [{n:"Valdrada",i:25}];
+  fugueData[5][3] = [{n:"Zemrude",i:26}];
+  fugueData[5][4] = [{n:"Baucis",i:27}];
+  fugueData[5][5] = [{n:"Phyllis",i:28}];
+  fugueData[5][6] = [{n:"Moriana",i:29}];
+  // Names: ch4-ch8
+  fugueData[6][3] = [{n:"Aglaura",i:30}];
+  fugueData[6][4] = [{n:"Leandra",i:31}];
+  fugueData[6][5] = [{n:"Pyrrha",i:32}];
+  fugueData[6][6] = [{n:"Clarice",i:33}];
+  fugueData[6][7] = [{n:"Irene",i:34}];
+  // Dead: ch5-ch9
+  fugueData[7][4] = [{n:"Melania",i:35}];
+  fugueData[7][5] = [{n:"Adelma",i:36}];
+  fugueData[7][6] = [{n:"Eusapia",i:37}];
+  fugueData[7][7] = [{n:"Argia",i:38}];
+  fugueData[7][8] = [{n:"Laudomia",i:39}];
+  // Sky: ch6-ch9
+  fugueData[8][5] = [{n:"Eudoxia",i:40}];
+  fugueData[8][6] = [{n:"Beersheba",i:41}];
+  fugueData[8][7] = [{n:"Thekla",i:42}];
+  fugueData[8][8] = [{n:"Perinthia",i:43},{n:"Andria",i:44}];
+  // Continuous: ch7-ch9
+  fugueData[9][6] = [{n:"Leonia",i:45}];
+  fugueData[9][7] = [{n:"Trude",i:46}];
+  fugueData[9][8] = [{n:"Procopia",i:47},{n:"Cecilia",i:48},{n:"Penthesilea",i:49}];
+  // Hidden: ch8-ch9
+  fugueData[10][7] = [{n:"Olinda",i:50}];
+  fugueData[10][8] = [{n:"Raissa",i:51},{n:"Marozia",i:52},{n:"Theodora",i:53},{n:"Berenice",i:54}];
+
+  for (let cat = 0; cat < 11; cat++) {
+    grid.innerHTML += `<div class="fugue-cat">${categories[cat]}</div>`;
+    for (let ch = 0; ch < 9; ch++) {
+      const cellData = fugueData[cat][ch];
+      if (cellData && cellData.length > 0) {
+        const names = cellData.map(c => c.n).join(', ');
+        const idxs = cellData.map(c => c.i).join(',');
+        grid.innerHTML += `<div class="fugue-cell filled" onclick="showFugueCity([${idxs}])" title="${names}">${names}</div>`;
+      } else {
+        grid.innerHTML += `<div class="fugue-cell empty"></div>`;
+      }
+    }
+  }
+}
+
+function showFugueCity(idxs) {
+  const d = document.getElementById('fugueDetail');
+  const html = idxs.map(idx => {
+    const c = cities[idx];
+    return `<strong>${c.name}</strong> — ${categories[c.cat]} ${c.num}<br><em style="color:var(--accent)">${c.prop}</em><br><span style="font-size:0.85rem">${c.desc}</span>`;
+  }).join('<hr style="margin:12px 0;border-color:rgba(212,168,83,0.2)">');
+  d.innerHTML = html;
+  d.classList.add('visible');
+  d.style.display = 'block';
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ============ SECTION 6: Nested Cities ============
+let bereniceLevels = 3;
+let olindaLevels = 3;
+let eusapiaStep = 0;
+
+function showNest(which) {
+  document.querySelectorAll('.nest-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const d = document.getElementById('nestDisplay');
+
+  if (which === 'berenice') {
+    bereniceLevels = 3;
+    renderBerenice();
+  } else if (which === 'olinda') {
+    olindaLevels = 3;
+    renderOlinda();
+  } else if (which === 'eusapia') {
+    eusapiaStep = 0;
+    renderEusapia();
+  }
+}
+
+function renderBerenice() {
+  const d = document.getElementById('nestDisplay');
+  function ring(level, maxLevel) {
+    if (level > maxLevel) return '';
+    const isJust = level % 2 === 0;
+    const size = 220 - level * 25;
+    const cls = isJust ? 'berenice-just' : 'berenice-unjust';
+    const label = isJust ? 'Just' : 'Unjust';
+    return `<div class="berenice-ring ${cls}" style="width:${size}px;height:${size}px" onclick="event.stopPropagation();deepenBerenice()">
+      <span class="ring-label">${label}</span>
+      ${ring(level + 1, maxLevel)}
+    </div>`;
+  }
+  d.innerHTML = `<div class="nest-berenice">${ring(0, bereniceLevels)}</div>
+    <p class="nest-instructions">Click any ring to go deeper. Justice contains injustice contains justice... "All future Berenices are already present in this instant, wrapped one within the other, inextricable."</p>`;
+}
+
+function deepenBerenice() {
+  if (bereniceLevels < 8) bereniceLevels++;
+  renderBerenice();
+}
+
+function renderOlinda() {
+  const d = document.getElementById('nestDisplay');
+  function ring(level, maxLevel) {
+    if (level > maxLevel) return '<div style="width:10px;height:10px;background:var(--gold);border-radius:50%;margin:auto" title="A point no bigger than a pin"></div>';
+    const size = 200 - level * 35;
+    const opacity = 1 - level * 0.15;
+    return `<div class="olinda-ring" style="width:${size}px;height:${size}px;opacity:${opacity}" onclick="event.stopPropagation();deepenOlinda()">
+      <span class="olinda-label">Olinda ${['I','II','III','IV','V','VI','VII'][level] || ''}</span>
+      ${ring(level + 1, maxLevel)}
+    </div>`;
+  }
+  d.innerHTML = `<div class="nest-olinda">${ring(0, olindaLevels)}</div>
+    <p class="nest-instructions">Click to grow a new city from the center. "Within this innermost circle there are already blossoming the next Olinda and those that will grow after it."</p>`;
+}
+
+function deepenOlinda() {
+  if (olindaLevels < 6) olindaLevels++;
+  renderOlinda();
+}
+
+function renderEusapia() {
+  const d = document.getElementById('nestDisplay');
+  const steps = [
+    {living:"The living city: clockmakers, barbers, girls milking heifers.", dead:"The dead city below: identical, but corpses seated at tables, playing trumpets.", arrow:"↓", note:"The living build an underground copy for the dead."},
+    {living:"The living city: adopting innovations first seen below.", dead:"The dead city: making sober changes, rearranging furniture.", arrow:"↑", note:"The dead innovate. The living copy them."},
+    {living:"The living city — or is it the dead city?", dead:"The dead city — or is it the living city?", arrow:"⇅", note:"Perhaps the dead built the upper city. No way to know who is alive and who is dead."},
+    {living:"?", dead:"?", arrow:"≡", note:"In the twin cities there is no longer any way of knowing who is alive and who is dead."}
+  ];
+  const s = steps[eusapiaStep];
+  d.innerHTML = `<div class="nest-eusapia">
+    <div class="eusapia-row">
+      <div class="eusapia-city eusapia-living"><strong>☀️ Above</strong><br><span style="font-size:0.8rem">${s.living}</span></div>
+      <div class="eusapia-arrow">${s.arrow}</div>
+      <div class="eusapia-city eusapia-dead"><strong>🌑 Below</strong><br><span style="font-size:0.8rem">${s.dead}</span></div>
+    </div>
+    <p style="margin-top:16px;font-style:italic;font-size:0.9rem">${s.note}</p>
+    <button class="chess-btn" style="margin-top:16px;font-size:0.85rem" onclick="advanceEusapia()">${eusapiaStep < steps.length - 1 ? 'What happens next →' : 'Start over'}</button>
+  </div>`;
+}
+
+function advanceEusapia() {
+  eusapiaStep++;
+  if (eusapiaStep > 3) eusapiaStep = 0;
+  renderEusapia();
+}
+
+// ============ NAV HIGHLIGHTING ============
+const sections = ['cities','chessboard','generator','venice','fugue','nested','review'];
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY + 100;
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= scrollY) current = id;
+  });
+  document.querySelectorAll('nav a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ============ INIT ============
+buildCities();
+populateGen();
+buildFugue();
+showNest('berenice');
+</script>
+</body>
+</html>

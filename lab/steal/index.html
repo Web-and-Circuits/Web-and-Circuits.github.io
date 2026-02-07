@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steal Like an Artist — Interactive Review</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Georgia', serif; background: #1a1a2e; color: #e0e0e0; overflow-x: hidden; }
+a { color: #ffd700; }
+
+/* Header */
+.header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+.header h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-family: 'Courier New', monospace; color: #ffd700; margin-bottom: 10px; letter-spacing: 2px; }
+.header .subtitle { font-size: 1.1rem; color: #aaa; font-style: italic; }
+.header .rating { font-size: 1.5rem; margin-top: 15px; }
+.header .author { color: #ccc; margin-top: 8px; }
+
+/* Navigation */
+.nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 20px; background: #16213e; border-bottom: 2px solid #ffd700; position: sticky; top: 0; z-index: 100; }
+.nav button { background: #0f3460; color: #e0e0e0; border: 1px solid #ffd700; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; font-family: 'Courier New', monospace; }
+.nav button:hover, .nav button.active { background: #ffd700; color: #1a1a2e; }
+
+/* Sections */
+.section { display: none; padding: 40px 20px; max-width: 900px; margin: 0 auto; min-height: 80vh; }
+.section.active { display: block; }
+.section h2 { font-family: 'Courier New', monospace; color: #ffd700; font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+.section h3 { color: #ffd700; margin: 20px 0 10px; }
+
+/* Quote boxes */
+.quote { background: #16213e; border-left: 4px solid #ffd700; padding: 15px 20px; margin: 20px 0; font-style: italic; border-radius: 0 8px 8px 0; }
+.quote .attr { display: block; text-align: right; color: #aaa; font-style: normal; margin-top: 8px; font-size: 0.9rem; }
+
+/* Interactive panels */
+.panel { background: #16213e; border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #333; }
+.panel-title { font-family: 'Courier New', monospace; color: #ffd700; font-size: 1.2rem; margin-bottom: 15px; }
+
+/* Genealogy Tree */
+#tree-canvas { width: 100%; height: 500px; background: #0d1b2a; border-radius: 8px; border: 1px solid #333; cursor: crosshair; position: relative; overflow: hidden; }
+.tree-node { position: absolute; background: #1a1a2e; border: 2px solid #ffd700; border-radius: 50%; min-width: 80px; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; padding: 8px; cursor: grab; user-select: none; transition: box-shadow 0.3s; color: #ffd700; font-family: 'Courier New', monospace; }
+.tree-node:hover { box-shadow: 0 0 20px rgba(255,215,0,0.4); }
+.tree-node.you { background: #ffd700; color: #1a1a2e; font-weight: bold; border-color: #fff; }
+.tree-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.tree-controls input { background: #0d1b2a; border: 1px solid #ffd700; color: #e0e0e0; padding: 8px 12px; border-radius: 6px; font-family: 'Courier New', monospace; flex: 1; min-width: 150px; }
+.tree-controls button { background: #ffd700; color: #1a1a2e; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; }
+
+/* Theft Spectrum */
+.theft-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 20px 0; }
+.theft-item { padding: 15px; text-align: center; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; transition: all 0.3s; border-radius: 4px; }
+.theft-good { background: #1a472a; color: #4ade80; }
+.theft-bad { background: #4a1a1a; color: #f87171; }
+.theft-item:hover { transform: scale(1.05); }
+.theft-item .example { font-weight: normal; font-family: Georgia, serif; font-size: 0.85rem; display: none; margin-top: 10px; color: #ccc; }
+.theft-item.expanded .example { display: block; }
+.theft-header { font-size: 1.1rem; padding: 10px; text-align: center; font-family: 'Courier New', monospace; font-weight: bold; }
+
+/* Copy-to-Voice slider */
+.evolution-track { position: relative; height: 200px; margin: 30px 0; }
+.evolution-bar { position: absolute; top: 50%; left: 0; right: 0; height: 6px; background: linear-gradient(to right, #4a1a1a, #4a3a1a, #1a4a2a); border-radius: 3px; transform: translateY(-50%); }
+.evolution-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: grab; z-index: 2; }
+.evolution-labels { display: flex; justify-content: space-between; margin-top: 10px; }
+.evolution-label { text-align: center; font-size: 0.8rem; color: #aaa; max-width: 120px; }
+.evolution-label strong { display: block; color: #ffd700; font-family: 'Courier New', monospace; margin-bottom: 4px; }
+.evolution-example { text-align: center; margin-top: 20px; padding: 15px; background: #0d1b2a; border-radius: 8px; min-height: 80px; }
+
+/* Constraint Lab */
+.constraint-workspace { background: #0d1b2a; border-radius: 8px; padding: 20px; margin: 15px 0; }
+.constraint-textarea { width: 100%; min-height: 120px; background: transparent; border: 1px solid #333; color: #e0e0e0; padding: 15px; font-family: 'Courier New', monospace; font-size: 1rem; border-radius: 6px; resize: vertical; }
+.constraint-info { display: flex; justify-content: space-between; margin-top: 10px; color: #aaa; font-size: 0.9rem; }
+.constraint-buttons { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+.constraint-btn { background: #0f3460; color: #e0e0e0; border: 1px solid #ffd700; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.85rem; transition: all 0.3s; }
+.constraint-btn:hover, .constraint-btn.active { background: #ffd700; color: #1a1a2e; }
+
+/* Remix Machine */
+.remix-slots { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+.remix-slot { width: 150px; height: 150px; background: #0d1b2a; border: 2px dashed #ffd700; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; padding: 10px; text-align: center; }
+.remix-slot:hover { border-style: solid; background: #16213e; }
+.remix-slot .category { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.remix-slot .value { font-family: 'Courier New', monospace; color: #ffd700; font-size: 0.9rem; }
+.remix-result { background: #0d1b2a; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+.remix-result .prompt { font-size: 1.1rem; line-height: 1.6; }
+.remix-btn { display: block; margin: 15px auto; background: #ffd700; color: #1a1a2e; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; font-size: 1rem; transition: transform 0.2s; }
+.remix-btn:hover { transform: scale(1.05); }
+
+/* Swipe File */
+.swipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 20px 0; }
+.swipe-card { background: #0d1b2a; border: 1px solid #333; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.3s; position: relative; }
+.swipe-card:hover { border-color: #ffd700; transform: translateY(-3px); }
+.swipe-card.collected { border-color: #4ade80; }
+.swipe-card.collected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: #4ade80; font-weight: bold; }
+.swipe-card .swipe-type { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+.swipe-card .swipe-content { margin-top: 8px; font-size: 0.9rem; }
+.swipe-counter { text-align: center; color: #aaa; margin: 10px 0; font-family: 'Courier New', monospace; }
+
+/* Two Desks */
+.desks-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+.desk { border-radius: 12px; padding: 20px; text-align: center; min-height: 200px; transition: all 0.5s; cursor: pointer; }
+.desk-analog { background: linear-gradient(135deg, #3d2b1f, #5c3d2e); border: 2px solid #8b6914; }
+.desk-digital { background: linear-gradient(135deg, #1a2744, #0f3460); border: 2px solid #4a90d9; }
+.desk h3 { font-family: 'Courier New', monospace; margin-bottom: 15px; }
+.desk-analog h3 { color: #daa520; }
+.desk-digital h3 { color: #4a90d9; }
+.desk-items { font-size: 0.9rem; line-height: 2; color: #ccc; }
+.desk.active-desk { transform: scale(1.03); box-shadow: 0 0 30px rgba(255,215,0,0.2); }
+.desk-workflow { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+.desk-workflow .arrow { color: #ffd700; font-size: 1.5rem; }
+.desk-workflow .step { background: #16213e; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #333; }
+.desk-workflow .step.analog-step { border-color: #8b6914; color: #daa520; }
+.desk-workflow .step.digital-step { border-color: #4a90d9; color: #4a90d9; }
+
+/* Chain Calendar */
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 20px 0; }
+.cal-day { aspect-ratio: 1; background: #0d1b2a; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.8rem; color: #666; transition: all 0.2s; border: 1px solid transparent; }
+.cal-day:hover { border-color: #ffd700; }
+.cal-day.marked { background: #ffd700; color: #1a1a2e; font-weight: bold; }
+.cal-day.chain { background: #daa520; color: #1a1a2e; }
+.cal-header { font-family: 'Courier New', monospace; color: #aaa; text-align: center; font-size: 0.75rem; padding: 5px; }
+.chain-stats { text-align: center; margin: 15px 0; font-family: 'Courier New', monospace; }
+.chain-stats .streak { font-size: 2rem; color: #ffd700; }
+
+/* Review section */
+.review-card { background: linear-gradient(135deg, #16213e, #1a1a2e); border: 1px solid #ffd700; border-radius: 12px; padding: 25px; margin: 20px 0; }
+.review-card h3 { color: #ffd700; margin-bottom: 10px; }
+.connections-list { list-style: none; }
+.connections-list li { padding: 10px 0; border-bottom: 1px solid #222; }
+.connections-list li:last-child { border-bottom: none; }
+.connections-list .book-name { color: #ffd700; font-family: 'Courier New', monospace; }
+
+/* Footer */
+.footer { text-align: center; padding: 40px 20px; color: #666; font-size: 0.85rem; border-top: 1px solid #333; margin-top: 40px; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .theft-grid { grid-template-columns: 1fr; }
+  .desks-container { grid-template-columns: 1fr; }
+  .remix-slot { width: 120px; height: 120px; }
+  .calendar-grid { gap: 2px; }
+  .cal-day { font-size: 0.65rem; }
+  .nav button { padding: 6px 12px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>STEAL LIKE AN ARTIST</h1>
+  <div class="author">Austin Kleon (2012)</div>
+  <div class="subtitle">10 Things Nobody Told You About Being Creative</div>
+  <div class="rating">★★★☆☆</div>
+</div>
+
+<div class="nav" id="nav">
+  <button onclick="showSection('genealogy')" class="active">🌳 Genealogy</button>
+  <button onclick="showSection('theft')">⚖️ Good/Bad Theft</button>
+  <button onclick="showSection('evolution')">🦋 Copy→Voice</button>
+  <button onclick="showSection('remix')">🎰 Remix Machine</button>
+  <button onclick="showSection('constraint')">✂️ Constraints</button>
+  <button onclick="showSection('desks')">🖊️ Two Desks</button>
+  <button onclick="showSection('swipe')">📁 Swipe File</button>
+  <button onclick="showSection('chain')">📅 Don't Break It</button>
+  <button onclick="showSection('review')">📖 Review</button>
+</div>
+
+<!-- 1. GENEALOGY TREE -->
+<div class="section active" id="genealogy">
+  <h2>🌳 Build Your Influence Genealogy</h2>
+  <p>Kleon says you have a genealogy of ideas just like a family tree. "Chew on one thinker you really love. Find three people that thinker loved. Repeat."</p>
+  <div class="quote">"You are, in fact, a mashup of what you choose to let into your life."<span class="attr">— Austin Kleon</span></div>
+  
+  <div class="panel">
+    <div class="panel-title">📐 Build Your Tree</div>
+    <p style="color:#aaa; margin-bottom:15px;">Add influences. Click them to connect. <strong>YOU</strong> is at the center — drag nodes to arrange.</p>
+    <div class="tree-controls">
+      <input type="text" id="node-name" placeholder="Artist, writer, musician..." maxlength="30">
+      <button onclick="addTreeNode()">+ Add</button>
+      <button onclick="clearTree()" style="background:#444; color:#e0e0e0;">Clear</button>
+    </div>
+    <div id="tree-canvas">
+      <svg id="tree-lines" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></svg>
+    </div>
+    <p style="color:#666; font-size:0.8rem; margin-top:10px;">Click two nodes to draw a connection between them. Drag to rearrange.</p>
+  </div>
+</div>
+
+<!-- 2. GOOD/BAD THEFT -->
+<div class="section" id="theft">
+  <h2>⚖️ Good Theft vs. Bad Theft</h2>
+  <p>Kleon's sharpest contribution: a clear framework for creative ethics. Click each pair to see examples.</p>
+  
+  <div class="panel">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2px;">
+      <div class="theft-header" style="color:#4ade80;">✓ GOOD THEFT</div>
+      <div class="theft-header" style="color:#f87171;">✗ BAD THEFT</div>
+    </div>
+    <div class="theft-grid" id="theft-grid"></div>
+  </div>
+  
+  <div class="quote">"If you rip off a hundred people, everyone will say you're so original!"<span class="attr">— Gary Panter</span></div>
+</div>
+
+<!-- 3. COPY → VOICE EVOLUTION -->
+<div class="section" id="evolution">
+  <h2>🦋 The Copy-to-Voice Evolution</h2>
+  <p>Nobody starts original. You start by copying, move to imitating, then emulating, and finally find your own voice — through the <em>failure</em> to perfectly copy your heroes.</p>
+  
+  <div class="panel">
+    <div class="panel-title">🎯 The Conan O'Brien Chain</div>
+    <p style="color:#aaa; margin-bottom:15px;">Each comedian tried to be the previous one, failed, and became themselves:</p>
+    <div id="conan-chain" style="margin: 20px 0;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">📊 Where Are You?</div>
+    <p style="color:#aaa; margin-bottom:15px;">Drag the marker to see what each stage feels like:</p>
+    <div style="position:relative; padding: 20px 0;">
+      <div style="display:flex; justify-content:space-between; height: 120px; align-items: stretch; gap: 4px;" id="evolution-stages">
+      </div>
+      <div class="evolution-example" id="evolution-desc"></div>
+    </div>
+  </div>
+  
+  <div class="quote">"Our failure to copy our heroes is where we discover where our own thing lives. That is how we evolve."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 4. REMIX MACHINE -->
+<div class="section" id="remix">
+  <h2>🎰 The Remix Machine</h2>
+  <p>"Every new idea is just a mashup or a remix of one or more previous ideas." Click the slots to randomize, then see what impossible combination emerges.</p>
+  
+  <div class="panel">
+    <div class="remix-slots" id="remix-slots"></div>
+    <button class="remix-btn" onclick="spinAll()">🎰 SPIN ALL</button>
+    <div class="remix-result" id="remix-result">
+      <div class="prompt">Click the slots or hit SPIN ALL to generate a creative mashup...</div>
+    </div>
+  </div>
+  
+  <div class="quote">"1 + 1 = 3. There's the first line, the second line, but then there's a line of negative space that runs between them."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 5. CONSTRAINT LAB -->
+<div class="section" id="constraint">
+  <h2>✂️ The Constraint Lab</h2>
+  <p>"Limitations mean freedom." Dr. Seuss wrote <em>Green Eggs and Ham</em> with only 50 unique words. Try writing under constraints — you'll surprise yourself.</p>
+  
+  <div class="panel">
+    <div class="panel-title">🎯 Pick Your Constraint</div>
+    <div class="constraint-buttons" id="constraint-buttons"></div>
+    <div class="constraint-workspace">
+      <textarea class="constraint-textarea" id="constraint-text" placeholder="Start writing..."></textarea>
+      <div class="constraint-info">
+        <span id="constraint-status">No constraint active</span>
+        <span id="word-count">0 words</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote">"Telling yourself you have all the time in the world, all the money in the world, all the colors in the palette, anything you want — that just kills creativity."<span class="attr">— Jack White</span></div>
+</div>
+
+<!-- 6. TWO DESKS -->
+<div class="section" id="desks">
+  <h2>🖊️ The Two-Desk System</h2>
+  <p>"The computer brings out the uptight perfectionist in us — we start editing ideas before we have them." Kleon keeps two workstations: one analog, one digital.</p>
+  
+  <div class="desks-container">
+    <div class="desk desk-analog" onclick="toggleDesk('analog')">
+      <h3>📝 ANALOG DESK</h3>
+      <div class="desk-items">
+        ✏️ Pencils & markers<br>
+        📄 Paper & index cards<br>
+        📰 Newspapers<br>
+        ✂️ Scissors & tape<br>
+        📌 Sticky notes<br>
+        <br>
+        <em style="font-size:0.8rem; color:#8b6914;">⚡ No electronics allowed</em>
+      </div>
+    </div>
+    <div class="desk desk-digital" onclick="toggleDesk('digital')">
+      <h3>💻 DIGITAL DESK</h3>
+      <div class="desk-items">
+        💻 Laptop<br>
+        🖥️ Monitor<br>
+        📷 Scanner<br>
+        ✍️ Drawing tablet<br>
+        🖨️ Printer<br>
+        <br>
+        <em style="font-size:0.8rem; color:#4a90d9;">⚡ Edit & publish here</em>
+      </div>
+    </div>
+  </div>
+  
+  <div class="panel">
+    <div class="panel-title">🔄 The Analog-Digital Loop</div>
+    <p style="color:#aaa; margin-bottom:15px;">Ideas flow back and forth. Click each step to see what happens there:</p>
+    <div class="desk-workflow" id="workflow"></div>
+    <div id="workflow-desc" style="text-align:center; padding:15px; color:#ccc; min-height:60px;"></div>
+  </div>
+
+  <div class="quote">"In the digital age, don't forget to use your digits!"<span class="attr">— Lynda Barry</span></div>
+</div>
+
+<!-- 7. SWIPE FILE -->
+<div class="section" id="swipe">
+  <h2>📁 The Swipe File</h2>
+  <p>"Keep track of the stuff you've swiped from others." Click cards to collect them into your personal swipe file. Kleon says: "Your morgue file is where you keep the dead things that you'll later reanimate in your work."</p>
+  
+  <div class="swipe-counter" id="swipe-counter">Collected: 0 / 16</div>
+  <div class="swipe-grid" id="swipe-grid"></div>
+  
+  <div class="quote">"It is better to take what does not belong to you than to let it lie around neglected."<span class="attr">— Mark Twain</span></div>
+</div>
+
+<!-- 8. DON'T BREAK THE CHAIN -->
+<div class="section" id="chain">
+  <h2>📅 Don't Break the Chain</h2>
+  <p>Jerry Seinfeld's productivity method: do the work every day and mark an X. "Your only job next is to not break the chain." Click days to mark them.</p>
+  
+  <div class="panel">
+    <div class="chain-stats">
+      <div class="streak" id="streak-count">0</div>
+      <div style="color:#aaa;">current streak</div>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px;">
+      <div class="cal-header">Sun</div><div class="cal-header">Mon</div><div class="cal-header">Tue</div>
+      <div class="cal-header">Wed</div><div class="cal-header">Thu</div><div class="cal-header">Fri</div><div class="cal-header">Sat</div>
+    </div>
+    <div class="calendar-grid" id="calendar"></div>
+    <div style="text-align:center; margin-top:15px;">
+      <button onclick="resetCalendar()" style="background:#444; color:#e0e0e0; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-family:'Courier New',monospace;">Reset</button>
+    </div>
+  </div>
+  
+  <div class="quote">"Be regular and orderly in your life, so that you may be violent and original in your work."<span class="attr">— Gustave Flaubert</span></div>
+</div>
+
+<!-- 9. REVIEW -->
+<div class="section" id="review">
+  <h2>📖 The Review</h2>
+  
+  <div class="review-card">
+    <h3>★★★☆☆ — Charming Gateway Drug</h3>
+    <p style="margin-bottom:15px;">This book is likeable but lightweight. It's Instagram wisdom before Instagram wisdom was a genre. The ideas are real — influence genealogy, constraint-as-liberation, process-over-product — but none are developed past the aphorism stage.</p>
+    <p style="margin-bottom:15px;">Kleon spends 2 pages on "use your hands" where Papert spends 20 on the epistemology of turtle geometry. The book says in 150 pages what could be (and originally was) a blog post turned into a talk at Broome Community College.</p>
+    <p>But here's the thing: it <em>works</em> as a gateway. Someone reads this at 19, gets fired up, and eventually finds the deeper books. The <strong>Good Theft / Bad Theft</strong> framework is genuinely useful as a creative ethics checklist. And "our failure to copy our heroes is where we discover where our own thing lives" is a legitimately beautiful sentence.</p>
+  </div>
+
+  <div class="review-card">
+    <h3>Best Contribution</h3>
+    <p>The <strong>influence genealogy</strong> idea — that you actively choose your creative ancestors the way you can't choose your biological ones — is the book's most fertile concept. It reframes "originality anxiety" as something productive: you're not stealing, you're building a family tree.</p>
+  </div>
+
+  <div class="review-card">
+    <h3>Connections to Other Books</h3>
+    <ul class="connections-list">
+      <li><span class="book-name">Mindstorms (Papert)</span> — Both argue for learning-by-doing, but Papert has 100x the theoretical depth. Kleon's "fake it til you make it" is a folk version of Piagetian learning.</li>
+      <li><span class="book-name">How to Solve It (Pólya)</span> — Both emphasize process over product. Pólya's heuristics are the rigorous version of Kleon's "steal the thinking behind the style."</li>
+      <li><span class="book-name">Inmates (Cooper)</span> — Kleon's "two desks" echoes Cooper's separation of design from implementation.</li>
+      <li><span class="book-name">TAOUP (Raymond)</span> — Both celebrate the remix/recombination ethos. "Good artists borrow, great artists steal" comes from the same tradition.</li>
+      <li><span class="book-name">Vehicles (Braitenberg)</span> — The genealogy of ideas is structurally similar to how Braitenberg builds complex behavior from simple parts — ideas combine and produce emergent originality.</li>
+    </ul>
+  </div>
+
+  <div class="review-card">
+    <h3>The Honest Take</h3>
+    <p style="margin-bottom:15px;">If you've read widely in creativity, design, or education, you already know everything in this book. It's a well-designed sampler plate of ideas that exist in much richer form elsewhere.</p>
+    <p>But Kleon would probably be fine with that assessment. After all — he's the one who said nothing is original.</p>
+  </div>
+  
+  <div class="quote">"Everything that needs to be said has already been said. But, since no one was listening, everything must be said again."<span class="attr">— André Gide, as quoted by Kleon</span></div>
+</div>
+
+<div class="footer">
+  <p>An interactive review of <em>Steal Like an Artist</em> by Austin Kleon (2012)</p>
+  <p style="margin-top:8px;">Book review by Web & Circuits · <a href="https://webandcircuits.com">webandcircuits.com</a></p>
+</div>
+
+<script>
+// Navigation
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ========== GENEALOGY TREE ==========
+let treeNodes = [];
+let treeLines = [];
+let connectMode = null;
+let dragNode = null;
+let dragOffset = { x: 0, y: 0 };
+
+function addTreeNode() {
+  const input = document.getElementById('node-name');
+  const name = input.value.trim();
+  if (!name) return;
+  
+  const canvas = document.getElementById('tree-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = 100 + Math.random() * (rect.width - 200);
+  const y = 80 + Math.random() * (rect.height - 160);
+  
+  const node = document.createElement('div');
+  node.className = 'tree-node';
+  node.textContent = name;
+  node.style.left = x + 'px';
+  node.style.top = y + 'px';
+  node.dataset.id = treeNodes.length;
+  
+  node.addEventListener('mousedown', startDrag);
+  node.addEventListener('touchstart', startDragTouch, { passive: false });
+  node.addEventListener('click', handleNodeClick);
+  
+  canvas.appendChild(node);
+  treeNodes.push({ el: node, x, y, name });
+  input.value = '';
+}
+
+// Add "YOU" node on load
+function initTree() {
+  const canvas = document.getElementById('tree-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const node = document.createElement('div');
+  node.className = 'tree-node you';
+  node.textContent = 'YOU';
+  const cx = rect.width / 2, cy = rect.height / 2;
+  node.style.left = cx + 'px';
+  node.style.top = cy + 'px';
+  node.dataset.id = 0;
+  node.addEventListener('mousedown', startDrag);
+  node.addEventListener('touchstart', startDragTouch, { passive: false });
+  node.addEventListener('click', handleNodeClick);
+  canvas.appendChild(node);
+  treeNodes.push({ el: node, x: cx, y: cy, name: 'YOU' });
+}
+
+function handleNodeClick(e) {
+  if (dragNode) return;
+  const id = parseInt(e.target.dataset.id);
+  if (connectMode === null) {
+    connectMode = id;
+    e.target.style.boxShadow = '0 0 20px rgba(255,215,0,0.8)';
+  } else if (connectMode !== id) {
+    drawLine(connectMode, id);
+    treeNodes[connectMode].el.style.boxShadow = '';
+    connectMode = null;
+  } else {
+    e.target.style.boxShadow = '';
+    connectMode = null;
+  }
+}
+
+function drawLine(a, b) {
+  const svg = document.getElementById('tree-lines');
+  const na = treeNodes[a], nb = treeNodes[b];
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('stroke', '#ffd700');
+  line.setAttribute('stroke-width', '2');
+  line.setAttribute('opacity', '0.5');
+  updateLinePos(line, na, nb);
+  svg.appendChild(line);
+  treeLines.push({ el: line, a, b });
+}
+
+function updateLinePos(line, na, nb) {
+  const ax = na.x + na.el.offsetWidth/2, ay = na.y + na.el.offsetHeight/2;
+  const bx = nb.x + nb.el.offsetWidth/2, by = nb.y + nb.el.offsetHeight/2;
+  line.setAttribute('x1', ax); line.setAttribute('y1', ay);
+  line.setAttribute('x2', bx); line.setAttribute('y2', by);
+}
+
+function startDrag(e) {
+  e.preventDefault();
+  const id = parseInt(e.target.dataset.id);
+  dragNode = id;
+  const node = treeNodes[id];
+  dragOffset.x = e.clientX - node.x;
+  dragOffset.y = e.clientY - node.y;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', endDrag);
+}
+
+function startDragTouch(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  const id = parseInt(e.target.dataset.id);
+  dragNode = id;
+  const node = treeNodes[id];
+  dragOffset.x = t.clientX - node.x;
+  dragOffset.y = t.clientY - node.y;
+  document.addEventListener('touchmove', onDragTouch, { passive: false });
+  document.addEventListener('touchend', endDrag);
+}
+
+function onDrag(e) {
+  if (dragNode === null) return;
+  moveNode(e.clientX, e.clientY);
+}
+
+function onDragTouch(e) {
+  e.preventDefault();
+  if (dragNode === null) return;
+  moveNode(e.touches[0].clientX, e.touches[0].clientY);
+}
+
+function moveNode(cx, cy) {
+  const node = treeNodes[dragNode];
+  node.x = cx - dragOffset.x;
+  node.y = cy - dragOffset.y;
+  node.el.style.left = node.x + 'px';
+  node.el.style.top = node.y + 'px';
+  treeLines.forEach(l => {
+    if (l.a === dragNode || l.b === dragNode) {
+      updateLinePos(l.el, treeNodes[l.a], treeNodes[l.b]);
+    }
+  });
+}
+
+function endDrag() {
+  dragNode = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', endDrag);
+  document.removeEventListener('touchmove', onDragTouch);
+  document.removeEventListener('touchend', endDrag);
+}
+
+function clearTree() {
+  document.getElementById('tree-canvas').innerHTML = '<svg id="tree-lines" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>';
+  treeNodes = [];
+  treeLines = [];
+  connectMode = null;
+  initTree();
+}
+
+// ========== THEFT SPECTRUM ==========
+const theftPairs = [
+  { good: 'HONOR', bad: 'DEGRADE', goodEx: 'The Beatles acknowledged their debt to Chuck Berry, Little Richard, and Buddy Holly openly. They honored their sources.', badEx: 'Vanilla Ice sampled "Under Pressure" without credit and initially denied the similarity. Degrading the source.' },
+  { good: 'STUDY', bad: 'SKIM', goodEx: 'Kobe Bryant watched thousands of hours of tape — Michael Jordan, Hakeem Olajuwon, Magic Johnson — studying their footwork and timing at frame-by-frame level.', badEx: 'Grabbing a visual style from Pinterest without understanding why it works or who made it. Surface-level swiping.' },
+  { good: 'STEAL FROM MANY', bad: 'STEAL FROM ONE', goodEx: 'Shakespeare stole plots from Plutarch, Holinshed, Boccaccio, and dozens of other sources — weaving them into something unmistakably his.', badEx: 'Copying one artist\'s entire aesthetic and calling it your own. You\'re not inspired, you\'re a cover band.' },
+  { good: 'CREDIT', bad: 'PLAGIARIZE', goodEx: 'Hip-hop\'s sample culture at its best: crediting and clearing samples, building new meaning on top of acknowledged foundations.', badEx: 'Submitting someone else\'s code/writing as your own. The academic sin — and the creative dead end.' },
+  { good: 'TRANSFORM', bad: 'IMITATE', goodEx: 'Picasso saw African masks, Cézanne\'s geometry, and Iberian sculpture — and synthesized Cubism. Utterly new from clearly visible sources.', badEx: 'Making work that looks exactly like your hero\'s. You\'ve learned their style but not their thinking.' },
+  { good: 'REMIX', bad: 'RIP OFF', goodEx: 'Girl Talk layers 300+ samples into a single album, creating dense new compositions from recognizable fragments. Transformation through combination.', badEx: 'Changing just enough to avoid a lawsuit. The spirit of theft without the spirit of creation.' }
+];
+
+function initTheft() {
+  const grid = document.getElementById('theft-grid');
+  theftPairs.forEach((pair, i) => {
+    const good = document.createElement('div');
+    good.className = 'theft-item theft-good';
+    good.innerHTML = `${pair.good}<div class="example">${pair.goodEx}</div>`;
+    good.onclick = () => good.classList.toggle('expanded');
+    
+    const bad = document.createElement('div');
+    bad.className = 'theft-item theft-bad';
+    bad.innerHTML = `${pair.bad}<div class="example">${pair.badEx}</div>`;
+    bad.onclick = () => bad.classList.toggle('expanded');
+    
+    grid.appendChild(good);
+    grid.appendChild(bad);
+  });
+}
+
+// ========== EVOLUTION ==========
+const stages = [
+  { name: 'COPY', color: '#f87171', desc: 'You reproduce exactly. The Beatles playing "Long Tall Sally" note for note. Painters reproducing masterpieces. Writers copying out passages by hand. This is how you learn the mechanics — like a mechanic taking apart a car.' },
+  { name: 'IMITATE', color: '#fb923c', desc: 'You make your own work in the style of your hero. It looks like them, sounds like them. Kobe Bryant stealing moves from tape. Conan trying to be Letterman. You\'re wearing their costume, but your body is underneath.' },
+  { name: 'EMULATE', color: '#facc15', desc: 'You\'re trying to reach the same quality and effect, but your own personality keeps leaking through. The moves don\'t quite work the same way because you have a different body, different history. This is the breakthrough zone.' },
+  { name: 'YOUR VOICE', color: '#4ade80', desc: 'You\'ve internalized what you love and it comes out transformed. Carson became Carson by failing to be Benny. The failure to copy perfectly is where your originality lives. "Adding something to the world that only you can add."' }
+];
+
+function initEvolution() {
+  const container = document.getElementById('evolution-stages');
+  stages.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = `flex:1; background:${s.color}22; border:2px solid ${s.color}; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:10px; text-align:center; transition:all 0.3s;`;
+    div.innerHTML = `<div><strong style="color:${s.color}; font-family:'Courier New',monospace; font-size:0.9rem;">${s.name}</strong></div>`;
+    div.onclick = () => {
+      document.querySelectorAll('#evolution-stages > div').forEach(d => d.style.transform = '');
+      div.style.transform = 'scale(1.05)';
+      document.getElementById('evolution-desc').innerHTML = `<strong style="color:${s.color}">${s.name}</strong><br><br>${s.desc}`;
+    };
+    container.appendChild(div);
+  });
+  
+  // Conan chain
+  const chain = document.getElementById('conan-chain');
+  const comedians = [
+    { name: 'Jack Benny', role: 'The Original' },
+    { name: 'Johnny Carson', role: 'Tried to be Benny' },
+    { name: 'David Letterman', role: 'Tried to be Carson' },
+    { name: 'Conan O\'Brien', role: 'Tried to be Letterman' }
+  ];
+  chain.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">' +
+    comedians.map((c, i) => 
+      `<div style="text-align:center; padding:12px 16px; background:#0d1b2a; border-radius:8px; border:1px solid ${i===3?'#4ade80':'#ffd700'};">
+        <strong style="color:${i===3?'#4ade80':'#ffd700'}; font-family:'Courier New',monospace;">${c.name}</strong>
+        <div style="font-size:0.75rem; color:#aaa; margin-top:4px;">${c.role}</div>
+      </div>` + (i < 3 ? '<div style="color:#ffd700; font-size:1.2rem;">→</div>' : '')
+    ).join('') + '</div>' +
+    '<p style="text-align:center; color:#aaa; margin-top:15px; font-size:0.9rem;">"It is our failure to become our perceived ideal that ultimately defines us and makes us unique."</p>';
+}
+
+// ========== REMIX MACHINE ==========
+const remixData = {
+  medium: ['A novel', 'A podcast', 'A video game', 'A cookbook', 'A dance piece', 'A comic book', 'A mobile app', 'An album', 'A documentary', 'A board game'],
+  style: ['in the style of Wes Anderson', 'with punk rock energy', 'using only primary colors', 'told backwards', 'as a love letter', 'with Japanese minimalism', 'like a 1970s cop show', 'using only found materials', 'in the form of a diary', 'as an instruction manual'],
+  about: ['about losing your keys', 'about a friendship between rivals', 'about the last day of summer', 'about learning to cook', 'about a city that never sleeps', 'about the smell of rain', 'about teaching a robot to cry', 'about the space between heartbeats', 'about rebuilding after a fire', 'about the joy of repetition'],
+  constraint: ['in under 50 words', 'using no adjectives', 'that fits on a postcard', 'made in one hour', 'with a $5 budget', 'using only things in your pocket', 'that a 5-year-old can understand', 'without any dialogue', 'using only questions', 'that changes meaning when read backwards']
+};
+
+const categories = Object.keys(remixData);
+
+function initRemix() {
+  const container = document.getElementById('remix-slots');
+  categories.forEach(cat => {
+    const slot = document.createElement('div');
+    slot.className = 'remix-slot';
+    slot.dataset.cat = cat;
+    slot.innerHTML = `<div class="category">${cat}</div><div class="value">click to spin</div>`;
+    slot.onclick = () => spinSlot(slot, cat);
+    container.appendChild(slot);
+  });
+}
+
+function spinSlot(slot, cat) {
+  const items = remixData[cat];
+  const val = items[Math.floor(Math.random() * items.length)];
+  slot.querySelector('.value').textContent = val;
+  slot.style.borderStyle = 'solid';
+  updateRemixResult();
+}
+
+function spinAll() {
+  document.querySelectorAll('.remix-slot').forEach(slot => {
+    spinSlot(slot, slot.dataset.cat);
+  });
+}
+
+function updateRemixResult() {
+  const vals = [];
+  document.querySelectorAll('.remix-slot').forEach(slot => {
+    const v = slot.querySelector('.value').textContent;
+    if (v !== 'click to spin') vals.push(v);
+  });
+  if (vals.length === 4) {
+    document.getElementById('remix-result').innerHTML = 
+      `<div class="prompt"><strong style="color:#ffd700;">Your mashup:</strong><br><br>${vals[0]} ${vals[2]}, ${vals[1]}, ${vals[3]}.</div>`;
+  }
+}
+
+// ========== CONSTRAINT LAB ==========
+const constraints = [
+  { name: 'Free Write', desc: 'No constraints. Write anything.', check: () => ({ok:true, msg:''}) },
+  { name: '50 Words', desc: 'Like Green Eggs and Ham — only 50 unique words allowed.', check: (t) => {
+    const words = new Set(t.toLowerCase().match(/[a-z']+/g) || []);
+    const ok = words.size <= 50;
+    return { ok, msg: `${words.size}/50 unique words` };
+  }},
+  { name: 'No "I"', desc: 'Write without using the word "I" — get outside yourself.', check: (t) => {
+    const has = /\bi\b/i.test(t);
+    return { ok: !has, msg: has ? '⚠️ Found "I"!' : '✓ No "I" detected' };
+  }},
+  { name: '6 Words', desc: 'Hemingway\'s challenge: tell a story in exactly 6 words.', check: (t) => {
+    const count = (t.trim().match(/\S+/g) || []).length;
+    return { ok: count === 6, msg: `${count}/6 words` };
+  }},
+  { name: 'No Adjectives', desc: 'Strip away decoration. Nouns and verbs only.', check: (t) => {
+    return { ok: true, msg: 'Self-policed — be honest with yourself' };
+  }},
+  { name: 'One Syllable', desc: 'Every word must be one syllable. Think Anglo-Saxon.', check: (t) => {
+    return { ok: true, msg: 'Self-policed — read it aloud to check' };
+  }}
+];
+
+let activeConstraint = 0;
+
+function initConstraints() {
+  const container = document.getElementById('constraint-buttons');
+  constraints.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'constraint-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = c.name;
+    btn.onclick = () => {
+      document.querySelectorAll('.constraint-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeConstraint = i;
+      checkConstraint();
+    };
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('constraint-text').addEventListener('input', () => {
+    const text = document.getElementById('constraint-text').value;
+    const words = (text.trim().match(/\S+/g) || []).length;
+    document.getElementById('word-count').textContent = words + ' words';
+    checkConstraint();
+  });
+}
+
+function checkConstraint() {
+  const text = document.getElementById('constraint-text').value;
+  const c = constraints[activeConstraint];
+  const result = c.check(text);
+  document.getElementById('constraint-status').textContent = 
+    activeConstraint === 0 ? 'No constraint active' : `${c.name}: ${result.msg}`;
+  document.getElementById('constraint-status').style.color = result.ok ? '#4ade80' : '#f87171';
+}
+
+// ========== TWO DESKS / WORKFLOW ==========
+function toggleDesk(type) {
+  document.querySelectorAll('.desk').forEach(d => d.classList.remove('active-desk'));
+  document.querySelector(`.desk-${type}`).classList.add('active-desk');
+}
+
+const workflowSteps = [
+  { label: 'Scribble', type: 'analog', desc: 'Grab paper, markers, sticky notes. No screens. Brainstorm, doodle, make a mess. This is where ideas are born — from the physical act of making marks.' },
+  { label: 'Scan', type: 'digital', desc: 'Move to the computer. Scan your sketches, type up your notes, start giving shape to the raw material.' },
+  { label: 'Print & Cut', type: 'analog', desc: 'Print it out. Spread it on the floor. Cut things up, rearrange, pin to walls. "Look for patterns." Physical rearrangement reveals structure your screen hides.' },
+  { label: 'Edit & Ship', type: 'digital', desc: 'Back to the computer for final editing, polishing, publishing. The digital desk is for finishing — not starting.' }
+];
+
+function initWorkflow() {
+  const container = document.getElementById('workflow');
+  workflowSteps.forEach((s, i) => {
+    const step = document.createElement('div');
+    step.className = `step ${s.type}-step`;
+    step.textContent = s.label;
+    step.style.cursor = 'pointer';
+    step.onclick = () => {
+      document.getElementById('workflow-desc').innerHTML = `<strong style="color:${s.type === 'analog' ? '#daa520' : '#4a90d9'}">${s.label}</strong><br>${s.desc}`;
+    };
+    container.appendChild(step);
+    if (i < workflowSteps.length - 1) {
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '→';
+      container.appendChild(arrow);
+    }
+  });
+}
+
+// ========== SWIPE FILE ==========
+const swipeItems = [
+  { type: 'Quote', content: '"Steal from anywhere that resonates with inspiration or fuels your imagination." — Jim Jarmusch' },
+  { type: 'Method', content: 'David Hockney had jacket pockets tailored to fit sketchbooks.' },
+  { type: 'Rule', content: 'Google everything. Google your dreams, Google your problems.' },
+  { type: 'Trick', content: 'Two parallel lines create a third line of negative space between them. 1+1=3.' },
+  { type: 'Quote', content: '"Nothing is more important than an unread library." — John Waters' },
+  { type: 'Habit', content: 'Carry a notebook and pen everywhere. Jot down overheard conversations.' },
+  { type: 'Method', content: 'Bradford Cox recorded fake albums before the real ones came out. Many became real songs.' },
+  { type: 'Rule', content: 'If you\'re the most talented person in the room, find another room.' },
+  { type: 'Quote', content: '"Quit picking fights on Twitter and go make something!" — Kleon\'s wife' },
+  { type: 'Trick', content: 'Keep a "praise file" — save every nice email for dark days when you want to quit.' },
+  { type: 'Habit', content: 'Set up two workstations: analog (no electronics) and digital (editing only).' },
+  { type: 'Method', content: 'Jerry Seinfeld calendar: X each day you work, then don\'t break the chain.' },
+  { type: 'Rule', content: 'Stay out of debt. Financial freedom = creative freedom.' },
+  { type: 'Quote', content: '"What we respond to in any work of art is the artist\'s struggle against limitations." — Steinberg' },
+  { type: 'Trick', content: 'Dr. Seuss wrote Green Eggs and Ham on a bet — only 50 unique words allowed.' },
+  { type: 'Habit', content: 'Keep a logbook. List what you did each day. Small details recall big ones.' }
+];
+
+function initSwipe() {
+  const grid = document.getElementById('swipe-grid');
+  swipeItems.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'swipe-card';
+    card.innerHTML = `<div class="swipe-type">${item.type}</div><div class="swipe-content">${item.content}</div>`;
+    card.onclick = () => {
+      card.classList.toggle('collected');
+      updateSwipeCount();
+    };
+    grid.appendChild(card);
+  });
+}
+
+function updateSwipeCount() {
+  const collected = document.querySelectorAll('.swipe-card.collected').length;
+  document.getElementById('swipe-counter').textContent = `Collected: ${collected} / ${swipeItems.length}`;
+}
+
+// ========== CALENDAR ==========
+function initCalendar() {
+  const grid = document.getElementById('calendar');
+  // 5 weeks of days
+  for (let i = 0; i < 35; i++) {
+    const day = document.createElement('div');
+    day.className = 'cal-day';
+    day.textContent = i + 1;
+    day.dataset.day = i;
+    day.onclick = () => {
+      day.classList.toggle('marked');
+      updateStreak();
+    };
+    grid.appendChild(day);
+  }
+}
+
+function updateStreak() {
+  const days = document.querySelectorAll('.cal-day');
+  let streak = 0, maxStreak = 0, current = 0;
+  
+  // Reset chain highlighting
+  days.forEach(d => d.classList.remove('chain'));
+  
+  // Find current streak (consecutive from start)
+  let lastMarked = -1;
+  days.forEach((d, i) => {
+    if (d.classList.contains('marked')) {
+      if (i === lastMarked + 1 || lastMarked === -1) {
+        current++;
+      } else {
+        current = 1;
+      }
+      lastMarked = i;
+      if (current > maxStreak) maxStreak = current;
+    }
+  });
+  
+  // Highlight longest chain
+  let chainStart = -1, chainLen = 0, bestStart = 0, bestLen = 0;
+  days.forEach((d, i) => {
+    if (d.classList.contains('marked')) {
+      if (chainStart === -1) chainStart = i;
+      chainLen++;
+      if (chainLen > bestLen) { bestLen = chainLen; bestStart = chainStart; }
+    } else {
+      chainStart = -1; chainLen = 0;
+    }
+  });
+  
+  for (let i = bestStart; i < bestStart + bestLen; i++) {
+    days[i].classList.add('chain');
+  }
+  
+  document.getElementById('streak-count').textContent = bestLen;
+}
+
+function resetCalendar() {
+  document.querySelectorAll('.cal-day').forEach(d => {
+    d.classList.remove('marked', 'chain');
+  });
+  document.getElementById('streak-count').textContent = '0';
+}
+
+// ========== INIT ==========
+initTree();
+initTheft();
+initEvolution();
+initRemix();
+initConstraints();
+initWorkflow();
+initSwipe();
+initCalendar();
+
+// Enter key for tree input
+document.getElementById('node-name').addEventListener('keypress', e => {
+  if (e.key === 'Enter') addTreeNode();
+});
+</script>
+</body>
+</html>

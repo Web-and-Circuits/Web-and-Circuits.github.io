@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crafting Interpreters — Interactive Book Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--surface3:#282828;--text:#e8e6e3;--text-dim:#8a8a8a;--accent:#f0c040;--accent2:#e06050;--accent3:#50b0e0;--green:#50c878;--mono:'JetBrains Mono',monospace;--serif:'EB Garamond',serif;--display:'Playfair Display',serif;--sans:'Inter',sans-serif}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--serif);line-height:1.7;overflow-x:hidden}
+
+/* Progress bar */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:999;transition:width 0.15s;width:0%}
+
+/* Back link */
+.back{position:fixed;top:16px;left:16px;z-index:99;font-family:var(--sans);font-size:0.85rem;color:var(--text-dim);text-decoration:none;min-height:44px;min-width:44px;display:flex;align-items:center;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--surface3);transition:all 0.2s}
+.back:hover{color:var(--accent);border-color:var(--accent)}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* Layout */
+.container{max-width:760px;margin:0 auto;padding:0 24px}
+section{padding:80px 0}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 24px;position:relative}
+.hero h1{font-family:var(--display);font-size:clamp(2.4rem,6vw,4rem);font-weight:700;line-height:1.15;margin-bottom:16px;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{font-family:var(--serif);font-size:1.3rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
+.hero .byline{font-family:var(--sans);font-size:0.85rem;color:var(--text-dim);margin-top:8px}
+.stars{font-size:2rem;letter-spacing:4px;margin-bottom:24px}
+
+/* Section headings */
+h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:24px;color:var(--accent)}
+h3{font-family:var(--display);font-size:1.3rem;margin-bottom:12px;color:var(--text)}
+
+/* Text */
+p{margin-bottom:16px;font-size:1.1rem}
+.dim{color:var(--text-dim)}
+.highlight{color:var(--accent);font-weight:600}
+blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:20px 0;background:var(--surface);border-radius:0 8px 8px 0;font-style:italic;color:var(--text-dim)}
+blockquote .attr{display:block;margin-top:8px;font-size:0.9rem;color:var(--accent);font-style:normal}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--surface3);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{color:var(--accent)}
+
+/* Interactive demos */
+.demo{background:var(--surface);border:1px solid var(--surface3);border-radius:12px;padding:24px;margin:24px 0}
+.demo-title{font-family:var(--sans);font-size:0.8rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+.demo textarea,.demo input[type=text]{width:100%;background:var(--bg);border:1px solid var(--surface3);color:var(--text);font-family:var(--mono);font-size:0.9rem;padding:12px;border-radius:8px;resize:vertical;min-height:44px}
+.demo textarea:focus,.demo input[type=text]:focus{outline:none;border-color:var(--accent)}
+.demo button{min-height:44px;min-width:44px;padding:10px 20px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--sans);font-size:0.9rem;font-weight:500;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-top:12px}
+.demo button:hover{background:var(--accent);color:var(--bg)}
+.demo .output{background:var(--bg);border:1px solid var(--surface3);border-radius:8px;padding:12px;margin-top:12px;font-family:var(--mono);font-size:0.85rem;min-height:44px;white-space:pre-wrap;color:var(--green)}
+.demo .error{color:var(--accent2)}
+
+/* Token visualizer */
+.token-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.token{display:inline-block;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:0.8rem;border:1px solid var(--surface3)}
+.token.keyword{background:#2a1f0a;border-color:var(--accent);color:var(--accent)}
+.token.number{background:#0a1f2a;border-color:var(--accent3);color:var(--accent3)}
+.token.string{background:#1f0a0a;border-color:var(--accent2);color:var(--accent2)}
+.token.operator{background:#0a2a1a;border-color:var(--green);color:var(--green)}
+.token.identifier{background:var(--surface2);color:var(--text)}
+.token.punctuation{background:var(--surface2);color:var(--text-dim)}
+
+/* AST visualizer */
+.ast-node{margin-left:20px;padding:4px 0;font-family:var(--mono);font-size:0.85rem;position:relative}
+.ast-node::before{content:'├─';color:var(--text-dim);position:absolute;left:-18px}
+.ast-node:last-child::before{content:'└─'}
+.ast-label{color:var(--accent);font-weight:500}
+.ast-value{color:var(--text-dim)}
+.ast-tree{padding:12px;background:var(--bg);border-radius:8px;margin-top:12px;border:1px solid var(--surface3);overflow-x:auto}
+
+/* Pipeline diagram */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:8px;justify-content:center;margin:24px 0}
+.pipeline-step{background:var(--surface);border:1px solid var(--surface3);border-radius:8px;padding:10px 16px;font-family:var(--sans);font-size:0.85rem;min-height:44px;display:flex;align-items:center;cursor:pointer;transition:all 0.2s;user-select:none}
+.pipeline-step:hover,.pipeline-step.active{border-color:var(--accent);color:var(--accent)}
+.pipeline-arrow{color:var(--text-dim);font-size:1.2rem}
+.pipeline-desc{background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:16px;margin-top:12px;font-size:0.95rem;display:none}
+.pipeline-desc.show{display:block}
+
+/* Scope visualizer */
+.scope-box{border:1px dashed var(--text-dim);border-radius:8px;padding:12px;margin:8px 0 8px 16px;position:relative}
+.scope-label{position:absolute;top:-10px;left:12px;background:var(--bg);padding:0 6px;font-family:var(--mono);font-size:0.75rem;color:var(--text-dim)}
+.scope-var{font-family:var(--mono);font-size:0.85rem;padding:4px 0}
+.scope-var .name{color:var(--accent3)}
+.scope-var .val{color:var(--green)}
+
+/* Bytecode */
+.bytecode{font-family:var(--mono);font-size:0.85rem;margin-top:12px}
+.bytecode .line{display:flex;gap:12px;padding:3px 0}
+.bytecode .addr{color:var(--text-dim);min-width:40px}
+.bytecode .op{color:var(--accent);min-width:120px}
+.bytecode .arg{color:var(--accent3)}
+
+/* NaN boxing */
+.bit-row{display:flex;gap:1px;margin:8px 0}
+.bit{width:12px;height:24px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.6rem;border-radius:2px}
+.bit.sign{background:#4a1a2a;color:var(--accent2)}
+.bit.exponent{background:#2a2a0a;color:var(--accent)}
+.bit.mantissa{background:#0a2a2a;color:var(--accent3)}
+.bit.tag{background:#0a2a0a;color:var(--green)}
+.bit-labels{display:flex;gap:4px;font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-top:4px}
+
+/* Opinion */
+.opinion{background:linear-gradient(135deg,#1a150a,#1a0a0a);border:1px solid var(--accent);border-radius:12px;padding:24px;margin:24px 0;position:relative}
+.opinion::before{content:'💭';position:absolute;top:-14px;left:20px;font-size:1.4rem}
+
+/* Footer */
+footer{text-align:center;padding:60px 24px;color:var(--text-dim);font-family:var(--sans);font-size:0.85rem}
+footer a{color:var(--accent);text-decoration:none}
+
+@media(max-width:600px){
+  .pipeline{flex-direction:column}
+  .pipeline-arrow{transform:rotate(90deg)}
+  .bit{width:8px;height:20px;font-size:0.5rem}
+  section{padding:48px 0}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<a href="../" class="back">← Back to Lab</a>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="stars">★★★★★</div>
+  <h1>Crafting Interpreters</h1>
+  <p class="subtitle">by Robert Nystrom</p>
+  <p class="dim" style="max-width:500px">An interactive book report. Not just a summary—these demos let you <em>experience</em> the concepts from the book.</p>
+  <p class="byline">Reviewed by 🐑 · Feb 2026</p>
+</section>
+
+<!-- 1: THE PIPELINE -->
+<section class="container reveal">
+  <h2>The Compiler Pipeline</h2>
+  <p>Every language implementation climbs the same mountain. Click each stage to see what it does:</p>
+  <div class="pipeline" id="pipeline">
+    <div class="pipeline-step" data-stage="0">📝 Source</div><span class="pipeline-arrow">→</span>
+    <div class="pipeline-step" data-stage="1">🔍 Scanner</div><span class="pipeline-arrow">→</span>
+    <div class="pipeline-step" data-stage="2">🌳 Parser</div><span class="pipeline-arrow">→</span>
+    <div class="pipeline-step" data-stage="3">🧠 Analysis</div><span class="pipeline-arrow">→</span>
+    <div class="pipeline-step" data-stage="4">⚙️ Bytecode</div><span class="pipeline-arrow">→</span>
+    <div class="pipeline-step" data-stage="5">🖥️ VM</div>
+  </div>
+  <div class="pipeline-desc" id="pipeline-desc"></div>
+</section>
+
+<!-- 2: SCANNER DEMO -->
+<section class="container reveal">
+  <h2>Try the Scanner</h2>
+  <p>The scanner (or <em>lexer</em>) takes raw text and chunks it into <span class="highlight">tokens</span>—the "words" of the language. Type some Lox code and watch it tokenize:</p>
+  <div class="demo">
+    <div class="demo-title">Interactive Scanner</div>
+    <textarea id="scanner-input" rows="3" spellcheck="false">var x = 3.14 + 2;
+print "hello";</textarea>
+    <button onclick="runScanner()">Scan →</button>
+    <div class="token-list" id="scanner-output"></div>
+  </div>
+</section>
+
+<!-- 3: PARSER / AST DEMO -->
+<section class="container reveal">
+  <h2>Recursive Descent Parsing</h2>
+  <p>The parser takes those flat tokens and builds a <span class="highlight">tree</span> that mirrors the nested structure of the code. Each grammar rule becomes a function—that's the "recursive descent" part.</p>
+  <div class="demo">
+    <div class="demo-title">Expression → AST</div>
+    <input type="text" id="ast-input" value="1 + 2 * 3" spellcheck="false">
+    <button onclick="buildAST()">Parse →</button>
+    <div class="ast-tree" id="ast-output"></div>
+  </div>
+  <div class="opinion">
+    <p><strong>My take:</strong> Recursive descent is one of those ideas that sounds complex but is shockingly simple once you see it. Nystrom's insight—that a parser is just a literal translation of grammar rules into code—is one of those "aha" moments that reframes how you think about parsing forever.</p>
+  </div>
+</section>
+
+<!-- 4: EVALUATOR DEMO -->
+<section class="container reveal">
+  <h2>Evaluating Expressions</h2>
+  <p>The tree-walk interpreter traverses the AST <em>post-order</em>—evaluate children first, then apply the operation. Try evaluating expressions:</p>
+  <div class="demo">
+    <div class="demo-title">Mini Lox Evaluator</div>
+    <textarea id="eval-input" rows="4" spellcheck="false">var x = 10;
+var y = 3;
+print x + y * 2;
+print "hello" + " world";</textarea>
+    <button onclick="runEval()">Run →</button>
+    <div class="output" id="eval-output"></div>
+  </div>
+</section>
+
+<!-- 5: SCOPE DEMO -->
+<section class="container reveal">
+  <h2>Scope & Environments</h2>
+  <p>Each block <code>{}</code> creates a new <span class="highlight">environment</span>—a hash map of variable bindings chained to the enclosing scope. This is how local variables work:</p>
+  <div class="demo">
+    <div class="demo-title">Scope Visualizer</div>
+    <button onclick="showScope()">Show Scope Chain →</button>
+    <div id="scope-output"></div>
+  </div>
+  <blockquote>"A variable usage refers to the preceding declaration with the same name in the innermost scope that encloses the expression where the variable is used."<span class="attr">— The scoping rule, precisely stated</span></blockquote>
+</section>
+
+<!-- 6: CLOSURES -->
+<section class="container reveal">
+  <h2>Closures: The Beautiful Trap</h2>
+  <p>A closure "closes over" variables from its surrounding scope. Even after the outer function returns, the closure remembers:</p>
+  <div class="demo">
+    <div class="demo-title">Closure Demo</div>
+    <button onclick="runClosure()">Run makeCounter() →</button>
+    <div class="output" id="closure-output"></div>
+  </div>
+  <div class="opinion">
+    <p><strong>My take:</strong> Chapter 11 (Resolving and Binding) is where the book transcends "tutorial" and becomes genuinely educational. The closure scoping bug is subtle—a mutable environment lets a closure accidentally see variables declared <em>after</em> it. The fix—a resolver pass that calculates static scope distances—is elegant. This is the chapter that separates "I followed along" from "I truly understand."</p>
+  </div>
+</section>
+
+<!-- 7: BYTECODE -->
+<section class="container reveal">
+  <h2>Bytecode: The Second Interpreter</h2>
+  <p>Part III rebuilds everything in C, compiling to bytecode for a stack-based VM. Here's how <code>1 + 2 * 3</code> compiles:</p>
+  <div class="demo">
+    <div class="demo-title">Bytecode Compiler</div>
+    <input type="text" id="bc-input" value="1 + 2 * 3" spellcheck="false">
+    <button onclick="compileBytecode()">Compile →</button>
+    <div class="bytecode" id="bc-output"></div>
+  </div>
+  <div class="demo">
+    <div class="demo-title">Stack VM Simulator</div>
+    <button onclick="runVM()">Step Through →</button>
+    <div class="output" id="vm-output"></div>
+  </div>
+</section>
+
+<!-- 8: NAN BOXING -->
+<section class="container reveal">
+  <h2>NaN Boxing: A Bit-Level Magic Trick</h2>
+  <p>IEEE 754 doubles have <em>billions</em> of unused NaN bit patterns. Lox stuffs nil, booleans, and object pointers into those bits—halving memory usage:</p>
+  <div class="demo">
+    <div class="demo-title">NaN Boxing Visualizer</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="showNaN('number')">Number (3.14)</button>
+      <button onclick="showNaN('nil')">nil</button>
+      <button onclick="showNaN('true')">true</button>
+      <button onclick="showNaN('false')">false</button>
+      <button onclick="showNaN('obj')">Obj pointer</button>
+    </div>
+    <div id="nan-output" style="margin-top:16px"></div>
+  </div>
+  <div class="opinion">
+    <p><strong>My take:</strong> NaN boxing is one of the coolest bit-twiddling tricks in all of computer science. The way it exploits IEEE 754's structure to pack a dynamically-typed value into exactly 64 bits is beautiful—and the ~10% performance gain comes essentially for free.</p>
+  </div>
+</section>
+
+<!-- 9: THE VERDICT -->
+<section class="container reveal">
+  <h2>The Verdict</h2>
+  <div class="card">
+    <h3>★★★★★ — A Masterpiece</h3>
+    <p><em>Crafting Interpreters</em> is the rare technical book that works as both a tutorial and a reference, as both a page-turner and an encyclopedia. Nystrom writes with warmth, humor, and deep respect for the reader's intelligence.</p>
+    <p>The book's central thesis—that compilers aren't magic, they're just code—is proven conclusively across 800 pages and two complete implementations. If you write code for a living, this book will make you better at it.</p>
+    <p class="dim" style="margin-bottom:0"><strong>Best chapters:</strong> Ch. 6 (Parsing Expressions), Ch. 11 (Resolving and Binding), Ch. 17 (Pratt Parsing), Ch. 26 (Garbage Collection), Ch. 30 (NaN Boxing)</p>
+  </div>
+  <blockquote>"My hope is that if you've felt intimidated by languages, and this book helps you overcome that fear, maybe I'll leave you just a tiny bit braver than you were before."<span class="attr">— Robert Nystrom</span></blockquote>
+</section>
+
+<footer>
+  <p>🐑 Interactive Book Report · <a href="https://craftinginterpreters.com" target="_blank">Read the book (free online)</a></p>
+  <p style="margin-top:8px">Built with love and a hand-crafted scanner</p>
+</footer>
+
+<script>
+// ─── PROGRESS BAR ───
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+});
+
+// ─── SCROLL REVEAL ───
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ─── PIPELINE ───
+const pipeDescs = [
+  '<strong>Source Code:</strong> Raw text. Just a string of characters. Everything starts here.<br><code>var x = 42;</code>',
+  '<strong>Scanner (Lexer):</strong> Groups characters into tokens—the "words" of the language. Whitespace and comments are discarded.<br><code>[VAR "var"] [IDENT "x"] [EQUAL "="] [NUMBER 42] [SEMICOLON ";"]</code>',
+  '<strong>Parser:</strong> Takes the flat token stream and builds an Abstract Syntax Tree (AST). Operator precedence is encoded in the tree structure.',
+  '<strong>Semantic Analysis:</strong> Resolves variable bindings, checks scope rules. In jlox, this is the Resolver pass that calculates how many environment "hops" each variable reference needs.',
+  '<strong>Bytecode Compiler:</strong> In clox, the AST is compiled to bytecode—a dense, linear encoding of instructions for a virtual stack machine. <code>OP_CONSTANT 42, OP_DEFINE_GLOBAL "x"</code>',
+  '<strong>Virtual Machine:</strong> Executes bytecode instructions one at a time. Uses a stack for intermediate values. This is where your program actually runs!'
+];
+document.getElementById('pipeline').addEventListener('click', e => {
+  const step = e.target.closest('.pipeline-step');
+  if (!step) return;
+  document.querySelectorAll('.pipeline-step').forEach(s => s.classList.remove('active'));
+  step.classList.add('active');
+  const desc = document.getElementById('pipeline-desc');
+  desc.innerHTML = pipeDescs[step.dataset.stage];
+  desc.classList.add('show');
+});
+
+// ─── SCANNER ───
+function runScanner() {
+  const src = document.getElementById('scanner-input').value;
+  const out = document.getElementById('scanner-output');
+  out.innerHTML = '';
+  const keywords = new Set(['and','class','else','false','for','fun','if','nil','or','print','return','super','this','true','var','while']);
+  const ops = new Set(['+','-','*','/','=','!','<','>','==','!=','<=','>=','!']);
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (' \t\r\n'.includes(c)) { i++; continue; }
+    if (c === '/' && src[i+1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    // two-char ops
+    if ('!=<>'.includes(c) && src[i+1] === '=') { addTok(out, c + '=', 'operator'); i += 2; continue; }
+    if ('(){},;.+-*/=!<>'.includes(c)) {
+      const cls = ops.has(c) ? 'operator' : 'punctuation';
+      addTok(out, c, cls); i++; continue;
+    }
+    if (c === '"') {
+      let s = '"'; i++;
+      while (i < src.length && src[i] !== '"') s += src[i++];
+      if (i < src.length) { s += '"'; i++; }
+      addTok(out, s, 'string'); continue;
+    }
+    if (c >= '0' && c <= '9') {
+      let n = ''; while (i < src.length && ((src[i] >= '0' && src[i] <= '9') || src[i] === '.')) n += src[i++];
+      addTok(out, n, 'number'); continue;
+    }
+    if (isAlpha(c)) {
+      let id = ''; while (i < src.length && isAlphaNum(src[i])) id += src[i++];
+      addTok(out, id, keywords.has(id) ? 'keyword' : 'identifier'); continue;
+    }
+    i++;
+  }
+  addTok(out, 'EOF', 'punctuation');
+}
+function addTok(parent, text, cls) {
+  const el = document.createElement('span');
+  el.className = 'token ' + cls;
+  el.textContent = text;
+  parent.appendChild(el);
+}
+function isAlpha(c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'; }
+function isAlphaNum(c) { return isAlpha(c) || (c >= '0' && c <= '9'); }
+
+// ─── AST BUILDER ───
+function buildAST() {
+  const src = document.getElementById('ast-input').value.trim();
+  const out = document.getElementById('ast-output');
+  try {
+    const tokens = tokenize(src);
+    const ast = parseExpr(tokens, 0);
+    out.innerHTML = renderAST(ast.node, 0);
+  } catch(e) {
+    out.innerHTML = `<span class="error">Parse error: ${e.message}</span>`;
+  }
+}
+
+function tokenize(src) {
+  const tokens = []; let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === ' ') { i++; continue; }
+    if (c >= '0' && c <= '9') {
+      let n = ''; while (i < src.length && ((src[i] >= '0' && src[i] <= '9') || src[i] === '.')) n += src[i++];
+      tokens.push({ type: 'NUM', value: parseFloat(n) }); continue;
+    }
+    if ('"\''.includes(c)) {
+      const q = c; i++; let s = '';
+      while (i < src.length && src[i] !== q) s += src[i++];
+      i++; tokens.push({ type: 'STR', value: s }); continue;
+    }
+    if ('+-*/'.includes(c)) { tokens.push({ type: 'OP', value: c }); i++; continue; }
+    if (c === '(') { tokens.push({ type: 'LPAREN' }); i++; continue; }
+    if (c === ')') { tokens.push({ type: 'RPAREN' }); i++; continue; }
+    if (isAlpha(c)) {
+      let id = ''; while (i < src.length && isAlphaNum(src[i])) id += src[i++];
+      if (id === 'true' || id === 'false') tokens.push({ type: 'BOOL', value: id === 'true' });
+      else if (id === 'nil') tokens.push({ type: 'NIL' });
+      else tokens.push({ type: 'IDENT', value: id });
+      continue;
+    }
+    i++;
+  }
+  return tokens;
+}
+
+const prec = { '+': 1, '-': 1, '*': 2, '/': 2 };
+function parseExpr(tokens, pos, minPrec = 0) {
+  let left = parseAtom(tokens, pos);
+  pos = left.pos;
+  while (pos < tokens.length && tokens[pos].type === 'OP' && (prec[tokens[pos].value] || 0) >= minPrec) {
+    const op = tokens[pos].value;
+    pos++;
+    const right = parseExpr(tokens, pos, prec[op] + 1);
+    pos = right.pos;
+    left = { node: { type: 'Binary', op, left: left.node, right: right.node }, pos };
+  }
+  return left;
+}
+function parseAtom(tokens, pos) {
+  const t = tokens[pos];
+  if (!t) throw new Error('Unexpected end of input');
+  if (t.type === 'NUM') return { node: { type: 'Number', value: t.value }, pos: pos + 1 };
+  if (t.type === 'STR') return { node: { type: 'String', value: t.value }, pos: pos + 1 };
+  if (t.type === 'BOOL') return { node: { type: 'Bool', value: t.value }, pos: pos + 1 };
+  if (t.type === 'NIL') return { node: { type: 'Nil' }, pos: pos + 1 };
+  if (t.type === 'IDENT') return { node: { type: 'Ident', name: t.value }, pos: pos + 1 };
+  if (t.type === 'LPAREN') {
+    const inner = parseExpr(tokens, pos + 1, 0);
+    if (!tokens[inner.pos] || tokens[inner.pos].type !== 'RPAREN') throw new Error('Expected )');
+    return { node: { type: 'Group', expr: inner.node }, pos: inner.pos + 1 };
+  }
+  if (t.type === 'OP' && t.value === '-') {
+    const operand = parseExpr(tokens, pos + 1, 3);
+    return { node: { type: 'Unary', op: '-', expr: operand.node }, pos: operand.pos };
+  }
+  throw new Error('Unexpected token: ' + JSON.stringify(t));
+}
+
+function renderAST(node, depth) {
+  const indent = '  '.repeat(depth);
+  const prefix = depth > 0 ? '<span style="color:var(--text-dim)">' + (depth > 0 ? '├─ ' : '') + '</span>' : '';
+  if (node.type === 'Binary') {
+    return `${indent}${prefix}<span class="ast-label">Binary</span> <span class="ast-value">${node.op}</span>\n` +
+           renderAST(node.left, depth + 1) + renderAST(node.right, depth + 1);
+  }
+  if (node.type === 'Unary') {
+    return `${indent}${prefix}<span class="ast-label">Unary</span> <span class="ast-value">${node.op}</span>\n` +
+           renderAST(node.expr, depth + 1);
+  }
+  if (node.type === 'Group') {
+    return `${indent}${prefix}<span class="ast-label">Group</span>\n` + renderAST(node.expr, depth + 1);
+  }
+  if (node.type === 'Number') return `${indent}${prefix}<span class="ast-label">Number</span> <span class="ast-value">${node.value}</span>\n`;
+  if (node.type === 'String') return `${indent}${prefix}<span class="ast-label">String</span> <span class="ast-value">"${node.value}"</span>\n`;
+  if (node.type === 'Bool') return `${indent}${prefix}<span class="ast-label">Bool</span> <span class="ast-value">${node.value}</span>\n`;
+  if (node.type === 'Nil') return `${indent}${prefix}<span class="ast-label">Nil</span>\n`;
+  if (node.type === 'Ident') return `${indent}${prefix}<span class="ast-label">Ident</span> <span class="ast-value">${node.name}</span>\n`;
+  return '';
+}
+
+// ─── MINI EVALUATOR ───
+function runEval() {
+  const src = document.getElementById('eval-input').value;
+  const out = document.getElementById('eval-output');
+  const env = {};
+  const lines = src.split('\n').map(l => l.trim()).filter(Boolean);
+  let result = '';
+  try {
+    for (const line of lines) {
+      const m1 = line.match(/^var\s+(\w+)\s*=\s*(.+);$/);
+      if (m1) { env[m1[1]] = evalSimple(m1[2], env); continue; }
+      const m2 = line.match(/^var\s+(\w+)\s*;$/);
+      if (m2) { env[m2[1]] = null; continue; }
+      const m3 = line.match(/^print\s+(.+);$/);
+      if (m3) { result += stringify(evalSimple(m3[1], env)) + '\n'; continue; }
+      const m4 = line.match(/^(\w+)\s*=\s*(.+);$/);
+      if (m4) { if (!(m4[1] in env)) throw new Error(`Undefined variable '${m4[1]}'.`); env[m4[1]] = evalSimple(m4[2], env); continue; }
+      result += stringify(evalSimple(line.replace(/;$/, ''), env)) + '\n';
+    }
+    out.innerHTML = result || '<span class="dim">(no output)</span>';
+    out.classList.remove('error');
+  } catch(e) {
+    out.innerHTML = `<span class="error">Runtime Error: ${e.message}</span>`;
+  }
+}
+function evalSimple(expr, env) {
+  expr = expr.trim();
+  // String concatenation & arithmetic via tokenizer + evaluator
+  const tokens = tokenize(expr);
+  const ast = parseExpr(tokens, 0);
+  return evalNode(ast.node, env);
+}
+function evalNode(node, env) {
+  if (node.type === 'Number') return node.value;
+  if (node.type === 'String') return node.value;
+  if (node.type === 'Bool') return node.value;
+  if (node.type === 'Nil') return null;
+  if (node.type === 'Ident') {
+    if (node.name === 'true') return true;
+    if (node.name === 'false') return false;
+    if (node.name === 'nil') return null;
+    if (!(node.name in env)) throw new Error(`Undefined variable '${node.name}'.`);
+    return env[node.name];
+  }
+  if (node.type === 'Group') return evalNode(node.expr, env);
+  if (node.type === 'Unary') {
+    const v = evalNode(node.expr, env);
+    if (node.op === '-') return -v;
+    if (node.op === '!') return !isTruthy(v);
+  }
+  if (node.type === 'Binary') {
+    const l = evalNode(node.left, env), r = evalNode(node.right, env);
+    switch(node.op) {
+      case '+': return (typeof l === 'string' || typeof r === 'string') ? String(l) + String(r) : l + r;
+      case '-': return l - r;
+      case '*': return l * r;
+      case '/': return l / r;
+    }
+  }
+  return null;
+}
+function isTruthy(v) { return v !== null && v !== false; }
+function stringify(v) { return v === null ? 'nil' : String(v); }
+
+// ─── SCOPE VISUALIZER ───
+function showScope() {
+  document.getElementById('scope-output').innerHTML = `
+<pre style="font-family:var(--mono);font-size:0.85rem;color:var(--text-dim);margin:12px 0">var a = "global";
+{
+  var b = "outer";
+  {
+    var c = "inner";
+    print a + b + c; // ← here
+  }
+}</pre>
+<p style="font-size:0.95rem;margin:12px 0">At the <code>print</code> statement, the environment chain looks like:</p>
+<div class="scope-box" style="border-color:var(--accent)">
+  <span class="scope-label">Global</span>
+  <div class="scope-var"><span class="name">a</span> = <span class="val">"global"</span></div>
+  <div class="scope-box" style="border-color:var(--accent3)">
+    <span class="scope-label">Block 1</span>
+    <div class="scope-var"><span class="name">b</span> = <span class="val">"outer"</span></div>
+    <div class="scope-box" style="border-color:var(--green)">
+      <span class="scope-label">Block 2</span>
+      <div class="scope-var"><span class="name">c</span> = <span class="val">"inner"</span></div>
+      <div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);margin-top:8px">
+        c → 0 hops · b → 1 hop · a → 2 hops
+      </div>
+    </div>
+  </div>
+</div>
+<p style="font-size:0.9rem;color:var(--text-dim);margin-top:12px">The resolver calculates these "hops" at compile time. At runtime, the VM jumps directly to the right slot—no searching needed.</p>`;
+}
+
+// ─── CLOSURE DEMO ───
+function runClosure() {
+  const out = document.getElementById('closure-output');
+  let output = '';
+  output += '// fun makeCounter() { var i = 0; fun count() { i = i + 1; print i; } return count; }\n';
+  output += '// var counter = makeCounter();\n\n';
+  // Simulate
+  let i = 0;
+  function count() { i++; return i; }
+  output += `counter() → ${count()}   // The closure remembers i!\n`;
+  output += `counter() → ${count()}   // i persists between calls\n`;
+  output += `counter() → ${count()}   // Even though makeCounter() has returned\n\n`;
+  output += `// The closure "closes over" the variable i.\n`;
+  output += `// It holds a reference to the environment where i lives,\n`;
+  output += `// keeping it alive even after the enclosing function exits.`;
+  out.textContent = output;
+}
+
+// ─── BYTECODE COMPILER ───
+function compileBytecode() {
+  const src = document.getElementById('bc-input').value.trim();
+  const out = document.getElementById('bc-output');
+  try {
+    const tokens = tokenize(src);
+    const ast = parseExpr(tokens, 0);
+    const instructions = [];
+    const constants = [];
+    function emit(node) {
+      if (node.type === 'Number') {
+        constants.push(node.value);
+        instructions.push({ op: 'OP_CONSTANT', arg: node.value });
+      } else if (node.type === 'Binary') {
+        emit(node.left);
+        emit(node.right);
+        const ops = { '+': 'OP_ADD', '-': 'OP_SUBTRACT', '*': 'OP_MULTIPLY', '/': 'OP_DIVIDE' };
+        instructions.push({ op: ops[node.op] || 'OP_UNKNOWN' });
+      } else if (node.type === 'Unary' && node.op === '-') {
+        emit(node.expr);
+        instructions.push({ op: 'OP_NEGATE' });
+      } else if (node.type === 'Group') {
+        emit(node.expr);
+      }
+    }
+    emit(ast.node);
+    instructions.push({ op: 'OP_RETURN' });
+    out.innerHTML = instructions.map((inst, i) => {
+      const addr = String(i).padStart(4, '0');
+      const arg = inst.arg !== undefined ? String(inst.arg) : '';
+      return `<div class="line"><span class="addr">${addr}</span><span class="op">${inst.op}</span><span class="arg">${arg}</span></div>`;
+    }).join('');
+  } catch(e) {
+    out.innerHTML = `<span class="error">${e.message}</span>`;
+  }
+}
+
+// ─── VM SIMULATOR ───
+function runVM() {
+  const src = document.getElementById('bc-input').value.trim();
+  const out = document.getElementById('vm-output');
+  try {
+    const tokens = tokenize(src);
+    const ast = parseExpr(tokens, 0);
+    const instructions = [];
+    function emit(node) {
+      if (node.type === 'Number') instructions.push({ op: 'PUSH', arg: node.value });
+      else if (node.type === 'Binary') { emit(node.left); emit(node.right); instructions.push({ op: node.op }); }
+      else if (node.type === 'Unary' && node.op === '-') { emit(node.expr); instructions.push({ op: 'NEG' }); }
+      else if (node.type === 'Group') emit(node.expr);
+    }
+    emit(ast.node);
+    // Step through
+    const stack = [];
+    let log = '';
+    for (const inst of instructions) {
+      if (inst.op === 'PUSH') {
+        stack.push(inst.arg);
+        log += `PUSH ${inst.arg}`.padEnd(24) + `stack: [${stack.join(', ')}]\n`;
+      } else if (inst.op === 'NEG') {
+        const a = stack.pop();
+        stack.push(-a);
+        log += `NEGATE`.padEnd(24) + `stack: [${stack.join(', ')}]\n`;
+      } else {
+        const b = stack.pop(), a = stack.pop();
+        let r;
+        switch(inst.op) {
+          case '+': r = a + b; break;
+          case '-': r = a - b; break;
+          case '*': r = a * b; break;
+          case '/': r = a / b; break;
+        }
+        stack.push(r);
+        const opName = {'+':'ADD','-':'SUB','*':'MUL','/':'DIV'}[inst.op];
+        log += `${opName} (${a} ${inst.op} ${b} = ${r})`.padEnd(24) + `stack: [${stack.join(', ')}]\n`;
+      }
+    }
+    log += `\n→ Result: ${stack[0]}`;
+    out.textContent = log;
+  } catch(e) {
+    out.innerHTML = `<span class="error">${e.message}</span>`;
+  }
+}
+
+// ─── NAN BOXING ───
+function showNaN(type) {
+  const out = document.getElementById('nan-output');
+  let bits, desc, labels;
+  if (type === 'number') {
+    // 3.14 in IEEE 754
+    const buf = new ArrayBuffer(8);
+    new Float64Array(buf)[0] = 3.14;
+    const view = new DataView(buf);
+    const hi = view.getUint32(4), lo = view.getUint32(0);
+    bits = toBin(hi, 32) + toBin(lo, 32);
+    desc = '<strong>Number (3.14):</strong> Just a regular IEEE 754 double. No boxing needed—the bits are used as-is. This is why number operations have zero overhead.';
+    labels = '<span style="color:var(--accent2)">S</span> <span style="color:var(--accent)">Exponent (11 bits)</span> <span style="color:var(--accent3)">Mantissa (52 bits)</span>';
+  } else if (type === 'nil') {
+    bits = '0' + '11111111111' + '1' + '1' + '00000000000000000000000000000000000000000000000000' + '01';
+    desc = '<strong>nil:</strong> All quiet NaN bits set + tag 01. A unique sentinel value.';
+    labels = '<span style="color:var(--text-dim)">S=0</span> <span style="color:var(--accent)">Exponent=all 1s</span> <span style="color:var(--accent)">QNaN</span> <span style="color:var(--green)">Tag=01</span>';
+  } else if (type === 'true') {
+    bits = '0' + '11111111111' + '1' + '1' + '00000000000000000000000000000000000000000000000000' + '11';
+    desc = '<strong>true:</strong> Quiet NaN bits + tag 11.';
+    labels = '<span style="color:var(--text-dim)">S=0</span> <span style="color:var(--accent)">Exponent=all 1s</span> <span style="color:var(--accent)">QNaN</span> <span style="color:var(--green)">Tag=11</span>';
+  } else if (type === 'false') {
+    bits = '0' + '11111111111' + '1' + '1' + '00000000000000000000000000000000000000000000000000' + '10';
+    desc = '<strong>false:</strong> Quiet NaN bits + tag 10.';
+    labels = '<span style="color:var(--text-dim)">S=0</span> <span style="color:var(--accent)">Exponent=all 1s</span> <span style="color:var(--accent)">QNaN</span> <span style="color:var(--green)">Tag=10</span>';
+  } else {
+    // Obj pointer: sign bit set + QNaN + 48-bit pointer
+    bits = '1' + '11111111111' + '1' + '1' + '0000000000000000' + '00000000010111110100101000010000';
+    desc = '<strong>Obj pointer:</strong> Sign bit (1) = "this is a pointer". Lower 48 bits hold the memory address. Modern CPUs only use 48-bit addresses, so it fits perfectly.';
+    labels = '<span style="color:var(--accent2)">S=1 (ptr flag)</span> <span style="color:var(--accent)">QNaN bits</span> <span style="color:var(--accent3)">48-bit address</span>';
+  }
+  // Render bits
+  let html = '<div class="bit-row">';
+  for (let i = 0; i < 64; i++) {
+    let cls = 'mantissa';
+    if (i === 0) cls = 'sign';
+    else if (i <= 11) cls = 'exponent';
+    else if (i <= 13 && type !== 'number') cls = 'exponent'; // QNaN bits
+    else if (i >= 62 && type !== 'number' && type !== 'obj') cls = 'tag';
+    html += `<span class="bit ${cls}">${bits[i] || '0'}</span>`;
+  }
+  html += '</div>';
+  html += `<div class="bit-labels">${labels}</div>`;
+  html += `<p style="margin-top:12px;font-size:0.95rem">${desc}</p>`;
+  out.innerHTML = html;
+}
+function toBin(n, bits) { return n.toString(2).padStart(bits, '0'); }
+
+// Run scanner on load
+setTimeout(runScanner, 500);
+</script>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicles — Braitenberg Interactive Book Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --surface: #141414; --surface2: #1e1e1e; --surface3: #282828;
+  --text: #e8e8e8; --text-dim: #888; --text-muted: #555;
+  --accent: #ff6b35; --accent2: #ffd166; --accent3: #06d6a0; --accent4: #118ab2;
+  --love: #ef476f; --fear: #ffd166; --aggro: #ff6b35; --explore: #06d6a0;
+  --radius: 12px; --radius-sm: 8px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text);
+  line-height: 1.6; overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button {
+  font-family: inherit; cursor: pointer; border: none; border-radius: var(--radius-sm);
+  padding: 12px 24px; font-size: 15px; font-weight: 600; min-height: 44px; min-width: 44px;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #ff8555; transform: translateY(-1px); }
+.btn-secondary { background: var(--surface3); color: var(--text); }
+.btn-secondary:hover { background: #333; }
+.btn-small { padding: 8px 16px; font-size: 13px; }
+.btn-active { background: var(--accent) !important; color: #000 !important; }
+
+/* Layout */
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+section { padding: 80px 0; border-bottom: 1px solid #1a1a1a; }
+
+/* Hero */
+.hero { padding: 100px 0 80px; text-align: center; position: relative; overflow: hidden; }
+.hero::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(255,107,53,0.06) 0%, transparent 60%);
+  animation: pulse 8s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+.hero h1 { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; position: relative; }
+.hero .subtitle { font-size: clamp(1rem, 2.5vw, 1.3rem); color: var(--text-dim); font-weight: 300; margin-bottom: 12px; position: relative; }
+.hero .author { font-size: 1rem; color: var(--accent); font-weight: 500; margin-bottom: 40px; position: relative; }
+.hero .tagline { font-size: 1.1rem; color: var(--text-dim); max-width: 600px; margin: 0 auto 40px; position: relative; font-style: italic; }
+.stars { font-size: 2rem; position: relative; color: var(--accent2); margin-bottom: 16px; }
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100; background: rgba(10,10,10,0.9);
+  backdrop-filter: blur(20px); border-bottom: 1px solid #1a1a1a; padding: 12px 0;
+}
+nav .container { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+nav .container::-webkit-scrollbar { display: none; }
+nav a {
+  white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px;
+  font-weight: 500; color: var(--text-dim); transition: all 0.2s; min-height: 44px;
+  display: flex; align-items: center;
+}
+nav a:hover, nav a.active { background: var(--surface2); color: var(--text); text-decoration: none; }
+
+/* Cards */
+.card {
+  background: var(--surface); border-radius: var(--radius); padding: 24px;
+  border: 1px solid #1e1e1e; margin-bottom: 16px;
+}
+.card h3 { font-size: 1.2rem; margin-bottom: 12px; }
+
+/* Quote */
+blockquote {
+  border-left: 3px solid var(--accent); padding: 16px 20px; margin: 24px 0;
+  background: var(--surface); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic; color: var(--text-dim); font-size: 0.95rem;
+}
+blockquote cite { display: block; margin-top: 8px; font-style: normal; color: var(--accent); font-size: 0.85rem; }
+
+/* Section headers */
+.section-header { margin-bottom: 40px; }
+.section-header h2 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+.section-header p { color: var(--text-dim); font-size: 1rem; }
+.section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+
+/* Sandbox */
+#sandbox-section { padding-bottom: 40px; }
+.sandbox-wrapper { position: relative; }
+.sandbox-canvas {
+  width: 100%; aspect-ratio: 16/10; background: #080808; border-radius: var(--radius);
+  border: 1px solid #1e1e1e; display: block; cursor: crosshair; touch-action: none;
+}
+.sandbox-controls {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px; margin-top: 16px;
+}
+.control-group { background: var(--surface); border-radius: var(--radius-sm); padding: 16px; }
+.control-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.toggle-btn {
+  padding: 10px 16px; border-radius: 6px; background: var(--surface2); color: var(--text-dim);
+  font-size: 13px; font-weight: 600; border: 1px solid #2a2a2a; min-height: 44px; cursor: pointer;
+  transition: all 0.15s;
+}
+.toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.toggle-btn:hover:not(.active) { background: var(--surface3); color: var(--text); }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.preset-btn {
+  padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 2px solid;
+  background: transparent; cursor: pointer; min-height: 44px; transition: all 0.2s;
+}
+.preset-coward { border-color: var(--fear); color: var(--fear); }
+.preset-coward:hover, .preset-coward.active { background: var(--fear); color: #000; }
+.preset-aggressive { border-color: var(--aggro); color: var(--aggro); }
+.preset-aggressive:hover, .preset-aggressive.active { background: var(--aggro); color: #000; }
+.preset-love { border-color: var(--love); color: var(--love); }
+.preset-love:hover, .preset-love.active { background: var(--love); color: #000; }
+.preset-explorer { border-color: var(--explore); color: var(--explore); }
+.preset-explorer:hover, .preset-explorer.active { background: var(--explore); color: #000; }
+.sandbox-status {
+  margin-top: 12px; padding: 12px 16px; background: var(--surface); border-radius: var(--radius-sm);
+  font-size: 0.9rem; color: var(--text-dim); text-align: center;
+}
+.sandbox-status .behavior-name { color: var(--accent2); font-weight: 700; font-size: 1.1rem; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 40px; }
+.timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: #1e1e1e; }
+.timeline-item { position: relative; margin-bottom: 32px; }
+.timeline-item::before {
+  content: attr(data-num); position: absolute; left: -40px; top: 0;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--accent);
+  color: #000; font-size: 12px; font-weight: 800; display: flex; align-items: center;
+  justify-content: center;
+}
+.timeline-item h4 { font-size: 1rem; margin-bottom: 4px; }
+.timeline-item .adds { color: var(--accent3); font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.timeline-item .emerges { color: var(--text-dim); font-size: 0.9rem; }
+
+/* Quiz */
+.quiz-card {
+  background: var(--surface); border-radius: var(--radius); padding: 32px;
+  text-align: center; min-height: 300px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.quiz-card h3 { font-size: 1.3rem; margin-bottom: 24px; }
+.quiz-options { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.quiz-option {
+  padding: 14px 24px; border-radius: var(--radius-sm); background: var(--surface2);
+  border: 2px solid #2a2a2a; cursor: pointer; font-size: 15px; font-weight: 600;
+  min-height: 44px; min-width: 120px; transition: all 0.2s; color: var(--text);
+}
+.quiz-option:hover { border-color: var(--accent); }
+.quiz-option.correct { background: #06d6a022; border-color: var(--accent3); color: var(--accent3); }
+.quiz-option.wrong { background: #ef476f22; border-color: var(--love); color: var(--love); }
+.quiz-feedback { margin-top: 20px; font-size: 1rem; min-height: 30px; }
+.quiz-score { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 16px; }
+
+/* Uphill demo */
+.uphill-demo { text-align: center; }
+.uphill-canvas {
+  width: 100%; max-width: 500px; aspect-ratio: 1; background: #080808;
+  border-radius: var(--radius); border: 1px solid #1e1e1e; margin: 20px auto; display: block;
+}
+.uphill-controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+/* Threshold demo */
+.threshold-canvas {
+  width: 100%; aspect-ratio: 16/8; background: #080808;
+  border-radius: var(--radius); border: 1px solid #1e1e1e; display: block; margin: 20px 0;
+}
+
+/* Catalog */
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.catalog-card {
+  background: var(--surface); border-radius: var(--radius); padding: 20px;
+  border: 1px solid #1e1e1e; transition: all 0.2s;
+}
+.catalog-card:hover { border-color: #333; transform: translateY(-2px); }
+.catalog-card .num { font-size: 2rem; font-weight: 900; color: var(--accent); line-height: 1; }
+.catalog-card .name { font-size: 1.1rem; font-weight: 700; margin: 8px 0 4px; }
+.catalog-card .psychology { color: var(--accent2); font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+.catalog-card .desc { color: var(--text-dim); font-size: 0.85rem; }
+
+/* Philosophy section */
+.philosophy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+/* Footer */
+footer { padding: 60px 0; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  section { padding: 60px 0; }
+  .hero { padding: 60px 0 40px; }
+  .sandbox-controls { grid-template-columns: 1fr; }
+  .catalog-grid { grid-template-columns: 1fr; }
+  .philosophy-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="stars">★★★★★</div>
+    <h1>Vehicles</h1>
+    <div class="subtitle">Experiments in Synthetic Psychology</div>
+    <div class="author">Valentino Braitenberg · 1984</div>
+    <div class="tagline">"Science fiction in the service of science. Not for amusement."</div>
+    <a href="#sandbox-section"><button class="btn-primary" style="font-size:17px; padding:16px 32px;">▶ Build a Vehicle</button></a>
+  </div>
+</section>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <a href="#sandbox-section">🔧 Sandbox</a>
+    <a href="#timeline-section">📈 Timeline</a>
+    <a href="#quiz-section">🧠 Quiz</a>
+    <a href="#uphill-section">⛰️ Uphill Law</a>
+    <a href="#threshold-section">⚡ Threshold</a>
+    <a href="#catalog-section">📖 Catalog</a>
+    <a href="#quotes-section">💬 Quotes</a>
+    <a href="#philosophy-section">🔬 Philosophy</a>
+    <a href="#review-section">⭐ Review</a>
+  </div>
+</nav>
+
+<!-- ====== SANDBOX ====== -->
+<section id="sandbox-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">The Killer Demo</div>
+      <h2>Vehicle Builder Sandbox</h2>
+      <p>Wire up a vehicle. Drag light sources. Watch behavior emerge.</p>
+    </div>
+
+    <div class="sandbox-wrapper">
+      <canvas class="sandbox-canvas" id="sandboxCanvas"></canvas>
+    </div>
+
+    <div class="sandbox-status">
+      <span class="behavior-name" id="behaviorLabel">Select a preset or configure wiring</span>
+      <div id="behaviorDesc" style="margin-top:4px;">Tap canvas to place light sources. Drag them around.</div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="section-label" style="margin-bottom:10px;">Presets</div>
+      <div class="preset-row">
+        <button class="preset-btn preset-coward" onclick="setPreset('coward')">😰 Coward (2a)</button>
+        <button class="preset-btn preset-aggressive" onclick="setPreset('aggressive')">😡 Aggressive (2b)</button>
+        <button class="preset-btn preset-love" onclick="setPreset('love')">❤️ Love (3a)</button>
+        <button class="preset-btn preset-explorer" onclick="setPreset('explorer')">🧭 Explorer (3b)</button>
+      </div>
+    </div>
+
+    <div class="sandbox-controls">
+      <div class="control-group">
+        <label>Wiring</label>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="btn-direct" onclick="setWiring('direct')">Direct</button>
+          <button class="toggle-btn" id="btn-crossed" onclick="setWiring('crossed')">Crossed</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Connection Type</label>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="btn-excitatory" onclick="setConnection('excitatory')">Excitatory (+)</button>
+          <button class="toggle-btn" id="btn-inhibitory" onclick="setConnection('inhibitory')">Inhibitory (−)</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Actions</label>
+        <div class="toggle-row">
+          <button class="toggle-btn" onclick="toggleSim()" id="btn-go">▶ Go</button>
+          <button class="toggle-btn" onclick="resetSandbox()">↺ Reset</button>
+          <button class="toggle-btn" onclick="addVehicle()">+ Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== TIMELINE ====== -->
+<section id="timeline-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">The Progression</div>
+      <h2>14 Vehicles, 14 Upgrades</h2>
+      <p>Each vehicle adds one mechanism — and a new layer of apparent psychology emerges.</p>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<!-- ====== QUIZ ====== -->
+<section id="quiz-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Test Yourself</div>
+      <h2>Name That Behavior</h2>
+      <p>You see the wiring. What does the vehicle do?</p>
+    </div>
+    <div class="quiz-score" id="quizScore">Question 1 of 6</div>
+    <div class="quiz-card" id="quizCard"></div>
+  </div>
+</section>
+
+<!-- ====== UPHILL LAW ====== -->
+<section id="uphill-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Core Thesis</div>
+      <h2>The Law of Uphill Analysis</h2>
+      <p>Simple wiring → complex-looking behavior. Watch a trivially wired vehicle produce trajectories you'd never guess came from two sensors and two motors.</p>
+    </div>
+    <blockquote>"It is pleasurable and easy to create little machines that do certain tricks. But it is much more difficult to start from the outside and to try to guess internal structure just from the observation of behavior."<cite>— Braitenberg, Vehicle 5</cite></blockquote>
+    <div class="uphill-demo">
+      <canvas class="uphill-canvas" id="uphillCanvas"></canvas>
+      <div class="uphill-controls">
+        <button class="btn-secondary" onclick="uphillReset()">New Random Wiring</button>
+        <button class="btn-primary" id="uphillReveal" onclick="uphillReveal()">Reveal Wiring</button>
+      </div>
+      <div id="uphillLabel" style="margin-top:12px; color:var(--text-dim); font-size:0.9rem;">Watch the trajectory. Can you guess the wiring?</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== THRESHOLD ====== -->
+<section id="threshold-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Vehicle 4b / 12</div>
+      <h2>Threshold &amp; Memory</h2>
+      <p>Add a threshold and watch a vehicle appear to "ponder" before acting. Add memory and watch it learn from experience.</p>
+    </div>
+    <canvas class="threshold-canvas" id="thresholdCanvas"></canvas>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;">
+      <label style="font-size:0.85rem; color:var(--text-dim);">Threshold:</label>
+      <input type="range" id="thresholdSlider" min="0" max="100" value="30" style="flex:1; min-width:150px; accent-color:var(--accent);">
+      <span id="thresholdVal" style="font-size:0.85rem; color:var(--accent); font-weight:600;">0.30</span>
+      <button class="btn-secondary btn-small" onclick="resetThreshold()">Reset</button>
+    </div>
+    <div style="margin-top:8px; color:var(--text-dim); font-size:0.85rem;" id="thresholdDesc">
+      Vehicle sits still until stimulus exceeds threshold — then acts decisively. "Where decisions are being made, there must be a WILL to make them."
+    </div>
+  </div>
+</section>
+
+<!-- ====== CATALOG ====== -->
+<section id="catalog-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Reference</div>
+      <h2>The Complete Vehicle Catalog</h2>
+    </div>
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </div>
+</section>
+
+<!-- ====== QUOTES ====== -->
+<section id="quotes-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">In Braitenberg's Words</div>
+      <h2>Best Quotes</h2>
+    </div>
+    <div id="quotesContainer"></div>
+  </div>
+</section>
+
+<!-- ====== PHILOSOPHY ====== -->
+<section id="philosophy-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">The Argument</div>
+      <h2>Synthetic Psychology</h2>
+      <p>Braitenberg's case for building minds to understand them.</p>
+    </div>
+    <div class="philosophy-grid">
+      <div class="card">
+        <h3>🔽 Downhill Invention</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;">Building a machine that exhibits fear, love, or will is <em>easy</em>. You just wire sensors to motors with the right sign and topology. The behavior emerges for free — often exceeding what you planned.</p>
+      </div>
+      <div class="card">
+        <h3>🔼 Uphill Analysis</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;">Observing a behaving creature and reverse-engineering its mechanism is <em>fiendishly hard</em>. Multiple mechanisms produce identical behavior. We always overestimate internal complexity.</p>
+      </div>
+      <div class="card">
+        <h3>🧬 The Asymmetry</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;">This is why consciousness seems mysterious. We're stuck doing uphill analysis on brains that were built downhill by evolution. The "hard problem" may be an artifact of perspective, not metaphysics.</p>
+      </div>
+      <div class="card">
+        <h3>🔬 The Method</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;">Instead of analyzing complex brains, <strong>build</strong> simple vehicles and watch what behaviors emerge. Start simple, add one mechanism at a time, and let psychology dissolve into engineering.</p>
+      </div>
+      <div class="card">
+        <h3>🧠 Two Kinds of Knowledge</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;"><strong>Mnemotrix:</strong> "what goes with what" — concepts, association, nouns. <strong>Ergotrix:</strong> "what follows what" — causality, rules, verbs. Together they make a world model. Like vocabulary and grammar.</p>
+      </div>
+      <div class="card">
+        <h3>🎲 Chaotic Free Will</h3>
+        <p style="color:var(--text-dim); font-size:0.9rem;">Vehicle 12's train of thought is mathematically chaotic — iterating a humped function. Unpredictable even in principle. Braitenberg argues: if you can't predict it, you can't deny it free will.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== REVIEW ====== -->
+<section id="review-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Assessment</div>
+      <h2>★★★★★</h2>
+    </div>
+    <div class="card" style="max-width:700px;">
+      <p style="font-size:1.05rem; margin-bottom:16px;"><strong>Vehicles</strong> is one of those rare books that changes how you think, permanently, in under 150 pages.</p>
+      <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:12px;">It belongs in the same category as <em>The Selfish Gene</em> or <em>Gödel, Escher, Bach</em> — books that give you a new mental framework you'll use for the rest of your life. By building up from nothing — one sensor, one motor — Braitenberg makes you <em>feel</em> each level of complexity. Fear, love, will, foresight, and optimism emerge not as mysterious essences but as inevitable consequences of wiring.</p>
+      <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:12px;">The law of uphill analysis is one of the most important ideas in cognitive science. It explains why we over-attribute intelligence, why the "hard problem" feels hard, and why AI seems both trivially simple and impossibly complex depending on which direction you look.</p>
+      <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:12px;">Written in 1984, it anticipates neural networks, evolutionary algorithms, reinforcement learning, and embodied cognition — all framed more clearly than most modern textbooks.</p>
+      <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:12px;"><strong>Limitations:</strong> The biological notes are dense and dated. Later vehicles (10–14) get sketchier — ideas grow bigger but mechanisms get hand-wavy. No actual implementation — which makes it perfect for building demos.</p>
+      <p style="color:var(--accent2); font-weight:600; font-size:0.95rem;">The bottom line: Braitenberg proves, delightfully, that you don't need to understand a mind to build one — and that building one is the best way to start understanding.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Interactive book report for <em>Vehicles: Experiments in Synthetic Psychology</em> by Valentino Braitenberg (1984)</p>
+    <p style="margin-top:4px;">"Get used to a way of thinking in which the hardware of the realization of an idea is much less important than the idea itself."</p>
+  </div>
+</footer>
+
+<script>
+// ==================== SANDBOX ====================
+const canvas = document.getElementById('sandboxCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, dpr;
+let simRunning = false;
+let wiring = 'direct';      // direct | crossed
+let connection = 'excitatory'; // excitatory | inhibitory
+let lights = [];
+let vehicles = [];
+let animId = null;
+let dragLight = null;
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1;
+  W = rect.width; H = rect.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+function initSandbox() {
+  lights = [{ x: W * 0.7, y: H * 0.3, r: 12 }];
+  vehicles = [makeVehicle(W * 0.25, H * 0.6, Math.random() * Math.PI * 2)];
+}
+
+function makeVehicle(x, y, angle) {
+  return { x, y, angle, trail: [], vl: 0, vr: 0 };
+}
+
+function addVehicle() {
+  vehicles.push(makeVehicle(W * (0.1 + Math.random() * 0.8), H * (0.1 + Math.random() * 0.8), Math.random() * Math.PI * 2));
+}
+
+function setWiring(w) {
+  wiring = w;
+  document.getElementById('btn-direct').classList.toggle('active', w === 'direct');
+  document.getElementById('btn-crossed').classList.toggle('active', w === 'crossed');
+  clearPresets();
+  updateLabel();
+}
+function setConnection(c) {
+  connection = c;
+  document.getElementById('btn-excitatory').classList.toggle('active', c === 'excitatory');
+  document.getElementById('btn-inhibitory').classList.toggle('active', c === 'inhibitory');
+  clearPresets();
+  updateLabel();
+}
+
+function clearPresets() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+const presets = {
+  coward: { wiring: 'direct', connection: 'excitatory', name: 'COWARD (Vehicle 2a)', desc: 'Turns away from light, flees. "Vehicle 2a is a COWARD, you would say."', color: 'var(--fear)' },
+  aggressive: { wiring: 'crossed', connection: 'excitatory', name: 'AGGRESSIVE (Vehicle 2b)', desc: 'Charges toward light and rams it. "It resolutely turns toward them and hits them with high velocity."', color: 'var(--aggro)' },
+  love: { wiring: 'direct', connection: 'inhibitory', name: 'LOVE (Vehicle 3a)', desc: 'Approaches gently, comes to rest gazing at the source. "Staying close by in quiet admiration."', color: 'var(--love)' },
+  explorer: { wiring: 'crossed', connection: 'inhibitory', name: 'EXPLORER (Vehicle 3b)', desc: 'Rests facing away from source, easily drifts to new stimuli. "Keeps an eye open for other, perhaps stronger sources."', color: 'var(--explore)' },
+};
+
+function setPreset(p) {
+  const pr = presets[p];
+  wiring = pr.wiring; connection = pr.connection;
+  document.getElementById('btn-direct').classList.toggle('active', wiring === 'direct');
+  document.getElementById('btn-crossed').classList.toggle('active', wiring === 'crossed');
+  document.getElementById('btn-excitatory').classList.toggle('active', connection === 'excitatory');
+  document.getElementById('btn-inhibitory').classList.toggle('active', connection === 'inhibitory');
+  clearPresets();
+  document.querySelector(`.preset-${p}`).classList.add('active');
+  document.getElementById('behaviorLabel').textContent = pr.name;
+  document.getElementById('behaviorLabel').style.color = pr.color;
+  document.getElementById('behaviorDesc').textContent = pr.desc;
+  if (!simRunning) toggleSim();
+}
+
+function updateLabel() {
+  const key = `${wiring}_${connection}`;
+  const map = {
+    'direct_excitatory': presets.coward,
+    'crossed_excitatory': presets.aggressive,
+    'direct_inhibitory': presets.love,
+    'crossed_inhibitory': presets.explorer,
+  };
+  const pr = map[key];
+  document.getElementById('behaviorLabel').textContent = pr.name;
+  document.getElementById('behaviorLabel').style.color = pr.color;
+  document.getElementById('behaviorDesc').textContent = pr.desc;
+}
+
+function toggleSim() {
+  simRunning = !simRunning;
+  document.getElementById('btn-go').textContent = simRunning ? '⏸ Pause' : '▶ Go';
+  document.getElementById('btn-go').classList.toggle('active', simRunning);
+  if (simRunning && !animId) tick();
+}
+
+function resetSandbox() {
+  simRunning = false;
+  document.getElementById('btn-go').textContent = '▶ Go';
+  document.getElementById('btn-go').classList.remove('active');
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  initSandbox();
+  drawSandbox();
+}
+
+function sensorValue(veh, side) {
+  // side: 'left' or 'right'
+  const sensorDist = 10;
+  const offset = side === 'left' ? Math.PI / 6 : -Math.PI / 6;
+  const sx = veh.x + Math.cos(veh.angle + offset) * sensorDist;
+  const sy = veh.y + Math.sin(veh.angle + offset) * sensorDist;
+  let total = 0;
+  for (const l of lights) {
+    const dx = l.x - sx, dy = l.y - sy;
+    const d2 = dx * dx + dy * dy;
+    total += 5000 / (d2 + 100);
+  }
+  return total;
+}
+
+function tick() {
+  if (!simRunning) { animId = null; return; }
+  const dt = 1;
+  const baseSpeed = connection === 'inhibitory' ? 2.5 : 0.3;
+  const gain = connection === 'inhibitory' ? -1.8 : 1.5;
+
+  for (const v of vehicles) {
+    const sL = sensorValue(v, 'left');
+    const sR = sensorValue(v, 'right');
+
+    let motorL, motorR;
+    if (wiring === 'direct') {
+      motorL = baseSpeed + gain * sL;
+      motorR = baseSpeed + gain * sR;
+    } else {
+      motorL = baseSpeed + gain * sR;
+      motorR = baseSpeed + gain * sL;
+    }
+
+    // Clamp
+    motorL = Math.max(0, motorL);
+    motorR = Math.max(0, motorR);
+
+    // Slight randomness
+    motorL += (Math.random() - 0.5) * 0.1;
+    motorR += (Math.random() - 0.5) * 0.1;
+
+    const speed = (motorL + motorR) / 2;
+    const turn = (motorR - motorL) * 0.04;
+
+    v.angle += turn * dt;
+    v.x += Math.cos(v.angle) * speed * dt;
+    v.y += Math.sin(v.angle) * speed * dt;
+
+    // Wrap
+    if (v.x < -20) v.x = W + 20;
+    if (v.x > W + 20) v.x = -20;
+    if (v.y < -20) v.y = H + 20;
+    if (v.y > H + 20) v.y = -20;
+
+    v.trail.push({ x: v.x, y: v.y });
+    if (v.trail.length > 300) v.trail.shift();
+    v.vl = motorL; v.vr = motorR;
+  }
+
+  drawSandbox();
+  animId = requestAnimationFrame(tick);
+}
+
+function drawSandbox() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Light glow
+  for (const l of lights) {
+    const grad = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, 120);
+    grad.addColorStop(0, 'rgba(255,209,102,0.15)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(l.x - 120, l.y - 120, 240, 240);
+    // Source
+    ctx.beginPath(); ctx.arc(l.x, l.y, l.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffd166'; ctx.fill();
+    ctx.strokeStyle = '#ffea00'; ctx.lineWidth = 2; ctx.stroke();
+    // Rays
+    ctx.strokeStyle = 'rgba(255,209,102,0.3)'; ctx.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      ctx.beginPath(); ctx.moveTo(l.x + Math.cos(a) * 16, l.y + Math.sin(a) * 16);
+      ctx.lineTo(l.x + Math.cos(a) * 26, l.y + Math.sin(a) * 26); ctx.stroke();
+    }
+  }
+
+  // Vehicles
+  for (const v of vehicles) {
+    // Trail
+    if (v.trail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(v.trail[0].x, v.trail[0].y);
+      for (let i = 1; i < v.trail.length; i++) {
+        ctx.lineTo(v.trail[i].x, v.trail[i].y);
+      }
+      ctx.strokeStyle = 'rgba(255,107,53,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Body
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.rotate(v.angle);
+    // Triangle body
+    ctx.beginPath();
+    ctx.moveTo(14, 0);
+    ctx.lineTo(-10, -8);
+    ctx.lineTo(-10, 8);
+    ctx.closePath();
+    ctx.fillStyle = '#ff6b35';
+    ctx.fill();
+    ctx.strokeStyle = '#ff8555';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Sensors (eyes)
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(6, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, 6, 2.5, 0, Math.PI * 2); ctx.fill();
+
+    // Wiring lines
+    ctx.strokeStyle = connection === 'excitatory' ? 'rgba(255,100,50,0.6)' : 'rgba(6,214,160,0.6)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    if (wiring === 'direct') {
+      // Left sensor → left motor, right sensor → right motor
+      ctx.beginPath(); ctx.moveTo(6, -6); ctx.lineTo(-10, -6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, 6); ctx.lineTo(-10, 6); ctx.stroke();
+    } else {
+      // Crossed
+      ctx.beginPath(); ctx.moveTo(6, -6); ctx.lineTo(-10, 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, 6); ctx.lineTo(-10, -6); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+// Mouse/touch interaction
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+function findLight(pos) {
+  for (const l of lights) {
+    const dx = l.x - pos.x, dy = l.y - pos.y;
+    if (dx * dx + dy * dy < 400) return l;
+  }
+  return null;
+}
+
+canvas.addEventListener('pointerdown', e => {
+  const pos = getCanvasPos(e);
+  const hit = findLight(pos);
+  if (hit) { dragLight = hit; } else {
+    lights.push({ x: pos.x, y: pos.y, r: 12 });
+    drawSandbox();
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!dragLight) return;
+  const pos = getCanvasPos(e);
+  dragLight.x = pos.x; dragLight.y = pos.y;
+  if (!simRunning) drawSandbox();
+});
+canvas.addEventListener('pointerup', () => { dragLight = null; });
+canvas.addEventListener('pointercancel', () => { dragLight = null; });
+
+initSandbox();
+drawSandbox();
+
+// ==================== TIMELINE ====================
+const timelineData = [
+  { num: 1, title: 'Getting Around', adds: '1 sensor, 1 motor', emerges: 'Restlessness, "alive"' },
+  { num: 2, title: 'Fear & Aggression', adds: '2 sensors, 2 motors, crossed/uncrossed wiring', emerges: 'Fear (2a), Aggression (2b)' },
+  { num: 3, title: 'Love', adds: 'Inhibitory connections', emerges: 'Love (3a), Exploration (3b), Values (3c)' },
+  { num: 4, title: 'Values & Special Tastes', adds: 'Non-monotonic response curves, thresholds', emerges: 'Instincts, tastes, decisions, apparent will' },
+  { num: 5, title: 'Logic', adds: 'Threshold device networks (logic gates)', emerges: 'Counting, recognition, memory, computation' },
+  { num: 6, title: 'Selection', adds: 'Darwinian selection', emerges: 'Evolved intelligence, mysterious competence' },
+  { num: 7, title: 'Concepts', adds: 'Mnemotrix (Hebbian learning)', emerges: 'Concepts, association, abstraction' },
+  { num: 8, title: 'Space, Things, Movements', adds: 'Camera eyes, internal maps', emerges: 'Space perception, object detection' },
+  { num: 9, title: 'Shapes', adds: 'Symmetry/periodicity detectors', emerges: 'Shape recognition, "thou" detection' },
+  { num: 10, title: 'Getting Ideas', adds: 'Chains of association → wholes', emerges: 'Ideas, insight, "aha" moments' },
+  { num: 11, title: 'Rules & Regularities', adds: 'Ergotrix (directional causal learning)', emerges: 'Rules, world-as-model, signals' },
+  { num: 12, title: 'Trains of Thought', adds: 'Global threshold control', emerges: 'Attention, free will (chaos)' },
+  { num: 13, title: 'Foresight', adds: 'Predictor + Darwinian evaluator', emerges: 'Emotional memory, individual character' },
+  { num: 14, title: 'Egotism & Optimism', adds: 'Optimistic prediction selection', emerges: 'Goals, personality, dreams' },
+];
+const tl = document.getElementById('timeline');
+timelineData.forEach(t => {
+  tl.innerHTML += `<div class="timeline-item" data-num="${t.num}"><h4>Vehicle ${t.num}: ${t.title}</h4><div class="adds">+ ${t.adds}</div><div class="emerges">→ ${t.emerges}</div></div>`;
+});
+
+// ==================== QUIZ ====================
+const quizQuestions = [
+  { q: 'Direct wiring + excitatory connections. The vehicle will…', options: ['Flee from light', 'Charge at light', 'Rest near light', 'Orbit light'], correct: 0, explain: 'Direct excitatory = COWARD. The nearer sensor drives the same-side motor harder, turning the vehicle away.' },
+  { q: 'Crossed wiring + excitatory connections. The vehicle will…', options: ['Explore randomly', 'Rest facing away', 'Ram the light source', 'Circle at distance'], correct: 2, explain: 'Crossed excitatory = AGGRESSIVE. It turns toward the source and accelerates.' },
+  { q: 'Direct wiring + inhibitory connections. The vehicle will…', options: ['Come to rest gazing at the source', 'Flee in panic', 'Destroy the source', 'Ignore the source'], correct: 0, explain: 'Direct inhibitory = LOVE. It slows down facing the source. "Staying close by in quiet admiration."' },
+  { q: 'Crossed wiring + inhibitory connections. The vehicle will…', options: ['Attack aggressively', 'Rest facing away, drift to explore', 'Circle endlessly', 'Stop dead'], correct: 1, explain: 'Crossed inhibitory = EXPLORER. Rests facing away, easily drifts to new sources.' },
+  { q: 'A vehicle orbits a light source in figure-eights. What type is it?', options: ['Vehicle 2a', 'Vehicle 3a', 'Vehicle 4a (non-monotonic)', 'Vehicle 5 (logic)'], correct: 2, explain: 'Non-monotonic response curves create complex orbits — attraction at one intensity, repulsion at another.' },
+  { q: 'A vehicle sits perfectly still, then suddenly charges. What mechanism?', options: ['Crossed wiring', 'Inhibitory connections', 'Threshold device', 'Mnemotrix learning'], correct: 2, explain: 'Thresholds create the appearance of pondering and sudden decision — Vehicle 4b.' },
+];
+let quizIdx = 0, quizCorrect = 0;
+
+function renderQuiz() {
+  const qc = document.getElementById('quizCard');
+  if (quizIdx >= quizQuestions.length) {
+    qc.innerHTML = `<h3>Score: ${quizCorrect}/${quizQuestions.length}</h3><p style="color:var(--text-dim);margin-top:12px;">${quizCorrect === quizQuestions.length ? 'Perfect! You\'ve internalized the law of downhill invention.' : 'The law of uphill analysis strikes again — it\'s harder than it looks!'}</p><button class="btn-primary" onclick="quizIdx=0;quizCorrect=0;renderQuiz();" style="margin-top:20px;">Try Again</button>`;
+    document.getElementById('quizScore').textContent = `Final Score: ${quizCorrect}/${quizQuestions.length}`;
+    return;
+  }
+  const q = quizQuestions[quizIdx];
+  document.getElementById('quizScore').textContent = `Question ${quizIdx + 1} of ${quizQuestions.length} · Score: ${quizCorrect}`;
+  qc.innerHTML = `<h3>${q.q}</h3><div class="quiz-options">${q.options.map((o, i) => `<button class="quiz-option" onclick="checkQuiz(${i})" id="qopt${i}">${o}</button>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div>`;
+}
+
+function checkQuiz(i) {
+  const q = quizQuestions[quizIdx];
+  document.querySelectorAll('.quiz-option').forEach((btn, j) => {
+    btn.disabled = true;
+    if (j === q.correct) btn.classList.add('correct');
+    if (j === i && j !== q.correct) btn.classList.add('wrong');
+  });
+  if (i === q.correct) quizCorrect++;
+  document.getElementById('quizFeedback').innerHTML = `<p style="color:${i === q.correct ? 'var(--accent3)' : 'var(--love)'}">${i === q.correct ? '✓ Correct!' : '✗ Not quite.'} ${q.explain}</p><button class="btn-secondary btn-small" onclick="quizIdx++;renderQuiz();" style="margin-top:12px;">Next →</button>`;
+}
+renderQuiz();
+
+// ==================== UPHILL DEMO ====================
+const uphillC = document.getElementById('uphillCanvas');
+const uctx = uphillC.getContext('2d');
+let uphillVeh, uphillLights, uphillWiring, uphillConn, uphillTrail, uphillRevealed;
+
+function uphillResize() {
+  const r = uphillC.getBoundingClientRect();
+  uphillC.width = r.width * dpr; uphillC.height = r.height * dpr;
+  uctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+uphillResize();
+window.addEventListener('resize', uphillResize);
+
+function uphillReset() {
+  const r = uphillC.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  uphillWiring = Math.random() < 0.5 ? 'direct' : 'crossed';
+  uphillConn = Math.random() < 0.5 ? 'excitatory' : 'inhibitory';
+  uphillVeh = { x: w / 2, y: h / 2, angle: Math.random() * Math.PI * 2 };
+  uphillLights = [];
+  for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
+    uphillLights.push({ x: w * (0.15 + Math.random() * 0.7), y: h * (0.15 + Math.random() * 0.7) });
+  }
+  uphillTrail = [];
+  uphillRevealed = false;
+  document.getElementById('uphillLabel').textContent = 'Watch the trajectory. Can you guess the wiring?';
+  document.getElementById('uphillReveal').textContent = 'Reveal Wiring';
+  // Run simulation
+  const base = uphillConn === 'inhibitory' ? 2.5 : 0.3;
+  const gain = uphillConn === 'inhibitory' ? -1.8 : 1.5;
+  for (let i = 0; i < 500; i++) {
+    let sL = 0, sR = 0;
+    for (const l of uphillLights) {
+      const dxl = l.x - (uphillVeh.x + Math.cos(uphillVeh.angle + Math.PI/6) * 8);
+      const dyl = l.y - (uphillVeh.y + Math.sin(uphillVeh.angle + Math.PI/6) * 8);
+      const dxr = l.x - (uphillVeh.x + Math.cos(uphillVeh.angle - Math.PI/6) * 8);
+      const dyr = l.y - (uphillVeh.y + Math.sin(uphillVeh.angle - Math.PI/6) * 8);
+      sL += 5000 / (dxl*dxl + dyl*dyl + 100);
+      sR += 5000 / (dxr*dxr + dyr*dyr + 100);
+    }
+    let mL = base + gain * (uphillWiring === 'direct' ? sL : sR);
+    let mR = base + gain * (uphillWiring === 'direct' ? sR : sL);
+    mL = Math.max(0, mL) + (Math.random() - 0.5) * 0.08;
+    mR = Math.max(0, mR) + (Math.random() - 0.5) * 0.08;
+    const spd = (mL + mR) / 2;
+    uphillVeh.angle += (mR - mL) * 0.04;
+    uphillVeh.x += Math.cos(uphillVeh.angle) * spd;
+    uphillVeh.y += Math.sin(uphillVeh.angle) * spd;
+    if (uphillVeh.x < 0) uphillVeh.x = w; if (uphillVeh.x > w) uphillVeh.x = 0;
+    if (uphillVeh.y < 0) uphillVeh.y = h; if (uphillVeh.y > h) uphillVeh.y = 0;
+    uphillTrail.push({ x: uphillVeh.x, y: uphillVeh.y });
+  }
+  drawUphill();
+}
+
+function drawUphill() {
+  const r = uphillC.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  uctx.clearRect(0, 0, w, h);
+  // Lights
+  for (const l of uphillLights) {
+    const g = uctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, 60);
+    g.addColorStop(0, 'rgba(255,209,102,0.2)'); g.addColorStop(1, 'transparent');
+    uctx.fillStyle = g; uctx.fillRect(l.x-60, l.y-60, 120, 120);
+    uctx.beginPath(); uctx.arc(l.x, l.y, 8, 0, Math.PI*2);
+    uctx.fillStyle = '#ffd166'; uctx.fill();
+  }
+  // Trail
+  if (uphillTrail.length > 1) {
+    uctx.beginPath(); uctx.moveTo(uphillTrail[0].x, uphillTrail[0].y);
+    for (let i = 1; i < uphillTrail.length; i++) {
+      const a = i / uphillTrail.length;
+      uctx.strokeStyle = `rgba(255,107,53,${a * 0.6})`;
+      uctx.lineWidth = 1 + a;
+      uctx.lineTo(uphillTrail[i].x, uphillTrail[i].y);
+    }
+    uctx.strokeStyle = 'rgba(255,107,53,0.4)'; uctx.lineWidth = 1.5; uctx.stroke();
+  }
+}
+
+function uphillReveal() {
+  if (uphillRevealed) { uphillReset(); return; }
+  uphillRevealed = true;
+  const names = {
+    'direct_excitatory': 'COWARD (2a) — Direct + Excitatory',
+    'crossed_excitatory': 'AGGRESSIVE (2b) — Crossed + Excitatory',
+    'direct_inhibitory': 'LOVE (3a) — Direct + Inhibitory',
+    'crossed_inhibitory': 'EXPLORER (3b) — Crossed + Inhibitory',
+  };
+  document.getElementById('uphillLabel').textContent = names[`${uphillWiring}_${uphillConn}`];
+  document.getElementById('uphillReveal').textContent = 'Try Another';
+}
+uphillReset();
+
+// ==================== THRESHOLD DEMO ====================
+const threshC = document.getElementById('thresholdCanvas');
+const tctx = threshC.getContext('2d');
+let threshVeh, threshLight, threshTrail, threshThreshold = 0.3;
+
+function threshResize() {
+  const r = threshC.getBoundingClientRect();
+  threshC.width = r.width * dpr; threshC.height = r.height * dpr;
+  tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+threshResize();
+window.addEventListener('resize', threshResize);
+
+function resetThreshold() {
+  const r = threshC.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  threshVeh = { x: w * 0.15, y: h * 0.5, angle: 0 };
+  threshLight = { x: w * 0.75, y: h * 0.5 };
+  threshTrail = [];
+  threshThreshold = document.getElementById('thresholdSlider').value / 100;
+}
+resetThreshold();
+
+document.getElementById('thresholdSlider').addEventListener('input', e => {
+  threshThreshold = e.target.value / 100;
+  document.getElementById('thresholdVal').textContent = threshThreshold.toFixed(2);
+  resetThreshold();
+});
+
+function tickThreshold() {
+  const r = threshC.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  const v = threshVeh, l = threshLight;
+
+  const dx = l.x - v.x, dy = l.y - v.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const stimulus = 50 / (dist + 10);
+
+  // Apply threshold
+  const effective = stimulus > threshThreshold ? (stimulus - threshThreshold) * 2 : 0;
+
+  // Crossed excitatory (aggressive) with threshold
+  const targetAngle = Math.atan2(dy, dx);
+  let angleDiff = targetAngle - v.angle;
+  while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+  while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+  if (effective > 0) {
+    v.angle += angleDiff * 0.05;
+    v.x += Math.cos(v.angle) * effective * 0.8;
+    v.y += Math.sin(v.angle) * effective * 0.8;
+  }
+
+  v.x = Math.max(0, Math.min(w, v.x));
+  v.y = Math.max(0, Math.min(h, v.y));
+  threshTrail.push({ x: v.x, y: v.y });
+  if (threshTrail.length > 400) threshTrail.shift();
+
+  // Draw
+  tctx.clearRect(0, 0, w, h);
+
+  // Stimulus meter
+  tctx.fillStyle = '#1a1a1a';
+  tctx.fillRect(10, 10, 120, 16);
+  tctx.fillStyle = stimulus > threshThreshold ? '#ff6b35' : '#333';
+  tctx.fillRect(10, 10, Math.min(120, stimulus * 120), 16);
+  // Threshold line
+  const tx = 10 + threshThreshold * 120;
+  tctx.strokeStyle = '#ffd166'; tctx.lineWidth = 2;
+  tctx.beginPath(); tctx.moveTo(tx, 8); tctx.lineTo(tx, 28); tctx.stroke();
+  tctx.fillStyle = '#888'; tctx.font = '10px Inter';
+  tctx.fillText('stimulus', 14, 42);
+
+  // Light
+  const g = tctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, 80);
+  g.addColorStop(0, 'rgba(255,209,102,0.15)'); g.addColorStop(1, 'transparent');
+  tctx.fillStyle = g; tctx.fillRect(l.x-80, l.y-80, 160, 160);
+  tctx.beginPath(); tctx.arc(l.x, l.y, 10, 0, Math.PI*2);
+  tctx.fillStyle = '#ffd166'; tctx.fill();
+
+  // Trail
+  if (threshTrail.length > 1) {
+    tctx.beginPath(); tctx.moveTo(threshTrail[0].x, threshTrail[0].y);
+    for (const p of threshTrail) tctx.lineTo(p.x, p.y);
+    tctx.strokeStyle = 'rgba(255,107,53,0.2)'; tctx.lineWidth = 1.5; tctx.stroke();
+  }
+
+  // Vehicle
+  tctx.save();
+  tctx.translate(v.x, v.y); tctx.rotate(v.angle);
+  tctx.beginPath(); tctx.moveTo(12, 0); tctx.lineTo(-8, -6); tctx.lineTo(-8, 6); tctx.closePath();
+  tctx.fillStyle = effective > 0 ? '#ff6b35' : '#444';
+  tctx.fill();
+  tctx.restore();
+
+  requestAnimationFrame(tickThreshold);
+}
+tickThreshold();
+
+// Draggable threshold light
+threshC.addEventListener('pointerdown', e => { threshC._dragging = true; });
+threshC.addEventListener('pointermove', e => {
+  if (!threshC._dragging) return;
+  const r = threshC.getBoundingClientRect();
+  threshLight.x = e.clientX - r.left;
+  threshLight.y = e.clientY - r.top;
+});
+threshC.addEventListener('pointerup', () => { threshC._dragging = false; });
+
+// ==================== CATALOG ====================
+const catalog = [
+  { num: 1, name: 'Getting Around', psych: 'Restlessness, "alive"', desc: '1 sensor → 1 motor. Moves faster in warmth, slower in cold. Erratic Brownian-like motion from friction asymmetries.' },
+  { num: 2, name: 'Fear & Aggression', psych: 'Fear (2a) · Aggression (2b)', desc: '2 sensors, 2 motors. Direct wiring = coward (flees). Crossed = aggressive (charges). One wiring change, opposite personalities.' },
+  { num: 3, name: 'Love', psych: 'Love (3a) · Exploration (3b) · Values (3c)', desc: 'Inhibitory connections. 3a rests gazing at source. 3b faces away, drifts to explore. 3c has multiple sensors = value system.' },
+  { num: 4, name: 'Values & Tastes', psych: 'Instincts · Decisions · Will', desc: 'Non-monotonic response curves create orbits and figure-eights. Thresholds create pondering and sudden action.' },
+  { num: 5, name: 'Logic', psych: 'Counting · Memory · Computation', desc: 'Threshold device networks (McCulloch-Pitts neurons). Can count, play chess, prove theorems. Where uphill analysis is formally stated.' },
+  { num: 6, name: 'Selection', psych: 'Evolved intelligence', desc: 'Darwinian selection on a table. Fall off = death. Copying with errors. Increasingly sophisticated survival without conscious design.' },
+  { num: 7, name: 'Concepts', psych: 'Association · Abstraction', desc: 'Mnemotrix wire (Hebbian learning). Connections strengthen when elements co-activate. Learns "red = danger" from correlation.' },
+  { num: 8, name: 'Space & Things', psych: 'Spatial perception · Objects', desc: 'Camera eye (photocell array + lens). Internal maps, object detectors, movement detectors via delays, lateral inhibition.' },
+  { num: 9, name: 'Shapes', psych: '"Thou" detection · Social awareness', desc: 'Bilateral symmetry detector = "someone facing me." Periodicity detectors. Why temples are symmetrical.' },
+  { num: 10, name: 'Getting Ideas', psych: 'Insight · "Aha" moments', desc: 'Chains of pairwise associations click into holistic ideas. Discovers closed chains, two-faced coins, periodic patterns.' },
+  { num: 11, name: 'Rules & Regularities', psych: 'Causality · World model', desc: 'Ergotrix wire — directional, strengthened by sequence. Learns "what follows what." Brain becomes model of world.' },
+  { num: 12, name: 'Trains of Thought', psych: 'Attention · Free will (chaos)', desc: 'Global threshold control creates focusing. Chaotic dynamics = unpredictable even in principle. Braitenberg claims: free will.' },
+  { num: 13, name: 'Foresight', psych: 'Prediction · Character · Emotion', desc: 'Fast internal model predicts futures. Darwinian evaluator scores good/bad. Emotional events reverberate into permanent memory.' },
+  { num: 14, name: 'Egotism & Optimism', psych: 'Goals · Dreams · Personality', desc: 'Chooses the most pleasant predicted future. Pursues unseen goals. Dreams transform the world toward favorable states.' },
+];
+const cg = document.getElementById('catalogGrid');
+catalog.forEach(c => {
+  cg.innerHTML += `<div class="catalog-card"><div class="num">${c.num}</div><div class="name">${c.name}</div><div class="psychology">${c.psych}</div><div class="desc">${c.desc}</div></div>`;
+});
+
+// ==================== QUOTES ====================
+const quotes = [
+  { text: "This is an exercise in fictional science, or science fiction, if you like that better. Not for amusement: science fiction in the service of science.", src: "Introduction" },
+  { text: "We will talk only about machines with very simple internal structures, too simple in fact to be interesting from the point of view of mechanical or electrical engineering. Interest arises, rather, when we look at these machines or vehicles as if they were animals in a natural environment.", src: "Introduction" },
+  { text: "It is restless, you would say, and does not like warm water. But it is quite stupid, since it is not able to turn back to the nice cold spot it overshot in its restlessness. Anyway, you would say, it is ALIVE.", src: "Vehicle 1" },
+  { text: "Vehicle 2a is a COWARD, you would say. Not so Vehicle 2b. It, too, is excited by the presence of sources, but resolutely turns toward them and hits them with high velocity, as if it wanted to destroy them. Vehicle 2b is AGGRESSIVE, obviously.", src: "Vehicle 2" },
+  { text: "Vehicle 3a LOVES it in a permanent way, staying close by in quiet admiration from the time it spots the source to all future time. Vehicle 3b, on the other hand, is an EXPLORER.", src: "Vehicle 3" },
+  { text: "It is pleasurable and easy to create little machines that do certain tricks. But it is much more difficult to start from the outside and to try to guess internal structure just from the observation of behavior.", src: "Vehicle 5" },
+  { text: "When we analyze a mechanism, we tend to overestimate its complexity.", src: "Vehicle 5" },
+  { text: "Where there has been no conscious engineering at all… analysis will necessarily produce the feeling of a mysterious supernatural hand guiding the creation.", src: "Vehicle 6" },
+  { text: "Get used to a way of thinking in which the hardware of the realization of an idea is much less important than the idea itself.", src: "Introduction" },
+  { text: "I would claim that this is proof of FREE WILL in Vehicle 12. For I know of only one way of denying the power of decision to a creature—and that is to predict at any moment what it will do in the future.", src: "Vehicle 12" },
+  { text: "Whoever made animals and men may have been satisfied, like myself, a creator of vehicles, with something that for all intents and purposes looks like free will.", src: "Vehicle 12" },
+  { text: "Catch one of those Darwinian vehicles of type 6, take away its motors, and you have a detector for good and bad.", src: "Vehicle 13" },
+  { text: "There is a relation between bilateral symmetry in sensory space and the concept of 'thou,' the pronoun of the second person singular.", src: "Vehicle 9" },
+  { text: "It is aberrant behavior dictated by a very subjective law of causality, but it does seem to reflect a basic attitude of humankind, this irrational belief in the effectiveness of one's own actions.", src: "Vehicle 14" },
+];
+const qc = document.getElementById('quotesContainer');
+quotes.forEach(q => {
+  qc.innerHTML += `<blockquote>"${q.text}"<cite>— ${q.src}</cite></blockquote>`;
+});
+</script>
+</body>
+</html>

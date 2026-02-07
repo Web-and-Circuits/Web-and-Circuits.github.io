@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Information — James Gleick</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--bg2:#16213e;--blue:#00bfff;--blue2:#0099cc;--white:#e8e8e8;--dim:#8899aa;--mono:'Courier New',monospace;--sans:Georgia,'Times New Roman',serif;--card:#0f1629;--border:#1e3a5f}
+html{scroll-behavior:smooth;scroll-padding-top:60px}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);line-height:1.7;font-size:17px}
+nav{position:sticky;top:0;z-index:100;background:rgba(15,22,41,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+nav a{color:var(--dim);text-decoration:none;font-size:14px;padding:6px 14px;display:inline-block;font-family:var(--mono);transition:color .2s}
+nav a:hover,nav a.active{color:var(--blue)}
+.container{max-width:820px;margin:0 auto;padding:0 20px}
+section{padding:60px 0 40px;border-bottom:1px solid var(--border)}
+h1{font-size:2.4em;color:var(--blue);margin-bottom:10px;font-weight:400}
+h2{font-size:1.8em;color:var(--blue);margin-bottom:8px;font-weight:400;letter-spacing:1px}
+h3{font-size:1.1em;color:var(--blue);margin:20px 0 8px;font-family:var(--mono);font-weight:400}
+p{margin:12px 0;color:var(--dim)}
+p.bright{color:var(--white)}
+.subtitle{font-family:var(--mono);color:var(--dim);font-size:.85em;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+blockquote{border-left:3px solid var(--blue);padding:10px 20px;margin:20px 0;background:rgba(0,191,255,.04);font-style:italic;color:var(--dim)}
+blockquote em{color:var(--white);font-style:normal}
+.demo-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+input[type="text"],textarea{background:#0a0e1a;border:1px solid var(--border);color:var(--white);padding:10px 14px;border-radius:4px;font-family:var(--mono);font-size:15px;width:100%;outline:none;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:80px}
+button,.btn{background:transparent;border:1px solid var(--blue);color:var(--blue);padding:8px 18px;border-radius:4px;font-family:var(--mono);font-size:14px;cursor:pointer;transition:all .2s;margin:4px}
+button:hover,.btn:hover{background:var(--blue);color:var(--bg)}
+.result{font-family:var(--mono);color:var(--blue);margin:12px 0;padding:12px;background:rgba(0,191,255,.06);border-radius:4px;line-height:1.8;word-break:break-word}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}h1{font-size:1.8em}h2{font-size:1.4em}}
+.tag{display:inline-block;background:rgba(0,191,255,.12);color:var(--blue);padding:2px 10px;border-radius:12px;font-size:.8em;font-family:var(--mono);margin:2px}
+.fade{opacity:.5}
+.switch-row{display:flex;align-items:center;gap:16px;margin:10px 0;flex-wrap:wrap}
+.switch{width:60px;height:30px;background:#333;border-radius:15px;position:relative;cursor:pointer;transition:background .3s;flex-shrink:0}
+.switch.on{background:var(--blue)}
+.switch::after{content:'';position:absolute;width:24px;height:24px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .3s}
+.switch.on::after{left:33px}
+.gate-out{font-family:var(--mono);font-size:1.4em;padding:4px 14px;border-radius:4px;min-width:40px;text-align:center;transition:all .3s}
+.gate-out.on{color:#0f0;text-shadow:0 0 8px #0f0}
+.gate-out.off{color:#f44;text-shadow:0 0 8px #f44}
+label.sw-label{font-family:var(--mono);font-size:.9em;color:var(--dim);min-width:20px}
+.timeline-track{position:relative;padding:20px 0 20px 40px;border-left:2px solid var(--border);margin-left:20px}
+.timeline-node{position:relative;margin:0 0 30px;cursor:pointer}
+.timeline-node::before{content:'';position:absolute;left:-49px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--border);border:2px solid var(--bg);transition:all .3s}
+.timeline-node.active::before,.timeline-node:hover::before{background:var(--blue);box-shadow:0 0 12px var(--blue)}
+.timeline-node h4{font-family:var(--mono);color:var(--white);font-size:1em;margin-bottom:4px;transition:color .3s}
+.timeline-node:hover h4{color:var(--blue)}
+.timeline-node .year{font-family:var(--mono);color:var(--blue);font-size:.8em}
+.timeline-detail{color:var(--dim);font-size:.9em;max-height:0;overflow:hidden;transition:max-height .4s ease;line-height:1.6;margin-top:4px}
+.timeline-node.active .timeline-detail{max-height:300px}
+.stars{color:#ffd700;font-size:1.4em;letter-spacing:4px}
+.conn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+@media(max-width:600px){.conn-grid{grid-template-columns:1fr}}
+.conn{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px}
+.conn h4{font-family:var(--mono);color:var(--blue);font-size:.9em;margin-bottom:6px}
+.conn p{font-size:.85em;margin:0;color:var(--dim)}
+.codon-table{font-family:var(--mono);font-size:.7em;line-height:1.4;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:12px 0}
+.codon-cell{padding:3px 4px;background:rgba(0,191,255,.04);border-radius:2px;text-align:center}
+.codon-cell.header{color:var(--blue);font-weight:bold;background:rgba(0,191,255,.1)}
+.bit-example{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,191,255,.04);border-radius:4px;margin:6px 0;font-family:var(--mono);font-size:.9em}
+.bit-example .bits{color:var(--blue);font-weight:bold}
+.hero{text-align:center;padding:80px 0 40px}
+.hero h1{font-size:2.8em;margin-bottom:4px}
+.hero .author{color:var(--dim);font-size:1.1em;margin-bottom:20px}
+.circuit-svg{width:100%;max-width:400px;margin:10px auto;display:block}
+.dna-input{letter-spacing:4px;font-size:1.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<nav><div class="container">
+<a href="#top">▲</a>
+<a href="#drums">🥁 Drums</a>
+<a href="#bit">🔤 Bit</a>
+<a href="#circuit">⚡ Circuit</a>
+<a href="#redundancy">📝 Redundancy</a>
+<a href="#dna">🧬 Life's Code</a>
+<a href="#flood">🌊 Flood</a>
+<a href="#review">📖 Review</a>
+</div></nav>
+
+<div class="container">
+
+<section id="top" class="hero">
+<div class="subtitle">James Gleick, 2011</div>
+<h1>The Information</h1>
+<div class="author">A History, a Theory, a Flood</div>
+<p>Seven interactive exhibits on the nature of information — from talking drums to quantum bits.</p>
+<p style="font-family:var(--mono);font-size:.8em;margin-top:20px">"The bit now joined the inch, the pound, the quart, and the minute<br>as a determinate quantity — a fundamental unit of measure."</p>
+</section>
+
+<!-- ═══════════════════ 1. TALKING DRUMS ═══════════════════ -->
+<section id="drums">
+<h2>🥁 Talking Drums</h2>
+<div class="subtitle">Redundancy before Shannon</div>
+
+<p class="bright">The Kele people of the Congo encoded speech into drum patterns using only two tones — high and low. But with only two tones, hundreds of words sound identical. The solution: <em>redundancy</em>. Each word is wrapped in a stock phrase that disambiguates it.</p>
+
+<blockquote>"The moon looks down at the earth" means <em>moon</em>.<br>"The fowl, the little one that says kiokio" means <em>fowl</em>.</blockquote>
+
+<p>Messages expanded roughly <strong>8×</strong> to become unambiguous — centuries before information theory explained why.</p>
+
+<div class="demo-box">
+<h3>Drum Encoder</h3>
+<p>Type a word to see its drum encoding. Notice: the two-tone pattern is ambiguous without the surrounding phrase.</p>
+<input type="text" id="drum-input" placeholder="Try: moon, war, fish, father, river..." autocomplete="off">
+<div id="drum-output" class="result" style="min-height:60px"></div>
+</div>
+
+<div class="demo-box">
+<h3>The Ambiguity Problem</h3>
+<p>These words all share the same two-tone pattern. Click any to see its disambiguating phrase:</p>
+<div id="ambiguity-demo"></div>
+</div>
+</section>
+
+<!-- ═══════════════════ 2. THE BIT ═══════════════════ -->
+<section id="bit">
+<h2>🔤 The Bit</h2>
+<div class="subtitle">H = −Σ p log₂ p</div>
+
+<p class="bright">Shannon defined the <em>bit</em> — binary digit — as the fundamental unit of information: the amount of uncertainty resolved by a fair coin flip. Everything measurable can be expressed in bits.</p>
+
+<blockquote>"Information is surprise."</blockquote>
+
+<div class="demo-box">
+<h3>How Many Bits?</h3>
+<p>Click to explore the information content of different things:</p>
+<div id="bit-examples"></div>
+</div>
+
+<div class="demo-box">
+<h3>Entropy Calculator</h3>
+<p>Adjust the probability of a coin landing heads. A fair coin = 1 bit. A rigged coin carries <em>less</em> information — because the outcome is less surprising.</p>
+<div style="display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap">
+<label style="font-family:var(--mono);font-size:.9em">P(heads):</label>
+<input type="range" id="coin-slider" min="1" max="99" value="50" style="flex:1;min-width:150px;accent-color:var(--blue)">
+<span id="coin-prob" style="font-family:var(--mono);color:var(--blue);min-width:40px">0.50</span>
+</div>
+<div id="coin-result" class="result"></div>
+<div id="coin-visual" style="font-family:var(--mono);font-size:.8em;color:var(--dim);margin-top:8px"></div>
+</div>
+
+<div class="demo-box">
+<h3>Custom Bit Calculator</h3>
+<p>How many equally likely options? We need log₂(n) bits to distinguish them.</p>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<input type="number" id="custom-n" min="2" max="999999999" value="26" style="width:140px" placeholder="# of options">
+<span style="font-family:var(--mono);color:var(--dim)">options →</span>
+<span id="custom-bits" style="font-family:var(--mono);color:var(--blue);font-size:1.2em">4.70 bits</span>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ 3. SHANNON'S CIRCUIT ═══════════════════ -->
+<section id="circuit">
+<h2>⚡ Shannon's Circuit</h2>
+<div class="subtitle">Boolean algebra meets copper wire</div>
+
+<p class="bright">In his 1937 master's thesis — possibly the most important master's thesis ever written — Claude Shannon showed that Boolean algebra maps directly onto electrical switching circuits. What a relay passes onward is "not really electricity but rather a fact: the fact of whether the circuit is open or closed."</p>
+
+<blockquote>Circuits in series = AND. Circuits in parallel = OR. An inverting relay = NOT.<br>From these three primitives, all computation follows.</blockquote>
+
+<div class="demo-box">
+<h3>Logic Gates — Toggle the switches</h3>
+<div id="gates-demo"></div>
+</div>
+
+<div class="demo-box">
+<h3>Build: Half Adder</h3>
+<p>Combine gates to add two single-bit numbers. Sum = A XOR B. Carry = A AND B.</p>
+<div class="switch-row">
+<label class="sw-label">A</label>
+<div class="switch" id="ha-a" onclick="toggleHA('a')"></div>
+<label class="sw-label">B</label>
+<div class="switch" id="ha-b" onclick="toggleHA('b')"></div>
+</div>
+<div style="font-family:var(--mono);margin-top:12px;font-size:.95em">
+<div style="margin:4px 0"><span style="color:var(--dim)">A XOR B → Sum =</span> <span id="ha-sum" class="gate-out off">0</span></div>
+<div style="margin:4px 0"><span style="color:var(--dim)">A AND B → Carry =</span> <span id="ha-carry" class="gate-out off">0</span></div>
+<div style="margin-top:10px;color:var(--dim)"><span id="ha-a-val">0</span> + <span id="ha-b-val">0</span> = <span id="ha-result" style="color:var(--blue)">00</span><sub style="font-size:.7em">₂</sub> = <span id="ha-decimal" style="color:var(--blue)">0</span><sub style="font-size:.7em">₁₀</sub></div>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ 4. REDUNDANCY ENGINE ═══════════════════ -->
+<section id="redundancy">
+<h2>📝 Redundancy Engine</h2>
+<div class="subtitle">English is ~50% redundant</div>
+
+<p class="bright">Shannon proved that roughly half of English text is predictable — and therefore informationally redundant. He tested this by having his wife Betty guess the next letter in a Raymond Chandler novel. The result: each character carries only ~2.3 bits instead of the theoretical ~4.7.</p>
+
+<blockquote>"You cn rd ths sntnc wth hlf th lttrs mssng."</blockquote>
+
+<div class="demo-box">
+<h3>Type anything — watch it survive destruction</h3>
+<textarea id="redun-input" placeholder="Type or paste any English text here..." rows="3">The fundamental problem of communication is that of reproducing at one point either exactly or approximately a message selected at another point.</textarea>
+<div style="margin-top:16px">
+<button onclick="showRedundancy('vowels')">Remove Vowels</button>
+<button onclick="showRedundancy('every2')">Every Other Letter</button>
+<button onclick="showRedundancy('scramble')">Scramble Words</button>
+<button onclick="showRedundancy('half')">Random 50% Gone</button>
+<button onclick="showRedundancy('all')">All At Once</button>
+</div>
+<div id="redun-output"></div>
+<div id="redun-stats" class="result" style="font-size:.85em"></div>
+</div>
+
+<div class="demo-box">
+<h3>Shannon's Letter Guessing Game</h3>
+<p>Try guessing the next letter, just like Betty Shannon. How well can you predict English?</p>
+<div id="guess-text" style="font-family:var(--mono);font-size:1.1em;margin:12px 0;letter-spacing:2px;min-height:2em;line-height:1.8;word-break:break-all"></div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input type="text" id="guess-input" maxlength="1" style="width:50px;text-align:center;font-size:1.2em;text-transform:lowercase" placeholder="?">
+<button onclick="submitGuess()">Guess</button>
+<button onclick="resetGuess()" style="border-color:var(--dim);color:var(--dim)">New Text</button>
+<span id="guess-score" style="font-family:var(--mono);color:var(--dim);font-size:.85em"></span>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ 5. LIFE'S CODE ═══════════════════ -->
+<section id="dna">
+<h2>🧬 Life's Code</h2>
+<div class="subtitle">This IS a code, not a metaphor</div>
+
+<p class="bright">DNA uses a 4-symbol alphabet (A, T, C, G) arranged in 3-letter "words" called codons. 64 possible codons map to 20 amino acids — plus start and stop signals. It is, quite literally, a digital code.</p>
+
+<blockquote>"What lies at the heart of every living thing is not a fire, not warm breath, not a 'spark of life.' It is information, words, instructions." — Richard Dawkins</blockquote>
+
+<p>Schrödinger predicted this in 1943, calling it an "aperiodic crystal" — a structure with enough irregularity to carry a message. Watson and Crick proved him right a decade later.</p>
+
+<div class="demo-box">
+<h3>DNA Decoder</h3>
+<p>Enter a DNA sequence (A, T, C, G) and watch it translate into amino acids:</p>
+<input type="text" id="dna-input" class="dna-input" placeholder="ATGCGTACCTGA" value="ATGCGTACCTGA" autocomplete="off">
+<div id="dna-output" class="result" style="min-height:40px"></div>
+<div id="dna-info" style="font-family:var(--mono);font-size:.8em;color:var(--dim);margin-top:8px"></div>
+</div>
+
+<div class="demo-box">
+<h3>The Codon Table</h3>
+<p>4 bases × 3 positions = 64 codons → 20 amino acids. The redundancy is built in — most amino acids have multiple codons (error tolerance, just like the drums).</p>
+<div id="codon-table" class="codon-table"></div>
+<p style="font-size:.8em;margin-top:8px">Shannon estimated the human genome at ~10⁵ bits in 1949 — years before Watson & Crick. The actual figure: ~6.4 billion base pairs × 2 bits each ≈ 1.28 × 10¹⁰ bits. But with redundancy and compression, the meaningful information content is far less.</p>
+</div>
+</section>
+
+<!-- ═══════════════════ 6. THE FLOOD ═══════════════════ -->
+<section id="flood">
+<h2>🌊 The Flood</h2>
+<div class="subtitle">Each technology restructured consciousness</div>
+
+<p class="bright">The history of information is not a story of increasing speed. Each new technology — from speech to writing to the internet — didn't just transmit ideas faster. It changed <em>what humans could think</em>.</p>
+
+<blockquote>"It was something like a thunder-clap in human history, which the bias of familiarity has converted into the rustle of papers on a desk." — Eric Havelock, on writing</blockquote>
+
+<div class="demo-box">
+<div class="timeline-track" id="timeline"></div>
+</div>
+</section>
+
+<!-- ═══════════════════ 7. REVIEW ═══════════════════ -->
+<section id="review">
+<h2>📖 Review</h2>
+<div class="subtitle">Assessment & Connections</div>
+
+<div class="stars">★★★★★</div>
+
+<p class="bright" style="font-size:1.05em;margin-top:16px">This is the book that connects everything. It's the theoretical backbone — the explicit statement of what all the other books gesture at: that <em>information is the substrate, pattern is the signal, and meaning emerges from structure</em>.</p>
+
+<p>Gleick writes like a novelist about mathematics and physics. The book traces a single thread across 400+ pages: the gradual human discovery that information is a <em>thing</em> — measurable, physical, and possibly the substrate of reality itself. From African drums to quantum computing, from Babbage to Shannon to Wheeler's "It from Bit," each chapter reveals another facet of the same diamond.</p>
+
+<p>No wasted paragraphs. Every anecdote earns its place. The talking drums chapter alone — showing that illiterate drummers independently solved error-correction coding through centuries of cultural evolution — is worth the price of admission.</p>
+
+<h3>Connections</h3>
+<div class="conn-grid">
+<div class="conn"><h4>↔ Gödel, Escher, Bach</h4><p>Deepest connection. Gödel's encoding (mapping mathematics onto itself) is the same move as Shannon's (mapping logic onto circuits). Strange loops everywhere: information about information, codes that encode codes.</p></div>
+<div class="conn"><h4>↔ Mindstorms</h4><p>Writing as cognitive technology = Papert's "objects to think with." Each information revolution creates new microworlds for thought. The illiterate Uzbeks who can't process syllogisms are Papert's thesis made devastating.</p></div>
+<div class="conn"><h4>↔ Invisible Cities</h4><p>Each city is a compressed information packet — maximum meaning in minimum symbols. The Khan's chessboard mirrors Gleick's thesis: concrete → abstract → meaning recovered from the grain of wood.</p></div>
+<div class="conn"><h4>↔ Postman</h4><p>Chapter 15 IS Postman's nightmare — the flood of information without meaning. The gap between information and knowledge is Postman's central crisis. Shannon deliberately excluded meaning; Postman spent his career insisting it was all that mattered.</p></div>
+<div class="conn"><h4>↔ The Little Schemer</h4><p>Turing's universal machine is the theoretical foundation. Recursion, data as code, the idea that a few primitives build arbitrary complexity. Babbage → Turing → lambda calculus → Scheme.</p></div>
+<div class="conn"><h4>↔ Vehicles</h4><p>Shannon's maze-solving mouse is literally a Braitenberg vehicle — 75 relays producing behavior that looks like learning, memory, goal-seeking. Simple mechanism, complex behavior.</p></div>
+</div>
+
+<blockquote style="margin-top:24px;font-size:.95em">"Every it — every particle, every field of force, even the space-time continuum itself — derives its function, its meaning, its very existence entirely from binary choices, bits." — John Archibald Wheeler</blockquote>
+</section>
+
+<footer style="padding:40px 0;text-align:center;color:var(--dim);font-size:.8em;font-family:var(--mono)">
+Built for the library · information-prophet · 2026
+</footer>
+
+</div>
+
+<script>
+// ═══════════════════ TALKING DRUMS ═══════════════════
+const drumWords={
+moon:{tones:'●○●',pattern:'H L H',phrase:'the moon looks down at the earth',meaning:'Disambiguates from: month, darkness, roundness'},
+war:{tones:'○●○',pattern:'L H L',phrase:'war which watches over the village, war the paddle hits the dried skins',meaning:'Disambiguates from: quarrel, conflict'},
+fish:{tones:'○○●',pattern:'L L H',phrase:'the fish, the creature that swims in water and does not drown',meaning:'Disambiguates from: wet, river-thing'},
+father:{tones:'●●○',pattern:'H H L',phrase:'father, the great one who is strong in the village',meaning:'Disambiguates from: male, elder, chief'},
+river:{tones:'○●●',pattern:'L H H',phrase:'the river, water that never stands still and always flows onward',meaning:'Disambiguates from: rain, stream, water'},
+fowl:{tones:'●○○',pattern:'H L L',phrase:'the fowl, the little one that says kiokio',meaning:'Disambiguates from: bird, wing, egg'},
+fire:{tones:'●●●',pattern:'H H H',phrase:'fire, the bright one that consumes the dry grass',meaning:'Disambiguates from: heat, light, sun'},
+death:{tones:'○○○',pattern:'L L L',phrase:'death, the deep silence that swallows all sound',meaning:'Disambiguates from: sleep, darkness, end'},
+child:{tones:'●○●',pattern:'H L H',phrase:'child, the small one who plays in the village clearing',meaning:'Disambiguates from: moon (same tones!), young, seed'},
+rain:{tones:'○●○',pattern:'L H L',phrase:'rain, the water that falls from above and feeds the earth',meaning:'Disambiguates from: war (same tones!), clouds'},
+woman:{tones:'●○○',pattern:'H L L',phrase:'woman, she who carries the basket on her head',meaning:'Disambiguates from: fowl (same tones!), mother'},
+food:{tones:'○○●',pattern:'L L H',phrase:'food, that which fills the belly when the sun is high',meaning:'Disambiguates from: fish (same tones!), eat'}
+};
+
+const ambiguityGroups=[
+{tones:'●○●',pattern:'H L H',words:['moon','child'],note:'Same tones — only the surrounding phrase tells you which!'},
+{tones:'○●○',pattern:'L H L',words:['war','rain'],note:'Without redundancy, a call to war sounds like a weather report.'},
+{tones:'●○○',pattern:'H L L',words:['fowl','woman'],note:'Two tones can\'t distinguish these — context must do the work.'},
+{tones:'○○●',pattern:'L L H',words:['fish','food'],note:'The drum says the same thing for both.'}
+];
+
+function renderDrum(word){
+const el=document.getElementById('drum-output');
+const w=word.trim().toLowerCase();
+if(!w){el.innerHTML='<span style="color:var(--dim)">Enter a word above...</span>';return}
+const d=drumWords[w];
+if(!d){el.innerHTML=`<span style="color:var(--dim)">Try: ${Object.keys(drumWords).join(', ')}</span>`;return}
+const phraseLen=d.phrase.length;
+const wordLen=w.length;
+const ratio=(phraseLen/wordLen).toFixed(1);
+el.innerHTML=`
+<div style="margin-bottom:8px"><span style="color:var(--dim)">Word:</span> <strong>${w}</strong></div>
+<div style="margin-bottom:8px"><span style="color:var(--dim)">Tones:</span> <span style="font-size:1.3em;letter-spacing:6px">${d.tones}</span> <span style="color:var(--dim)">(${d.pattern})</span></div>
+<div style="margin-bottom:8px"><span style="color:var(--dim)">Drum phrase:</span> <em style="color:var(--white)">"${d.phrase}"</em></div>
+<div style="margin-bottom:4px"><span style="color:var(--dim)">Expansion:</span> ${wordLen} chars → ${phraseLen} chars = <strong>${ratio}× longer</strong></div>
+<div style="font-size:.85em;color:var(--dim)">${d.meaning}</div>`;
+}
+
+document.getElementById('drum-input').addEventListener('input',e=>renderDrum(e.target.value));
+
+(function(){
+const cont=document.getElementById('ambiguity-demo');
+let html='';
+ambiguityGroups.forEach(g=>{
+html+=`<div style="margin:12px 0;padding:12px;background:rgba(0,191,255,.04);border-radius:4px">
+<div style="font-family:var(--mono);margin-bottom:6px"><span style="font-size:1.2em;letter-spacing:4px">${g.tones}</span> <span style="color:var(--dim)">(${g.pattern})</span></div>
+<div style="margin-bottom:4px">${g.words.map(w=>`<button onclick="renderDrum('${w}');document.getElementById('drum-input').value='${w}'">${w}</button>`).join(' ')}</div>
+<div style="font-size:.8em;color:var(--dim)">${g.note}</div></div>`;
+});
+cont.innerHTML=html;
+})();
+
+renderDrum('moon');
+
+// ═══════════════════ THE BIT ═══════════════════
+const bitExamples=[
+{label:'Coin flip',n:'2',bits:'1.00',note:'The definition of a bit — one binary choice'},
+{label:'DNA base (A/T/C/G)',n:'4',bits:'2.00',note:'Each nucleotide = 2 bits of genetic information'},
+{label:'English letter (26)',n:'26',bits:'4.70',note:'But with frequency weighting, only ~2.3 bits (Shannon)'},
+{label:'Playing card',n:'52',bits:'5.70',note:'~6 yes/no questions to identify any card'},
+{label:'ASCII character',n:'128',bits:'7.00',note:'Hence 7-bit ASCII — exactly right'},
+{label:'Byte',n:'256',bits:'8.00',note:'The computer\'s basic unit: 2⁸ = 256 possibilities'},
+{label:'Chess position',n:'~10⁴³',bits:'~143',note:'Shannon number: more possible games than atoms in the universe'},
+{label:'Human genome',n:'4^(3.2×10⁹)',bits:'~6.4 billion',note:'6.4B base pairs × 2 bits each. Shannon estimated 10⁵ bits in 1949.'}
+];
+
+(function(){
+const cont=document.getElementById('bit-examples');
+bitExamples.forEach(ex=>{
+cont.innerHTML+=`<div class="bit-example"><div><span style="color:var(--white)">${ex.label}</span> <span style="color:var(--dim);font-size:.8em">(${ex.n})</span></div><div class="bits">${ex.bits} bits</div></div>`;
+});
+// Add hover tooltips
+cont.querySelectorAll('.bit-example').forEach((el,i)=>{
+el.title=bitExamples[i].note;
+el.style.cursor='pointer';
+el.onclick=()=>{
+const noteEl=el.querySelector('.note')||document.createElement('div');
+noteEl.className='note';
+if(noteEl.parentElement){noteEl.remove();return}
+noteEl.style.cssText='font-size:.8em;color:var(--dim);grid-column:1/-1;margin-top:4px;padding-top:4px;border-top:1px solid var(--border)';
+noteEl.textContent=bitExamples[i].note;
+el.appendChild(noteEl);
+};
+});
+})();
+
+const coinSlider=document.getElementById('coin-slider');
+const coinProb=document.getElementById('coin-prob');
+const coinResult=document.getElementById('coin-result');
+const coinVisual=document.getElementById('coin-visual');
+
+function updateCoin(){
+const p=coinSlider.value/100;
+coinProb.textContent=p.toFixed(2);
+const q=1-p;
+let H=0;
+if(p>0&&p<1) H=-(p*Math.log2(p)+q*Math.log2(q));
+const bar='█'.repeat(Math.round(H*30))+'░'.repeat(30-Math.round(H*30));
+coinResult.innerHTML=`<div>Entropy H = <strong>${H.toFixed(4)} bits</strong></div>
+<div style="margin-top:6px">${bar}</div>
+<div style="font-size:.85em;color:var(--dim);margin-top:4px">${p===0.5?'Maximum uncertainty — a perfectly fair coin':'Less than 1 bit — the outcome is partly predictable'}${p<0.05||p>0.95?' — almost no information, you already know the result':''}</div>`;
+coinVisual.textContent=`P(H)=${p.toFixed(2)} P(T)=${q.toFixed(2)} — Surprise(H)=${p>0?(-Math.log2(p)).toFixed(2):'∞'} bits, Surprise(T)=${q>0?(-Math.log2(q)).toFixed(2):'∞'} bits`;
+}
+coinSlider.addEventListener('input',updateCoin);
+updateCoin();
+
+const customN=document.getElementById('custom-n');
+const customBits=document.getElementById('custom-bits');
+customN.addEventListener('input',()=>{
+const n=parseInt(customN.value);
+if(n>=2) customBits.textContent=(Math.log2(n)).toFixed(2)+' bits';
+else customBits.textContent='need ≥ 2';
+});
+
+// ═══════════════════ SHANNON'S CIRCUIT ═══════════════════
+const gates=[
+{name:'AND',fn:(a,b)=>a&&b,desc:'Both switches must be ON (series circuit)'},
+{name:'OR',fn:(a,b)=>a||b,desc:'Either switch can be ON (parallel circuit)'},
+{name:'NOT',fn:(a)=>!a,desc:'Inverts the signal (inverting relay)',inputs:1},
+{name:'XOR',fn:(a,b)=>a!==b,desc:'One or the other, but not both'},
+{name:'NAND',fn:(a,b)=>!(a&&b),desc:'NOT-AND — universal gate, can build anything'}
+];
+const gateStates={};
+
+(function(){
+const cont=document.getElementById('gates-demo');
+gates.forEach((g,i)=>{
+gateStates[i]={a:false,b:false};
+const div=document.createElement('div');
+div.style.cssText='margin:14px 0;padding:12px;background:rgba(0,191,255,.03);border-radius:4px';
+const inputs=g.inputs||2;
+let html=`<div style="font-family:var(--mono);color:var(--white);margin-bottom:6px;font-size:1em">${g.name} <span style="color:var(--dim);font-size:.8em">— ${g.desc}</span></div><div class="switch-row">`;
+html+=`<label class="sw-label">A</label><div class="switch" id="g${i}a" onclick="toggleGate(${i},'a')"></div>`;
+if(inputs===2) html+=`<label class="sw-label">B</label><div class="switch" id="g${i}b" onclick="toggleGate(${i},'b')"></div>`;
+html+=`<span style="font-family:var(--mono);color:var(--dim)">→</span> <span id="g${i}out" class="gate-out off">0</span></div>`;
+div.innerHTML=html;
+cont.appendChild(div);
+});
+})();
+
+function toggleGate(i,input){
+gateStates[i][input]=!gateStates[i][input];
+document.getElementById(`g${i}${input}`).classList.toggle('on');
+const g=gates[i];
+const s=gateStates[i];
+const out=g.inputs===1?g.fn(s.a):g.fn(s.a,s.b);
+const el=document.getElementById(`g${i}out`);
+el.textContent=out?'1':'0';
+el.className='gate-out '+(out?'on':'off');
+}
+
+// Half adder
+const haState={a:false,b:false};
+function toggleHA(input){
+haState[input]=!haState[input];
+document.getElementById(`ha-${input}`).classList.toggle('on');
+const sum=haState.a!==haState.b;
+const carry=haState.a&&haState.b;
+const sumEl=document.getElementById('ha-sum');
+const carryEl=document.getElementById('ha-carry');
+sumEl.textContent=sum?'1':'0';sumEl.className='gate-out '+(sum?'on':'off');
+carryEl.textContent=carry?'1':'0';carryEl.className='gate-out '+(carry?'on':'off');
+document.getElementById('ha-a-val').textContent=haState.a?'1':'0';
+document.getElementById('ha-b-val').textContent=haState.b?'1':'0';
+const decimal=(carry?2:0)+(sum?1:0);
+document.getElementById('ha-result').textContent=(carry?'1':'0')+(sum?'1':'0');
+document.getElementById('ha-decimal').textContent=decimal;
+}
+
+// ═══════════════════ REDUNDANCY ENGINE ═══════════════════
+function showRedundancy(mode){
+const text=document.getElementById('redun-input').value;
+if(!text)return;
+const out=document.getElementById('redun-output');
+const stats=document.getElementById('redun-stats');
+let results=[];
+
+function removeVowels(s){return s.replace(/[aeiou]/gi,'·')}
+function everyOther(s){return s.split('').map((c,i)=>i%2===0?c:'·').join('')}
+function scrambleWords(s){
+return s.split(' ').map(w=>{
+if(w.length<=3)return w;
+const arr=w.slice(1,-1).split('');
+for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
+return w[0]+arr.join('')+w[w.length-1];
+}).join(' ');
+}
+function randomHalf(s){return s.split('').map(c=>Math.random()>.5?c:'·').join('')}
+
+if(mode==='vowels'||mode==='all'){
+const r=removeVowels(text);
+const pct=((text.length-r.replace(/·/g,'').length)/text.length*100).toFixed(0);
+results.push({label:'Vowels removed',text:r,pct,note:'Still readable? English vowels carry less information than consonants.'});
+}
+if(mode==='every2'||mode==='all'){
+const r=everyOther(text);
+results.push({label:'Every other letter',text:r,pct:'50',note:'Half the characters gone — and you can probably still read it.'});
+}
+if(mode==='scramble'||mode==='all'){
+const r=scrambleWords(text);
+results.push({label:'Scrambled middles',text:r,pct:'~30',note:'Only first and last letters preserved. Your brain fills in the rest.'});
+}
+if(mode==='half'||mode==='all'){
+const r=randomHalf(text);
+const pct=((r.match(/·/g)||[]).length/text.length*100).toFixed(0);
+results.push({label:'Random 50% removed',text:r,pct,note:'Shannon proved this is approximately the redundancy of English.'});
+}
+
+out.innerHTML=results.map(r=>`<div class="result" style="margin-top:12px">
+<div style="color:var(--dim);font-size:.8em;margin-bottom:4px">${r.label} (~${r.pct}% destroyed)</div>
+<div style="color:var(--white)">${r.text}</div>
+<div style="color:var(--dim);font-size:.8em;margin-top:4px">${r.note}</div></div>`).join('');
+
+const origBits=(text.length*4.7).toFixed(0);
+const shannonBits=(text.length*2.3).toFixed(0);
+stats.innerHTML=`Original: ${text.length} chars × 4.7 bits = ${origBits} bits theoretical<br>
+Shannon estimate: ${text.length} chars × 2.3 bits = ${shannonBits} bits actual information<br>
+<strong>Redundancy: ~${((1-2.3/4.7)*100).toFixed(0)}%</strong> — more than half of English is predictable.`;
+}
+
+// Letter guessing game
+const guessTexts=[
+"it was a bright cold day in april and the clocks were striking thirteen",
+"the fundamental problem of communication is that of reproducing at one point",
+"in the beginning was the word and the word was with god",
+"a device with two stable positions can store one bit of information",
+"the laws of science have been discovered as summaries of empirical data"
+];
+let guessState={text:'',pos:0,correct:0,total:0};
+
+function resetGuess(){
+guessState.text=guessTexts[Math.floor(Math.random()*guessTexts.length)];
+guessState.pos=1;guessState.correct=0;guessState.total=0;
+document.getElementById('guess-text').innerHTML=`<span style="color:var(--white)">${guessState.text[0]}</span><span style="color:var(--blue);text-decoration:underline">_</span>`;
+document.getElementById('guess-score').textContent='';
+document.getElementById('guess-input').value='';
+document.getElementById('guess-input').focus();
+}
+
+function submitGuess(){
+if(guessState.pos>=guessState.text.length)return;
+const input=document.getElementById('guess-input');
+const guess=input.value.toLowerCase();
+input.value='';
+if(!guess)return;
+const actual=guessState.text[guessState.pos];
+guessState.total++;
+if(guess===actual)guessState.correct++;
+const revealed=guessState.text.substring(0,guessState.pos+1);
+guessState.pos++;
+const next=guessState.pos<guessState.text.length;
+let html=`<span style="color:var(--white)">${revealed}</span>`;
+if(next) html+=`<span style="color:var(--blue);text-decoration:underline">_</span>`;
+else html+=` <span style="color:var(--blue)">✓ DONE</span>`;
+document.getElementById('guess-text').innerHTML=html;
+const pct=guessState.total>0?((guessState.correct/guessState.total)*100).toFixed(0):'0';
+const bitsPerChar=guessState.total>0?(-Math.log2(Math.max(guessState.correct/guessState.total,0.01))).toFixed(1):'?';
+document.getElementById('guess-score').textContent=`${guessState.correct}/${guessState.total} correct (${pct}%) — ~${bitsPerChar} bits/char uncertainty`;
+if(next) input.focus();
+}
+
+document.getElementById('guess-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitGuess()});
+resetGuess();
+
+// ═══════════════════ LIFE'S CODE ═══════════════════
+const codonMap={
+'TTT':'Phe','TTC':'Phe','TTA':'Leu','TTG':'Leu','CTT':'Leu','CTC':'Leu','CTA':'Leu','CTG':'Leu',
+'ATT':'Ile','ATC':'Ile','ATA':'Ile','ATG':'Met ⬤','GTT':'Val','GTC':'Val','GTA':'Val','GTG':'Val',
+'TCT':'Ser','TCC':'Ser','TCA':'Ser','TCG':'Ser','CCT':'Pro','CCC':'Pro','CCA':'Pro','CCG':'Pro',
+'ACT':'Thr','ACC':'Thr','ACA':'Thr','ACG':'Thr','GCT':'Ala','GCC':'Ala','GCA':'Ala','GCG':'Ala',
+'TAT':'Tyr','TAC':'Tyr','TAA':'STOP','TAG':'STOP','CAT':'His','CAC':'His','CAA':'Gln','CAG':'Gln',
+'AAT':'Asn','AAC':'Asn','AAA':'Lys','AAG':'Lys','GAT':'Asp','GAC':'Asp','GAA':'Glu','GAG':'Glu',
+'TGT':'Cys','TGC':'Cys','TGA':'STOP','TGG':'Trp','CGT':'Arg','CGC':'Arg','CGA':'Arg','CGG':'Arg',
+'AGT':'Ser','AGC':'Ser','AGA':'Arg','AGG':'Arg','GGT':'Gly','GGC':'Gly','GGA':'Gly','GGG':'Gly'
+};
+
+// Convert DNA input (which may use U) to codons
+function decodeDNA(){
+const raw=document.getElementById('dna-input').value.toUpperCase().replace(/[^ATCGU]/g,'').replace(/U/g,'T');
+const out=document.getElementById('dna-output');
+const info=document.getElementById('dna-info');
+if(raw.length<3){out.innerHTML='<span style="color:var(--dim)">Enter at least 3 bases (A, T, C, G)...</span>';info.textContent='';return}
+let codons=[];
+let aminos=[];
+for(let i=0;i+2<raw.length;i+=3){
+const c=raw.substring(i,i+3);
+codons.push(c);
+aminos.push(codonMap[c]||'???');
+}
+out.innerHTML=codons.map((c,i)=>{
+const a=aminos[i];
+const color=a==='STOP'?'#f44':a.includes('⬤')?'#4f4':'var(--blue)';
+return `<span style="display:inline-block;text-align:center;margin:2px 4px;padding:4px 6px;background:rgba(0,191,255,.08);border-radius:3px;line-height:1.3"><span style="font-size:.75em;color:var(--dim)">${c}</span><br><span style="color:${color};font-size:.9em">${a}</span></span>`;
+}).join('');
+const bases=raw.length;
+const bits=bases*2;
+info.textContent=`${bases} bases = ${bits} bits | ${codons.length} codons | ${aminos.filter(a=>a!=='STOP'&&!a.includes('⬤')).length} amino acids`;
+}
+
+document.getElementById('dna-input').addEventListener('input',decodeDNA);
+decodeDNA();
+
+// Codon table
+(function(){
+const el=document.getElementById('codon-table');
+const bases=['T','C','A','G'];
+let html='<div class="codon-cell header"></div>';
+bases.forEach(b2=>html+=`<div class="codon-cell header">${b2}</div>`);
+// Simplified: show first base rows
+bases.forEach(b1=>{
+bases.forEach(b3=>{
+html+=`<div class="codon-cell header">${b1}·${b3}</div>`;
+bases.forEach(b2=>{
+const c=b1+b2+b3;
+const a=codonMap[c]||'?';
+const style=a==='STOP'?'color:#f44':a.includes('⬤')?'color:#4f4':'';
+html+=`<div class="codon-cell" style="${style}" title="${c}">${a.replace(' ⬤','*')}</div>`;
+});
+});
+});
+el.innerHTML=html;
+})();
+
+// ═══════════════════ THE FLOOD TIMELINE ═══════════════════
+const timelineData=[
+{year:'~50,000 BCE',title:'Speech',desc:'Language enabled shared imagination — the ability to talk about things that don\'t exist. Not just communication but the birth of abstract thought. Every later technology is an attempt to overcome speech\'s limitation: it vanishes the instant it\'s spoken.'},
+{year:'~3200 BCE',title:'Writing',desc:'Restructured consciousness itself. Luria\'s illiterate Uzbeks couldn\'t process syllogisms — not from stupidity but from lacking the cognitive technology. A newly literate man: "To go by your words, they should all be white." Writing enabled categories, logic, self-awareness.'},
+{year:'~1440',title:'Printing',desc:'Made knowledge reproducible and democratized literacy. But more profoundly: it standardized language, enabled science (shared exact copies of data), and made individual authorship possible. The shift from "the book says" to "I think."'},
+{year:'1844',title:'Telegraph',desc:'First technology to separate communication from transportation. Rewired the concept of "now" — events in distant cities became simultaneous. Created "news" as we know it. Changed prose itself: economy of expression became a virtue when every word cost money.'},
+{year:'1876',title:'Telephone',desc:'Restored the human voice to electrical communication. But also created a new anxiety: you could be interrupted by anyone, anywhere, at any time. The phone restructured social space — suddenly "here" and "there" collapsed.'},
+{year:'1920s',title:'Radio & Television',desc:'Broadcasting: one to many. Created mass culture, shared simultaneous experience. For the first time, millions heard the same words at the same moment. The "global village" — but also the loss of local, particular knowledge.'},
+{year:'1948',title:'Shannon\'s Paper',desc:'Information became a measurable quantity. The bit was born. Shannon showed that communication is mathematics, meaning is separable from transmission, and noise can always be overcome. The theoretical foundation for everything digital.'},
+{year:'1953',title:'DNA Decoded',desc:'Watson & Crick revealed life\'s information system — confirming that biology runs on a digital code. 4 bases, 3-letter words, 20 amino acids. Evolution is an information process. "What lies at the heart of every living thing is information."'},
+{year:'1969→',title:'Internet',desc:'Every previous technology\'s limitations dissolved: instant, global, persistent, searchable, many-to-many. But also: the flood. Robert Burton complained of information overload in 1621. Now forgetting is the exception. Everything is recorded. Meaning doesn\'t vanish — it must be filtered.'}
+];
+
+(function(){
+const track=document.getElementById('timeline');
+timelineData.forEach((item,i)=>{
+const node=document.createElement('div');
+node.className='timeline-node';
+node.innerHTML=`<span class="year">${item.year}</span><h4>${item.title}</h4><div class="timeline-detail"><p>${item.desc}</p></div>`;
+node.onclick=()=>{
+document.querySelectorAll('.timeline-node').forEach(n=>n.classList.remove('active'));
+node.classList.toggle('active');
+};
+track.appendChild(node);
+});
+})();
+
+// ═══════════════════ NAV HIGHLIGHTING ═══════════════════
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('nav a');
+const observer=new IntersectionObserver(entries=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+navLinks.forEach(l=>l.classList.remove('active'));
+const link=document.querySelector(`nav a[href="#${entry.target.id}"]`);
+if(link)link.classList.add('active');
+}
+});
+},{rootMargin:'-30% 0px -60% 0px'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>

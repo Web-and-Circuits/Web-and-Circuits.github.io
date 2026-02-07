@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crafting Interpreters — Interactive Book Report v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--surface3:#252533;--text:#e8e6e3;--text-dim:#7a7a8a;--accent:#f0c040;--accent2:#e06050;--accent3:#50b0e0;--green:#50c878;--purple:#b070e0;--mono:'JetBrains Mono',monospace;--serif:'EB Garamond',serif;--display:'Playfair Display',serif;--sans:'Inter',sans-serif}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--serif);line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:var(--bg)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--purple));z-index:999;width:0%;transition:width 0.1s}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.container{max-width:800px;margin:0 auto;padding:0 24px}
+section{padding:80px 0}
+h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:24px;color:var(--accent)}
+h3{font-family:var(--display);font-size:1.3rem;margin-bottom:12px;color:var(--text)}
+p{margin-bottom:16px;font-size:1.1rem}
+.dim{color:var(--text-dim)}
+.hl{color:var(--accent);font-weight:600}
+code{font-family:var(--mono);font-size:0.9em;background:var(--surface2);padding:2px 6px;border-radius:4px}
+blockquote{border-left:3px solid var(--accent);padding:16px 24px;margin:24px 0;background:var(--surface);border-radius:0 10px 10px 0;font-style:italic;color:var(--text-dim);font-size:1.05rem}
+blockquote .attr{display:block;margin-top:8px;font-size:0.9rem;color:var(--accent);font-style:normal}
+.card{background:var(--surface);border:1px solid var(--surface3);border-radius:12px;padding:24px;margin-bottom:20px;transition:border-color 0.3s}
+.card:hover{border-color:var(--surface3)}
+.demo{background:var(--surface);border:1px solid var(--surface3);border-radius:12px;padding:24px;margin:24px 0}
+.demo-label{font-family:var(--sans);font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.demo-label::after{content:'';flex:1;height:1px;background:var(--surface3)}
+.demo textarea,.demo input[type=text]{width:100%;background:var(--bg);border:1px solid var(--surface3);color:var(--text);font-family:var(--mono);font-size:0.9rem;padding:12px;border-radius:8px;resize:vertical;min-height:44px;transition:border-color 0.2s}
+.demo textarea:focus,.demo input[type=text]:focus{outline:none;border-color:var(--accent)}
+.btn{min-height:44px;min-width:44px;padding:10px 20px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--sans);font-size:0.9rem;font-weight:500;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-top:8px;touch-action:manipulation}
+.btn:hover{background:var(--accent);color:var(--bg)}
+.btn:active{transform:scale(0.97)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.output{background:var(--bg);border:1px solid var(--surface3);border-radius:8px;padding:12px;margin-top:12px;font-family:var(--mono);font-size:0.85rem;min-height:44px;white-space:pre-wrap;color:var(--green);overflow-x:auto}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 24px;position:relative}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:200px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.hero h1{font-family:var(--display);font-size:clamp(2.6rem,7vw,4.5rem);font-weight:700;line-height:1.1;margin-bottom:16px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:shimmer 6s ease infinite}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-family:var(--serif);font-size:1.4rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
+.stars{font-size:2.2rem;letter-spacing:6px;margin-bottom:20px}
+.hero-scroll{position:absolute;bottom:40px;font-family:var(--sans);font-size:0.8rem;color:var(--text-dim);animation:bob 2s ease infinite;z-index:1}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* Pipeline */
+.pipeline-container{position:relative;overflow:hidden;padding:20px 0}
+.pipeline-stages{display:flex;align-items:center;gap:4px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.pipe-stage{background:var(--surface2);border:1px solid var(--surface3);border-radius:8px;padding:8px 14px;font-family:var(--sans);font-size:0.8rem;cursor:pointer;transition:all 0.3s;min-height:44px;display:flex;align-items:center;gap:6px;user-select:none}
+.pipe-stage.active{border-color:var(--accent);color:var(--accent);box-shadow:0 0 20px rgba(240,192,64,0.15)}
+.pipe-stage.done{border-color:var(--green);color:var(--green)}
+.pipe-arrow{color:var(--text-dim);font-size:0.9rem;transition:color 0.3s}
+.pipe-arrow.active{color:var(--accent)}
+.pipe-output{background:var(--bg);border:1px solid var(--surface3);border-radius:8px;padding:12px;min-height:60px;font-family:var(--mono);font-size:0.82rem;transition:all 0.3s;overflow-x:auto}
+
+/* Tokens */
+.token-list{display:flex;flex-wrap:wrap;gap:5px}
+.tok{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--surface3);transition:all 0.3s;opacity:0;animation:tokIn 0.3s forwards}
+@keyframes tokIn{to{opacity:1;transform:translateY(0)}}
+.tok.kw{background:#2a1f0a;border-color:#806020;color:var(--accent)}
+.tok.num{background:#0a1a2a;border-color:#2060a0;color:var(--accent3)}
+.tok.str{background:#2a0a0a;border-color:#a03030;color:var(--accent2)}
+.tok.op{background:#0a2a1a;border-color:#208050;color:var(--green)}
+.tok.id{background:var(--surface2);color:var(--text)}
+.tok.punc{background:var(--surface2);color:var(--text-dim)}
+.tok.eof{background:var(--surface2);color:var(--text-dim);font-style:italic}
+
+/* AST tree canvas */
+.ast-canvas{width:100%;min-height:200px;background:var(--bg);border:1px solid var(--surface3);border-radius:8px;margin-top:12px}
+
+/* Pratt table */
+.pratt-table{width:100%;border-collapse:collapse;margin:12px 0;font-family:var(--mono);font-size:0.82rem}
+.pratt-table th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--surface3);color:var(--accent);font-family:var(--sans);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px}
+.pratt-table td{padding:8px 12px;border-bottom:1px solid var(--surface3)}
+.pratt-table tr.active-row{background:rgba(240,192,64,0.1)}
+.pratt-step{font-family:var(--mono);font-size:0.82rem;padding:6px 0;border-bottom:1px solid var(--surface3);display:flex;gap:12px;opacity:0;animation:tokIn 0.4s forwards}
+.pratt-step .step-label{color:var(--accent);min-width:40px}
+.pratt-step .step-action{color:var(--text-dim)}
+.pratt-step .step-fn{color:var(--green)}
+
+/* Env chain */
+.env-box{border:2px solid var(--surface3);border-radius:10px;padding:14px;margin:8px 0 8px 20px;position:relative;transition:border-color 0.5s,box-shadow 0.5s}
+.env-box.highlight{border-color:var(--accent);box-shadow:0 0 20px rgba(240,192,64,0.1)}
+.env-label{position:absolute;top:-11px;left:14px;background:var(--bg);padding:0 8px;font-family:var(--mono);font-size:0.72rem;color:var(--text-dim)}
+.env-var{font-family:var(--mono);font-size:0.85rem;padding:3px 0;display:flex;gap:8px}
+.env-var .vname{color:var(--accent3)}
+.env-var .vval{color:var(--green)}
+.env-var .vval.closed{color:var(--accent2);text-decoration:line-through}
+.upvalue-arrow{font-family:var(--mono);font-size:0.75rem;color:var(--purple);margin-left:20px;padding:2px 0}
+
+/* NaN boxing bits */
+.nan-bits{display:flex;gap:1px;margin:8px 0;flex-wrap:wrap}
+.nbit{width:11px;height:26px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.55rem;border-radius:2px;cursor:pointer;transition:all 0.15s;user-select:none}
+.nbit:hover{transform:scaleY(1.3)}
+.nbit.sign{background:#4a1a2a;color:var(--accent2)}
+.nbit.exp{background:#2a2a0a;color:var(--accent)}
+.nbit.quiet{background:#3a2a0a;color:var(--accent)}
+.nbit.man{background:#0a2a2a;color:var(--accent3)}
+.nbit.tag{background:#0a2a0a;color:var(--green)}
+.nbit.ptr{background:#1a0a2a;color:var(--purple)}
+.nan-legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0;font-family:var(--sans);font-size:0.75rem}
+.nan-legend span{display:flex;align-items:center;gap:4px}
+.nan-swatch{width:12px;height:12px;border-radius:2px;display:inline-block}
+
+/* GC sim */
+.gc-heap{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;min-height:60px}
+.gc-obj{width:60px;height:60px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.7rem;border:2px solid var(--surface3);transition:all 0.4s;cursor:pointer;user-select:none;position:relative}
+.gc-obj.white{background:var(--surface2);border-color:var(--surface3);color:var(--text-dim)}
+.gc-obj.gray{background:#2a2a1a;border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(240,192,64,0.2)}
+.gc-obj.black{background:#1a2a1a;border-color:var(--green);color:var(--green);box-shadow:0 0 12px rgba(80,200,120,0.2)}
+.gc-obj.swept{opacity:0;transform:scale(0);border-color:var(--accent2)}
+.gc-obj .obj-name{font-weight:bold;font-size:0.8rem}
+.gc-obj .obj-refs{font-size:0.6rem;color:var(--text-dim)}
+.gc-refs{margin:8px 0;font-family:var(--mono);font-size:0.78rem;color:var(--text-dim)}
+.gc-log{background:var(--bg);border:1px solid var(--surface3);border-radius:8px;padding:10px;margin-top:10px;font-family:var(--mono);font-size:0.78rem;max-height:200px;overflow-y:auto;color:var(--text-dim)}
+
+/* Chapter nav */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:24px 0}
+.ch-card{background:var(--surface);border:1px solid var(--surface3);border-radius:10px;padding:16px;transition:all 0.3s;cursor:default}
+.ch-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ch-card .ch-num{font-family:var(--sans);font-size:0.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.ch-card .ch-title{font-family:var(--display);font-size:1rem;margin-bottom:6px}
+.ch-card .ch-desc{font-size:0.85rem;color:var(--text-dim);line-height:1.4}
+.part-label{font-family:var(--sans);font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:var(--purple);margin:20px 0 8px;padding-top:12px;border-top:1px solid var(--surface3)}
+
+/* Predictions */
+.pred{display:flex;gap:16px;margin:16px 0;align-items:flex-start}
+.pred-icon{font-size:1.5rem;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:10px}
+.pred-body{flex:1}
+.pred-body h4{font-family:var(--sans);font-size:0.95rem;margin-bottom:4px}
+.pred-body p{font-size:0.95rem;color:var(--text-dim);margin-bottom:0}
+
+/* Rating */
+.verdict-box{background:linear-gradient(135deg,#1a150a 0%,#1a0a0f 100%);border:1px solid var(--accent);border-radius:16px;padding:32px;margin:24px 0;position:relative;overflow:hidden}
+.verdict-box::before{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(240,192,64,0.05),transparent);pointer-events:none}
+
+footer{text-align:center;padding:60px 24px;color:var(--text-dim);font-family:var(--sans);font-size:0.85rem}
+footer a{color:var(--accent);text-decoration:none}
+
+@media(max-width:640px){
+  .pipeline-stages{flex-direction:column;align-items:stretch}
+  .pipe-arrow{transform:rotate(90deg);text-align:center}
+  .nbit{width:8px;height:22px;font-size:0.45rem}
+  section{padding:48px 0}
+  .ch-grid{grid-template-columns:1fr}
+  .pred{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+  <h1>Crafting Interpreters</h1>
+  <p class="subtitle">by Robert Nystrom</p>
+  <p class="dim" style="max-width:540px;font-size:1.05rem">A science-museum book report. Don't read — <em>play</em>. Each exhibit lets you experience language implementation from the inside.</p>
+  <p style="font-family:var(--sans);font-size:0.85rem;color:var(--text-dim);margin-top:12px">Reviewed by 🐑 · February 2026</p>
+  <div class="hero-scroll">↓ scroll to explore</div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EXHIBIT 1: PIPELINE FLOW              -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-pipeline">
+  <h2>Exhibit 1 · The Pipeline</h2>
+  <p>Every language implementation follows the same path: raw text in, running program out. Type code and watch it flow through every stage.</p>
+  <div class="demo">
+    <div class="demo-label">Live Pipeline</div>
+    <input type="text" id="pipe-input" value="1 + 2 * 3" spellcheck="false" placeholder="Type a Lox expression…">
+    <div class="btn-row">
+      <button class="btn" id="pipe-play" onclick="pipelineRun()">▶ Run Pipeline</button>
+      <button class="btn" onclick="pipelineStep()" style="border-color:var(--accent3);color:var(--accent3)">⏭ Step</button>
+      <button class="btn" onclick="pipelineReset()" style="border-color:var(--text-dim);color:var(--text-dim)">↺ Reset</button>
+    </div>
+    <div class="pipeline-stages" id="pipe-stages" style="margin-top:16px">
+      <div class="pipe-stage" data-i="0">📝 Source</div><span class="pipe-arrow">→</span>
+      <div class="pipe-stage" data-i="1">🔍 Scan</div><span class="pipe-arrow">→</span>
+      <div class="pipe-stage" data-i="2">🌳 Parse</div><span class="pipe-arrow">→</span>
+      <div class="pipe-stage" data-i="3">⚙️ Compile</div><span class="pipe-arrow">→</span>
+      <div class="pipe-stage" data-i="4">🖥️ Execute</div>
+    </div>
+    <div class="pipe-output" id="pipe-out" style="margin-top:12px"></div>
+  </div>
+  <blockquote>"The pipeline is a mountain—you climb up from raw text to high-level semantic understanding, then descend back down to machine-executable form."<span class="attr">— Chapter 2: A Map of the Territory</span></blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EXHIBIT 2: PRATT PARSER               -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-pratt">
+  <h2>Exhibit 2 · The Pratt Parser</h2>
+  <p>This is the <span class="hl">hidden gem</span> of the book. Each token type has a prefix function, an infix function, and a precedence level. Watch the parser decide what to do at each step:</p>
+  <div class="demo">
+    <div class="demo-label">Pratt Parser Visualizer</div>
+    <input type="text" id="pratt-input" value="1 + 2 * 3 - 4" spellcheck="false" placeholder="Type an expression…">
+    <button class="btn" onclick="runPratt()">Parse with Pratt →</button>
+    <table class="pratt-table" id="pratt-table" style="display:none">
+      <thead><tr><th>Token</th><th>Prefix</th><th>Infix</th><th>Precedence</th></tr></thead>
+      <tbody id="pratt-tbody"></tbody>
+    </table>
+    <div id="pratt-steps" style="margin-top:12px"></div>
+    <div class="ast-canvas" id="pratt-ast" style="display:none"></div>
+  </div>
+  <blockquote>"Pratt parsing is the hidden gem of this book. It's so much more elegant than recursive descent for expressions."<span class="attr">— Book Notes, Ch. 17</span></blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EXHIBIT 3: CLOSURE / UPVALUE TOY      -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-closures">
+  <h2>Exhibit 3 · Closures & Upvalues</h2>
+  <p>When a function captures a variable from an outer scope, it creates an <span class="hl">upvalue</span> — a reference to that variable. When the outer function returns, the upvalue "closes over," moving the value from the stack to the heap.</p>
+  <div class="demo">
+    <div class="demo-label">Upvalue Simulator</div>
+    <div class="btn-row">
+      <button class="btn" onclick="closureStep(0)">1. Define outer()</button>
+      <button class="btn" onclick="closureStep(1)">2. Call outer()</button>
+      <button class="btn" onclick="closureStep(2)">3. Create inner()</button>
+      <button class="btn" onclick="closureStep(3)">4. Return inner</button>
+      <button class="btn" onclick="closureStep(4)" style="border-color:var(--accent2);color:var(--accent2)">5. outer() exits!</button>
+      <button class="btn" onclick="closureStep(5)">6. Call inner()</button>
+      <button class="btn" onclick="closureStep(6)">7. Call inner() again</button>
+    </div>
+    <div id="closure-vis" style="margin-top:16px"></div>
+    <div class="output" id="closure-out" style="min-height:30px"></div>
+  </div>
+  <blockquote>"The upvalue mechanism is brilliant. It's one of those solutions that seems obvious in hindsight but required real insight to invent."<span class="attr">— Book Notes, on Lua's contribution (Ch. 25)</span></blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EXHIBIT 4: NaN BOXING EXPLORER        -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-nan">
+  <h2>Exhibit 4 · NaN Boxing</h2>
+  <p>IEEE 754 has <em>billions</em> of unused NaN bit patterns. Lox stuffs nil, booleans, and pointers into those bits — halving memory usage. Toggle individual bits to see what happens:</p>
+  <div class="demo">
+    <div class="demo-label">64-Bit Explorer</div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn" onclick="nanSet('num')">Number 3.14</button>
+      <button class="btn" onclick="nanSet('nil')">nil</button>
+      <button class="btn" onclick="nanSet('true')">true</button>
+      <button class="btn" onclick="nanSet('false')">false</button>
+      <button class="btn" onclick="nanSet('ptr')">Object ptr</button>
+    </div>
+    <div class="nan-bits" id="nan-bits"></div>
+    <div class="nan-legend" id="nan-legend"></div>
+    <div id="nan-info" style="margin-top:12px;font-size:0.95rem"></div>
+  </div>
+  <blockquote>"NaN boxing is one of the coolest bit-twiddling tricks in all of computer science. The way it exploits IEEE 754's structure to pack a dynamically-typed value into exactly 64 bits is beautiful."<span class="attr">— Book Notes, Ch. 30</span></blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EXHIBIT 5: GARBAGE COLLECTION SIM     -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-gc">
+  <h2>Exhibit 5 · Garbage Collection</h2>
+  <p>Create objects, make references, break them, then trigger GC and watch <span class="hl">tricolor mark-and-sweep</span> in action. White = unmarked. Gray = discovered. Black = fully traced. White after marking = garbage.</p>
+  <div class="demo">
+    <div class="demo-label">Mini Heap Simulator</div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn" onclick="gcAdd()">+ New Object</button>
+      <button class="btn" onclick="gcLink()" style="border-color:var(--accent3);color:var(--accent3)">🔗 Link Selected</button>
+      <button class="btn" onclick="gcUnlink()" style="border-color:var(--accent2);color:var(--accent2)">✂ Unlink Selected</button>
+      <button class="btn" onclick="gcToggleRoot()">📌 Toggle Root</button>
+    </div>
+    <div style="font-family:var(--sans);font-size:0.78rem;color:var(--text-dim);margin:8px 0">Click objects to select. Roots are pinned (📌).</div>
+    <div class="gc-heap" id="gc-heap"></div>
+    <div class="gc-refs" id="gc-refs"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="gcRun()" style="border-color:var(--green);color:var(--green)">🗑️ Run GC (animated)</button>
+      <button class="btn" onclick="gcReset()" style="border-color:var(--text-dim);color:var(--text-dim)">↺ Reset</button>
+    </div>
+    <div class="gc-log" id="gc-log"></div>
+  </div>
+  <blockquote>"GC bugs are among the most pernicious in language implementation. They're non-deterministic, depend on allocation patterns, and can corrupt memory silently."<span class="attr">— Book Notes, Ch. 26</span></blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CHAPTER NAVIGATOR                      -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-chapters">
+  <h2>The Journey: All 30 Chapters</h2>
+  <p>The book builds two complete interpreters for Lox — a tree-walk interpreter in Java and a bytecode VM in C.</p>
+
+  <div class="part-label">Part I — Welcome</div>
+  <div class="ch-grid">
+    <div class="ch-card"><div class="ch-num">Chapter 1</div><div class="ch-title">Introduction</div><div class="ch-desc">Dismantling the myth that compilers are wizardry. "It's just code."</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 2</div><div class="ch-title">A Map of the Territory</div><div class="ch-desc">The full pipeline: scanning → parsing → analysis → IR → codegen → runtime.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 3</div><div class="ch-title">The Lox Language</div><div class="ch-desc">Meet Lox: dynamic typing, closures, classes, and a standard library of… two functions.</div></div>
+  </div>
+
+  <div class="part-label">Part II — Tree-Walk Interpreter (jlox, Java)</div>
+  <div class="ch-grid">
+    <div class="ch-card"><div class="ch-num">Chapter 4</div><div class="ch-title">Scanning</div><div class="ch-desc">Turning raw characters into tokens. The "lexical analygator."</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 5</div><div class="ch-title">Representing Code</div><div class="ch-desc">Context-free grammars, ASTs, and the Visitor pattern.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 6</div><div class="ch-title">Parsing Expressions</div><div class="ch-desc">Recursive descent: each grammar rule becomes a function.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 7</div><div class="ch-title">Evaluating Expressions</div><div class="ch-desc">Walking the tree, computing values. The first "1+2=3" moment.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 8</div><div class="ch-title">Statements and State</div><div class="ch-desc">Variables, environments, scope chains.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 9</div><div class="ch-title">Control Flow</div><div class="ch-desc">if/else, while, for. Desugaring for-loops into while-loops.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 10</div><div class="ch-title">Functions</div><div class="ch-desc">Calls, declarations, closures, return via exceptions.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 11</div><div class="ch-title">Resolving and Binding</div><div class="ch-desc">The resolver pass. Fixing a subtle closure scoping bug.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 12</div><div class="ch-title">Classes</div><div class="ch-desc">Classes as first-class objects. Methods, this, init().</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 13</div><div class="ch-title">Inheritance</div><div class="ch-desc">Single inheritance with super. Method resolution chains.</div></div>
+  </div>
+
+  <div class="part-label">Part III — Bytecode Virtual Machine (clox, C)</div>
+  <div class="ch-grid">
+    <div class="ch-card"><div class="ch-num">Chapter 14</div><div class="ch-title">Chunks of Bytecode</div><div class="ch-desc">Dense, linear instruction encoding. Run-length line info.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 15</div><div class="ch-title">A Virtual Machine</div><div class="ch-desc">The stack-based VM. Push, pop, compute.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 16</div><div class="ch-title">Scanning on Demand</div><div class="ch-desc">Rewriting the scanner in C, character by character.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 17</div><div class="ch-title">Compiling Expressions</div><div class="ch-desc">Pratt parsing! The elegant single-pass expression compiler.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 18</div><div class="ch-title">Types of Values</div><div class="ch-desc">Tagged unions: type enum + value union.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 19</div><div class="ch-title">Strings</div><div class="ch-desc">Heap-allocated strings with interning for O(1) equality.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 20</div><div class="ch-title">Hash Tables</div><div class="ch-desc">Open addressing, linear probing, FNV-1a, tombstones.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 21</div><div class="ch-title">Global Variables</div><div class="ch-desc">Globals stored by name in a hash table.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 22</div><div class="ch-title">Local Variables</div><div class="ch-desc">Locals on the stack. Compile-time slot resolution. O(1) lookups.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 23</div><div class="ch-title">Jumping Back and Forth</div><div class="ch-desc">Control flow as jump instructions. Backpatching.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 24</div><div class="ch-title">Calls and Functions</div><div class="ch-desc">Call frames, the call stack, native functions.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 25</div><div class="ch-title">Closures</div><div class="ch-desc">Upvalues: references to enclosing stack slots that migrate to heap.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 26</div><div class="ch-title">Garbage Collection</div><div class="ch-desc">Mark-and-sweep with tricolor marking. Stress-test mode.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 27</div><div class="ch-title">Classes and Instances</div><div class="ch-desc">Classes as runtime objects. Instance fields in hash tables.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 28</div><div class="ch-title">Methods and Initializers</div><div class="ch-desc">Method dispatch, bound methods, init() returns this.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 29</div><div class="ch-title">Superclasses</div><div class="ch-desc">Inheritance copies methods. OP_GET_SUPER for super calls.</div></div>
+    <div class="ch-card"><div class="ch-num">Chapter 30</div><div class="ch-title">Optimization</div><div class="ch-desc">Hash caching, NaN boxing. ~10% faster for free.</div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- AI PREDICTIONS                         -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-predictions">
+  <h2>What Nystrom Got Right</h2>
+  <p>The book was published in 2021. What has aged well?</p>
+
+  <div class="pred">
+    <div class="pred-icon">✅</div>
+    <div class="pred-body"><h4>Pratt Parsing Everywhere</h4><p>Nystrom championed Pratt parsing when most textbooks ignored it. Today it's the go-to technique in Rust's compiler, TypeScript tooling, and virtually every new language project. The book helped make it mainstream.</p></div>
+  </div>
+  <div class="pred">
+    <div class="pred-icon">✅</div>
+    <div class="pred-body"><h4>Bytecode VMs as the Default</h4><p>Tree-walk interpreters remain teaching tools; real-world languages (Python 3.11+, Ruby YJIT, Lua) doubled down on bytecode VMs with JIT layers—exactly the trajectory the book's structure implies.</p></div>
+  </div>
+  <div class="pred">
+    <div class="pred-icon">✅</div>
+    <div class="pred-body"><h4>"Little Languages" Boom</h4><p>Chapter 1 predicted that embedded DSLs would proliferate. In 2024-2026 we've seen config languages (CUE, Pkl, Nickel), query languages (Malloy, PRQL), and AI prompt templating languages everywhere.</p></div>
+  </div>
+  <div class="pred">
+    <div class="pred-icon">✅</div>
+    <div class="pred-body"><h4>NaN Boxing Lives On</h4><p>JavaScriptCore, LuaJIT, and newer runtimes continue to use NaN boxing. The trick Nystrom dedicated Ch. 30 to remains the state of the art for dynamic value representation.</p></div>
+  </div>
+  <div class="pred">
+    <div class="pred-icon">🤔</div>
+    <div class="pred-body"><h4>GC vs. Ownership</h4><p>The book presents garbage collection as the natural choice. Rust's ownership model and languages like Vale/Mojo suggest alternatives are gaining traction—though GC remains dominant for scripting languages.</p></div>
+  </div>
+  <div class="pred">
+    <div class="pred-icon">🔮</div>
+    <div class="pred-body"><h4>AI Writing Interpreters?</h4><p>Nystrom's thesis—"it's just code"—proved more prophetic than expected. LLMs can now scaffold a basic interpreter from a grammar spec. The book's educational model (understand deeply, then build) is more valuable than ever as a counterweight.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VERDICT                                -->
+<!-- ═══════════════════════════════════════ -->
+<section class="container reveal" id="sec-verdict">
+  <h2>The Verdict</h2>
+  <div class="verdict-box">
+    <div class="stars" style="margin-bottom:16px">★★★★★</div>
+    <h3 style="font-size:1.5rem;margin-bottom:16px">A Masterpiece of Technical Writing</h3>
+    <p><em>Crafting Interpreters</em> manages to be simultaneously rigorous and accessible, comprehensive and readable, theoretical and practical. It's the rare programming book that you can read cover-to-cover like a novel AND use as a reference for years afterward.</p>
+    <p>The book's central thesis—that compilers aren't magic, they're just code—is proven conclusively across 800 pages and two complete implementations. Nystrom writes with warmth, humor, and deep respect for the reader's intelligence.</p>
+    <p><strong>Best chapters:</strong> Ch. 6 (Parsing Expressions), Ch. 11 (Resolving and Binding), Ch. 17 (Pratt Parsing), Ch. 26 (Garbage Collection), Ch. 30 (NaN Boxing)</p>
+    <p style="margin-bottom:0"><strong>Who should read it:</strong> Anyone who writes code for a living. Not because you'll necessarily build a language, but because you'll understand, at a visceral level, how the tools you use every day actually work. And that understanding changes how you think.</p>
+  </div>
+  <blockquote>"My hope is that if you've felt intimidated by languages, and this book helps you overcome that fear, maybe I'll leave you just a tiny bit braver than you were before."<span class="attr">— Robert Nystrom, closing words</span></blockquote>
+  <blockquote>"Every introduction to every compiler book seems to have this section. I don't think ornithology books worry about justifying their existence. They assume the reader loves birds and start teaching."<span class="attr">— Robert Nystrom, Chapter 1</span></blockquote>
+</section>
+
+<footer>
+  <p>🐑 Interactive Book Report v2 · <a href="https://craftinginterpreters.com" target="_blank" rel="noopener">Read the book free online</a></p>
+  <p style="margin-top:8px">Built with love, a hand-crafted scanner, and zero frameworks</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+const $=s=>document.getElementById(s);
+const isAlpha=c=>(c>='a'&&c<='z')||(c>='A'&&c<='Z')||c==='_';
+const isDigit=c=>c>='0'&&c<='9';
+const isAlphaNum=c=>isAlpha(c)||isDigit(c);
+const KW=new Set(['and','class','else','false','for','fun','if','nil','or','print','return','super','this','true','var','while']);
+
+// Progress bar
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  $('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ═══════════════════════════════════════
+// TOKENIZER (shared)
+// ═══════════════════════════════════════
+function tokenize(src){
+  const toks=[];let i=0;
+  while(i<src.length){
+    const c=src[i];
+    if(' \t\r\n'.includes(c)){i++;continue}
+    if(c==='/'&&src[i+1]==='/'){while(i<src.length&&src[i]!=='\n')i++;continue}
+    // two-char
+    if('!=<>'.includes(c)&&src[i+1]==='='){toks.push({type:'OP',value:c+'=',cls:'op'});i+=2;continue}
+    if('+-*/%'.includes(c)){toks.push({type:'OP',value:c,cls:'op'});i++;continue}
+    if('(){},;.'.includes(c)){toks.push({type:'PUNC',value:c,cls:'punc'});i++;continue}
+    if('=!<>'.includes(c)){toks.push({type:'OP',value:c,cls:'op'});i++;continue}
+    if(c==='"'){let s='';i++;while(i<src.length&&src[i]!=='"')s+=src[i++];i++;toks.push({type:'STR',value:s,cls:'str'});continue}
+    if(isDigit(c)){let n='';while(i<src.length&&(isDigit(src[i])||src[i]==='.'))n+=src[i++];toks.push({type:'NUM',value:parseFloat(n),cls:'num'});continue}
+    if(isAlpha(c)){let id='';while(i<src.length&&isAlphaNum(src[i]))id+=src[i++];
+      if(id==='true'||id==='false')toks.push({type:'BOOL',value:id==='true',cls:'kw'});
+      else if(id==='nil')toks.push({type:'NIL',value:null,cls:'kw'});
+      else if(KW.has(id))toks.push({type:'KW',value:id,cls:'kw'});
+      else toks.push({type:'ID',value:id,cls:'id'});
+      continue}
+    i++;
+  }
+  toks.push({type:'EOF',value:'EOF',cls:'eof'});
+  return toks;
+}
+
+// ═══════════════════════════════════════
+// EXPRESSION PARSER (Pratt-style, shared)
+// ═══════════════════════════════════════
+const PREC={'+':3,'-':3,'*':4,'/':4,'%':4,'<':2,'>':2,'<=':2,'>=':2,'==':1,'!=':1};
+function parseExpr(toks,pos,minP=0){
+  let left=parsePrefix(toks,pos);pos=left.pos;
+  while(pos<toks.length&&toks[pos].type==='OP'&&(PREC[toks[pos].value]||0)>=minP){
+    const op=toks[pos].value;pos++;
+    const right=parseExpr(toks,pos,(PREC[op]||0)+1);pos=right.pos;
+    left={node:{type:'Bin',op,l:left.node,r:right.node},pos};
+  }
+  return left;
+}
+function parsePrefix(toks,pos){
+  const t=toks[pos];if(!t)throw new Error('Unexpected end');
+  if(t.type==='NUM')return{node:{type:'Num',v:t.value},pos:pos+1};
+  if(t.type==='STR')return{node:{type:'Str',v:t.value},pos:pos+1};
+  if(t.type==='BOOL')return{node:{type:'Bool',v:t.value},pos:pos+1};
+  if(t.type==='NIL')return{node:{type:'Nil'},pos:pos+1};
+  if(t.type==='ID')return{node:{type:'Id',v:t.value},pos:pos+1};
+  if(t.type==='PUNC'&&t.value==='('){const inner=parseExpr(toks,pos+1,0);
+    if(!toks[inner.pos]||toks[inner.pos].value!==')')throw new Error('Expected )');
+    return{node:{type:'Group',e:inner.node},pos:inner.pos+1};}
+  if(t.type==='OP'&&t.value==='-'){const r=parseExpr(toks,pos+1,5);return{node:{type:'Neg',e:r.node},pos:r.pos};}
+  throw new Error('Unexpected: '+t.value);
+}
+function evalAST(n,env={}){
+  if(n.type==='Num')return n.v;if(n.type==='Str')return n.v;if(n.type==='Bool')return n.v;if(n.type==='Nil')return null;
+  if(n.type==='Id'){if(n.v in env)return env[n.v];throw new Error('Undefined: '+n.v)}
+  if(n.type==='Group')return evalAST(n.e,env);if(n.type==='Neg')return -evalAST(n.e,env);
+  if(n.type==='Bin'){const l=evalAST(n.l,env),r=evalAST(n.r,env);
+    if(n.op==='+')return typeof l==='string'||typeof r==='string'?String(l)+String(r):l+r;
+    if(n.op==='-')return l-r;if(n.op==='*')return l*r;if(n.op==='/')return l/r;
+    if(n.op==='%')return l%r;if(n.op==='<')return l<r;if(n.op==='>')return l>r;
+    if(n.op==='==')return l===r;if(n.op==='!=')return l!==r;}
+  return null;
+}
+
+// Compile AST to bytecode
+function compileAST(n){
+  const ins=[];
+  function emit(n){
+    if(n.type==='Num'){ins.push({op:'OP_CONSTANT',arg:n.v})}
+    else if(n.type==='Str'){ins.push({op:'OP_CONSTANT',arg:'"'+n.v+'"'})}
+    else if(n.type==='Bool'){ins.push({op:n.v?'OP_TRUE':'OP_FALSE'})}
+    else if(n.type==='Nil'){ins.push({op:'OP_NIL'})}
+    else if(n.type==='Group'){emit(n.e)}
+    else if(n.type==='Neg'){emit(n.e);ins.push({op:'OP_NEGATE'})}
+    else if(n.type==='Bin'){emit(n.l);emit(n.r);
+      const m={'+':'OP_ADD','-':'OP_SUBTRACT','*':'OP_MULTIPLY','/':'OP_DIVIDE','%':'OP_MODULO','<':'OP_LESS','>':'OP_GREATER','==':'OP_EQUAL','!=':'OP_NOT_EQUAL'};
+      ins.push({op:m[n.op]||'OP_UNKNOWN'})}
+  }
+  emit(n);ins.push({op:'OP_RETURN'});return ins;
+}
+
+// VM step-through
+function vmRun(ins){
+  const stack=[],steps=[];
+  for(const i of ins){
+    if(i.op==='OP_CONSTANT'){const v=typeof i.arg==='string'&&i.arg[0]==='"'?i.arg:Number(i.arg);stack.push(v);steps.push({op:i.op,arg:i.arg,stack:[...stack]})}
+    else if(i.op==='OP_TRUE'){stack.push(true);steps.push({op:i.op,stack:[...stack]})}
+    else if(i.op==='OP_FALSE'){stack.push(false);steps.push({op:i.op,stack:[...stack]})}
+    else if(i.op==='OP_NIL'){stack.push(null);steps.push({op:i.op,stack:[...stack]})}
+    else if(i.op==='OP_NEGATE'){const a=stack.pop();stack.push(-a);steps.push({op:i.op,stack:[...stack]})}
+    else if(i.op==='OP_RETURN'){steps.push({op:i.op,stack:[...stack]})}
+    else{const b=stack.pop(),a=stack.pop();let r;
+      if(i.op==='OP_ADD')r=typeof a==='string'?a+b:a+b;
+      else if(i.op==='OP_SUBTRACT')r=a-b;else if(i.op==='OP_MULTIPLY')r=a*b;
+      else if(i.op==='OP_DIVIDE')r=a/b;else if(i.op==='OP_LESS')r=a<b;
+      else if(i.op==='OP_GREATER')r=a>b;else if(i.op==='OP_EQUAL')r=a===b;
+      else if(i.op==='OP_NOT_EQUAL')r=a!==b;else r=0;
+      stack.push(r);steps.push({op:i.op,detail:`${a} ${i.op.replace('OP_','')} ${b} = ${r}`,stack:[...stack]})}
+  }
+  return steps;
+}
+
+// ═══════════════════════════════════════
+// EXHIBIT 1: PIPELINE FLOW
+// ═══════════════════════════════════════
+let pipeStage=-1,pipeToks,pipeAST,pipeIns,pipeVM;
+function pipelineReset(){
+  pipeStage=-1;pipeToks=null;pipeAST=null;pipeIns=null;pipeVM=null;
+  document.querySelectorAll('.pipe-stage').forEach(s=>{s.classList.remove('active','done')});
+  document.querySelectorAll('.pipe-arrow').forEach(a=>a.classList.remove('active'));
+  $('pipe-out').innerHTML='<span style="color:var(--text-dim)">Click "Run Pipeline" or "Step" to begin…</span>';
+}
+function pipelineStep(){
+  pipeStage++;if(pipeStage>4){pipelineReset();return}
+  const stages=document.querySelectorAll('.pipe-stage');
+  const arrows=document.querySelectorAll('.pipe-arrow');
+  stages.forEach((s,i)=>{s.classList.remove('active');if(i<pipeStage)s.classList.add('done')});
+  stages[pipeStage].classList.add('active');
+  if(pipeStage>0)arrows[pipeStage-1].classList.add('active');
+  const src=$('pipe-input').value;
+  const out=$('pipe-out');
+  if(pipeStage===0){out.innerHTML='<span style="color:var(--text-dim)">Source:</span> <span style="color:var(--text)">'+esc(src)+'</span>'}
+  else if(pipeStage===1){pipeToks=tokenize(src);out.innerHTML='<div class="token-list">'+pipeToks.map((t,i)=>`<span class="tok ${t.cls}" style="animation-delay:${i*60}ms">${esc(t.type==='STR'?'"'+t.value+'"':String(t.value))}</span>`).join('')+'</div>'}
+  else if(pipeStage===2){try{pipeAST=parseExpr(pipeToks,0);out.innerHTML='<pre style="color:var(--accent3)">'+esc(astToString(pipeAST.node,0))+'</pre>'}catch(e){out.innerHTML='<span style="color:var(--accent2)">'+esc(e.message)+'</span>'}}
+  else if(pipeStage===3){pipeIns=compileAST(pipeAST.node);out.innerHTML=pipeIns.map((inst,i)=>`<div style="display:flex;gap:12px;font-family:var(--mono);font-size:0.82rem"><span style="color:var(--text-dim)">${String(i).padStart(4,'0')}</span><span style="color:var(--accent)">${inst.op}</span><span style="color:var(--accent3)">${inst.arg!==undefined?inst.arg:''}</span></div>`).join('')}
+  else if(pipeStage===4){pipeVM=vmRun(pipeIns);const last=pipeVM[pipeVM.length-1];out.innerHTML=pipeVM.map(s=>{let line=`<span style="color:var(--accent)">${s.op.padEnd(16)}</span>`;if(s.arg!==undefined)line+=`<span style="color:var(--accent3)">${String(s.arg).padEnd(8)}</span>`;line+=`<span style="color:var(--text-dim)">stack: [${s.stack.join(', ')}]</span>`;return `<div style="font-family:var(--mono);font-size:0.8rem">${line}</div>`}).join('')+`<div style="margin-top:8px;color:var(--green);font-family:var(--mono)">→ Result: ${last.stack[last.stack.length-1]}</div>`}
+}
+function pipelineRun(){pipelineReset();let i=0;const go=()=>{pipelineStep();i++;if(i<5)setTimeout(go,500)};go();}
+function astToString(n,d){
+  const pad='  '.repeat(d);
+  if(n.type==='Num')return pad+'Num('+n.v+')';
+  if(n.type==='Str')return pad+'Str("'+n.v+'")';
+  if(n.type==='Bool')return pad+'Bool('+n.v+')';
+  if(n.type==='Nil')return pad+'Nil';
+  if(n.type==='Id')return pad+'Id('+n.v+')';
+  if(n.type==='Group')return pad+'Group\n'+astToString(n.e,d+1);
+  if(n.type==='Neg')return pad+'Negate\n'+astToString(n.e,d+1);
+  if(n.type==='Bin')return pad+'Binary('+n.op+')\n'+astToString(n.l,d+1)+'\n'+astToString(n.r,d+1);
+  return pad+'?';
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Auto-run on enter
+$('pipe-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();pipelineRun()}});
+
+// ═══════════════════════════════════════
+// EXHIBIT 2: PRATT PARSER
+// ═══════════════════════════════════════
+function runPratt(){
+  const src=$('pratt-input').value.trim();
+  const toks=tokenize(src).filter(t=>t.type!=='EOF');
+  // Show the parse rule table
+  const table=$('pratt-table');table.style.display='table';
+  const tbody=$('pratt-tbody');tbody.innerHTML='';
+  const rules={
+    'NUM':{prefix:'number()',infix:'—',prec:'—'},
+    'STR':{prefix:'string()',infix:'—',prec:'—'},
+    'BOOL':{prefix:'literal()',infix:'—',prec:'—'},
+    'NIL':{prefix:'literal()',infix:'—',prec:'—'},
+    'ID':{prefix:'variable()',infix:'—',prec:'—'},
+    '+':{prefix:'—',infix:'binary()',prec:'TERM (3)'},
+    '-':{prefix:'unary()',infix:'binary()',prec:'TERM (3)'},
+    '*':{prefix:'—',infix:'binary()',prec:'FACTOR (4)'},
+    '/':{prefix:'—',infix:'binary()',prec:'FACTOR (4)'},
+    '(':{prefix:'grouping()',infix:'call()',prec:'CALL (7)'},
+    ')':{prefix:'—',infix:'—',prec:'—'},
+  };
+  // Unique tokens
+  const seen=new Set();
+  for(const t of toks){
+    const key=t.type==='OP'||t.type==='PUNC'?t.value:t.type;
+    if(seen.has(key))continue;seen.add(key);
+    const r=rules[key]||rules[t.type]||{prefix:'—',infix:'—',prec:'—'};
+    tbody.innerHTML+=`<tr><td style="color:var(--accent3)">${esc(t.type==='OP'||t.type==='PUNC'?t.value:t.type)}</td><td style="color:${r.prefix!=='—'?'var(--green)':'var(--text-dim)'}">${r.prefix}</td><td style="color:${r.infix!=='—'?'var(--green)':'var(--text-dim)'}">${r.infix}</td><td>${r.prec}</td></tr>`;
+  }
+  // Trace the parse
+  const steps=$('pratt-steps');steps.innerHTML='';
+  const trace=[];let pos=0;
+  function prattParse(minP){
+    const t=toks[pos];if(!t)return;pos++;
+    const r=rules[t.type==='OP'||t.type==='PUNC'?t.value:t.type]||rules[t.type];
+    trace.push({token:t.type==='OP'||t.type==='PUNC'?t.value:String(t.value),fn:r?r.prefix:'?',action:'prefix'});
+    while(pos<toks.length){
+      const next=toks[pos];
+      const nr=rules[next.type==='OP'||next.type==='PUNC'?next.value:next.type];
+      const p=PREC[next.value]||0;
+      if(p<minP)break;
+      pos++;
+      trace.push({token:next.value,fn:nr?nr.infix:'?',action:'infix',prec:p});
+      prattParse(p+1);
+    }
+  }
+  try{prattParse(0)}catch(e){}
+  trace.forEach((s,i)=>{
+    const div=document.createElement('div');div.className='pratt-step';
+    div.style.animationDelay=i*80+'ms';
+    div.innerHTML=`<span class="step-label">${i+1}.</span><span style="color:var(--accent3)">${esc(s.token)}</span><span class="step-action">${s.action}</span><span class="step-fn">${s.fn}</span>${s.prec?`<span style="color:var(--text-dim)">prec=${s.prec}</span>`:''}`;
+    steps.appendChild(div);
+  });
+  // Show resulting AST
+  const ast=$('pratt-ast');ast.style.display='block';
+  try{
+    const allToks=tokenize(src);
+    const result=parseExpr(allToks,0);
+    ast.innerHTML='<pre style="padding:12px;margin:0;font-family:var(--mono);font-size:0.82rem;color:var(--accent3)">'+esc(astToString(result.node,0))+'</pre>';
+  }catch(e){ast.innerHTML='<span style="color:var(--accent2);padding:12px;display:block">'+esc(e.message)+'</span>'}
+}
+
+// ═══════════════════════════════════════
+// EXHIBIT 3: CLOSURES / UPVALUES
+// ═══════════════════════════════════════
+let closureState=0,closureCount=0;
+function closureStep(step){
+  closureState=step;
+  const vis=$('closure-vis'),out=$('closure-out');
+  const code=[
+    'fun outer() {\n  var x = 0;\n  fun inner() {\n    x = x + 1;\n    return x;\n  }\n  return inner;\n}\nvar fn = outer();',
+    'Calling outer()…',
+    'inner() is created — captures x via upvalue',
+    'outer() returns inner function',
+    'outer() exits! Stack frame destroyed.\nBut x survives — upvalue closes over.',
+    'fn() → inner() runs, x = 0 + 1 = 1',
+    'fn() → inner() runs, x = 1 + 1 = 2'
+  ];
+  closureCount=step>=5?(step>=6?2:1):0;
+
+  let html='<div style="display:flex;flex-wrap:wrap;gap:16px">';
+  // Stack side
+  html+='<div style="flex:1;min-width:200px">';
+  html+='<div style="font-family:var(--sans);font-size:0.75rem;color:var(--text-dim);margin-bottom:8px">STACK</div>';
+  if(step<4){
+    html+='<div class="env-box'+(step>=1?' highlight':'')+'"><span class="env-label">outer()</span>';
+    if(step>=1)html+='<div class="env-var"><span class="vname">x</span> = <span class="vval">0</span></div>';
+    if(step>=2)html+='<div class="env-var"><span class="vname">inner</span> = <span class="vval">&lt;fn&gt;</span></div>';
+    if(step>=2)html+='<div class="upvalue-arrow">↑ upvalue → x (on stack)</div>';
+    html+='</div>';
+  } else {
+    html+='<div style="font-family:var(--mono);font-size:0.82rem;color:var(--text-dim);padding:8px;border:1px dashed var(--accent2);border-radius:8px;text-align:center">outer() frame — <span style="color:var(--accent2)">popped!</span></div>';
+  }
+  if(step>=5){
+    html+='<div class="env-box highlight"><span class="env-label">inner() call</span>';
+    html+='<div class="env-var"><span class="vname">[upvalue]</span> → <span class="vval">x on heap</span></div>';
+    html+='</div>';
+  }
+  html+='</div>';
+
+  // Heap side
+  html+='<div style="flex:1;min-width:200px">';
+  html+='<div style="font-family:var(--sans);font-size:0.75rem;color:var(--text-dim);margin-bottom:8px">HEAP</div>';
+  if(step>=2){
+    html+='<div class="env-box" style="border-color:var(--purple)"><span class="env-label" style="color:var(--purple)">Closure: inner</span>';
+    html+='<div class="env-var"><span class="vname">function</span> = <span class="vval">&lt;code&gt;</span></div>';
+    html+='<div class="env-var"><span class="vname">upvalue[0]</span> → <span class="vval">'+(step<4?'x (stack)':'x (CLOSED)')+'</span></div>';
+    html+='</div>';
+  }
+  if(step>=4){
+    const xVal=closureCount;
+    html+='<div class="env-box" style="border-color:var(--green)"><span class="env-label" style="color:var(--green)">Closed-over value</span>';
+    html+='<div class="env-var"><span class="vname">x</span> = <span class="vval">'+xVal+'</span></div>';
+    html+='</div>';
+  }
+  html+='</div></div>';
+
+  vis.innerHTML=html;
+  let outText=step>=5?`fn() → ${closureCount}`:'';
+  if(step===4)outText='⚡ Upvalue closed! x moved from stack to heap.';
+  if(step<4)outText=code[step];
+  out.textContent=outText;
+}
+
+// ═══════════════════════════════════════
+// EXHIBIT 4: NaN BOXING
+// ═══════════════════════════════════════
+let nanBits=new Array(64).fill(0);
+function nanSet(type){
+  if(type==='num'){
+    const buf=new ArrayBuffer(8);new Float64Array(buf)[0]=3.14;
+    const dv=new DataView(buf);
+    const hi=dv.getUint32(4),lo=dv.getUint32(0);
+    const s=(hi>>>0).toString(2).padStart(32,'0')+(lo>>>0).toString(2).padStart(32,'0');
+    nanBits=s.split('').map(Number);
+  } else if(type==='nil'){
+    nanBits=new Array(64).fill(0);
+    // QNaN: sign=0, exp=all 1s, bit 51=1 (quiet), tag=01
+    for(let i=1;i<=11;i++)nanBits[i]=1;nanBits[12]=1;nanBits[63]=1;
+  } else if(type==='true'){
+    nanBits=new Array(64).fill(0);for(let i=1;i<=11;i++)nanBits[i]=1;nanBits[12]=1;nanBits[62]=1;nanBits[63]=1;
+  } else if(type==='false'){
+    nanBits=new Array(64).fill(0);for(let i=1;i<=11;i++)nanBits[i]=1;nanBits[12]=1;nanBits[62]=1;
+  } else if(type==='ptr'){
+    nanBits=new Array(64).fill(0);nanBits[0]=1;for(let i=1;i<=11;i++)nanBits[i]=1;nanBits[12]=1;
+    // Fake 48-bit pointer
+    const addr='000000000000000001011111010010100001';
+    for(let i=0;i<addr.length;i++)nanBits[28+i]=Number(addr[i]);
+  }
+  renderNaN(type);
+}
+function renderNaN(type){
+  const cont=$('nan-bits');const info=$('nan-info');const legend=$('nan-legend');
+  let html='';
+  for(let i=0;i<64;i++){
+    let cls='man';
+    if(i===0)cls='sign';
+    else if(i<=11)cls='exp';
+    else if(i===12)cls='quiet';
+    else if(type==='ptr'&&i>=16)cls='ptr';
+    else if(type!=='num'&&i>=62)cls='tag';
+    html+=`<span class="nbit ${cls}" data-i="${i}" onclick="toggleBit(${i},'${type}')">${nanBits[i]}</span>`;
+  }
+  cont.innerHTML=html;
+
+  const descs={
+    num:'<strong>Number (3.14):</strong> Just a regular IEEE 754 double. No boxing overhead — numbers are stored as-is. This is why arithmetic in NaN-boxed VMs has zero extra cost.',
+    nil:'<strong>nil:</strong> Quiet NaN pattern (exponent all 1s + quiet bit) with tag bits = 01. A unique sentinel value that\'s impossible to confuse with a real number.',
+    true:'<strong>true:</strong> Quiet NaN + tag = 11. Boolean true.',
+    false:'<strong>false:</strong> Quiet NaN + tag = 10. Boolean false.',
+    ptr:'<strong>Object pointer:</strong> Sign bit = 1 signals "this is a pointer." The lower 48 bits hold the memory address. Modern x86-64 only uses 48-bit virtual addresses, so it fits perfectly.'
+  };
+  info.innerHTML=descs[type]||'';
+
+  const swatches=[
+    {cls:'sign',label:'Sign'},
+    {cls:'exp',label:'Exponent (11b)'},
+    {cls:'quiet',label:'Quiet NaN'},
+    type==='num'?{cls:'man',label:'Mantissa (52b)'}:
+    type==='ptr'?{cls:'ptr',label:'48-bit pointer'}:
+    {cls:'tag',label:'Tag bits'}
+  ];
+  legend.innerHTML=swatches.map(s=>`<span><span class="nan-swatch nbit ${s.cls}" style="display:inline-block"></span>${s.label}</span>`).join('');
+}
+function toggleBit(i,type){nanBits[i]=nanBits[i]?0:1;renderNaN(type)}
+
+// ═══════════════════════════════════════
+// EXHIBIT 5: GARBAGE COLLECTION
+// ═══════════════════════════════════════
+let gcObjs=[],gcSelected=null,gcIdCounter=0;
+function gcInit(){
+  gcObjs=[
+    {id:gcIdCounter++,name:'A',refs:[],root:true,color:'white'},
+    {id:gcIdCounter++,name:'B',refs:[],root:false,color:'white'},
+    {id:gcIdCounter++,name:'C',refs:[],root:false,color:'white'},
+  ];
+  gcObjs[0].refs=[1];gcObjs[1].refs=[2];
+  gcSelected=null;gcRender();
+}
+function gcAdd(){
+  const names='DEFGHIJKLMNOPQRSTUVWXYZ';
+  const name=names[gcIdCounter%names.length]||(gcIdCounter+'');
+  gcObjs.push({id:gcIdCounter++,name,refs:[],root:false,color:'white'});
+  gcRender();
+}
+function gcToggleRoot(){
+  if(gcSelected===null)return;
+  const obj=gcObjs.find(o=>o.id===gcSelected);if(obj)obj.root=!obj.root;
+  gcRender();
+}
+function gcLink(){
+  if(gcSelected===null)return;
+  const target=prompt('Link to which object? (name)');if(!target)return;
+  const src=gcObjs.find(o=>o.id===gcSelected);
+  const dst=gcObjs.find(o=>o.name.toLowerCase()===target.toLowerCase());
+  if(src&&dst&&src.id!==dst.id&&!src.refs.includes(dst.id)){src.refs.push(dst.id)}
+  gcRender();
+}
+function gcUnlink(){
+  if(gcSelected===null)return;
+  const obj=gcObjs.find(o=>o.id===gcSelected);if(obj)obj.refs=[];
+  gcRender();
+}
+function gcRender(){
+  const heap=$('gc-heap');
+  heap.innerHTML=gcObjs.map(o=>{
+    const sel=o.id===gcSelected?' style="outline:2px solid var(--accent)"':'';
+    const pin=o.root?'📌':'';
+    return`<div class="gc-obj ${o.color}" data-id="${o.id}" onclick="gcSelect(${o.id})"${sel}><span class="obj-name">${pin}${o.name}</span><span class="obj-refs">${o.refs.map(r=>{const t=gcObjs.find(x=>x.id===r);return t?'→'+t.name:''}).join(' ')}</span></div>`;
+  }).join('');
+  const refs=$('gc-refs');
+  refs.innerHTML='References: '+gcObjs.map(o=>o.refs.length?o.name+'→['+o.refs.map(r=>{const t=gcObjs.find(x=>x.id===r);return t?t.name:'?'}).join(',')+']':'').filter(Boolean).join('  ')||'(none)';
+  refs.innerHTML+='<br>Roots: '+gcObjs.filter(o=>o.root).map(o=>o.name).join(', ')||'(none)';
+}
+function gcSelect(id){gcSelected=gcSelected===id?null:id;gcRender()}
+async function gcRun(){
+  const log=$('gc-log');log.innerHTML='';
+  function l(msg){log.innerHTML+=msg+'\n';log.scrollTop=log.scrollHeight}
+  // Reset colors
+  gcObjs.forEach(o=>o.color='white');gcRender();
+  await delay(400);
+  l('🔍 Phase 1: MARK — starting from roots');
+  // Mark phase with tricolor
+  const gray=[],black=new Set();
+  for(const o of gcObjs){if(o.root){o.color='gray';gray.push(o.id);l(`  Root ${o.name} → GRAY`)}}
+  gcRender();await delay(600);
+  while(gray.length){
+    const id=gray.shift();const obj=gcObjs.find(o=>o.id===id);if(!obj)continue;
+    for(const rid of obj.refs){
+      const ref=gcObjs.find(o=>o.id===rid);
+      if(ref&&ref.color==='white'){ref.color='gray';gray.push(ref.id);l(`  ${obj.name} refs ${ref.name} → GRAY`)}
+    }
+    obj.color='black';black.add(obj.id);l(`  ${obj.name} fully traced → BLACK`);
+    gcRender();await delay(500);
+  }
+  l('');l('🗑️ Phase 2: SWEEP — freeing white objects');await delay(400);
+  const toSweep=gcObjs.filter(o=>o.color==='white');
+  for(const o of toSweep){
+    l(`  ${o.name} is WHITE — garbage! Freeing…`);
+    o.color='swept';gcRender();await delay(400);
+  }
+  gcObjs=gcObjs.filter(o=>o.color!=='swept');
+  // Reset remaining to white
+  gcObjs.forEach(o=>o.color='white');
+  // Clean up dead references
+  const aliveIds=new Set(gcObjs.map(o=>o.id));
+  gcObjs.forEach(o=>{o.refs=o.refs.filter(r=>aliveIds.has(r))});
+  gcRender();
+  l('');l(`✅ GC complete. ${toSweep.length} object(s) freed, ${gcObjs.length} alive.`);
+}
+function gcReset(){gcIdCounter=0;gcInit()}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// Init
+gcInit();
+pipelineReset();
+nanSet('num');
+</script>
+</body>
+</html>

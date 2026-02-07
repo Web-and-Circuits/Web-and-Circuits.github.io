@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last Chance to See — Douglas Adams</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a1a1f;--bg2:#0f2229;--bg3:#132d38;--accent:#3dd6c8;--accent2:#2ba89d;
+--text:#d4e4e8;--text2:#8fa8b0;--gold:#e8c547;--warm:#e8a247;--danger:#e85c47;
+--font:'Georgia',serif;--mono:'Courier New',monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:var(--bg)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,26,31,.95);backdrop-filter:blur(12px);
+border-bottom:1px solid rgba(61,214,200,.15);padding:.6rem 1rem;display:flex;gap:.4rem;
+flex-wrap:wrap;justify-content:center}
+nav a{color:var(--text2);text-decoration:none;font-size:.8rem;padding:.3rem .6rem;border-radius:4px;
+transition:all .2s;white-space:nowrap}
+nav a:hover,nav a.active{color:var(--accent);background:rgba(61,214,200,.1)}
+
+/* SECTIONS */
+section{max-width:900px;margin:0 auto;padding:4rem 1.5rem}
+h2{font-size:2rem;color:var(--accent);margin-bottom:.5rem;letter-spacing:-.02em}
+h2 .emoji{margin-right:.5rem}
+.subtitle{color:var(--text2);font-size:1.1rem;margin-bottom:2rem;font-style:italic}
+h3{color:var(--gold);font-size:1.2rem;margin:1.5rem 0 .5rem}
+p{margin-bottom:1rem}
+.quote{border-left:3px solid var(--accent2);padding:.8rem 1.2rem;margin:1.5rem 0;
+background:rgba(61,214,200,.05);font-style:italic;color:var(--text)}
+.quote cite{display:block;margin-top:.5rem;font-style:normal;font-size:.85rem;color:var(--text2)}
+
+/* HERO */
+#hero{text-align:center;padding:6rem 1.5rem 4rem;max-width:900px;margin:0 auto}
+#hero h1{font-size:2.8rem;color:var(--accent);letter-spacing:-.03em;margin-bottom:.5rem}
+#hero .author{color:var(--gold);font-size:1.2rem;margin-bottom:1.5rem}
+#hero .tagline{color:var(--text2);font-size:1.15rem;max-width:600px;margin:0 auto 2rem;line-height:1.8}
+
+/* MAP */
+.map-container{position:relative;width:100%;max-width:800px;margin:0 auto 2rem;
+aspect-ratio:2/1;background:var(--bg2);border-radius:12px;border:1px solid rgba(61,214,200,.15);overflow:hidden}
+.map-svg{width:100%;height:100%}
+.map-dot{cursor:pointer;transition:all .3s}
+.map-dot circle{fill:var(--accent);opacity:.7;transition:all .3s}
+.map-dot:hover circle,.map-dot.active circle{opacity:1;r:8}
+.map-dot text{fill:var(--text);font-size:9px;font-family:var(--font);pointer-events:none}
+.map-line{stroke:var(--accent2);stroke-width:1.5;stroke-dasharray:6 4;fill:none;opacity:.4}
+.map-info{background:var(--bg3);border:1px solid rgba(61,214,200,.2);border-radius:8px;
+padding:1.2rem;margin-top:1rem;min-height:120px;transition:all .3s}
+.map-info h3{margin-top:0}
+.map-info .species-tag{display:inline-block;background:rgba(61,214,200,.15);color:var(--accent);
+padding:.2rem .6rem;border-radius:4px;font-size:.85rem;margin-bottom:.5rem}
+
+/* SPECIES CARDS */
+.species-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin:1.5rem 0}
+.species-card{background:var(--bg2);border:1px solid rgba(61,214,200,.12);border-radius:10px;
+padding:1.2rem;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.species-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.species-card h4{color:var(--accent);font-size:1.1rem;margin-bottom:.3rem}
+.species-card .latin{color:var(--text2);font-size:.8rem;font-style:italic;margin-bottom:.6rem}
+.species-card .peek{color:var(--text2);font-size:.9rem}
+.species-detail{display:none;margin-top:.8rem;padding-top:.8rem;border-top:1px solid rgba(61,214,200,.1)}
+.species-card.open .species-detail{display:block}
+.adapted-for,.world-became{padding:.6rem .8rem;border-radius:6px;margin:.4rem 0;font-size:.9rem}
+.adapted-for{background:rgba(61,214,200,.08);border-left:3px solid var(--accent)}
+.world-became{background:rgba(232,92,71,.08);border-left:3px solid var(--danger)}
+.adapted-for::before{content:'✓ Adapted for: ';color:var(--accent);font-weight:bold}
+.world-became::before{content:'✗ World became: ';color:var(--danger);font-weight:bold}
+
+/* BUREAUCRACY */
+.bureau-flow{position:relative;max-width:600px;margin:0 auto}
+.bureau-step{background:var(--bg2);border:1px solid rgba(61,214,200,.12);border-radius:8px;
+padding:1rem 1.2rem;margin-bottom:.5rem;cursor:pointer;transition:all .3s;opacity:.4;transform:translateX(-10px)}
+.bureau-step.revealed{opacity:1;transform:translateX(0)}
+.bureau-step.current{border-color:var(--gold);box-shadow:0 0 20px rgba(232,197,71,.1)}
+.bureau-step .step-num{color:var(--gold);font-size:.8rem;font-weight:bold;text-transform:uppercase}
+.bureau-step .step-text{margin-top:.3rem;font-size:.95rem}
+.bureau-step .step-quote{font-style:italic;color:var(--text2);font-size:.85rem;margin-top:.4rem}
+.bureau-btn{display:block;margin:1rem auto;padding:.6rem 1.5rem;background:var(--accent2);
+color:var(--bg);border:none;border-radius:6px;font-family:var(--font);font-size:.95rem;cursor:pointer;transition:all .2s}
+.bureau-btn:hover{background:var(--accent)}
+.bureau-counter{text-align:center;color:var(--gold);font-size:1.1rem;margin:1rem 0}
+
+/* ADAPTATION SLIDER */
+.adapt-section{margin:1.5rem 0}
+.adapt-tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.adapt-tab{padding:.4rem .8rem;background:var(--bg2);border:1px solid rgba(61,214,200,.12);
+border-radius:6px;cursor:pointer;color:var(--text2);font-size:.9rem;transition:all .2s}
+.adapt-tab.active{background:var(--accent2);color:var(--bg);border-color:var(--accent)}
+.adapt-slider-wrap{margin:1rem 0}
+.adapt-slider-wrap input[type=range]{width:100%;-webkit-appearance:none;background:linear-gradient(to right,var(--accent),var(--danger));
+height:6px;border-radius:3px;outline:none;cursor:pointer}
+.adapt-slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;
+border-radius:50%;background:white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.adapt-labels{display:flex;justify-content:space-between;font-size:.8rem;color:var(--text2);margin-bottom:.5rem}
+.adapt-display{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.adapt-env,.adapt-animal{padding:1rem;border-radius:8px;font-size:.9rem;transition:all .5s}
+.adapt-env{background:var(--bg2);border:1px solid rgba(61,214,200,.12)}
+.adapt-animal{background:var(--bg3);border:1px solid rgba(61,214,200,.12)}
+.fitness-bar{height:8px;border-radius:4px;margin-top:.5rem;transition:all .5s;background:var(--accent)}
+.fitness-label{font-size:.8rem;color:var(--text2);margin-top:.3rem}
+
+/* GORILLA GAZE */
+#gorilla-gaze .gaze-container{max-width:650px;margin:0 auto;min-height:400px}
+.gaze-line{opacity:0;transform:translateY(10px);transition:opacity 1.2s ease,transform 1.2s ease;
+font-size:1.1rem;line-height:1.9;margin-bottom:.6rem}
+.gaze-line.visible{opacity:1;transform:translateY(0)}
+.gaze-line.climax{color:var(--accent);font-size:1.2rem;font-weight:bold}
+.gaze-line.reflection{color:var(--text2);font-style:italic}
+.gaze-trigger{display:block;margin:2rem auto;padding:.7rem 2rem;background:transparent;
+border:1px solid var(--accent2);color:var(--accent);border-radius:6px;font-family:var(--font);
+font-size:1rem;cursor:pointer;transition:all .3s}
+.gaze-trigger:hover{background:rgba(61,214,200,.1)}
+.gaze-trigger.running{opacity:.3;pointer-events:none}
+
+/* ADAMS METHOD */
+.method-example{margin:1.5rem 0;background:var(--bg2);border-radius:10px;overflow:hidden;
+border:1px solid rgba(61,214,200,.12)}
+.method-tabs{display:flex;border-bottom:1px solid rgba(61,214,200,.12)}
+.method-tab{flex:1;padding:.6rem;text-align:center;cursor:pointer;font-size:.9rem;
+color:var(--text2);transition:all .2s;border-bottom:2px solid transparent}
+.method-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.method-tab:hover{color:var(--text)}
+.method-content{padding:1.2rem;font-size:.95rem;min-height:150px}
+.method-content .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;
+color:var(--gold);margin-bottom:.5rem}
+
+/* REVIEW */
+.stars{color:var(--gold);font-size:1.8rem;letter-spacing:.2rem;margin:.5rem 0}
+.connections{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem;margin:1.5rem 0}
+.connection{background:var(--bg2);border:1px solid rgba(61,214,200,.12);border-radius:8px;
+padding:1rem;font-size:.9rem}
+.connection h4{color:var(--accent);font-size:.95rem;margin-bottom:.3rem}
+.connection p{color:var(--text2);font-size:.85rem;margin:0}
+
+/* FOOTER */
+footer{text-align:center;padding:3rem 1.5rem;color:var(--text2);font-size:.85rem;
+border-top:1px solid rgba(61,214,200,.1);max-width:900px;margin:0 auto}
+
+@media(max-width:600px){
+  #hero h1{font-size:1.8rem}
+  h2{font-size:1.5rem}
+  section{padding:3rem 1rem}
+  .adapt-display{grid-template-columns:1fr}
+  .species-grid{grid-template-columns:1fr}
+  nav a{font-size:.7rem;padding:.2rem .4rem}
+}
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <a href="#hero">Home</a>
+  <a href="#journey-map">🌍 Journey</a>
+  <a href="#species">🦎 Species</a>
+  <a href="#bureaucracy">🏛️ Bureaucracy</a>
+  <a href="#adaptation">🔄 Adaptation</a>
+  <a href="#gorilla-gaze">👁️ Gorilla</a>
+  <a href="#adams-method">✍️ Method</a>
+  <a href="#review">📖 Review</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <h1>Last Chance to See</h1>
+  <div class="author">Douglas Adams &amp; Mark Carwardine · 1990</div>
+  <div class="tagline">
+    A science fiction novelist and a zoologist go looking for the world's rarest animals.
+    What they find instead is bureaucracy, broken jeeps, dead goats, and the startling realisation
+    that we are all — every last one of us — monkeys who got good at twigs.
+  </div>
+</section>
+
+<!-- 1. JOURNEY MAP -->
+<section id="journey-map">
+  <h2><span class="emoji">🌍</span>Journey Map</h2>
+  <p class="subtitle">Click each stop to see what Adams found there — and what found him.</p>
+
+  <div class="map-container">
+    <svg class="map-svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet">
+      <!-- Simplified world outline hints -->
+      <rect x="0" y="0" width="800" height="400" fill="var(--bg2)"/>
+      <!-- Continent blobs - very minimal -->
+      <ellipse cx="380" cy="160" rx="80" ry="60" fill="rgba(61,214,200,.04)" /><!-- Africa -->
+      <ellipse cx="270" cy="140" rx="60" ry="50" fill="rgba(61,214,200,.03)" /><!-- Europe -->
+      <ellipse cx="580" cy="180" rx="50" ry="40" fill="rgba(61,214,200,.04)" /><!-- SE Asia -->
+      <ellipse cx="520" cy="150" rx="70" ry="50" fill="rgba(61,214,200,.03)" /><!-- Asia -->
+      <ellipse cx="660" cy="320" rx="40" ry="25" fill="rgba(61,214,200,.04)" /><!-- NZ -->
+      <!-- Grid lines -->
+      <line x1="0" y1="200" x2="800" y2="200" stroke="rgba(61,214,200,.06)" stroke-width="1"/>
+      <line x1="400" y1="0" x2="400" y2="400" stroke="rgba(61,214,200,.06)" stroke-width="1"/>
+
+      <!-- Route lines -->
+      <polyline class="map-line" points="430,250 560,220 660,310 530,170 370,210 440,310 370,210"/>
+
+      <!-- Location dots -->
+      <g class="map-dot" data-loc="0" onclick="showLocation(0)"><circle cx="430" cy="250" r="6"/><text x="440" y="268">Madagascar</text></g>
+      <g class="map-dot" data-loc="1" onclick="showLocation(1)"><circle cx="560" cy="220" r="6"/><text x="570" y="238">Indonesia</text></g>
+      <g class="map-dot" data-loc="2" onclick="showLocation(2)"><circle cx="660" cy="310" r="6"/><text x="630" y="328">New Zealand</text></g>
+      <g class="map-dot" data-loc="3" onclick="showLocation(3)"><circle cx="530" cy="170" r="6"/><text x="540" y="165">China</text></g>
+      <g class="map-dot" data-loc="4" onclick="showLocation(4)"><circle cx="370" cy="210" r="6"/><text x="332" y="205">Zaire</text></g>
+      <g class="map-dot" data-loc="5" onclick="showLocation(5)"><circle cx="440" cy="270" r="6"/><text x="450" y="285">Mauritius</text></g>
+      <g class="map-dot" data-loc="6" onclick="showLocation(6)"><circle cx="380" cy="195" r="6"/><text x="338" y="192">Zaire ²</text></g>
+    </svg>
+  </div>
+
+  <div class="map-info" id="map-info">
+    <p style="color:var(--text2);text-align:center;padding:2rem 0">Click a dot on the map to explore each stop on Adams's journey.</p>
+  </div>
+</section>
+
+<!-- 2. SPECIES EXPLORER -->
+<section id="species">
+  <h2><span class="emoji">🦎</span>Species Explorer</h2>
+  <p class="subtitle">Each creature exquisitely designed for a world that no longer exists. Click to open.</p>
+
+  <div class="species-grid" id="species-grid"></div>
+</section>
+
+<!-- 3. BUREAUCRACY SIMULATOR -->
+<section id="bureaucracy">
+  <h2><span class="emoji">🏛️</span>Bureaucracy Simulator</h2>
+  <p class="subtitle">The number of obstacles between Douglas Adams and seeing one endangered animal.
+  Each click reveals the next absurdity. Based on actual events from the book.</p>
+
+  <div class="bureau-counter" id="bureau-counter">Obstacles encountered: 0</div>
+  <div class="bureau-flow" id="bureau-flow"></div>
+  <button class="bureau-btn" id="bureau-btn" onclick="nextBureauStep()">Next Obstacle →</button>
+</section>
+
+<!-- 4. ADAPTATION GAP -->
+<section id="adaptation">
+  <h2><span class="emoji">🔄</span>The Adaptation Gap</h2>
+  <p class="subtitle">Drag the slider between the world these animals evolved for and the world they got.
+  Watch the gap between perfect adaptation and hopeless mismatch.</p>
+
+  <div class="adapt-tabs" id="adapt-tabs"></div>
+  <div class="adapt-slider-wrap">
+    <div class="adapt-labels"><span>Ancient World</span><span>Modern World</span></div>
+    <input type="range" id="adapt-slider" min="0" max="100" value="0" oninput="updateAdaptation()">
+  </div>
+  <div class="adapt-display">
+    <div class="adapt-env" id="adapt-env"><strong>Environment</strong><div id="adapt-env-text"></div></div>
+    <div class="adapt-animal" id="adapt-animal"><strong>Animal</strong><div id="adapt-animal-text"></div>
+      <div class="fitness-bar" id="fitness-bar"></div>
+      <div class="fitness-label" id="fitness-label"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. GORILLA'S GAZE -->
+<section id="gorilla-gaze">
+  <h2><span class="emoji">👁️</span>The Gorilla's Gaze</h2>
+  <p class="subtitle">The emotional heart of the book. The passage builds slowly. Let it.</p>
+
+  <button class="gaze-trigger" id="gaze-trigger" onclick="startGaze()">Begin the encounter</button>
+  <div class="gaze-container" id="gaze-container"></div>
+</section>
+
+<!-- 6. THE ADAMS METHOD -->
+<section id="adams-method">
+  <h2><span class="emoji">✍️</span>The Adams Method</h2>
+  <p class="subtitle">The same event, two ways. Toggle between nature-documentary voice and Adams's voice.
+  Notice what the humor reveals that the straight version misses.</p>
+
+  <div id="method-examples"></div>
+</section>
+
+<!-- 7. REVIEW -->
+<section id="review">
+  <h2><span class="emoji">📖</span>Review</h2>
+  <div class="stars">★★★★★</div>
+  <p>This is not a conservation book. It's not a travel book. It's Douglas Adams applying the full force
+  of one of the finest comic minds of the twentieth century to the actual, physical world — and discovering
+  that reality is funnier, stranger, and more heartbreaking than anything he ever invented for
+  <em>The Hitchhiker's Guide</em>.</p>
+
+  <p>Adams approaches everything as a curious outsider, not an expert. He finds the absurd angle that
+  reveals truth better than straight reporting ever could. The digressions <em>are</em> the point — his tangent
+  about airports, about Dr. Struan Sutherland's fairy cakes and hydroponics, about the utter impossibility
+  of buying condoms in Shanghai — these are not decorations on the argument, they are the argument.
+  The systems that make extinction possible are the same systems that make airports terrible. It's all connected.</p>
+
+  <p>Every chapter lands a different emotional payload. The Komodo dragon chapter is about horror
+  and our reflexive need to project evil onto creatures that know nothing of it. The gorilla chapter is about
+  kinship across an evolutionary gulf. The kakapo chapter is about the gentle absurdity of a creature so
+  perfectly adapted to safety that it has forgotten danger exists. And Adams never preaches. He makes you
+  laugh, then you realise you're heartbroken.</p>
+
+  <h3>Connections</h3>
+  <div class="connections">
+    <div class="connection">
+      <h4>Vehicles (Braitenberg)</h4>
+      <p>The kakapo is a Braitenberg vehicle whose environment changed. Simple creature, exquisitely wired for one world, catastrophically wrong for another.</p>
+    </div>
+    <div class="connection">
+      <h4>GEB (Hofstadter)</h4>
+      <p>Strange loops of observation: Adams watching animals watching him. The gorilla encounter is a strange loop of recognition — consciousness regarding consciousness across a species gap.</p>
+    </div>
+    <div class="connection">
+      <h4>Inmates (Cooper)</h4>
+      <p>The bureaucracy chapters are pure Cooper. Systems designed for the system's convenience, not the user's. Zaire's customs officials are the conceptual siblings of every bad interface.</p>
+    </div>
+    <div class="connection">
+      <h4>Invisible Cities (Calvino)</h4>
+      <p>Each chapter is its own city — a self-contained world with its own rules, textures, and revelations. Madagascar, Komodo, Fiordland: distinct planets orbiting the same theme.</p>
+    </div>
+  </div>
+
+  <div class="quote">
+    "Human beings, who are almost unique in having the ability to learn from the experience of others,
+    are also remarkable for their apparent disinclination to do so."
+    <cite>— Douglas Adams</cite>
+  </div>
+</section>
+
+<footer>
+  <p>Built as an interactive reading companion. All quotes from <em>Last Chance to See</em> by Douglas Adams &amp; Mark Carwardine (1990).</p>
+  <p style="margin-top:.5rem">The world would be a poorer, darker, lonelier place without them.</p>
+</footer>
+
+<script>
+// ============ DATA ============
+
+const locations = [
+  {
+    name:'Madagascar',species:'Aye-aye',
+    absurdity:'The Ambassador promised two Landrovers and a helicopter. They had a moped. It didn\'t work. The road was impassable because it was being rebuilt by the Chinese, "only we\'re not supposed to know that."',
+    quote:'"I was a monkey looking at a lemur." Adams realised that by flying from New York to Madagascar in a series of increasingly dilapidated vehicles, they were making a time journey backward through twig technology to the world from which we had originally ousted the lemurs.',
+    detail:'The aye-aye is a nocturnal lemur that looks like it was assembled from bits of other animals — a bat\'s ears, a beaver\'s teeth, a middle finger like a long dead twig. Madagascar is a life-raft from a different time.'
+  },
+  {
+    name:'Indonesia (Komodo)',species:'Komodo Dragon',
+    absurdity:'Their confirmed tickets were not confirmed. "Confirmed" didn\'t actually mean confirmed — it was merely something they wrote on tickets because it saved a lot of bother. One official went to visit his mother in Jakarta. With their tickets.',
+    quote:'"The great thing about being the only species that makes a distinction between right and wrong is that we can make up the rules for ourselves as we go along."',
+    detail:'The dragons were fed goats on hooks for tourists to watch from a bandstand. Adams\'s horror was not at the dragon eating — it was at the mirror of the dragon\'s disinterested eye, reflecting all the guilt back at the humans who staged the spectacle.'
+  },
+  {
+    name:'New Zealand (Fiordland)',species:'Kakapo',
+    absurdity:'A freelance kakapo tracker named Arab, with a kakapo-tracking dog named Boss who wore a bell. They hung a dead penguin from a tree. "It was a tradition that had only started today and they doubted if they would keep it up."',
+    quote:'"Sadly, however, it seems that not only has the kakapo forgotten how to fly, but it has also forgotten that it has forgotten how to fly."',
+    detail:'The kakapo is the world\'s fattest parrot. It booms for a mate for seven hours a night for three months — but the sound is so deep the female can\'t tell where it\'s coming from. It mates once every three or four years. The single egg gets eaten by a stoat.'
+  },
+  {
+    name:'China (Yangtze)',species:'Baiji (Yangtze River Dolphin)',
+    absurdity:'To record underwater sound they needed a condom for the microphone. Buying condoms in Shanghai required elaborate mime, a porcelain Eiffel Tower, and the phrase "rubberover." A crewman finally understood: "Ficky ficky!"',
+    quote:'"I tried to imagine what it would be like to be a blind man trying to live in a discotheque."',
+    detail:'The baiji was half-blind from millennia in muddy water, navigating by echolocation. Then humans filled the river with engine noise. It\'s like having your only sense — your sonar vision — jammed with white noise. Continuously. Forever.'
+  },
+  {
+    name:'Zaire (Virungas)',species:'Mountain Gorilla',
+    absurdity:'Guides claimed to be ex-commandos who\'d shot five poachers. They were wearing army surplus they\'d bought off actual commandos who sold their uniforms to buy food. Adams carried a wooden Komodo dragon model, Dickens novels, and a dozen computer magazines up the volcano.',
+    quote:'"I had a foolish impulse to show him my camera as well." The gorilla had touched his pen — not to take it, just to see what it was. Adams felt the gorilla was sending him signals to which he did not know how to respond.',
+    detail:'This is the emotional summit of the book. Adams sat eighteen inches from a silverback who regarded him like someone who had sat slightly too close on a sofa. The encounter shattered every assumption about intelligence, kinship, and what we\'ve lost.'
+  },
+  {
+    name:'Mauritius',species:'Rodrigues Fruitbat (+ Pink Pigeon, Mauritius Kestrel)',
+    absurdity:'A kestrel named Pink was so imprinted on a human (Carl Jones) that it thought it was a person. They collected its semen using a special hat. "Pink goes mad with desire for Carl, flies down and fucks the hell out of his hat."',
+    quote:'"You gather the idea that Mauritius was made first and then heaven; and that heaven was copied after Mauritius." — Mark Twain. "That was less than a hundred years ago," said Richard. "Since then just about everything that shouldn\'t be done to an island has been done."',
+    detail:'Carl Jones was sent to Mauritius to close down the conservation project. It was, they said, hopeless — just one breeding pair of kestrels. He refused. There are now a hundred kestrels in the wild. "I suppose I have to admit that I\'ve been a complete failure."'
+  },
+  {
+    name:'Zaire (Garamba)',species:'Northern White Rhino',
+    absurdity:'At the airport leaving Zaire, an official said tourists must leave from the same port they entered. This was an invention. He knew they knew it was nonsense. "That was clearly part of the pleasure of it." He held their passports and smiled at the natty blue suit they were expected to fund.',
+    quote:'"So the difference between life or death for one of the rarest and most magnificent animals in the world is actually about twelve dollars." The poacher gets $12 for a horn that sells for thousands as a Yemeni dagger handle. Fashion. Costume jewellery.',
+    detail:'22 northern white rhinos remained. Adams crept within 25 yards of one. It regarded him with nasal passages bigger than its brain, its whole world-picture made of smells. "Huge muscles moved easily under its heavy skin like Volkswagens parking."'
+  }
+];
+
+const speciesData = [
+  {name:'Aye-aye',latin:'Daubentonia madagascariensis',peek:'Nocturnal lemur, assembled from spare parts',
+   adaptedFor:'A Madagascar without monkeys — millions of years of gentle, uncontested island life. Its bizarre twig-finger evolved to fill the niche woodpeckers fill elsewhere.',
+   worldBecame:'Monkeys finally arrived (us), armed with 15 million years of twig-technology improvements: fire, machetes, asphalt, concrete. The refuges got smaller and smaller.'},
+  {name:'Komodo Dragon',latin:'Varanus komodoensis',peek:'The lizard your nightmares forgot to include',
+   adaptedFor:'An island ecosystem where being a 12-foot, bacteria-infested scavenger with the worst breath on earth was a perfectly reasonable life strategy.',
+   worldBecame:'Tourists on ferries watching it eat goats on hooks from a bandstand. 350 breeding females. One forest fire away from oblivion.'},
+  {name:'Kakapo',latin:'Strigops habroptilus',peek:'The parrot that forgot it forgot how to fly',
+   adaptedFor:'New Zealand before any mammals arrived. No predators whatsoever. Flight was an unnecessary expense. Breeding slowly was fine — nothing was eating them.',
+   worldBecame:'Cats, stoats, possums, rats. A creature with no concept of danger, no flight reflex, a mating call the female can\'t locate, and a breeding cycle measured in years. Forty left.'},
+  {name:'Baiji',latin:'Lipotes vexillifer',peek:'A blind dolphin in the world\'s busiest river',
+   adaptedFor:'The Yangtze as it was for millions of years — muddy but quiet. Echolocation so precise it could find a ring on the river bed.',
+   worldBecame:'The world\'s busiest shipping lane. Continuous engine noise, propellers, sewage, chemical waste, fishing nets strung with hundreds of bare hooks. Echolocation jammed by white noise.'},
+  {name:'Northern White Rhino',latin:'Ceratotherium simum cottoni',peek:'Three tons, navigating entirely by smell',
+   adaptedFor:'African savannah with plenty of space. Nasal passages bigger than its brain. Its world-picture is made entirely of smells — the concept of "seeing" is barely relevant.',
+   worldBecame:'Worth $12 to a poacher, thousands to a Yemeni dagger-handle maker. 22 left. Armed guards. The militarisation of conservation.'},
+  {name:'Mountain Gorilla',latin:'Gorilla beringei beringei',peek:'Your nth cousin, n times removed',
+   adaptedFor:'Cloud forest in the Virungas. A social, contemplative life among family groups. So closely related to humans that classification systems strain to keep us separate.',
+   worldBecame:'Poachers, civil war, habitat loss. 280 remaining. Baby gorillas captured, adults shot defending them. Caught in wire snares set for other animals.'},
+  {name:'Rodrigues Fruitbat',latin:'Pteropus rodricensis',peek:'Tiny island, tiny population, one cyclone away',
+   adaptedFor:'The forests of Rodrigues Island — a fruit-eating nocturnal flier in a tiny, self-contained ecosystem.',
+   worldBecame:'Subsistence farming stripped the forest. One big cyclone — and they get them — could finish the species. Hundreds left. "Common as muck" by Mauritian standards, desperately rare by everyone else\'s.'}
+];
+
+const bureaucracySteps = [
+  {num:'Step 1',text:'Arrive in Madagascar. Mark explains the setup.',quote:'"Everything\'s gone wrong." The Ambassador promised two Landrovers and a helicopter. They\'ve got a moped. It doesn\'t work.'},
+  {num:'Step 2',text:'The road north is impassable.',quote:'It\'s being rebuilt by the Chinese, "only we\'re not supposed to know that." They\'ve apparently been at it for ten years.'},
+  {num:'Step 3',text:'Probably won\'t be allowed to take film out of the country.',quote:'Mentioned in passing, like weather.'},
+  {num:'Step 4',text:'Indonesia: Flight tickets say "Confirmed."',quote:'"Confirmed" didn\'t actually mean confirmed. It was merely something they wrote on tickets when people asked them to because it saved a lot of bother.'},
+  {num:'Step 5',text:'Official goes to visit his mother. In Jakarta.',quote:'With their tickets. He\'d apparently not seen her in three years.'},
+  {num:'Step 6',text:'Everyone in the office goes to lunch.',quote:'Simultaneously. While holding their travel documents.'},
+  {num:'Step 7',text:'Travel agent explains: "East of this line, it doesn\'t work."',quote:'Points at a map of half of Asia. Stamps feet = results. Serenity = going to Jakarta to see someone\'s mother.'},
+  {num:'Step 8',text:'Bima airport. No flight to Labuan Bajo until tomorrow.',quote:'They are then seized and shoved onto a plane that is sitting fully loaded on the tarmac, waiting to go.'},
+  {num:'Step 9',text:'Baggage sits on an unregarded cart on the tarmac.',quote:'Staff smoothly shifted from assuring him the bags were on board to helping him actually get them on board. Barely a change of beat.'},
+  {num:'Step 10',text:'The pilot\'s cockpit door is open. Or possibly missing.',quote:'Half the instruments aren\'t working. Adams reasons this is probably for the best — working instruments would only worry the pilots.'},
+  {num:'Step 11',text:'Landing: pilots can\'t get the flaps down.',quote:'Both pilots tugging with combined weight on the ceiling-mounted lever as trees at the end of the runway loom closer. Lever gives way at last moment.'},
+  {num:'Step 12',text:'Guide Mr Condo has gone diving.',quote:'Kiri turns up to explain that Mr Condo is not coming. Kiri is coming instead. And his guitar. The captain isn\'t the captain but the captain\'s father.'},
+  {num:'Step 13',text:'Zaire: Customs forms headed "Belgian Congo", crossed out.',quote:'"Zaire" written in pencil. They must be at least eighteen years old.'},
+  {num:'Step 14',text:'Small nasty customs man steals their car magazine.',quote:'On the grounds that he liked cars.'},
+  {num:'Step 15',text:'Driver operates the clutch by hand. Under the dashboard.',quote:'Adams closes his eyes for the remainder of the journey. Mark notices they pass no motor vehicles except trucks that have been parked so long they no longer have rear axles.'},
+  {num:'Step 16',text:'Leaving Zaire: official invents rule about exit ports.',quote:'"Tourists must leave from the same port they entered." His smile was the smile of a man who had found his calling in life.'},
+  {num:'Final',text:'Animals seen: some. Permits, officials, broken vehicles, invented regulations, missing flights, stolen magazines, and clutches operated by hand:',quote:'Everything. Every single time. The systems that make extinction possible are the same systems that make airports terrible.'}
+];
+
+const adaptData = [
+  {
+    name:'Kakapo',
+    envStages:['Dense New Zealand forest. No mammals. No predators of any kind. Fruit abundant seasonally. Perfect silence at night.','Some Polynesian settlers arrive with dogs and rats. Forest begins to thin.','Europeans arrive with cats, stoats, possums, ferrets. Forest clearing accelerates. Hunting grounds proliferate.','Only 10% of original habitat remains. Feral cats hunt at night. Stoats raid nests. The kakapo\'s entire survival strategy is obsolete.'],
+    animalStages:['Perfectly adapted. Flightless saves enormous energy. Breeds slowly because nothing threatens population. Freezes when startled because nothing has ever needed to be fled from. Booms for a mate: the whole valley is safe.','Starting to decline. Dogs find them. Rats eat eggs. But still thousands remain.','Catastrophic decline. Can\'t fly from cats. Freezes instead of fleeing — cats love this. Mating too slow to replace losses. A seriously worried kakapo runs up a tree and jumps out, whereupon it flies like a brick.','40 remaining. Breeding once every 3-4 years. The single egg gets eaten by a stoat. Has forgotten how to fly, and has also forgotten that it has forgotten.'],
+    fitness:[100,70,25,5]
+  },
+  {
+    name:'Baiji',
+    envStages:['The Yangtze: muddy but quiet. Sailing boats only. Fish abundant. Sound travels clearly — echolocation gives a precise picture of the world.','Some motorised traffic begins. The river gets busier. Fishing intensifies.','Industrial revolution comes to China. Diesel engines, container ships, chemical waste, artificial fertiliser. The sonic landscape becomes chaotic.','Continuous white noise. Nothing distinguishable. Poisoned water, declining fish, hundreds of bare hooks on fishing lines. A sustained shrieking blast in which nothing can be made out.'],
+    animalStages:['Superb echolocator. Eyes have migrated up the head over millennia — no need to see downward. Can find a ring on the river bed by sound alone.','Adapting slowly. Dives when it hears a boat, surfaces behind it. Still functional.','Echolocation overwhelmed. Surfaces under propellers. Gets tangled in nets. Can\'t find fish. Can\'t tell boats apart from river noise.','Effectively deaf and blind simultaneously. Continual bewilderment, hunger, pain and fear. 200 left in 2000 km of chaos.'],
+    fitness:[100,75,20,3]
+  },
+  {
+    name:'Northern White Rhino',
+    envStages:['African savannah, vast and open. Grass everywhere. Other rhinos, no competition from humans. Territory marked by scent — the world makes sense through smell.','Discovered by Europeans in 1903. Enormous numbers across five countries. Interest from collectors.','Poaching intensifies. Horns worth thousands for Yemeni dagger handles. Armed Sudanese poachers cross borders.','22 remain in one park. Armed guards required. Poacher gets $12, horn sells for thousands. Habitat = militarised zone.'],
+    animalStages:['Perfectly suited. 3 tons of herbivore, nasal passages bigger than brain. "Sees" in smell. Nothing threatens it. Muscles move under skin like Volkswagens parking.','Still viable populations. Thousands exist across range. Genetic diversity intact.','Populations collapse. Too large to hide, too valuable alive. Horn worth more than gold by weight. Conservation becomes warfare.','Genetically vulnerable. 22 individuals. One disease, one drought, one funding cut from zero. The difference between life and death is $12.'],
+    fitness:[100,80,20,8]
+  }
+];
+
+const gazeLines = [
+  {text:'We followed the gorillas through the forest. Thick vegetation, cold, wet, full of large black ants.',class:''},
+  {text:'And then — about thirty yards away, standing in plain view — something so big we hadn\'t even noticed it.',class:''},
+  {text:'A mountain gorilla. Or perhaps I should say a gorilla mountain.',class:''},
+  {text:'A kind of humming mental paralysis grips you when you first encounter such a creature in the wild.',class:''},
+  {text:'All sorts of wild and vertiginous feelings well up into your brain, that you seem to have no connection with and no name for.',class:''},
+  {text:'Perhaps because it is thousands or millions of years since such feelings were last aroused.',class:''},
+  {text:'I crept closer. Slowly. On my hands and knees. Until I was about eighteen inches away.',class:''},
+  {text:'He glanced round at me unconcernedly, as if I was just someone who had walked into the room.',class:''},
+  {text:'He shifted himself away from me — just about six inches — as if I had sat slightly too close to him on a sofa.',class:''},
+  {text:'I carefully pulled the pink writing paper out of my bag and started to make notes.',class:''},
+  {text:'This seemed to interest him. His eyes followed as my hand moved across the paper.',class:''},
+  {text:'And after a while he reached out and touched first the paper and then the top of my biro.',class:'climax'},
+  {text:'Not to take it away from me, or even to interrupt me. Just to see what it was and what it felt like.',class:'climax'},
+  {text:'I began to feel how patronising it was of us to presume to judge their intelligence, as if ours was any kind of standard by which to measure.',class:'reflection'},
+  {text:'I pictured him lying there easily in his own world, tolerating my presence in it, but possibly sending me signals to which I did not know how to respond.',class:'reflection'},
+  {text:'And I pictured myself beside him, festooned with the apparatus of my intelligence — Gore-Tex, pen, autofocus Nikon — and my inability to comprehend any of the life we had left behind us in the forest.',class:'reflection'},
+  {text:'But somewhere in the genetic history that we each carry with us in every cell of our body was a deep connection with this creature.',class:'climax'},
+  {text:'As inaccessible to us now as last year\'s dreams, but — like last year\'s dreams — always invisibly and unfathomably present.',class:'climax'},
+  {text:'Maybe it is not that they have yet to gain a language. It is that we have lost one.',class:'climax'}
+];
+
+const methodExamples = [
+  {
+    title:'The Komodo Dragon Encounter',
+    documentary:'The Komodo dragon, Varanus komodoensis, is the world\'s largest lizard, reaching lengths of over three metres. Found only on a few Indonesian islands, approximately 5,000 individuals remain. The species is an ambush predator that relies on bacterial infection to debilitate prey. Researchers observed specimens in their natural habitat at the Komodo National Park visitor centre.',
+    adams:'Lying on the ground was a small stuffed dragon. I say small, because it was only about four feet long. I was a little startled to see it for a moment, but then went up to have a look at it. It opened its eyes and had a look at me. I rocketed backwards with a yell of astonishment, which provoked barks of derisive laughter from the terrace. "It\'s just a dragon," called out an American girl. "Done the dragons. Bored with them. The food\'s terrible."',
+    reveals:'The documentary tells you the facts. Adams tells you what it actually feels like to confront a creature whose eye is almost the same size as yours and watches you with a slow, considered blink — and then to discover that the tourist infrastructure has reduced this ancient predator to a show you can be "bored with."'
+  },
+  {
+    title:'Buying Condoms in Shanghai',
+    documentary:'In order to waterproof recording equipment for underwater sound monitoring of the Yangtze river dolphin\'s acoustic environment, the research team required prophylactic devices to protect sensitive microphone elements from water damage during field recordings.',
+    adams:'She brought us a wooden spoon, a candle, a sort of paper knife and, surprisingly enough, a small porcelain model of the Eiffel Tower and then at last lapsed into a posture of defeat. I plucked up the bravado to perform a delicate little mime and at last the penny dropped. "You go 616 Nanjing Road. You ask rubberover." The crewman recognised the condom dangling in the water and light dawned: "Ficky ficky!"',
+    reveals:'The documentary version makes the condom sound like a research tool. Adams shows the beautiful absurdity of the human chain — the mime, the Eiffel Tower, the rubberover, the ficky ficky — that was required to achieve this one small step toward understanding a dying species. The comedy IS the conservation story: it shows how hard it is to do anything at all.'
+  },
+  {
+    title:'The Kakapo\'s Mating Strategy',
+    documentary:'The kakapo (Strigops habroptilus) employs a lek mating system. Males excavate bowl-shaped depressions at acoustically favourable sites and produce low-frequency vocalisations (booming) to attract females. The species exhibits infrequent breeding, with reproduction linked to mast fruiting events of podocarp species, occurring approximately biennially.',
+    adams:'"Come and get me!" "Where are you?" "Come and get me!" "Where the hell are you?" "Come and get me!" "Look, do you want me to come or not?" The booming is so deep you can\'t tell where it\'s coming from. One ranger left his hat on the ground. He came back to find a kakapo attempting to ravish it. The net result of all these months of excavating and booming and scrarking is that once every three or four years the female lays one single egg which promptly gets eaten by a stoat.',
+    reveals:'The documentary gives you the mechanism. Adams gives you the tragedy — reframed as comedy so devastating that when you finally understand what "one egg every four years, eaten by a stoat" means for the species, the laughter catches in your throat. Humour isn\'t decoration here. It\'s how the truth gets past your defences.'
+  }
+];
+
+// ============ RENDER ============
+
+// Journey Map
+function showLocation(i){
+  document.querySelectorAll('.map-dot').forEach(d=>d.classList.remove('active'));
+  document.querySelector(`.map-dot[data-loc="${i}"]`).classList.add('active');
+  const loc=locations[i];
+  document.getElementById('map-info').innerHTML=`
+    <span class="species-tag">${loc.species}</span>
+    <h3>${loc.name}</h3>
+    <p>${loc.detail}</p>
+    <p style="margin-top:.8rem"><strong style="color:var(--gold)">The Absurdity:</strong> ${loc.absurdity}</p>
+    <div class="quote">${loc.quote}</div>`;
+}
+
+// Species
+(function(){
+  const g=document.getElementById('species-grid');
+  speciesData.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='species-card';
+    d.onclick=()=>d.classList.toggle('open');
+    d.innerHTML=`<h4>${s.name}</h4><div class="latin">${s.latin}</div><div class="peek">${s.peek}</div>
+      <div class="species-detail">
+        <div class="adapted-for">${s.adaptedFor}</div>
+        <div class="world-became">${s.worldBecame}</div>
+      </div>`;
+    g.appendChild(d);
+  });
+})();
+
+// Bureaucracy
+let bureauStep=-1;
+(function(){
+  const f=document.getElementById('bureau-flow');
+  bureaucracySteps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='bureau-step';
+    d.id='bstep-'+i;
+    d.innerHTML=`<div class="step-num">${s.num}</div><div class="step-text">${s.text}</div><div class="step-quote">${s.quote}</div>`;
+    f.appendChild(d);
+  });
+})();
+function nextBureauStep(){
+  bureauStep++;
+  if(bureauStep>=bureaucracySteps.length){
+    document.getElementById('bureau-btn').textContent='That\'s all of them. And you only wanted to see one animal.';
+    document.getElementById('bureau-btn').disabled=true;
+    return;
+  }
+  document.querySelectorAll('.bureau-step').forEach(s=>s.classList.remove('current'));
+  const el=document.getElementById('bstep-'+bureauStep);
+  el.classList.add('revealed','current');
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('bureau-counter').textContent=`Obstacles encountered: ${bureauStep+1}`;
+  if(bureauStep===bureaucracySteps.length-1)document.getElementById('bureau-btn').textContent='That\'s the last one.';
+}
+
+// Adaptation
+let currentAdapt=0;
+(function(){
+  const t=document.getElementById('adapt-tabs');
+  adaptData.forEach((a,i)=>{
+    const b=document.createElement('div');
+    b.className='adapt-tab'+(i===0?' active':'');
+    b.textContent=a.name;
+    b.onclick=()=>{
+      currentAdapt=i;
+      document.querySelectorAll('.adapt-tab').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      updateAdaptation();
+    };
+    t.appendChild(b);
+  });
+  updateAdaptation();
+})();
+function updateAdaptation(){
+  const val=parseInt(document.getElementById('adapt-slider').value);
+  const d=adaptData[currentAdapt];
+  const stage=Math.min(3,Math.floor(val/25.1));
+  const fitness=d.fitness[stage];
+  document.getElementById('adapt-env-text').innerHTML=d.envStages[stage];
+  document.getElementById('adapt-animal-text').innerHTML=d.animalStages[stage];
+  const bar=document.getElementById('fitness-bar');
+  bar.style.width=fitness+'%';
+  bar.style.background=fitness>60?'var(--accent)':fitness>30?'var(--gold)':'var(--danger)';
+  document.getElementById('fitness-label').textContent=`Fitness: ${fitness}%`+(fitness<10?' — Critical':'');
+}
+
+// Gorilla Gaze
+let gazeRunning=false;
+function startGaze(){
+  if(gazeRunning)return;
+  gazeRunning=true;
+  const btn=document.getElementById('gaze-trigger');
+  btn.classList.add('running');
+  btn.textContent='Reading...';
+  const container=document.getElementById('gaze-container');
+  container.innerHTML='';
+  gazeLines.forEach((line,i)=>{
+    const p=document.createElement('p');
+    p.className='gaze-line'+(line.class?' '+line.class:'');
+    p.textContent=line.text;
+    container.appendChild(p);
+    setTimeout(()=>{p.classList.add('visible')},1800*(i+1));
+  });
+  setTimeout(()=>{
+    btn.textContent='Read again';
+    btn.classList.remove('running');
+    gazeRunning=false;
+  },1800*(gazeLines.length+1));
+}
+
+// Adams Method
+(function(){
+  const c=document.getElementById('method-examples');
+  methodExamples.forEach((ex,i)=>{
+    const d=document.createElement('div');
+    d.className='method-example';
+    d.innerHTML=`
+      <h3 style="padding:1rem 1.2rem .5rem;margin:0;color:var(--text)">${ex.title}</h3>
+      <div class="method-tabs">
+        <div class="method-tab active" onclick="switchMethod(${i},'doc',this)">🎬 Documentary</div>
+        <div class="method-tab" onclick="switchMethod(${i},'adams',this)">✍️ Adams</div>
+        <div class="method-tab" onclick="switchMethod(${i},'reveals',this)">💡 What It Reveals</div>
+      </div>
+      <div class="method-content" id="method-${i}">
+        <div class="label">Nature Documentary Style</div>
+        ${ex.documentary}
+      </div>`;
+    c.appendChild(d);
+  });
+})();
+function switchMethod(i,type,el){
+  const ex=methodExamples[i];
+  const content=document.getElementById('method-'+i);
+  el.parentElement.querySelectorAll('.method-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const labels={doc:'Nature Documentary Style',adams:'Douglas Adams Style',reveals:'What The Humor Reveals'};
+  const texts={doc:ex.documentary,adams:ex.adams,reveals:ex.reveals};
+  content.innerHTML=`<div class="label">${labels[type]}</div>${texts[type]}`;
+}
+
+// NAV highlight
+const sections=document.querySelectorAll('section');
+const navLinks=document.querySelectorAll('nav a');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navLinks.forEach(l=>l.classList.remove('active'));
+      const link=document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if(link)link.classList.add('active');
+    }
+  });
+},{threshold:.3,rootMargin:'-80px 0px -50% 0px'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
