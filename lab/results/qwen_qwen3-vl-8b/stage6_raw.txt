@@ -1,0 +1,57 @@
+Here is a precise description of everything visible in the image:
+
+---
+
+**1. Number of Components:**
+There are **5** distinct rectangular components in the diagram.
+
+---
+
+**2. Component Names and Colors:**
+
+- **Frontend** → Orange rectangle with white text.
+- **Backend API** → Green rectangle with white text.
+- **Database** → Purple rectangle with white text.
+- **File Storage** → Red rectangle with white text.
+- **Auth Service** → Red rectangle with white text.
+
+---
+
+**3. Layout Pattern:**
+
+The components are arranged in a **two-column, three-row grid**, but not perfectly aligned due to the vertical positioning of the elements.
+
+- **Left Column (Vertical Stack):**
+  - Top: Frontend (orange)
+  - Middle: Backend API (green)
+  - Bottom: Database (purple)
+
+- **Right Column (Vertical Stack):**
+  - Top: File Storage (red)
+  - Bottom: Auth Service (red)
+
+The layout is **not symmetrical** — the left column has three components stacked vertically, while the right column has two components stacked vertically, with space below Auth Service.
+
+---
+
+**4. Connections/Arrows:**
+
+There are **five** bidirectional arrows (double-headed) connecting components:
+
+- **Frontend ↔ Backend API** — Vertical arrow between orange and green.
+- **Backend API ↔ Database** — Vertical arrow between green and purple.
+- **Frontend ↔ File Storage** — Diagonal arrow from orange to red (top-right).
+- **File Storage ↔ Auth Service** — Vertical arrow between red (top) and red (bottom).
+- **Auth Service ↔ Database** — Diagonal arrow from red (bottom) to purple (left).
+
+Note: The arrows are **blue** and **bidirectional**, meaning they indicate two-way communication between the connected components.
+
+---
+
+**5. Title:**
+
+There is **no title** visible anywhere in the image.
+
+---
+
+✅ All elements are clearly readable, and the diagram is well-defined with distinct colors, labels, and connections.

@@ -1,0 +1,13 @@
+The visual reference significantly influenced the redesign by establishing a clear, radial hub-and-spoke layout where the **API Gateway** is the central hub and all other components are arranged symmetrically around it. This pattern emphasizes centralized control and routing, which aligns with the reference diagram’s structure.
+
+Here’s how the reference influenced my new layout decisions:
+
+1.  **Central Hub Placement**: The reference image explicitly positions the API Gateway at the center. I adopted this by making the API Gateway the focal point of the diagram, ensuring it is visually dominant and equidistant from all other components.
+
+2.  **Radial Arrangement**: The reference uses a circular, radial layout. I mirrored this by placing all components (Frontend, CDN, Auth, File Store, Cache, Database) at equal distances from the center, arranged in a circular fashion. This creates visual balance and clearly conveys that each component connects directly to the central API Gateway.
+
+3.  **Connection Style**: The reference uses distinct, dashed lines to show connections from the hub to each spoke. I replicated this by using different colored dashed lines to connect each component to the central API Gateway, visually reinforcing the hub-and-spoke relationship.
+
+4.  **Symmetry and Clarity**: The radial layout in the reference promotes symmetry and clarity. I used this to ensure the diagram is easy to read and understand, with each component clearly associated with the central hub.
+
+In summary, the reference image provided a clear visual model for implementing a hub-and-spoke architecture. It guided me to prioritize the central API Gateway, arrange components radially, and use distinct visual cues to emphasize the hub-and-spoke relationships. The result is a diagram that accurately reflects the intended architecture and is visually consistent with the reference.

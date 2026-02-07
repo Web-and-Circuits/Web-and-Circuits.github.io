@@ -1,0 +1,5 @@
+{
+  "reasoning": "```\nFrontend: [85, 115, 230, 215]\nBackend API: [85, 230, 230, 330]\nDatabase: [85, 345, 230, 445]\nFile Storage: [260, 115, 405, 215]\nAuth Service: [260, 230, 405, 330]\n```\n\nCenter points:\n- Frontend: [157, 165]\n- Backend API: [157, 270]\n- Database: [157, 385]\n- File Storage: [332, 165]\n- Auth Service: [332, 270]\n\nConfidence: high for all estimates. The bounding boxes and center points are clearly identifiable based on the visible rectangular shapes and their positions in the image.",
+  "diagram": null,
+  "raw": "```\nFrontend: [85, 115, 230, 215]\nBackend API: [85, 230, 230, 330]\nDatabase: [85, 345, 230, 445]\nFile Storage: [260, 115, 405, 215]\nAuth Service: [260, 230, 405, 330]\n```\n\nCenter points:\n- Frontend: [157, 165]\n- Backend API: [157, 270]\n- Database: [157, 385]\n- File Storage: [332, 165]\n- Auth Service: [332, 270]\n\nConfidence: high for all estimates. The bounding boxes and center points are clearly identifiable based on the visible rectangular shapes and their positions in the image."
+}

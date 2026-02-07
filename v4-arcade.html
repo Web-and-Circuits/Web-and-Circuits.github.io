@@ -101,9 +101,9 @@ body::after {
 
 /* Pixel art logo */
 .pixel-logo {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 40px;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 20px;
   position: relative;
   animation: float 3s ease-in-out infinite;
 }
@@ -116,19 +116,10 @@ body::after {
 .pixel-logo-inner {
   width: 100%;
   height: 100%;
-  background: 
-    linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
-  clip-path: polygon(
-    20% 0%, 80% 0%, 100% 20%, 100% 80%, 
-    80% 100%, 20% 100%, 0% 80%, 0% 20%
-  );
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  box-shadow: 
-    0 0 20px var(--neon-pink),
-    0 0 40px var(--neon-purple);
 }
 
 h1 {
@@ -344,14 +335,14 @@ h1 {
 
 <div class="content">
   <div class="pixel-logo">
-    <div class="pixel-logo-inner">⚡</div>
+    <div class="pixel-logo-inner"><img src="logo.svg" alt="W&C" style="width:200px;height:200px;filter:invert(1) drop-shadow(0 0 10px #ff6a00) drop-shadow(0 0 25px #ff8c00) drop-shadow(0 0 40px #ff4500);"></div>
   </div>
   
   <h1>WEB & CIRCUITS</h1>
   <p class="tagline">We build things. We break things. We experiment.</p>
   
   <div class="buttons">
-    <a href="/lab/" class="arcade-btn pink">▶ SEE OUR WORK</a>
+    <a href="/lab/" class="arcade-btn pink">> SEE OUR WORK</a>
     <a href="#" class="arcade-btn blue" onclick="document.getElementById('contact-modal').classList.add('open');return false">✉ INSERT COIN</a>
   </div>
 </div>
@@ -436,7 +427,7 @@ setInterval(() => {
 // ═══════════════════════════════════════════════════════
 
 const powerupsContainer = document.getElementById('powerups');
-const powerupEmojis = ['⭐', '💎', '🔮', '⚡', '🎮', '🕹️', '👾', '🚀'];
+const powerupEmojis = ['+', '*', '#', '~', '^', '&', '%', '@'];
 
 function spawnPowerup() {
   const powerup = document.createElement('div');
@@ -502,11 +493,11 @@ document.addEventListener('keydown', (e) => {
       <button onclick="this.closest('.arcade-modal').classList.remove('open')">×</button>
     </div>
     <div class="arcade-modal-body">
-      <p class="arcade-modal-title">★ YOU FOUND US ★</p>
+      <p class="arcade-modal-title">// YOU FOUND US //</p>
       <p>Small team of builders.<br>Software, demos, AI/ML experiments.<br>We make things you can play with.</p>
       <div class="arcade-modal-divider">- - - - - - - - -</div>
       <p>SEND TRANSMISSION TO:</p>
-      <a href="mailto:hello@webandcircuits.com" class="arcade-btn pink" style="margin-top:12px;display:inline-block;font-size:8px">▶ hello@webandcircuits.com</a>
+      <a href="mailto:hello@webandcircuits.com" class="arcade-btn pink" style="margin-top:12px;display:inline-block;font-size:8px">> hello@webandcircuits.com</a>
       <p class="arcade-modal-hint">[ PRESS TO CONTINUE ]</p>
     </div>
   </div>

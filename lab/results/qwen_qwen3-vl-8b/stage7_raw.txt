@@ -1,0 +1,16 @@
+```
+Frontend: [85, 115, 230, 215]
+Backend API: [85, 230, 230, 330]
+Database: [85, 345, 230, 445]
+File Storage: [260, 115, 405, 215]
+Auth Service: [260, 230, 405, 330]
+```
+
+Center points:
+- Frontend: [157, 165]
+- Backend API: [157, 270]
+- Database: [157, 385]
+- File Storage: [332, 165]
+- Auth Service: [332, 270]
+
+Confidence: high for all estimates. The bounding boxes and center points are clearly identifiable based on the visible rectangular shapes and their positions in the image.

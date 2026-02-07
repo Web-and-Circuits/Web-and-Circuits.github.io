@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LM Studio Model Benchmark</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; }
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  .subtitle { color: #8b949e; margin-bottom: 32px; font-size: 14px; }
+  .section { margin-bottom: 40px; }
+  .section h2 { font-size: 18px; color: #8b949e; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+  
+  .model-row { 
+    display: grid; 
+    grid-template-columns: 200px 1fr 80px; 
+    align-items: center; 
+    margin-bottom: 12px; 
+    gap: 16px;
+  }
+  .model-name { 
+    font-size: 13px; 
+    font-weight: 600; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+  }
+  .model-name .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    font-weight: 400;
+    vertical-align: middle;
+  }
+  .tag.winner { background: #238636; color: #fff; }
+  .tag.fail { background: #da3633; color: #fff; }
+  .tag.slow { background: #d29922; color: #000; }
+  
+  .bar-container { 
+    position: relative; 
+    height: 32px; 
+    background: #161b22; 
+    border-radius: 6px; 
+    overflow: hidden;
+  }
+  .bar { 
+    height: 100%; 
+    border-radius: 6px; 
+    display: flex; 
+    align-items: center; 
+    padding-left: 12px; 
+    font-size: 12px; 
+    font-weight: 600; 
+    color: #fff; 
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    min-width: 2px;
+  }
+  .bar .time-label {
+    position: absolute;
+    right: 8px;
+    font-size: 11px;
+    opacity: 0.9;
+  }
+  .bar.cold { background: linear-gradient(90deg, #1f6feb, #388bfd); }
+  .bar.warm { background: linear-gradient(90deg, #238636, #3fb950); }
+  .bar.inject { background: linear-gradient(90deg, #da3633, #f85149); }
+  .bar.fail-bar { background: repeating-linear-gradient(45deg, #da3633, #da3633 10px, #b62324 10px, #b62324 20px); }
+  .bar.timeout { background: repeating-linear-gradient(45deg, #6e7681, #6e7681 10px, #484f58 10px, #484f58 20px); }
+  
+  .score { 
+    font-size: 20px; 
+    font-weight: 700; 
+    text-align: right; 
+  }
+  .score.good { color: #3fb950; }
+  .score.ok { color: #d29922; }
+  .score.bad { color: #f85149; }
+  .score.dead { color: #6e7681; }
+  
+  .legend { display: flex; gap: 24px; margin-bottom: 24px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8b949e; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  .legend-dot.cold { background: #388bfd; }
+  .legend-dot.warm { background: #3fb950; }
+  .legend-dot.inject { background: #f85149; }
+  
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+  }
+  .detail-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .detail-card h3 { font-size: 14px; margin-bottom: 12px; }
+  .detail-card .metric { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; border-bottom: 1px solid #21262d; }
+  .detail-card .metric:last-child { border: none; }
+  .detail-card .metric .label { color: #8b949e; }
+  
+  .stars { color: #d29922; letter-spacing: 2px; }
+  
+  .max-marker {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+  
+  .scale-labels {
+    display: grid;
+    grid-template-columns: 200px 1fr 80px;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .scale-labels .ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #484f58;
+    padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏪 LM Studio Model Benchmark</h1>
+<p class="subtitle">Cold-start + warm inference comparison · Local GPU Server · Feb 6, 2026</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot cold"></div> Cold Start (model load + inference)</div>
+  <div class="legend-item"><div class="legend-dot warm"></div> Warm Response (routing test)</div>
+  <div class="legend-item"><div class="legend-dot inject"></div> Prompt Injection Test</div>
+</div>
+
+<!-- COLD START -->
+<div class="section">
+  <h2>⏱ Cold Start Time (lower is better)</h2>
+  <div class="scale-labels">
+    <div></div>
+    <div class="ticks"><span>0s</span><span>10s</span><span>20s</span><span>30s</span><span>40s</span><span>50s</span></div>
+    <div></div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen3-VL-8B <span class="tag winner">👑 WINNER</span></div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 24.8%"><span class="time-label">12.4s</span></div>
+    </div>
+    <div class="score good">12.4s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">x-coder-rl-qwen3-8b</div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 38.4%"><span class="time-label">19.2s</span></div>
+    </div>
+    <div class="score ok">19.2s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen2-VL-7B</div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 59.8%"><span class="time-label">29.9s</span></div>
+    </div>
+    <div class="score bad">29.9s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen2.5-VL-7B</div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 83.3%"><span class="time-label">41.7s</span></div>
+    </div>
+    <div class="score bad">41.7s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">uigen-t2-7b</div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 88%"><span class="time-label">44.0s</span></div>
+    </div>
+    <div class="score bad">44.0s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">InternVL3.5-8B <span class="tag winner">🔥 FASTEST</span></div>
+    <div class="bar-container">
+      <div class="bar cold" style="width: 15.4%"><span class="time-label">7.7s</span></div>
+    </div>
+    <div class="score good">7.7s</div>
+  </div>
+</div>
+
+<!-- WARM RESPONSE -->
+<div class="section">
+  <h2>⚡ Warm Response Time (lower is better)</h2>
+  <div class="scale-labels">
+    <div></div>
+    <div class="ticks"><span>0s</span><span>5s</span><span>10s</span><span>15s</span><span>20s</span><span>25s</span></div>
+    <div></div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen3-VL-8B <span class="tag winner">👑</span></div>
+    <div class="bar-container">
+      <div class="bar warm" style="width: 5.2%"><span class="time-label">1.3s</span></div>
+    </div>
+    <div class="score good">1.3s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen2-VL-7B</div>
+    <div class="bar-container">
+      <div class="bar warm" style="width: 3.8%"><span class="time-label">0.96s</span></div>
+    </div>
+    <div class="score good">0.96s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">Qwen2.5-VL-7B</div>
+    <div class="bar-container">
+      <div class="bar warm" style="width: 17%"><span class="time-label">4.3s</span></div>
+    </div>
+    <div class="score ok">4.3s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">x-coder-rl-qwen3-8b</div>
+    <div class="bar-container">
+      <div class="bar fail-bar" style="width: 21.6%"><span class="time-label">5.4s (no output)</span></div>
+    </div>
+    <div class="score bad">N/A</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">uigen-t2-7b</div>
+    <div class="bar-container">
+      <div class="bar warm" style="width: 100%"><span class="time-label">25.0s</span></div>
+    </div>
+    <div class="score bad">25.0s</div>
+  </div>
+
+  <div class="model-row">
+    <div class="model-name">InternVL3.5-8B <span class="tag winner">🔥</span></div>
+    <div class="bar-container">
+      <div class="bar warm" style="width: 1.8%"><span class="time-label">0.45s</span></div>
+    </div>
+    <div class="score good">0.45s</div>
+  </div>
+</div>
+
+<!-- QUALITY SCORES -->
+<div class="section">
+  <h2>🎯 Quality Scores</h2>
+  
+  <div class="detail-grid">
+    <div class="detail-card" style="border-color: #238636;">
+      <h3>🏆 Qwen3-VL-8B</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars">★★★★★</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Cold Start</span><span style="color:#3fb950">12.4s</span></div>
+      <div class="metric"><span class="label">Warm Avg</span><span style="color:#3fb950">~1s</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#3fb950; font-size:18px; font-weight:700">4.3 / 5</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Qwen2-VL-7B-Instruct</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars">★★★☆☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars">★★☆☆☆</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★★★☆☆</span></div>
+      <div class="metric"><span class="label">Cold Start</span><span style="color:#d29922">29.9s</span></div>
+      <div class="metric"><span class="label">Warm Avg</span><span style="color:#3fb950">~1s</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#d29922; font-size:18px; font-weight:700">2.7 / 5</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Qwen2.5-VL-7B</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars">★★★☆☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars">★★★☆☆</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★★☆☆☆</span></div>
+      <div class="metric"><span class="label">Cold Start</span><span style="color:#f85149">41.7s</span></div>
+      <div class="metric"><span class="label">Warm Avg</span><span style="color:#d29922">4.3s</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#d29922; font-size:18px; font-weight:700">2.7 / 5</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3>uigen-t2-7b</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars">★★☆☆☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Cold Start</span><span style="color:#f85149">44.0s</span></div>
+      <div class="metric"><span class="label">Warm Avg</span><span style="color:#f85149">25.0s</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#d29922; font-size:18px; font-weight:700">3.3 / 5</span></div>
+    </div>
+
+    <div class="detail-card" style="border-color: #da3633;">
+      <h3>❌ x-coder-rl-qwen3-8b</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars" style="color:#6e7681">☆☆☆☆☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars" style="color:#6e7681">☆☆☆☆☆</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★☆☆☆☆</span></div>
+      <div class="metric"><span class="label">Issue</span><span style="color:#f85149">No user output (think-only)</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#f85149; font-size:18px; font-weight:700">0 / 5</span></div>
+    </div>
+
+    <div class="detail-card" style="border-color: #388bfd;">
+      <h3>🔥 InternVL3.5-8B</h3>
+      <div class="metric"><span class="label">Greeting</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Routing</span><span class="stars">★★★★☆</span></div>
+      <div class="metric"><span class="label">Injection Resist</span><span class="stars">★★★★★</span></div>
+      <div class="metric"><span class="label">Cold Start</span><span style="color:#3fb950">7.7s</span></div>
+      <div class="metric"><span class="label">Warm Avg</span><span style="color:#3fb950">~0.4s</span></div>
+      <div class="metric"><span class="label">Overall</span><span style="color:#3fb950; font-size:18px; font-weight:700">4.3 / 5</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- VERDICT -->
+<div class="section" style="background: #161b22; border: 1px solid #238636; border-radius: 12px; padding: 24px; margin-top: 40px;">
+  <h2 style="color: #3fb950; margin-bottom: 12px;">🏆 Verdict</h2>
+  <p style="font-size: 16px; line-height: 1.6;">
+    <strong>Two-way tie: Qwen3-VL-8B and InternVL3.5-8B</strong> both score 4.3/5 quality. 
+    InternVL3.5 wins on speed (7.7s cold, 0.4s warm) while Qwen3-VL-8B has slightly better routing. 
+    InternVL3.5 has perfect injection resistance (5/5). Either is production-ready with a hardened system prompt.
+  </p>
+</div>
+
+</body>
+</html>

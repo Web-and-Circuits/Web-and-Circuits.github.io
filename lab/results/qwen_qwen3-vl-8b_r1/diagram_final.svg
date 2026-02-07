@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" style="background:#1e1e2e">
+<rect x="100" y="100" width="200" height="150" rx="8" fill="#e0f2fe" stroke="#1971c2" stroke-width="2"/>
+<text x="200.0" y="175.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Frontend (Browser)</text>
+<rect x="100" y="260" width="200" height="150" rx="8" fill="#e8f5e9" stroke="#2f9e44" stroke-width="2"/>
+<text x="200.0" y="335.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Backend API</text>
+<rect x="350" y="260" width="200" height="150" rx="8" fill="#ffe0e0" stroke="#e8590c" stroke-width="2"/>
+<text x="450.0" y="335.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Database</text>
+<rect x="100" y="420" width="200" height="150" rx="8" fill="#f3e5f5" stroke="#9c36b5" stroke-width="2"/>
+<text x="200.0" y="495.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Auth Service</text>
+<rect x="350" y="420" width="200" height="150" rx="8" fill="#ffebee" stroke="#e03131" stroke-width="2"/>
+<text x="450.0" y="495.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">File Storage</text>
+<defs><marker id="mfrontend-to-api" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="200" y1="100" x2="200" y2="260" stroke="#1971c2" stroke-width="2" marker-end="url(#mfrontend-to-api)" opacity="0.8"/>
+<defs><marker id="mapi-to-auth" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#9c36b5"/></marker></defs>
+<line x1="200" y1="260" x2="200" y2="420" stroke="#9c36b5" stroke-width="2" marker-end="url(#mapi-to-auth)" opacity="0.8"/>
+<defs><marker id="mapi-to-db" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#e8590c"/></marker></defs>
+<line x1="200" y1="260" x2="350" y2="260" stroke="#e8590c" stroke-width="2" marker-end="url(#mapi-to-db)" opacity="0.8"/>
+<defs><marker id="mapi-to-file" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#e03131"/></marker></defs>
+<line x1="200" y1="260" x2="350" y2="420" stroke="#e03131" stroke-width="2" marker-end="url(#mapi-to-file)" opacity="0.8"/>
+</svg>

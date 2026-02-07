@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" style="background:#1e1e2e">
+<rect x="100" y="100" width="200" height="80" rx="8" fill="#e8590c" stroke="#1971c2" stroke-width="2"/>
+<text x="200.0" y="140.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Frontend</text>
+<rect x="100" y="200" width="200" height="80" rx="8" fill="#2f9e44" stroke="#1971c2" stroke-width="2"/>
+<text x="200.0" y="240.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Backend API</text>
+<rect x="100" y="300" width="200" height="80" rx="8" fill="#9c36b5" stroke="#1971c2" stroke-width="2"/>
+<text x="200.0" y="340.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Database</text>
+<rect x="350" y="200" width="200" height="80" rx="8" fill="#e03131" stroke="#1971c2" stroke-width="2"/>
+<text x="450.0" y="240.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">Auth Service</text>
+<rect x="350" y="100" width="200" height="80" rx="8" fill="#e03131" stroke="#1971c2" stroke-width="2"/>
+<text x="450.0" y="140.0" fill="#e6edf3" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">File Storage</text>
+<defs><marker id="m6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="140" x2="250" y2="180" stroke="#1971c2" stroke-width="2" marker-end="url(#m6)" opacity="0.8"/>
+<defs><marker id="m7" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="240" x2="250" y2="280" stroke="#1971c2" stroke-width="2" marker-end="url(#m7)" opacity="0.8"/>
+<defs><marker id="m8" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="340" x2="250" y2="380" stroke="#1971c2" stroke-width="2" marker-end="url(#m8)" opacity="0.8"/>
+<defs><marker id="m9" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="450" y1="240" x2="450" y2="280" stroke="#1971c2" stroke-width="2" marker-end="url(#m9)" opacity="0.8"/>
+<defs><marker id="m10" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="450" y1="140" x2="450" y2="180" stroke="#1971c2" stroke-width="2" marker-end="url(#m10)" opacity="0.8"/>
+<defs><marker id="m11" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="220" x2="250" y2="240" stroke="#1971c2" stroke-width="2" marker-end="url(#m11)" opacity="0.8"/>
+<defs><marker id="m12" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="320" x2="250" y2="340" stroke="#1971c2" stroke-width="2" marker-end="url(#m12)" opacity="0.8"/>
+<defs><marker id="m13" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1971c2"/></marker></defs>
+<line x1="250" y1="120" x2="250" y2="140" stroke="#1971c2" stroke-width="2" marker-end="url(#m13)" opacity="0.8"/>
+</svg>

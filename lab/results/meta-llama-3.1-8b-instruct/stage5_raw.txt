@@ -1,0 +1,23 @@
+1. Let's walk through every component and how they connect:
+
+- **CDN (Content Delivery Network):** This sits in front of the frontend and acts as an intermediary for user requests. It's likely used to distribute static assets across different geographic locations, reducing latency for users.
+
+- **Frontend:** This is where users interact with our application via their web browsers. The CDN routes requests from here to our backend API.
+
+- **Backend API:** This component handles incoming requests from the frontend (after passing through the CDN) and performs actions such as authentication, data retrieval, and file storage. It interacts with several other components for these tasks:
+
+  * **Auth Service:** Verifies user credentials before allowing access to the application.
+  * **Database:** Stores and retrieves application data on behalf of the API.
+  * **Redis Caching Layer:** Acts as an intermediary between the API and database, caching frequently accessed data to reduce the load on our database.
+
+- **File Storage:** This component is responsible for storing files uploaded through the application. The backend API interacts with it to store these files.
+
+2. If I had more time, here are some potential changes:
+
+- Consider adding a **load balancer** between the CDN and frontend to distribute incoming traffic across multiple instances of our frontend servers.
+- Introduce an **observability layer**, such as Prometheus and Grafana, to monitor key metrics like request latency, error rates, and resource utilization. This would help us identify bottlenecks and optimize performance.
+- For added security, we could integrate a **Web Application Firewall (WAF)** between the CDN and frontend to protect against common web attacks.
+
+3. The weakest part of this architecture appears to be our database. While the Redis caching layer helps mitigate some load, it's not designed to handle high traffic on its own. If we're suddenly hit with 10x traffic tomorrow, our database might become overwhelmed, leading to performance issues and potential downtime.
+
+4. To address this concern, I would add a **database replication** setup next. This involves creating multiple instances of our database across different servers or geographic locations. We can then use a mechanism like MySQL's Galera Cluster or PostgreSQL's streaming replication to keep these instances in sync. This setup allows us to handle increased traffic by distributing the load across multiple databases, reducing the likelihood of any single point of failure.

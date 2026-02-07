@@ -1,0 +1,230 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "agent",
+  "elements": [
+    {
+      "type": "rectangle",
+      "id": "1",
+      "x": 200,
+      "y": 100,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 1234,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Frontend",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "2",
+      "x": 400,
+      "y": 200,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 5678,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Backend API",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "3",
+      "x": 400,
+      "y": 300,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 9012,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Database",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "4",
+      "x": 400,
+      "y": 100,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 3456,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Auth Service",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "5",
+      "x": 400,
+      "y": 400,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 7890,
+      "version": 1,
+      "isDeleted": false,
+      "text": "File Storage",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "6",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 1111,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Load Balancer",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "arrow",
+      "id": "7",
+      "points": [
+        [
+          200,
+          150
+        ],
+        [
+          450,
+          200
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "version": 1,
+      "isDeleted": false,
+      "startArrow": "arrow",
+      "endArrow": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "8",
+      "points": [
+        [
+          300,
+          150
+        ],
+        [
+          450,
+          200
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "version": 1,
+      "isDeleted": false,
+      "startArrow": "arrow",
+      "endArrow": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "9",
+      "points": [
+        [
+          450,
+          150
+        ],
+        [
+          450,
+          150
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "version": 1,
+      "isDeleted": false,
+      "startArrow": "arrow",
+      "endArrow": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "10",
+      "points": [
+        [
+          450,
+          250
+        ],
+        [
+          450,
+          250
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "version": 1,
+      "isDeleted": false,
+      "startArrow": "arrow",
+      "endArrow": "arrow"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  }
+}

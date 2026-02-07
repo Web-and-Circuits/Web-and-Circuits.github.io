@@ -1,0 +1,13 @@
+The visual reference of the Hub-and-Spoke Architecture Pattern provided insight into organizing system components around a central hub, which is the API Gateway in this case. Here's how I applied these principles to redesign our architecture:
+
+1. **Central Hub**: The API Gateway became the central node, representing the core communication point for all services.
+
+2. **Circular Arrangement**: Components were rearranged in a circular fashion around the API Gateway, ensuring each service is equidistant from the hub. This promotes balanced interaction and access.
+
+3. **Connectivity Lines**: Each component was connected directly to the API Gateway with lines radiating outward, emphasizing direct communication pathways.
+
+4. **Component Placement**:
+   - **CDN**, **Cache**, **Database**, **Auth**, **File Store** were positioned around the API Gateway.
+   - The layout ensures that each service can efficiently communicate with the central hub without unnecessary complexity.
+
+This redesign enhances clarity and efficiency by visually representing direct interactions between services through a centralized API Gateway.

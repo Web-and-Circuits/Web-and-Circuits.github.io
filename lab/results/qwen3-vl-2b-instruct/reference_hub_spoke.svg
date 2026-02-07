@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" style="background:#1e1e2e">
+    <text x="400" y="40" fill="#e6edf3" font-size="24" font-weight="bold" text-anchor="middle">Hub-and-Spoke Architecture Pattern</text>
+    
+    <!-- Center hub -->
+    <circle cx="400" cy="400" r="70" fill="#2f9e4433" stroke="#2f9e44" stroke-width="3"/>
+    <text x="400" y="395" fill="#e6edf3" font-size="16" font-weight="bold" text-anchor="middle">API</text>
+    <text x="400" y="415" fill="#e6edf3" font-size="12" text-anchor="middle">Gateway</text>
+    
+    <!-- Spokes -->
+    <line x1="400" y1="330" x2="400" y2="180" stroke="#388bfd" stroke-width="2" stroke-dasharray="6,3"/>
+    <line x1="466" y1="365" x2="600" y2="250" stroke="#e03131" stroke-width="2" stroke-dasharray="6,3"/>
+    <line x1="466" y1="435" x2="600" y2="550" stroke="#e8590c" stroke-width="2" stroke-dasharray="6,3"/>
+    <line x1="400" y1="470" x2="400" y2="620" stroke="#2f9e44" stroke-width="2" stroke-dasharray="6,3"/>
+    <line x1="334" y1="435" x2="200" y2="550" stroke="#9c36b5" stroke-width="2" stroke-dasharray="6,3"/>
+    <line x1="334" y1="365" x2="200" y2="250" stroke="#1971c2" stroke-width="2" stroke-dasharray="6,3"/>
+    
+    <!-- Outer nodes -->
+    <rect x="340" y="120" width="120" height="60" rx="8" fill="#1971c222" stroke="#1971c2" stroke-width="2"/>
+    <text x="400" y="155" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">Frontend</text>
+    
+    <rect x="560" y="220" width="120" height="60" rx="8" fill="#e0313122" stroke="#e03131" stroke-width="2"/>
+    <text x="620" y="255" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">Auth</text>
+    
+    <rect x="560" y="520" width="120" height="60" rx="8" fill="#e8590c22" stroke="#e8590c" stroke-width="2"/>
+    <text x="620" y="555" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">File Store</text>
+    
+    <rect x="340" y="620" width="120" height="60" rx="8" fill="#2f9e4422" stroke="#2f9e44" stroke-width="2"/>
+    <text x="400" y="655" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">Database</text>
+    
+    <rect x="140" y="520" width="120" height="60" rx="8" fill="#9c36b522" stroke="#9c36b5" stroke-width="2"/>
+    <text x="200" y="555" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">Cache</text>
+    
+    <rect x="140" y="220" width="120" height="60" rx="8" fill="#1971c222" stroke="#1971c2" stroke-width="2"/>
+    <text x="200" y="255" fill="#e6edf3" font-size="14" font-weight="bold" text-anchor="middle">CDN</text>
+    
+    <text x="400" y="760" fill="#8b949e" font-size="13" text-anchor="middle">Reference: Radial layout with central API hub</text>
+    </svg>

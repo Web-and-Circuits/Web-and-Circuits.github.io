@@ -1,0 +1,297 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "agent",
+  "elements": [
+    {
+      "type": "text",
+      "id": "title",
+      "x": 400,
+      "y": 20,
+      "width": 800,
+      "height": 50,
+      "strokeColor": "#000000",
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 1,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Web App Architecture",
+      "fontSize": 40,
+      "fontFamily": 1,
+      "textAlign": "center"
+    },
+    {
+      "type": "rectangle",
+      "id": "cdn",
+      "x": 100,
+      "y": 50,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 1,
+      "version": 1,
+      "isDeleted": false,
+      "text": "CDN"
+    },
+    {
+      "type": "rectangle",
+      "id": "frontend",
+      "x": 100,
+      "y": 170,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 2,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Frontend"
+    },
+    {
+      "type": "rectangle",
+      "id": "api",
+      "x": 100,
+      "y": 290,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#2f9e44",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 3,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Backend API"
+    },
+    {
+      "type": "rectangle",
+      "id": "redis",
+      "x": 100,
+      "y": 390,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#e8590c",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 4,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Redis Cache"
+    },
+    {
+      "type": "rectangle",
+      "id": "db",
+      "x": 100,
+      "y": 510,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#e8590c",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 5,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Database"
+    },
+    {
+      "type": "rectangle",
+      "id": "auth",
+      "x": 350,
+      "y": 290,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#9c36b5",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 6,
+      "version": 1,
+      "isDeleted": false,
+      "text": "Auth Service"
+    },
+    {
+      "type": "rectangle",
+      "id": "storage",
+      "x": 350,
+      "y": 510,
+      "width": 200,
+      "height": 100,
+      "strokeColor": "#e8590c",
+      "backgroundColor": "#e0f2fe",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 7,
+      "version": 1,
+      "isDeleted": false,
+      "text": "File Storage"
+    },
+    {
+      "type": "arrow",
+      "id": "cdn_to_frontend",
+      "points": [
+        [
+          250,
+          120
+        ],
+        [
+          250,
+          170
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 8,
+      "version": 1,
+      "isDeleted": false
+    },
+    {
+      "type": "arrow",
+      "id": "frontend_to_api",
+      "points": [
+        [
+          250,
+          220
+        ],
+        [
+          250,
+          290
+        ]
+      ],
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 9,
+      "version": 1,
+      "isDeleted": false
+    },
+    {
+      "type": "arrow",
+      "id": "api_to_redis",
+      "points": [
+        [
+          250,
+          320
+        ],
+        [
+          250,
+          390
+        ]
+      ],
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 10,
+      "version": 1,
+      "isDeleted": false
+    },
+    {
+      "type": "arrow",
+      "id": "redis_to_db",
+      "points": [
+        [
+          250,
+          440
+        ],
+        [
+          250,
+          510
+        ]
+      ],
+      "strokeColor": "#e8590c",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 11,
+      "version": 1,
+      "isDeleted": false
+    },
+    {
+      "type": "arrow",
+      "id": "api_to_auth",
+      "points": [
+        [
+          250,
+          290
+        ],
+        [
+          350,
+          290
+        ]
+      ],
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 12,
+      "version": 1,
+      "isDeleted": false
+    },
+    {
+      "type": "arrow",
+      "id": "api_to_storage",
+      "points": [
+        [
+          250,
+          290
+        ],
+        [
+          350,
+          510
+        ]
+      ],
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "angle": 0,
+      "seed": 13,
+      "version": 1,
+      "isDeleted": false
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  }
+}

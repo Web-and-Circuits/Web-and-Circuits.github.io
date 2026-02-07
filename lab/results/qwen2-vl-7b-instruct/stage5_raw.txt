@@ -1,0 +1,21 @@
+In this web app architecture:
+
+1. The frontend is where users interact with the system.
+2. The backend API processes requests from the frontend and communicates with other components.
+3. The auth service handles user authentication, ensuring only authorized users can access sensitive data.
+4. The database stores all application data, making it accessible to both the backend API and file storage.
+5. File storage manages files uploaded by users, providing a secure location for storing these files.
+
+The connections between these components are as follows:
+
+- From frontend to backend API: The user initiates requests through the frontend.
+- From backend API to auth service: Checks authentication before proceeding with data access.
+- From auth service to database: Ensures only authorized users can interact with sensitive information.
+- From database to backend API: Queries the database based on user requests for data or services.
+- From backend API to file storage: Manages file-related operations, such as uploading and downloading.
+
+If there were more time, I would consider adding a load balancer between the frontend and backend API. This would help distribute traffic evenly across multiple servers, reducing the risk of overload and improving performance during high traffic periods. Additionally, implementing a session management system to manage user sessions across different devices or browsers would be beneficial for ensuring seamless access.
+
+The weakest part of this architecture is the potential for performance degradation under heavy load. Without proper scaling mechanisms in place, the system may struggle to handle increased traffic efficiently. Adding a load balancer and implementing caching strategies could help mitigate these issues.
+
+If handling 10x more traffic were necessary tomorrow, I would prioritize adding a load balancer between the frontend and backend API. This would ensure that incoming requests are distributed across multiple servers, reducing the risk of overload and improving overall performance. Additionally, implementing caching mechanisms for frequently accessed data or files could significantly reduce database load and improve response times.

@@ -1,0 +1,11 @@
+{"reasoning": "To illustrate the data flow, I'll create an arrow from each component that's involved in the process.
+
+First, let's start with the frontend, which is where users interact with our application. The frontend makes requests to the backend API, so I'll add an arrow pointing from the frontend rectangle to the backend API rectangle. This represents the user input and any relevant data being sent to the server for processing.
+
+Next, as part of the authentication process, the backend API interacts with the auth service. So, another arrow will connect the backend API rectangle to the auth service rectangle, indicating that the auth service is responsible for verifying user credentials.
+
+After authentication, the API needs to query the database to retrieve any necessary data. Therefore, I'll add an arrow from the backend API rectangle to the database rectangle, highlighting this interaction.
+
+Finally, when it's time to store files, the API interacts with the file storage component. An arrow will connect the backend API rectangle to the file storage rectangle to show how file uploads are handled by our system.
+
+These arrows represent the most critical connections in our application's architecture and highlight the flow of data between components.", "diagram": {"type":"excalidraw","version":2,"source":"agent","elements":[...],"appState":{"viewBackgroundColor":"#ffffff"}}

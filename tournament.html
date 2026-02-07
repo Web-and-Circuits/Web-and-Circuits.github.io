@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Landing Page Tournament</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#0a0a0a; color:#e0e0e0; min-height:100vh; }
+
+.header { text-align:center; padding:32px 16px 16px; }
+.header h1 { font-size:28px; margin-bottom:8px; }
+.header p { color:#888; font-size:14px; }
+
+.bracket-view { display:none; padding:16px; max-width:900px; margin:0 auto; }
+.bracket-view.active { display:block; }
+
+.round-label { text-align:center; font-size:13px; color:#666; text-transform:uppercase; letter-spacing:2px; margin:24px 0 12px; }
+
+.matchup { display:flex; gap:12px; align-items:stretch; margin:8px auto; max-width:700px; }
+.matchup.done { opacity:0.4; pointer-events:none; }
+
+.pick-btn {
+  flex:1; padding:16px; background:#151515; border:2px solid #2a2a2a; border-radius:12px;
+  cursor:pointer; transition:all 0.2s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.pick-btn:hover { border-color:#555; background:#1a1a1a; transform:translateY(-2px); }
+.pick-btn:active { transform:translateY(0); }
+.pick-btn.winner { border-color:#4CAF50; background:rgba(76,175,80,0.08); }
+.pick-btn.loser { opacity:0.3; border-color:#333; }
+.pick-btn .name { font-size:16px; font-weight:600; }
+.pick-btn .desc { font-size:12px; color:#888; }
+.pick-btn .preview-tag { font-size:11px; color:#555; margin-top:4px; }
+
+.vs { display:flex; align-items:center; font-size:12px; color:#444; font-weight:700; letter-spacing:1px; }
+
+/* Battle mode */
+.battle { display:none; flex-direction:column; height:100vh; }
+.battle.active { display:flex; }
+
+.battle-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 16px; background:#111; border-bottom:1px solid #222; z-index:100;
+}
+.battle-header .round-info { font-size:13px; color:#888; }
+.battle-header .matchup-info { font-size:15px; font-weight:600; }
+
+.battle-frames { display:flex; flex:1; min-height:0; }
+.battle-frames iframe { flex:1; border:none; min-height:0; }
+.battle-divider { width:2px; background:#333; position:relative; }
+.battle-divider::after { content:'VS'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#333; color:#888; font-size:10px; font-weight:700; padding:4px 6px; border-radius:4px; letter-spacing:1px; }
+
+.battle-footer { display:flex; border-top:1px solid #222; background:#111; }
+.battle-pick {
+  flex:1; padding:14px; text-align:center; font-size:15px; font-weight:600;
+  cursor:pointer; transition:all 0.15s; border:none; background:transparent; color:#e0e0e0;
+}
+.battle-pick:first-child { border-right:1px solid #222; }
+.battle-pick:hover { background:#1a1a1a; }
+.battle-pick:active { background:#252525; }
+.battle-pick.left { color:#4FC3F7; }
+.battle-pick.right { color:#FF8A65; }
+
+/* Champion */
+.champion { display:none; text-align:center; padding:60px 20px; }
+.champion.active { display:block; }
+.champion h2 { font-size:36px; margin-bottom:8px; }
+.champion .champ-name { font-size:24px; color:#4CAF50; font-weight:700; margin:16px 0; }
+.champion .champ-desc { color:#888; margin-bottom:24px; }
+.champion button {
+  padding:12px 32px; background:#4CAF50; color:#fff; border:none; border-radius:8px;
+  font-size:15px; font-weight:600; cursor:pointer;
+}
+.champion button:hover { background:#43A047; }
+
+.restart { text-align:center; margin:24px; }
+.restart button { padding:8px 20px; background:#222; color:#888; border:1px solid #333; border-radius:6px; cursor:pointer; font-size:13px; }
+.restart button:hover { color:#e0e0e0; border-color:#555; }
+
+/* Mobile: stack frames vertically */
+@media (max-width:768px) {
+  .battle-frames { flex-direction:column; }
+  .battle-divider { width:auto; height:2px; }
+  .battle-divider::after { top:50%; }
+  .matchup { flex-direction:column; gap:8px; }
+  .vs { justify-content:center; padding:4px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏆 Landing Page Tournament</h1>
+  <p>Pick your favorite in each matchup. Winner advances.</p>
+</div>
+
+<div id="bracketView" class="bracket-view active"></div>
+<div id="battleView" class="battle"></div>
+<div id="championView" class="champion">
+  <h2>🏆 Champion</h2>
+  <div id="champName" class="champ-name"></div>
+  <div id="champDesc" class="champ-desc"></div>
+  <button onclick="window.open(champion.file,'_blank')">View the Winner →</button>
+  <div class="restart"><button onclick="restart()">Run it again?</button></div>
+</div>
+
+<script>
+const pages = [
+  { id:'v1', name:'Cosmos', desc:'3D starfield, floating text', file:'v1-threejs-cosmos.html' },
+  { id:'v2', name:'Terminal', desc:'Hacker terminal, typing effect', file:'v2-terminal.html' },
+  { id:'v3', name:'Liquid', desc:'Fluid blobs, organic feel', file:'v3-liquid.html' },
+  { id:'v4', name:'Arcade', desc:'Retro pixel, 8-bit', file:'v4-arcade.html' },
+  { id:'v5', name:'Kinetic', desc:'Bold typography, motion', file:'v5-kinetic.html' },
+  { id:'v6', name:'Brutalist', desc:'Raw, stark, no-frills', file:'v6-brutalist.html' },
+  { id:'v7', name:'Isometric', desc:'3D isometric blocks', file:'v7-isometric.html' },
+  { id:'v8', name:'Editorial', desc:'Clean magazine layout', file:'v8-editorial.html' },
+  { id:'v9', name:'Vaporwave', desc:'90s aesthetic, pink/purple', file:'v9-vaporwave.html' },
+  { id:'v10', name:'Generative', desc:'Algorithmic art patterns', file:'v10-generative.html' },
+  { id:'v11', name:'Noir', desc:'Dark, moody, cinematic', file:'v11-noir.html' },
+];
+
+let rounds = [];
+let currentRound = 0;
+let currentMatch = 0;
+let champion = null;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function init() {
+  // Shuffle and create first round. 11 entries = 5 get byes (advance free), 6 play 3 matches
+  // To make 8 in round 2: 3 matches + 5 byes = 8
+  const shuffled = shuffle(pages);
+  const firstRound = [];
+  // 6 play, 5 get byes → 3 winners + 5 byes = 8 for round 2
+  const playing = shuffled.slice(0, 6);
+  const byes = shuffled.slice(6);
+
+  for (let i = 0; i < playing.length; i += 2) {
+    firstRound.push({ a: playing[i], b: playing[i+1], winner: null });
+  }
+
+  rounds = [{ label: 'Round 1 (Play-in)', matches: firstRound, byes }];
+  currentRound = 0;
+  currentMatch = 0;
+  champion = null;
+  renderBracket();
+}
+
+function getRoundName(totalInRound) {
+  if (totalInRound === 2) return 'Final';
+  if (totalInRound === 4) return 'Semifinals';
+  if (totalInRound === 8) return 'Quarterfinals';
+  return 'Round ' + (currentRound + 1);
+}
+
+function renderBracket() {
+  const bv = document.getElementById('bracketView');
+  const cv = document.getElementById('championView');
+  const btv = document.getElementById('battleView');
+  cv.classList.remove('active');
+  btv.classList.remove('active');
+  bv.classList.add('active');
+
+  let html = '';
+
+  rounds.forEach((round, ri) => {
+    html += `<div class="round-label">${round.label}</div>`;
+
+    round.matches.forEach((m, mi) => {
+      const done = m.winner !== null;
+      const isCurrent = ri === currentRound && mi === currentMatch && !done;
+      html += `<div class="matchup ${done ? 'done' : ''}" ${isCurrent ? 'id="currentMatchup"' : ''}>`;
+      html += `<div class="pick-btn ${done ? (m.winner === m.a ? 'winner' : 'loser') : ''}" onclick="startBattle(${ri},${mi},'a')">`;
+      html += `<div class="name">${m.a.name}</div><div class="desc">${m.a.desc}</div>`;
+      html += `</div>`;
+      html += `<div class="vs">VS</div>`;
+      html += `<div class="pick-btn ${done ? (m.winner === m.b ? 'winner' : 'loser') : ''}" onclick="startBattle(${ri},${mi},'b')">`;
+      html += `<div class="name">${m.b.name}</div><div class="desc">${m.b.desc}</div>`;
+      html += `</div></div>`;
+    });
+
+    if (round.byes && round.byes.length) {
+      html += `<div style="text-align:center;margin:8px 0;font-size:12px;color:#555">${round.byes.map(b => b.name).join(', ')} — bye (auto-advance)</div>`;
+    }
+  });
+
+  html += `<div class="restart"><button onclick="restart()">Reshuffle & restart</button></div>`;
+  bv.innerHTML = html;
+
+  // Auto-start current battle
+  if (currentRound < rounds.length) {
+    const round = rounds[currentRound];
+    if (currentMatch < round.matches.length && round.matches[currentMatch].winner === null) {
+      setTimeout(() => startBattle(currentRound, currentMatch, null), 300);
+    }
+  }
+}
+
+function startBattle(ri, mi, quickPick) {
+  if (rounds[ri].matches[mi].winner) return;
+
+  const m = rounds[ri].matches[mi];
+  const bv = document.getElementById('bracketView');
+  const btv = document.getElementById('battleView');
+  bv.classList.remove('active');
+  btv.classList.add('active');
+
+  const roundLabel = rounds[ri].label;
+  const matchLabel = `${mi + 1} of ${rounds[ri].matches.length}`;
+
+  btv.innerHTML = `
+    <div class="battle-header">
+      <div class="round-info">${roundLabel} · Match ${matchLabel}</div>
+      <div class="matchup-info">${m.a.name} vs ${m.b.name}</div>
+    </div>
+    <div class="battle-frames">
+      <iframe src="${m.a.file}" title="${m.a.name}"></iframe>
+      <div class="battle-divider"></div>
+      <iframe src="${m.b.file}" title="${m.b.name}"></iframe>
+    </div>
+    <div class="battle-footer">
+      <button class="battle-pick left" onclick="pick(${ri},${mi},'a')">← ${m.a.name}</button>
+      <button class="battle-pick right" onclick="pick(${ri},${mi},'b')">${m.b.name} →</button>
+    </div>
+  `;
+}
+
+function pick(ri, mi, side) {
+  const m = rounds[ri].matches[mi];
+  m.winner = side === 'a' ? m.a : m.b;
+
+  // Check if round is complete
+  const round = rounds[ri];
+  const allDone = round.matches.every(m => m.winner);
+
+  if (allDone) {
+    // Collect winners + byes
+    const advancers = round.matches.map(m => m.winner);
+    if (round.byes) advancers.push(...round.byes);
+
+    if (advancers.length === 1) {
+      // Champion!
+      champion = advancers[0];
+      document.getElementById('battleView').classList.remove('active');
+      document.getElementById('champName').textContent = champion.name;
+      document.getElementById('champDesc').textContent = champion.desc;
+      document.getElementById('championView').classList.add('active');
+      return;
+    }
+
+    // Build next round
+    const shuffledAdvancers = shuffle(advancers);
+    const nextMatches = [];
+    for (let i = 0; i < shuffledAdvancers.length; i += 2) {
+      nextMatches.push({ a: shuffledAdvancers[i], b: shuffledAdvancers[i+1], winner: null });
+    }
+
+    const totalNext = shuffledAdvancers.length;
+    const nextLabel = totalNext === 2 ? '🏆 Final' : totalNext === 4 ? 'Semifinals' : 'Quarterfinals';
+    rounds.push({ label: nextLabel, matches: nextMatches, byes: null });
+    currentRound++;
+    currentMatch = 0;
+  } else {
+    currentMatch = round.matches.findIndex(m => m.winner === null);
+  }
+
+  renderBracket();
+}
+
+function restart() {
+  init();
+}
+
+init();
+</script>
+</body>
+</html>

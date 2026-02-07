@@ -1,0 +1,33 @@
+Sure, let’s walk through each component in your updated diagram:
+
+1. **Frontend**: This is where the user interacts with the application. It processes requests from users and sends them to the API for processing.
+
+2. **API**: The API receives these requests, checks authentication (via an arrow pointing towards it), then queries the database or performs other operations as necessary.
+
+3. **Redis Cache Layer**: Positioned between the API and database, this layer helps reduce load on the database by caching frequently accessed data, improving performance.
+
+4. **Database**: Stores all application-related data. It’s queried directly from the API to retrieve information.
+
+5. **Auth Service**: Manages user authentication for security reasons before any further actions can be taken in the system.
+   
+6. **CDN (Content Delivery Network)**: Positioned at the very top, this layer sits in front of the frontend and is responsible for accelerating the delivery of static content by caching it closer to users.
+
+7. **File Storage**: Stores files uploaded by users or generated as part of the application’s functionality.
+
+**What trade-offs are you making with the positioning?**
+
+The positioning keeps the components logically grouped based on their role within the system, which is good for understanding and managing dependencies. However, there might be a slight overemphasis on vertical space rather than horizontal flow, which could make the diagram slightly harder to follow at first glance.
+
+**What’s the weakest part of this architecture?**
+
+The weakest part in terms of scalability seems to be around the database. Adding a Redis cache layer helps manage load somewhat but doesn't scale horizontally as efficiently as sharding or adding more databases might. If this needed to handle 10x traffic tomorrow, adding horizontal scaling capabilities (like clustering databases) would be critical.
+
+**If this needed to handle 10x traffic tomorrow, what would you add first?**
+
+To address the increased load, I’d recommend starting with:
+
+1. **Horizontal Scaling of Databases**: Adding more database nodes or implementing a distributed database architecture.
+2. **Load Balancing**: Ensuring that incoming requests are evenly distributed across the API layer to avoid single points of failure and ensure optimal performance.
+3. **More Resources for the CDN**: If the traffic is primarily static content, scaling up the CDN capacity could significantly reduce load on other components.
+
+These additions would help manage the increased load more effectively without compromising performance or availability.
