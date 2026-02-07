@@ -13,46 +13,10 @@ html, body, iframe {
   overflow: hidden;
 }
 body { background: #000; }
-iframe {
-  display: block;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-iframe.loaded { opacity: 1; }
+iframe { display: block; }
 </style>
 </head>
 <body>
-<iframe id="frame" title="Web & Circuits"></iframe>
-<script>
-(function() {
-  const variants = [
-    'v1-threejs-cosmos.html',
-    'v2-terminal.html',
-    'v3-liquid.html',
-    'v4-arcade.html',
-    'v5-kinetic.html',
-    'v6-brutalist.html',
-    'v7-isometric.html',
-    'v8-editorial.html',
-    'v9-vaporwave.html',
-    'v10-generative.html',
-    'v11-noir.html'
-  ];
-  
-  // Pick random variant
-  const pick = variants[Math.floor(Math.random() * variants.length)];
-  
-  // Load it
-  const frame = document.getElementById('frame');
-  frame.onload = function() {
-    frame.classList.add('loaded');
-    try {
-      const innerTitle = frame.contentDocument?.title;
-      if (innerTitle) document.title = innerTitle;
-    } catch(e) {}
-  };
-  frame.src = pick;
-})();
-</script>
+<iframe src="v4-arcade.html" allowfullscreen></iframe>
 </body>
 </html>
