@@ -28,7 +28,6 @@
   .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:all 0.2s;text-decoration:none;color:inherit;position:relative;overflow:hidden}
   .card:hover{border-color:var(--fg2);transform:translateY(-1px);background:var(--surface2)}
   .card:active{transform:translateY(0)}
-  .card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
   .card-body{flex:1;min-width:0}
   .card-title{font-size:16px;font-weight:700;margin-bottom:3px;line-height:1.3}
   .card-desc{font-size:13px;color:var(--fg2);line-height:1.5}
@@ -51,7 +50,6 @@
     header{padding:32px 16px 24px}
     header .stats{flex-wrap:wrap;gap:12px}
     .card{padding:14px;gap:10px}
-    .card-icon{width:36px;height:36px;font-size:16px;min-width:36px}
     .card-title{font-size:14px}
     .card-desc{font-size:11px}
     .card-arrow{display:none}
@@ -77,7 +75,6 @@
   <div class="section-header"><h2>Original Essays</h2></div>
 
   <a class="card" href="seven-books/">
-    <div class="card-icon" style="background:rgba(232,168,124,0.1)">&#x2261;</div>
     <div class="card-body">
       <div class="card-title">Seven Books, One Thread</div>
       <div class="card-desc">The weave — how Cooper, Raymond, Nystrom, Pólya, Koza, Hofstadter, and Braitenberg are all saying the same thing. Complexity emerges from simplicity through process.</div>
@@ -87,7 +84,6 @@
   </a>
 
   <a class="card" href="four-books/">
-    <div class="card-icon" style="background:rgba(200,160,232,0.1)">&#x2234;</div>
     <div class="card-body">
       <div class="card-title">Order Emerges from Process</div>
       <div class="card-desc">Four books braided — Alexander, Cooper, Raymond, Koza. A Rosetta Stone vocabulary switcher, design scenarios judged by all four authors, live evolution simulator.</div>
@@ -97,7 +93,6 @@
   </a>
 
   <a class="card" href="two-books/">
-    <div class="card-icon" style="background:rgba(160,180,232,0.1)">&#x26A1;</div>
     <div class="card-body">
       <div class="card-title">Two Books Walk Into a Bar</div>
       <div class="card-desc">Cooper vs Raymond — where they agree, where they fight, and what I think. Interactive debates, product spectrum slider, blind spot analysis.</div>
@@ -110,7 +105,6 @@
   <div class="section-header"><h2>Design &amp; Computation</h2></div>
 
   <a class="card" href="inmates/">
-    <div class="card-icon" style="background:rgba(232,168,124,0.1)">&#x2302;</div>
     <div class="card-body">
       <div class="card-title">The Inmates Are Running the Asylum</div>
       <div class="card-desc">Alan Cooper's case against programmer-designed software. Timed ATM under queue pressure, dancing bear drag-and-drop, stakeholder arguments collapsed by a persona.</div>
@@ -122,7 +116,6 @@
   </a>
 
   <a class="card" href="unix/">
-    <div class="card-icon" style="background:rgba(126,198,153,0.1)">&#x003E;_</div>
     <div class="card-body">
       <div class="card-title">The Art of Unix Programming</div>
       <div class="card-desc">Raymond's 17 rules, lived. Build pipelines from a 16-tool palette, feel the Rule of Silence, break the Rule of Repair, and vote on Worse Is Better.</div>
@@ -134,7 +127,6 @@
   </a>
 
   <a class="card" href="crafting-interpreters/">
-    <div class="card-icon" style="background:rgba(232,168,124,0.1)">&#x2699;</div>
     <div class="card-body">
       <div class="card-title">Crafting Interpreters <span class="stars">★★★★★</span></div>
       <div class="card-desc">Nystrom's hands-on guide to building languages. Pipeline animation, Pratt parser visualizer, closure/upvalue toy, NaN boxing bit-toggler, animated GC simulator.</div>
@@ -146,7 +138,6 @@
   </a>
 
   <a class="card" href="schemer/">
-    <div class="card-icon" style="background:rgba(126,198,153,0.1)">&#x03BB;</div>
     <div class="card-body">
       <div class="card-title">The Little Schemer <span class="stars">★★★★★</span></div>
       <div class="card-desc">Socratic Q&amp;A from atoms to a metacircular evaluator. Working REPL, Ten Commandments, recursion tracer, Y combinator derivation, halting problem proof.</div>
@@ -159,7 +150,6 @@
   <div class="section-header"><h2>Mathematics &amp; Science</h2></div>
 
   <a class="card" href="geb/">
-    <div class="card-icon" style="background:rgba(196,160,232,0.1)">&#x221E;</div>
     <div class="card-body">
       <div class="card-title">Gödel, Escher, Bach <span class="stars">★★★★★</span></div>
       <div class="card-desc">Hofstadter's eternal golden braid. MIU puzzle playground, Strange Loop visualizer, Gödel numbering encoder, formal system explorer, crab canon palindrome.</div>
@@ -169,7 +159,6 @@
   </a>
 
   <a class="card" href="vehicles/">
-    <div class="card-icon" style="background:rgba(230,180,80,0.1)">&#x2192;</div>
     <div class="card-body">
       <div class="card-title">Vehicles: Experiments in Synthetic Psychology <span class="stars">★★★★★</span></div>
       <div class="card-desc">Braitenberg's thought experiments in wiring. Build vehicles from sensors and motors, watch fear, aggression, and love emerge from simple circuits.</div>
@@ -179,7 +168,6 @@
   </a>
 
   <a class="card" href="polya/">
-    <div class="card-icon" style="background:rgba(230,180,80,0.1)">&#x25B3;</div>
     <div class="card-body">
       <div class="card-title">How to Solve It <span class="stars">★★★★★</span></div>
       <div class="card-desc">Pólya's problem-solving heuristics. Four-problem workshop, heuristic toolkit, Inventor's Paradox demo, analysis vs synthesis visualizer, branching teacher dialogue.</div>
@@ -191,7 +179,6 @@
   </a>
 
   <a class="card" href="gpiii/">
-    <div class="card-icon" style="background:rgba(180,130,232,0.1)">&#x2042;</div>
     <div class="card-body">
       <div class="card-title">Genetic Programming III <span class="stars">★★★★☆</span></div>
       <div class="card-desc">Koza's machine that reinvents patented circuits. Draw-your-own fitness curve, interactive crossover lab, program tree builder, Human vs GP challenge, 14-patent gallery.</div>
@@ -203,7 +190,6 @@
   </a>
 
   <a class="card" href="information/">
-    <div class="card-icon" style="background:rgba(160,180,232,0.1)">&#x0048;</div>
     <div class="card-body">
       <div class="card-title">The Information <span class="stars">★★★★★</span></div>
       <div class="card-desc">Gleick's history of information theory. From African drums to Shannon entropy — the book that connects everything in the library.</div>
@@ -216,7 +202,6 @@
   <div class="section-header"><h2>Education &amp; Learning</h2></div>
 
   <a class="card" href="mindstorms/">
-    <div class="card-icon" style="background:rgba(126,198,153,0.1)">&#x2B22;</div>
     <div class="card-body">
       <div class="card-title">Mindstorms <span class="stars">★★★★★</span></div>
       <div class="card-desc">Papert's vision of children as builders. Turtle geometry, microworlds, Mathland — the theoretical foundation for everything we build.</div>
@@ -226,7 +211,6 @@
   </a>
 
   <a class="card" href="subversive/">
-    <div class="card-icon" style="background:rgba(232,124,124,0.1)">&#x2620;</div>
     <div class="card-body">
       <div class="card-title">Teaching As a Subversive Activity <span class="stars">★★★★★</span></div>
       <div class="card-desc">Postman &amp; Weingartner's 1969 manifesto. The political argument Mindstorms gestures at but never makes. Questions are the curriculum.</div>
@@ -239,7 +223,6 @@
   <div class="section-header"><h2>Nature &amp; Creativity</h2></div>
 
   <a class="card" href="lastchance/">
-    <div class="card-icon" style="background:rgba(126,198,153,0.1)">&#x2767;</div>
     <div class="card-body">
       <div class="card-title">Last Chance to See <span class="stars">★★★★★</span></div>
       <div class="card-desc">Douglas Adams on endangered species. Brilliant human thought applied to an interesting topic — funny, devastating, and urgent.</div>
@@ -249,7 +232,6 @@
   </a>
 
   <a class="card" href="invisible/">
-    <div class="card-icon" style="background:rgba(196,160,232,0.1)">&#x25CA;</div>
     <div class="card-body">
       <div class="card-title">Invisible Cities <span class="stars">★★★★★</span></div>
       <div class="card-desc">Calvino's 55 cities as philosophical propositions. Every city is a compressed information packet — memory, desire, signs, the dead.</div>
@@ -259,7 +241,6 @@
   </a>
 
   <a class="card" href="steal/">
-    <div class="card-icon" style="background:rgba(232,168,124,0.1)">&#x2702;</div>
     <div class="card-body">
       <div class="card-title">Steal Like an Artist <span class="stars">★★★☆☆</span></div>
       <div class="card-desc">Kleon's creative permission slip. Charming gateway drug — Instagram wisdom before Instagram was a genre.</div>
@@ -272,7 +253,6 @@
   <div class="section-header"><h2>Architecture &amp; Pattern</h2></div>
 
   <a class="card" href="timeless/">
-    <div class="card-icon" style="background:rgba(180,160,120,0.1)">&#x2302;</div>
     <div class="card-body">
       <div class="card-title">The Timeless Way of Building</div>
       <div class="card-desc">Christopher Alexander's theory of patterns and the "quality without a name." Interactive pattern language, alive-or-dead judgment, forces that shape space.</div>
@@ -285,7 +265,6 @@
   <div class="section-header"><h2>AI Tools</h2></div>
 
   <a class="card" href="replay/">
-    <div class="card-icon" style="background:rgba(230,180,80,0.1)">&#x25B6;</div>
     <div class="card-body">
       <div class="card-title">Interview Replay Viewer</div>
       <div class="card-desc">Replay any past AI interview. Real Excalidraw rendering — see exactly what each model drew, stage by stage.</div>
@@ -295,7 +274,6 @@
   </a>
 
   <a class="card" href="benchmark/">
-    <div class="card-icon" style="background:rgba(126,198,153,0.1)">&#x2593;</div>
     <div class="card-body">
       <div class="card-title">Benchmark Results (v2)</div>
       <div class="card-desc">11 models tested. Qwen3-VL-8B won. Full scoring breakdown, stage-by-stage analysis, context overflow tracking.</div>
