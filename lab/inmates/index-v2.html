@@ -154,15 +154,24 @@
   .persona-result{background:#faf8f2;padding:16px;border-radius:6px;font-size:16px;line-height:1.7;min-height:80px;border-left:3px solid var(--ink4)}
 
   /* ===== GOALS VS TASKS ===== */
-  .ba-slider{position:relative;margin:24px 0;border-radius:10px;overflow:hidden;height:280px;cursor:col-resize;user-select:none;border:1px solid #ddd}
-  .ba-layer{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:24px 32px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.8}
-  .ba-before{background:#f5f0e8;color:var(--ink);clip-path:inset(0 50% 0 0)}
-  .ba-after{background:#0d1a0d;color:#33ff33;font-family:monospace;clip-path:inset(0 0 0 50%)}
-  .ba-handle{position:absolute;top:0;left:50%;width:3px;height:100%;background:var(--ink4);transform:translateX(-50%);z-index:5;pointer-events:none}
-  .ba-handle::after{content:'◀ ▶';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--ink4);color:#fff;padding:4px 8px;border-radius:10px;font-size:10px;white-space:nowrap;letter-spacing:4px}
-  .ba-label{position:absolute;top:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;z-index:3}
-  .ba-label.left{left:14px;color:var(--ink3)}
-  .ba-label.right{right:14px;color:#2a662a}
+  .tm-wrap{background:#1a1a1a;border:1px solid #444;border-radius:10px;overflow:hidden;margin:24px 0}
+  .tm-goal{text-align:center;padding:14px 16px;background:rgba(126,198,153,0.08);border-bottom:1px solid #333;font-family:'Inter',sans-serif;font-size:14px;color:#ccc}
+  .tm-goal span{color:#7ec699;font-weight:700}
+  .tm-cols{display:grid;grid-template-columns:1fr 36px 1fr}
+  .tm-col{padding:16px 20px}
+  .tm-col h3{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;font-weight:700}
+  .tm-col.before h3{color:#cc8866}
+  .tm-col.after h3{color:#7ec699}
+  .tm-item{font-family:'Inter',sans-serif;font-size:13px;padding:6px 0;border-bottom:1px solid #252525;line-height:1.5}
+  .tm-item .tl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.5px}
+  .tm-divider{display:flex;align-items:center;justify-content:center;border-left:1px solid #333;border-right:1px solid #333}
+  .tm-divider span{writing-mode:vertical-lr;font-family:'Inter',sans-serif;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase}
+  .tm-sliders{padding:12px 20px;border-top:1px solid #333;display:flex;align-items:center;gap:10px}
+  .tm-sliders input{flex:1;accent-color:var(--ink4)}
+  .tm-yr{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;min-width:36px;text-align:center}
+  .tm-yr.left{color:#cc8866}
+  .tm-yr.right{color:#7ec699}
+  @media(max-width:600px){.tm-cols{grid-template-columns:1fr;gap:0}.tm-divider{display:none}.tm-col{padding:12px 16px}}
 
   /* ===== JETWAY ===== */
   .jetway-choice{display:flex;gap:0;margin:30px 0;height:300px;border-radius:12px;overflow:hidden;cursor:pointer}
@@ -215,7 +224,6 @@
     .persona-card .fields{grid-template-columns:1fr;gap:6px}
     .persona-card label{text-align:left}
     .persona-card input,.persona-card select{min-height:44px}
-    .ba-slider{height:320px}
     .jetway-choice{flex-direction:column;height:auto}
     .jetway-side{padding:20px}
     .jetway-side p{max-width:100%}
@@ -487,26 +495,21 @@
   <div class="inner">
     <h2 class="reveal">Goals are not tasks.</h2>
     <p class="reveal" style="color:#999">A goal is a stable end condition. A task is a transient way of reaching it. Technology changes tasks. Goals never change.</p>
-    <div class="ba-slider reveal" id="baSlider">
-      <div class="ba-label left">1850</div>
-      <div class="ba-label right">1999</div>
-      <div class="ba-layer ba-before" id="baBefore">
-        <p><strong>St. Louis → San Francisco</strong></p>
-        <p>🐴 Conestoga wagon</p>
-        <p>🔫 Bring Winchester rifle (safety)</p>
-        <p>⏱️ 4-6 months</p>
-        <p style="margin-top:12px;font-size:12px;color:var(--ink3)">Goal: speed, comfort, safety</p>
+    <div class="tm-wrap reveal">
+      <div class="tm-goal">Goal: <span>Get from St. Louis to San Francisco — safely and comfortably</span></div>
+      <div class="tm-cols">
+        <div class="tm-col before" id="tmLeft"></div>
+        <div class="tm-divider"><span>same goal</span></div>
+        <div class="tm-col after" id="tmRight"></div>
       </div>
-      <div class="ba-layer ba-after" id="baAfter">
-        <p><strong>St. Louis → San Francisco</strong></p>
-        <p>✈️ Boeing 777</p>
-        <p>🚫 Leave rifle at HOME (safety)</p>
-        <p>⏱️ 4 hours</p>
-        <p style="margin-top:12px;font-size:12px;color:#2a662a">Goal: speed, comfort, safety</p>
+      <div class="tm-sliders">
+        <span class="tm-yr left" id="tmYrL">1850</span>
+        <input type="range" id="tmSliderL" min="0" max="5" value="0" oninput="updateTimeMachine()">
+        <input type="range" id="tmSliderR" min="0" max="5" value="5" oninput="updateTimeMachine()">
+        <span class="tm-yr right" id="tmYrR">2020</span>
       </div>
-      <div class="ba-handle" id="baHandle"></div>
     </div>
-    <p class="caption reveal" style="color:#666;text-align:center">← Drag to compare → Same goals. Opposite tasks.</p>
+    <p class="caption reveal" style="color:#666;text-align:center">Pick any two eras. Tasks are completely different. The goal is identical.</p>
   </div>
 </section>
 
@@ -875,25 +878,28 @@ function updatePersona(){
   document.getElementById('personaResult').innerHTML=t;
 }
 
-// ===== BEFORE/AFTER SLIDER =====
-(function(){
-  const slider=document.getElementById('baSlider');
-  if(!slider)return;
-  let dragging=false;
-  function setPos(x){
-    const rect=slider.getBoundingClientRect();
-    let pct=Math.max(5,Math.min(95,(x-rect.left)/rect.width*100));
-    document.getElementById('baHandle').style.left=pct+'%';
-    document.getElementById('baBefore').style.clipPath=`inset(0 ${100-pct}% 0 0)`;
-    document.getElementById('baAfter').style.clipPath=`inset(0 0 0 ${pct}%)`;
-  }
-  slider.addEventListener('mousedown',e=>{dragging=true;setPos(e.clientX)});
-  slider.addEventListener('touchstart',e=>{dragging=true;setPos(e.touches[0].clientX)},{passive:true});
-  window.addEventListener('mousemove',e=>{if(dragging)setPos(e.clientX)});
-  window.addEventListener('touchmove',e=>{if(dragging)setPos(e.touches[0].clientX)},{passive:true});
-  window.addEventListener('mouseup',()=>dragging=false);
-  window.addEventListener('touchend',()=>dragging=false);
-})();
+// ===== TIME MACHINE (Goals vs Tasks) =====
+const tmEras=[
+  {year:1850,tasks:['Horse & covered wagon','Rifle + group travel','Scout & landmarks','4–6 months']},
+  {year:1870,tasks:['Transcontinental railroad','Armed guards on train','Published schedules','7 days']},
+  {year:1920,tasks:['Model T automobile','Seatbelt (optional)','Paper road maps','5 days driving']},
+  {year:1960,tasks:['Commercial Boeing 707','FAA safety regulations','Air traffic control','5 hours']},
+  {year:2000,tasks:['Book flight on Expedia','TSA + airbags','GPS navigation','5 hours']},
+  {year:2020,tasks:['Book on phone in 30 sec','AI collision avoidance','Real-time rerouting','4.5 hours']},
+];
+const tmLabels=['Vehicle','Safety','Navigation','Duration'];
+function renderTmCol(el,era,cls){
+  el.innerHTML=`<h3>${era.year}</h3>`+era.tasks.map((t,i)=>`<div class="tm-item"><div class="tl">${tmLabels[i]}</div>${t}</div>`).join('');
+}
+function updateTimeMachine(){
+  const li=parseInt(document.getElementById('tmSliderL').value);
+  const ri=parseInt(document.getElementById('tmSliderR').value);
+  renderTmCol(document.getElementById('tmLeft'),tmEras[li]);
+  renderTmCol(document.getElementById('tmRight'),tmEras[ri]);
+  document.getElementById('tmYrL').textContent=tmEras[li].year;
+  document.getElementById('tmYrR').textContent=tmEras[ri].year;
+}
+updateTimeMachine();
 
 // ===== POLITE VS RUDE =====
 let rudeStage=0;
