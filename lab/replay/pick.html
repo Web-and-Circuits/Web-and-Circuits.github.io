@@ -14,17 +14,28 @@ a{display:block;background:#161b22;border:1px solid #30363d;border-radius:10px;p
 a:hover{border-color:#388bfd;transform:translateY(-1px)}
 a strong{font-size:16px;display:block;margin-bottom:4px}
 a span{font-size:13px;color:#8b949e}
+.section{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1.5px;margin-top:20px;margin-bottom:8px;padding-top:16px;border-top:1px solid #21262d}
+.section:first-of-type{border-top:none;margin-top:0;padding-top:0}
 </style>
 </head>
 <body>
 <h1>Replay Viewer — Mobile Variants</h1>
 <p>Open each on your phone to compare. Pick one.</p>
 <div class="cards">
+  <div class="section">Layout variants</div>
   <a href="v1-tabs.html"><strong>v1 — Tabs</strong><span>Chat/Canvas tab switcher. One view at a time. Controls pinned at bottom.</span></a>
   <a href="v2-stack.html"><strong>v2 — Stack</strong><span>Chat on top (40%), canvas below (60%). Simple vertical split.</span></a>
   <a href="v3-drawer.html"><strong>v3 — Drawer</strong><span>Full-screen canvas. Chat slides up from bottom as a pull-up sheet.</span></a>
   <a href="v4-timeline.html"><strong>v4 — Timeline</strong><span>Canvas dominates. Chat as floating toasts. Horizontal timeline at top.</span></a>
   <a href="v5-split.html"><strong>v5 — Split</strong><span>Landscape: 50/50. Portrait: auto-switches to tabs.</span></a>
+
+  <div class="section">Cinematic variants</div>
+  <a href="v6-bubbles.html"><strong>v6 — Bubbles ★</strong><span>Full-screen canvas. Auto-play. Messages float up and fade like subtitles.</span></a>
+  <a href="v7-score.html"><strong>v7 — Score</strong><span>Live scoreboard overlay. Stage title cards. Watch the model perform.</span></a>
+  <a href="v8-compare.html"><strong>v8 — Compare</strong><span>Split-screen. Two models replay simultaneously. Race mode.</span></a>
+  <a href="v9-museum.html"><strong>v9 — Museum</strong><span>Science museum kiosk. Attract screen, card picker, auto-narration.</span></a>
+
+  <div class="section">Original</div>
   <a href="index.html"><strong>Current</strong><span>The existing layout for comparison.</span></a>
 </div>
 </body>
