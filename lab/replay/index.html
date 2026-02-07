@@ -50,30 +50,28 @@
   #badge { display: none; }
   #canvas-label { display: none; }
 
-  /* Chat bubbles overlay — scrolling battle text style */
+  /* Chat overlay — MMO battle text: new at bottom, scrolls up, fades at top */
   #chat {
     position: fixed; top: 44px; left: 0; right: 0; z-index: 40;
     height: 40vh;
-    display: flex; flex-direction: column-reverse;
+    display: flex; flex-direction: column; justify-content: flex-end;
     pointer-events: none; padding: 0 16px;
     overflow: hidden;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
-  }
-  #chat-inner {
-    display: flex; flex-direction: column; justify-content: flex-end; min-height: 100%;
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 100%);
   }
   .msg {
     max-width: 80%; padding: 10px 16px; margin-bottom: 6px;
     border-radius: 16px; font-size: 13px; line-height: 1.5;
-    animation: msgAppear 0.4s ease-out;
-    opacity: 0.9; pointer-events: none;
+    animation: msgSlideIn 0.3s ease-out;
+    opacity: 0.85; pointer-events: none;
     word-wrap: break-word;
     flex-shrink: 0;
+    transition: opacity 0.5s, transform 0.5s;
   }
-  @keyframes msgAppear {
-    0%   { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 0.9; transform: translateY(0); }
+  @keyframes msgSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 0.85; transform: translateY(0); }
   }
   .msg.human, .msg.interviewer, .msg.vision-prompt {
     background: rgba(31, 111, 235, 0.25); border: 1px solid rgba(31, 111, 235, 0.3);
@@ -212,15 +210,13 @@ let msgCounter = 0;
 let excalidrawAPI = null;
 let excalidrawReady = false;
 
-// Battle text: keep last N messages, oldest scroll off top and get masked
-const MAX_BUBBLES = 8;
+// Battle text: keep last N messages, oldest fade out smoothly via CSS mask
+const MAX_BUBBLES = 10;
 function pruneChat() {
   const chat = document.getElementById('chat');
+  // Let the gradient mask handle visual fade — just remove truly old ones
   while (chat.children.length > MAX_BUBBLES) {
-    const oldest = chat.firstChild;
-    oldest.style.transition = 'opacity 0.3s';
-    oldest.style.opacity = '0';
-    setTimeout(() => oldest.remove(), 300);
+    chat.removeChild(chat.firstChild);
   }
 }
 
