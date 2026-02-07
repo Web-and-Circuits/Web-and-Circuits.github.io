@@ -260,11 +260,10 @@ h1 {
 
 <div class="content">
   <h1>Web and Circuits LLC</h1>
-  <p class="tagline">Building digital worlds, one experiment at a time</p>
+  <p class="tagline">Software, demos, and experiments. We build things and see what happens.</p>
   <div class="buttons">
-    <a href="/heartbeat-demo" class="btn btn-primary">Explore Demo</a>
-    <a href="/lab/" class="btn btn-outline">The Lab</a>
-    <a href="https://github.com/Web-and-Circuits" class="btn btn-outline">View Code</a>
+    <a href="/lab/" class="btn btn-primary">See Our Work</a>
+    <a href="#" class="btn btn-outline" onclick="document.getElementById('contact-modal').classList.add('open');return false">Info</a>
   </div>
 </div>
 
@@ -370,5 +369,27 @@ setInterval(() => {
   randomWindow.classList.toggle('lit');
 }, 500);
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="iso-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="iso-modal-card">
+    <button class="iso-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <div class="iso-modal-accent"></div>
+    <h2>📡 Signal Received</h2>
+    <p>Small team building software, demos, and AI/ML experiments. We'd love to hear from you.</p>
+    <a href="mailto:hello@webandcircuits.com" class="btn btn-primary" style="margin-top:24px;display:inline-block">hello@webandcircuits.com</a>
+  </div>
+</div>
+<style>
+.iso-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(26,26,46,0.85);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity 0.4s}
+.iso-modal.open{opacity:1;pointer-events:all}
+.iso-modal-card{position:relative;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(233,69,96,0.3);border-radius:12px;padding:48px;max-width:420px;text-align:center;color:#fff;box-shadow:8px 8px 0 rgba(233,69,96,0.2),16px 16px 0 rgba(233,69,96,0.1);transform:perspective(600px) rotateY(-5deg) scale(0.9);transition:transform 0.5s cubic-bezier(.175,.885,.32,1.275)}
+.iso-modal.open .iso-modal-card{transform:perspective(600px) rotateY(0deg) scale(1)}
+.iso-modal-card h2{font-size:24px;margin-bottom:16px}
+.iso-modal-card p{color:rgba(255,255,255,0.7);line-height:1.7;font-size:15px}
+.iso-modal-accent{position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent);border-radius:12px 12px 0 0}
+.iso-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:24px;cursor:pointer}
+.iso-modal-close:hover{color:#fff}
+</style>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

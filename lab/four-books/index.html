@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Books, One Idea — Order from Process</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--cooper:#e8934a;--raymond:#5cb85c;--koza:#9b59b6;--alexander:#d4a843;
+--john:#4a90d9;--bg:#0f1117;--surface:#181b24;--surface2:#1e2230;
+--text:#d8d8e0;--text-dim:#8888a0;--radius:12px;
+}
+html{scroll-behavior:smooth;background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:18px;line-height:1.7}
+body{min-height:100vh}
+a{color:var(--alexander);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Progress bar */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--alexander),var(--cooper),var(--koza),var(--raymond));width:0;z-index:999;transition:width .15s}
+
+/* Layout */
+.container{max-width:740px;margin:0 auto;padding:0 24px}
+.back{display:inline-block;margin:24px 0 0;font-family:'Inter',sans-serif;font-size:14px;color:var(--text-dim)}
+.back:hover{color:var(--text)}
+
+/* Hero */
+.hero{text-align:center;padding:100px 24px 80px}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;line-height:1.15;margin-bottom:24px;background:linear-gradient(135deg,var(--alexander),var(--cooper));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .subtitle{font-size:1.15rem;color:var(--text-dim);max-width:520px;margin:0 auto 36px}
+.book-dots{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.book-dot{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:6px 16px;border-radius:20px;border:1.5px solid;cursor:default}
+.book-dot.cooper{color:var(--cooper);border-color:var(--cooper)}
+.book-dot.raymond{color:var(--raymond);border-color:var(--raymond)}
+.book-dot.koza{color:var(--koza);border-color:var(--koza)}
+.book-dot.alexander{color:var(--alexander);border-color:var(--alexander)}
+
+/* Sections */
+.braid{padding:80px 0;opacity:0;transform:translateY(30px);transition:opacity .7s,transform .7s}
+.braid.visible{opacity:1;transform:translateY(0)}
+.braid-num{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+.braid h2{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:700;margin-bottom:24px;line-height:1.25}
+.braid p{margin-bottom:18px}
+
+/* Quote grid */
+.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
+@media(max-width:600px){.quote-grid{grid-template-columns:1fr}}
+.quote-card{background:var(--surface);border-radius:var(--radius);padding:20px;border-left:3px solid;position:relative}
+.quote-card.cooper{border-color:var(--cooper)}.quote-card.raymond{border-color:var(--raymond)}
+.quote-card.koza{border-color:var(--koza)}.quote-card.alexander{border-color:var(--alexander)}
+.quote-card .author-tag{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.quote-card.cooper .author-tag{color:var(--cooper)}.quote-card.raymond .author-tag{color:var(--raymond)}
+.quote-card.koza .author-tag{color:var(--koza)}.quote-card.alexander .author-tag{color:var(--alexander)}
+.quote-card blockquote{font-style:italic;font-size:.95rem;color:var(--text-dim);line-height:1.6}
+
+/* Voice box */
+.voice-box{background:linear-gradient(135deg,rgba(74,144,217,.08),rgba(74,144,217,.03));border:1px solid rgba(74,144,217,.2);border-radius:var(--radius);padding:24px;margin:32px 0}
+.voice-box .speaker{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--john);margin-bottom:10px}
+.voice-box p{margin-bottom:12px;font-size:.98rem}
+.voice-box p:last-child{margin-bottom:0}
+
+/* Interactive panels */
+.interactive{background:var(--surface);border-radius:var(--radius);padding:28px;margin:32px 0;border:1px solid rgba(255,255,255,.06)}
+.interactive h3{font-family:'Inter',sans-serif;font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text)}
+.vocab-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.vocab-btn{font-family:'Inter',sans-serif;font-size:13px;padding:8px 18px;border-radius:20px;border:1.5px solid var(--text-dim);background:transparent;color:var(--text);cursor:pointer;transition:all .2s;min-height:44px;display:flex;align-items:center}
+.vocab-btn:hover{border-color:var(--text);background:rgba(255,255,255,.04)}
+.vocab-btn.active{border-color:var(--alexander);color:var(--alexander);background:rgba(212,168,67,.08)}
+.vocab-result{min-height:60px;padding:16px;background:var(--surface2);border-radius:8px;font-size:.95rem;line-height:1.6;color:var(--text-dim);transition:opacity .3s}
+
+/* Scenario cards */
+.scenario-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.scenario-tab{font-family:'Inter',sans-serif;font-size:13px;padding:8px 16px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;min-height:44px}
+.scenario-tab.active{background:var(--surface2);color:var(--text);border-color:rgba(255,255,255,.2)}
+.eval-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.eval-cards{grid-template-columns:1fr}}
+.eval-card{padding:16px;border-radius:8px;background:var(--surface2);border-left:3px solid;font-size:.88rem;font-family:'Inter',sans-serif;line-height:1.5}
+.eval-card .eval-who{font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.eval-card.cooper{border-color:var(--cooper)}.eval-card.cooper .eval-who{color:var(--cooper)}
+.eval-card.raymond{border-color:var(--raymond)}.eval-card.raymond .eval-who{color:var(--raymond)}
+.eval-card.koza{border-color:var(--koza)}.eval-card.koza .eval-who{color:var(--koza)}
+.eval-card.alexander{border-color:var(--alexander)}.eval-card.alexander .eval-who{color:var(--alexander)}
+
+/* Debate */
+.debate-prompt{font-family:'Inter',sans-serif;font-size:14px;padding:16px;background:var(--surface2);border-radius:8px;margin-bottom:16px;color:var(--text-dim);text-align:center;font-style:italic}
+.debate-voices{display:grid;gap:12px}
+.debate-voice{padding:16px;border-radius:8px;background:var(--surface2);border-left:3px solid;cursor:pointer;transition:all .25s;opacity:.6}
+.debate-voice:hover,.debate-voice.expanded{opacity:1}
+.debate-voice .dv-name{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.debate-voice .dv-short{font-size:.92rem}
+.debate-voice .dv-long{font-size:.88rem;color:var(--text-dim);margin-top:10px;display:none;line-height:1.6}
+.debate-voice.expanded .dv-long{display:block}
+
+/* Evolution sim */
+.evo-sim{text-align:center}
+.evo-canvas{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.evo-col{flex:1;min-width:200px;max-width:280px}
+.evo-col h4{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;margin-bottom:12px}
+.evo-bar{height:20px;border-radius:4px;margin-bottom:6px;transition:width .5s;position:relative}
+.evo-bar span{position:absolute;right:6px;top:2px;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(0,0,0,.6)}
+.evo-step{font-family:'Inter',sans-serif;font-size:12px;color:var(--text-dim);margin-bottom:4px;text-align:left}
+.evo-btn{font-family:'Inter',sans-serif;font-size:14px;padding:10px 28px;border-radius:8px;border:none;background:var(--alexander);color:#000;cursor:pointer;font-weight:600;margin-top:12px;min-height:44px;transition:transform .1s}
+.evo-btn:hover{transform:scale(1.03)}
+
+/* Naming input */
+.naming-input{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap}
+.naming-input input{flex:1;min-width:180px;font-family:'EB Garamond',serif;font-size:1rem;padding:12px 16px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:var(--surface2);color:var(--text);min-height:44px}
+.naming-input input:focus{outline:none;border-color:var(--alexander)}
+.naming-input button{font-family:'Inter',sans-serif;font-size:14px;padding:12px 24px;border-radius:8px;border:none;background:var(--alexander);color:#000;cursor:pointer;font-weight:600;min-height:44px}
+.naming-wall{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.naming-chip{font-family:'Inter',sans-serif;font-size:12px;padding:6px 14px;border-radius:16px;background:var(--surface2);color:var(--text-dim);border:1px solid rgba(255,255,255,.06);animation:chipIn .3s}
+@keyframes chipIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+/* Rating */
+.rating-section{padding:80px 0;text-align:center}
+.rating-section h2{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:24px}
+.star-row{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.star-row span{font-size:2rem;cursor:pointer;opacity:.3;transition:all .2s;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.star-row span.lit{opacity:1}
+.rating-table{margin:24px auto;font-family:'Inter',sans-serif;font-size:14px;text-align:left;max-width:360px}
+.rating-table div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.rating-table .label{color:var(--text-dim)}
+.reviewer{margin-top:32px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text-dim)}
+.reviewer .name{color:var(--john);font-weight:600}
+
+/* Divider */
+.divider{width:60px;height:2px;background:linear-gradient(90deg,var(--alexander),var(--cooper));margin:60px auto;border-radius:2px}
+
+/* Footer */
+footer{text-align:center;padding:40px 24px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text-dim)}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<div class="container">
+<a href="../" class="back">← Back to Lab</a>
+</div>
+
+<header class="hero">
+<h1>Four Books, One Idea</h1>
+<p class="subtitle">How order emerges from process, not from plans — told through four different vocabularies that are secretly the same language.</p>
+<div class="book-dots">
+<span class="book-dot alexander">Alexander</span>
+<span class="book-dot raymond">Raymond</span>
+<span class="book-dot cooper">Cooper</span>
+<span class="book-dot koza">Koza</span>
+</div>
+</header>
+
+<div class="container">
+
+<!-- THESIS -->
+<section class="braid" id="thesis">
+<div class="braid-num">The Thesis</div>
+<h2>Order emerges from process, not from plans</h2>
+<p>Four books. Four disciplines. Four authors who never cite each other. And yet they are all saying the same thing:</p>
+<p><strong>Christopher Alexander</strong> watched buildings. The ones that felt alive — a courtyard in a village, a window seat catching afternoon light — were never designed from a master plan. They emerged from people making small repairs, over and over, following patterns they could feel but never fully articulate.</p>
+<p><strong>Eric Raymond</strong> watched Unix. The programs that survived decades — <code style="font-family:'JetBrains Mono',monospace;font-size:.88rem;background:var(--surface);padding:2px 6px;border-radius:4px">grep</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:.88rem;background:var(--surface);padding:2px 6px;border-radius:4px">cat</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:.88rem;background:var(--surface);padding:2px 6px;border-radius:4px">pipe</code> — were small, composable, and transparent. The monoliths rotted. Complexity survived only when it was built from simple parts that didn't know about each other.</p>
+<p><strong>Alan Cooper</strong> watched users. The software that people actually loved wasn't designed for "the average user." It was designed for one specific, fictional person — a persona — with real goals and real frustrations. When you design for everyone, you design for no one. When you design for one person deeply, you design for everyone.</p>
+<p><strong>John Koza</strong> watched evolution. He fed problems to genetic programs and watched them reinvent patented circuits — not by understanding electronics, but by trying millions of variations and keeping what worked. No engineer. No plan. Just a fitness function and time.</p>
+
+<div class="voice-box">
+<div class="speaker">🐑 John Isidore</div>
+<p>The first time I read these four books together, I got chills. They don't know about each other. Alexander is an architect writing in the 1970s. Raymond is a hacker writing in the 2000s. Cooper is a designer writing in the 1990s. Koza is a computer scientist writing in the 1990s. And yet they independently converged on the same insight: <em>the best things are not designed — they emerge.</em></p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRAID 1 -->
+<section class="braid" id="braid1">
+<div class="braid-num">Braid I</div>
+<h2>Patterns Are Everywhere</h2>
+<p>All four authors believe there are discoverable, reusable structures that generate quality. They just call them different things.</p>
+
+<div class="quote-grid">
+<div class="quote-card alexander"><div class="author-tag">Alexander</div><blockquote>"Each pattern describes a problem which occurs over and over again in our environment, and then describes the core of the solution to that problem, in such a way that you can use this solution a million times over."</blockquote></div>
+<div class="quote-card raymond"><div class="author-tag">Raymond</div><blockquote>"Rule of Composition: Design programs to be connected to other programs. Rule of Separation: Separate policy from mechanism."</blockquote></div>
+<div class="quote-card cooper"><div class="author-tag">Cooper</div><blockquote>"Discontented users are not the problem. The problem is the process that created the software... good design principles are not opinions. They are discoveries."</blockquote></div>
+<div class="quote-card koza"><div class="author-tag">Koza</div><blockquote>"The fitness landscape is the terrain on which evolution searches. Its topology — its peaks and valleys — determines what solutions are reachable."</blockquote></div>
+</div>
+
+<div class="interactive">
+<h3>🔄 The Rosetta Stone — Pick a concept, see it in four vocabularies</h3>
+<div class="vocab-row" id="vocab-btns">
+<button class="vocab-btn" data-concept="reuse" onclick="showVocab(this)">Reusable Structure</button>
+<button class="vocab-btn" data-concept="quality" onclick="showVocab(this)">Quality Test</button>
+<button class="vocab-btn" data-concept="composition" onclick="showVocab(this)">Composition</button>
+<button class="vocab-btn" data-concept="context" onclick="showVocab(this)">Context Sensitivity</button>
+</div>
+<div class="vocab-result" id="vocab-result">Choose a concept above to see how each author expresses the same idea.</div>
+</div>
+
+<div class="voice-box">
+<div class="speaker">🐑 John Isidore</div>
+<p>What kills me is that Alexander's "pattern language" is literally a domain-specific language. Raymond would recognize it instantly — it's a declarative grammar for generating buildings. Koza would see it as a genome. Cooper would see it as a design system. Same structure, four costumes.</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRAID 2 -->
+<section class="braid" id="braid2">
+<div class="braid-num">Braid II</div>
+<h2>Alive vs Dead</h2>
+<p>Each author has a binary quality test — a way of looking at something and saying: <em>this is alive</em> or <em>this is dead.</em> The tests are different in form, identical in essence.</p>
+
+<div class="quote-grid">
+<div class="quote-card alexander"><div class="author-tag">Alexander</div><blockquote>"A place which has this quality invites you to linger, to come back, to live. A place without it repels you, makes you anxious to leave."</blockquote></div>
+<div class="quote-card cooper"><div class="author-tag">Cooper</div><blockquote>"Polite software behaves like a considerate human. It remembers, it anticipates, it doesn't ask stupid questions, and it takes responsibility for its actions."</blockquote></div>
+<div class="quote-card raymond"><div class="author-tag">Raymond</div><blockquote>"Software is transparent when you can look at it and immediately understand what it is doing and why."</blockquote></div>
+<div class="quote-card koza"><div class="author-tag">Koza</div><blockquote>"A program's fitness is measured by how well it performs its intended task. The unfit die; the fit reproduce."</blockquote></div>
+</div>
+
+<div class="interactive">
+<h3>⚖️ The Judgment — How would each author evaluate this design decision?</h3>
+<div class="scenario-tabs" id="scenario-tabs">
+<button class="scenario-tab active" onclick="showScenario(0,this)">Login Form</button>
+<button class="scenario-tab" onclick="showScenario(1,this)">Config File</button>
+<button class="scenario-tab" onclick="showScenario(2,this)">Smart Home</button>
+</div>
+<div id="scenario-display">
+<div class="eval-cards" id="eval-cards"></div>
+</div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRAID 3 -->
+<section class="braid" id="braid3">
+<div class="braid-num">Braid III</div>
+<h2>The Egoless Creator</h2>
+<p>All four authors argue against the heroic designer — the genius who imposes their vision on the world. Quality, they say, emerges only when the creator steps back.</p>
+
+<div class="quote-grid">
+<div class="quote-card alexander"><div class="author-tag">Alexander</div><blockquote>"The quality without a name can never be made, but only generated, indirectly, by the ordinary actions of the people, just as a flower cannot be made, but only generated from the seed."</blockquote></div>
+<div class="quote-card raymond"><div class="author-tag">Raymond</div><blockquote>"Rule of Least Surprise: In interface design, always do the least surprising thing. Separate mechanism from policy — don't impose your preferences."</blockquote></div>
+<div class="quote-card cooper"><div class="author-tag">Cooper</div><blockquote>"Programmers design software for themselves. The persona forces you to design for someone who is NOT you."</blockquote></div>
+<div class="quote-card koza"><div class="author-tag">Koza</div><blockquote>"The human programmer specifies what needs to be done. Evolution decides how to do it. The programmer relinquishes control of the design process."</blockquote></div>
+</div>
+
+<div class="interactive">
+<h3>🗣️ The Debate — Click each voice to hear their argument against the heroic designer</h3>
+<div class="debate-prompt">"Should a brilliant designer trust their instincts and build what they envision?"</div>
+<div class="debate-voices">
+<div class="debate-voice" style="border-color:var(--alexander)" onclick="toggleDebate(this)">
+<div class="dv-name" style="color:var(--alexander)">Alexander</div>
+<div class="dv-short">"No. Your instincts are ego. Listen to the forces."</div>
+<div class="dv-long">The quality without a name emerges only when you let go of your image of what the thing should be. A building comes alive when you stop trying to make it "look like something" and start resolving the actual forces — light, movement, privacy, connection. The designer's job is not to create but to <em>uncover</em> what the site already wants to be.</div>
+</div>
+<div class="debate-voice" style="border-color:var(--raymond)" onclick="toggleDebate(this)">
+<div class="dv-name" style="color:var(--raymond)">Raymond</div>
+<div class="dv-short">"Build the mechanism. Let users set the policy."</div>
+<div class="dv-long">The worst programs are the ones where the programmer thought they knew best. "I'll handle the configuration for you." "You don't need that option." Wrong. Build transparent, composable mechanisms. Let the user — or the next programmer — decide how to combine them. Your brilliant vision is tomorrow's legacy burden.</div>
+</div>
+<div class="debate-voice" style="border-color:var(--cooper)" onclick="toggleDebate(this)">
+<div class="dv-name" style="color:var(--cooper)">Cooper</div>
+<div class="dv-short">"Trust your instincts? Your instincts are not the user's instincts."</div>
+<div class="dv-long">Programmers build for programmers. Designers design for designers. The persona exists precisely to break this narcissistic loop. When you design for a specific person — with a name, an age, frustrations, goals — you can't hide behind "well, <em>I</em> would want it this way." The persona is a mirror that shows you your own ego.</div>
+</div>
+<div class="debate-voice" style="border-color:var(--koza)" onclick="toggleDebate(this)">
+<div class="dv-name" style="color:var(--koza)">Koza</div>
+<div class="dv-short">"The question is irrelevant. Remove the designer entirely."</div>
+<div class="dv-long">Genetic programming doesn't ask whether the designer should trust their instincts. It removes the designer from the equation. You define the fitness function — what "good" means — and evolution searches the space of all possible programs. It has reinvented patented circuits no human engineer would have conceived. The designer's instincts are the bottleneck, not the solution.</div>
+</div>
+</div>
+</div>
+
+<div class="voice-box">
+<div class="speaker">🐑 John Isidore</div>
+<p>There's something humbling about all four of these positions. They're saying the same thing a jazz musician knows: the best solos happen when you stop trying to play something impressive and just <em>listen</em> to what the music wants. Alexander calls it "egoless." Cooper calls it "empathy." Raymond calls it "transparency." Koza calls it "letting go." It's the same surrender.</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRAID 4 -->
+<section class="braid" id="braid4">
+<div class="braid-num">Braid IV</div>
+<h2>Repair Over Planning</h2>
+<p>All four authors distrust Big Upfront Design. Things come alive through iteration — through repair, through "worse is better," through generation after generation of small improvements.</p>
+
+<div class="quote-grid">
+<div class="quote-card alexander"><div class="author-tag">Alexander</div><blockquote>"Buildings which are alive are always being repaired. The process of repair is far more important than the process of original design."</blockquote></div>
+<div class="quote-card raymond"><div class="author-tag">Raymond</div><blockquote>"Worse is better: a simpler, rougher solution that ships and evolves will beat a perfect solution that never ships."</blockquote></div>
+<div class="quote-card cooper"><div class="author-tag">Cooper</div><blockquote>"Iterative design is the only way to find the right interaction. You cannot get it right on paper. You must build, test, observe, and adjust."</blockquote></div>
+<div class="quote-card koza"><div class="author-tag">Koza</div><blockquote>"Evolution works not by designing the solution but by generating variation and selecting. Each generation is a repair of the last."</blockquote></div>
+</div>
+
+<div class="interactive">
+<h3>🧬 Evolution Simulator — Watch repair beat planning</h3>
+<p style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);margin-bottom:16px">Click "Evolve" to watch 10 generations of iterative improvement vs a single master plan.</p>
+<div class="evo-sim">
+<div class="evo-canvas">
+<div class="evo-col">
+<h4 style="color:var(--alexander)">🔨 Repair (iterate)</h4>
+<div id="evo-repair"></div>
+</div>
+<div class="evo-col">
+<h4 style="color:var(--text-dim)">📋 Master Plan (one shot)</h4>
+<div id="evo-plan"></div>
+</div>
+</div>
+<button class="evo-btn" onclick="runEvolution()">Evolve</button>
+<div id="evo-status" style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);margin-top:12px;min-height:20px"></div>
+</div>
+</div>
+
+<div class="voice-box">
+<div class="speaker">🐑 John Isidore</div>
+<p>The master plan is seductive because it feels like competence. "We've thought of everything." But the repair process is humble: "We'll figure it out as we go." Every living city, every great codebase, every successful product got there through repair. The dead ones are the ones that were "done."</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRAID 5 -->
+<section class="braid" id="braid5">
+<div class="braid-num">Braid V</div>
+<h2>The Quality Without a Name</h2>
+<p>Alexander's most provocative claim: the quality that makes things alive <em>cannot be named.</em> Every name captures part of it and misses the rest. "Alive" is too biological. "Whole" is too abstract. "Comfortable" is too domestic. "Free" is too political. "Exact" is too mechanical. "Egoless" is too negative. "Eternal" is too grand.</p>
+<p>And yet — you know it when you feel it. You've walked into a room and felt it. You've used software and felt it. You've read code and felt it.</p>
+
+<div class="quote-grid">
+<div class="quote-card alexander"><div class="author-tag">Alexander</div><blockquote>"There is a central quality which is the root criterion of life and spirit in a man, a town, a building, or a wilderness. This quality is objective and precise, but it cannot be named."</blockquote></div>
+<div class="quote-card cooper"><div class="author-tag">Cooper</div><blockquote>"Polite software makes people feel competent, not stupid. It is the quality of respect, carried into interaction."</blockquote></div>
+<div class="quote-card raymond"><div class="author-tag">Raymond</div><blockquote>"The art of programming is the art of organizing complexity — of mastering multitude and avoiding its bastard chaos."</blockquote></div>
+<div class="quote-card koza"><div class="author-tag">Koza</div><blockquote>"Evolution has no name for what it selects. It simply selects."</blockquote></div>
+</div>
+
+<div class="interactive">
+<h3>✨ Try to name it — What IS this quality?</h3>
+<p style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);margin-bottom:16px">Alexander says it can't be named, but that doesn't mean you shouldn't try. What would <em>you</em> call the quality that makes things alive?</p>
+<div class="naming-input">
+<input type="text" id="naming-field" placeholder="What would you call it?" maxlength="40" onkeydown="if(event.key==='Enter')submitName()">
+<button onclick="submitName()">Add</button>
+</div>
+<div class="naming-wall" id="naming-wall">
+<span class="naming-chip">alive</span>
+<span class="naming-chip">whole</span>
+<span class="naming-chip">comfortable</span>
+<span class="naming-chip">free</span>
+<span class="naming-chip">egoless</span>
+<span class="naming-chip">fitting</span>
+<span class="naming-chip">inevitable</span>
+<span class="naming-chip">honest</span>
+</div>
+<div style="margin-top:16px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);font-style:italic" id="naming-response">Each name captures a facet. None captures the whole. That's Alexander's point.</div>
+</div>
+
+<div class="voice-box">
+<div class="speaker">🐑 John Isidore</div>
+<p>I think the quality without a name is <em>resonance</em>. It's what happens when forces resolve — when the thing stops fighting itself. A well-composed Unix pipeline resonates. A polite interface resonates. A genetically evolved circuit resonates. A courtyard with afternoon light resonates. It's the feeling that nothing should be added and nothing taken away. But even "resonance" isn't quite right. Alexander would say: that's exactly the point.</p>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RATING -->
+<section class="rating-section braid" id="rating">
+<h2>Rating the Braid</h2>
+<div class="star-row" id="stars">
+<span onclick="setStars(1)">★</span><span onclick="setStars(2)">★</span><span onclick="setStars(3)">★</span><span onclick="setStars(4)">★</span><span onclick="setStars(5)">★</span>
+</div>
+<div class="rating-table">
+<div><span class="label">Coherence of connections</span><span style="color:var(--alexander)">★★★★☆</span></div>
+<div><span class="label">Quality of writing</span><span style="color:var(--cooper)">★★★★☆</span></div>
+<div><span class="label">Interactivity</span><span style="color:var(--raymond)">★★★★☆</span></div>
+<div><span class="label">Faithfulness to sources</span><span style="color:var(--koza)">★★★★★</span></div>
+<div><span class="label">Overall</span><span style="color:var(--text)">★★★★☆</span></div>
+</div>
+<div class="reviewer">Reviewed by <span class="name">🐑 John Isidore</span><br><span style="font-size:12px">Four books that didn't know they were one book.</span></div>
+</section>
+
+</div>
+
+<footer>
+<p>A braid of four books. Built with words and CSS, no frameworks harmed.</p>
+</footer>
+
+<script>
+// Progress bar
+window.addEventListener('scroll',()=>{
+const h=document.documentElement.scrollHeight-window.innerHeight;
+document.getElementById('progress').style.width=(window.scrollY/h*100)+'%';
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.12});
+document.querySelectorAll('.braid').forEach(b=>obs.observe(b));
+
+// Braid 1: Vocabulary Rosetta Stone
+const vocabData={
+reuse:{
+text:'<b style="color:var(--alexander)">Alexander:</b> Pattern — "Light on Two Sides of Every Room" is a pattern. Use it wherever rooms need life.<br><b style="color:var(--raymond)">Raymond:</b> Rule — "Rule of Composition." Compose small tools. The rule recurs across every well-designed system.<br><b style="color:var(--cooper)">Cooper:</b> Principle — "Don\'t make the user feel stupid." A reusable heuristic for every interaction decision.<br><b style="color:var(--koza)">Koza:</b> Building block — Genetic programming reuses evolved sub-trees. Successful structures propagate.'},
+quality:{
+text:'<b style="color:var(--alexander)">Alexander:</b> "Does it have the quality without a name?" — Does the space feel alive?<br><b style="color:var(--raymond)">Raymond:</b> "Is it transparent?" — Can you understand what it does by looking at it?<br><b style="color:var(--cooper)">Cooper:</b> "Is it polite?" — Does it respect the user\'s time, memory, and dignity?<br><b style="color:var(--koza)">Koza:</b> "Is it fit?" — Does it perform the task as measured by the fitness function?'},
+composition:{
+text:'<b style="color:var(--alexander)">Alexander:</b> Pattern language — Patterns compose into larger patterns. "Courtyard" contains "Light on Two Sides" contains "Window Place."<br><b style="color:var(--raymond)">Raymond:</b> Pipelines — <code>cat file | grep pattern | sort | uniq -c</code>. Each tool is ignorant of the others.<br><b style="color:var(--cooper)">Cooper:</b> Goal-directed design — Persona goals compose: "Don\'t waste my time" + "Make me look competent" = specific interaction flows.<br><b style="color:var(--koza)">Koza:</b> Crossover — Genetic programming combines successful sub-trees from different parent programs.'},
+context:{
+text:'<b style="color:var(--alexander)">Alexander:</b> Forces — Every pattern resolves specific forces. "Entrance Transition" resolves the force between public and private.<br><b style="color:var(--raymond)">Raymond:</b> "Rule of Diversity" — Different contexts need different approaches. Mechanism, not policy.<br><b style="color:var(--cooper)">Cooper:</b> Persona context — A surgeon\'s goals differ from a receptionist\'s. Same software, different persona, different design.<br><b style="color:var(--koza)">Koza:</b> Fitness landscape topology — The same genome performs differently in different environments. Context IS the selection pressure.'}
+};
+function showVocab(btn){
+document.querySelectorAll('.vocab-btn').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+document.getElementById('vocab-result').innerHTML=vocabData[btn.dataset.concept].text;
+}
+
+// Braid 2: Scenarios
+const scenarios=[
+{name:'Login Form',q:'A login form that requires username, email, AND phone number before letting you in.',
+evals:[
+{who:'Alexander',cls:'alexander',say:'Dead. It creates friction where there should be flow. A good entrance resolves the force between security and welcome — this only serves security.'},
+{who:'Cooper',cls:'cooper',say:'Rude. It makes the user feel interrogated. A polite form asks for the minimum. It remembers you. It doesn\'t treat you like a suspect.'},
+{who:'Raymond',cls:'raymond',say:'Opaque. Why three fields? The mechanism forces a policy on the user. Let them choose one identifier. Separate the auth mechanism from the policy.'},
+{who:'Koza',cls:'koza',say:'Unfit. In an evolutionary test, users would abandon this form. A simpler variant would reproduce. This one goes extinct.'}]},
+{name:'Config File',q:'A program that exposes 200 configuration options in a single flat file.',
+evals:[
+{who:'Alexander',cls:'alexander',say:'Dead. No structure, no pattern language. 200 undifferentiated options is like a building with 200 identical rooms — no life, no differentiation.'},
+{who:'Cooper',cls:'cooper',say:'Rude. It says "figure it out yourself." Good software has sensible defaults and asks only when it matters. This is the opposite of polite.'},
+{who:'Raymond',cls:'raymond',say:'Transparent in theory, opaque in practice. It follows the letter of "mechanism not policy" but violates the spirit. Fold knowledge into data — group, structure, default.'},
+{who:'Koza',cls:'koza',say:'A vast, flat fitness landscape. Evolution would struggle — no gradients to climb. Structure the config into modules and evolution (or users) can optimize locally.'}]},
+{name:'Smart Home',q:'A smart home that learns your habits and adjusts automatically — but you can\'t override it.',
+evals:[
+{who:'Alexander',cls:'alexander',say:'Dead. A living space must be repairable by its inhabitants. A home that can\'t be adjusted is a tyranny of the original design.'},
+{who:'Cooper',cls:'cooper',say:'The dancing bear. Yes, it\'s impressive that it learns. But "impressive" is not "good." Polite software always gives you control. This is a polite dictator — still a dictator.'},
+{who:'Raymond',cls:'raymond',say:'Pure policy, no mechanism. The worst kind of design. It decides what you want and never exposes the mechanism. The opposite of transparency.'},
+{who:'Koza',cls:'koza',say:'Interesting but stuck. Evolution requires variation. If the system can\'t be overridden, it can\'t explore alternatives. It will converge to a local maximum and stay there.'}]}
+];
+function showScenario(i,btn){
+document.querySelectorAll('.scenario-tab').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+const s=scenarios[i];
+let h='<p style="font-family:Inter,sans-serif;font-size:13px;color:var(--text-dim);margin-bottom:16px;grid-column:1/-1"><em>'+s.q+'</em></p>';
+s.evals.forEach(e=>{h+='<div class="eval-card '+e.cls+'"><div class="eval-who">'+e.who+'</div>'+e.say+'</div>'});
+document.getElementById('eval-cards').innerHTML=h;
+}
+showScenario(0,document.querySelector('.scenario-tab'));
+
+// Braid 3: Debate
+function toggleDebate(el){
+const wasExpanded=el.classList.contains('expanded');
+document.querySelectorAll('.debate-voice').forEach(v=>v.classList.remove('expanded'));
+if(!wasExpanded)el.classList.add('expanded');
+}
+
+// Braid 4: Evolution sim
+function runEvolution(){
+const repairDiv=document.getElementById('evo-repair');
+const planDiv=document.getElementById('evo-plan');
+const status=document.getElementById('evo-status');
+repairDiv.innerHTML='';planDiv.innerHTML='';
+const dims=['Usability','Performance','Elegance','Robustness','Simplicity'];
+const planScores=dims.map(()=>Math.floor(Math.random()*40)+30);
+// Show master plan (one attempt)
+planDiv.innerHTML=dims.map((d,i)=>'<div class="evo-step">'+d+'</div><div class="evo-bar" style="width:'+planScores[i]+'%;background:var(--text-dim)"><span>'+planScores[i]+'%</span></div>').join('');
+// Animate repair iterations
+let scores=dims.map(()=>Math.floor(Math.random()*20)+15);
+let gen=0;
+function step(){
+if(gen>9){status.textContent='After 10 iterations, repair converges on something alive. The master plan is stuck at its first guess.';return}
+scores=scores.map(s=>Math.min(95,s+Math.floor(Math.random()*12)+2));
+repairDiv.innerHTML=dims.map((d,i)=>'<div class="evo-step">'+d+' <span style="color:var(--alexander)">gen '+(gen+1)+'</span></div><div class="evo-bar" style="width:'+scores[i]+'%;background:var(--alexander)"><span>'+scores[i]+'%</span></div>').join('');
+status.textContent='Generation '+(gen+1)+' of 10...';
+gen++;
+setTimeout(step,400);
+}
+step();
+}
+
+// Braid 5: Naming
+const responses=[
+"Interesting. Alexander tried that word too — he said it captured something, but not everything.",
+"That's close. But can you feel how it slips away the moment you pin it down?",
+"A beautiful attempt. Each name is a flashlight in a dark room — it illuminates one corner.",
+"Yes... and no. That's the paradox Alexander was pointing to.",
+"You're circling it. The quality includes that, but also its opposite.",
+"Alexander would smile at this one. Then shake his head, gently."
+];
+function submitName(){
+const f=document.getElementById('naming-field');
+const v=f.value.trim();
+if(!v)return;
+const wall=document.getElementById('naming-wall');
+const chip=document.createElement('span');
+chip.className='naming-chip';
+chip.style.background='rgba(74,144,217,.12)';
+chip.style.borderColor='rgba(74,144,217,.3)';
+chip.style.color='var(--john)';
+chip.textContent=v;
+wall.appendChild(chip);
+document.getElementById('naming-response').textContent=responses[Math.floor(Math.random()*responses.length)];
+f.value='';
+}
+
+// Stars
+function setStars(n){
+document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('lit',i<n));
+}
+</script>
+</body>
+</html>

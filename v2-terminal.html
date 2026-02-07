@@ -323,25 +323,24 @@ const bootSequence = [
   { type: 'output', text: '  Welcome to <span class="highlight">Web and Circuits LLC</span>', delay: 3200 },
   { type: 'output', text: '  ────────────────────────────', delay: 3300 },
   { type: 'output', text: '', delay: 3350 },
-  { type: 'output', text: '  We build bridges between human creativity', delay: 3400 },
-  { type: 'output', text: '  and machine intelligence.', delay: 3500 },
+  { type: 'output', text: '  We build things and break things.', delay: 3400 },
+  { type: 'output', text: '  Software, demos, experiments.', delay: 3500 },
   { type: 'output', text: '', delay: 3550 },
-  { type: 'output', text: '  <span class="highlight">→</span> Open Source', delay: 3600 },
-  { type: 'output', text: '  <span class="highlight">→</span> Community Driven', delay: 3700 },
-  { type: 'output', text: '  <span class="highlight">→</span> Endlessly Curious', delay: 3800 },
+  { type: 'output', text: '  <span class="highlight">→</span> Software & AI/ML', delay: 3600 },
+  { type: 'output', text: '  <span class="highlight">→</span> Interactive Demos', delay: 3700 },
+  { type: 'output', text: '  <span class="highlight">→</span> Show Don\'t Tell', delay: 3800 },
   { type: 'blank', delay: 4000 },
   { type: 'command', prompt: 'root@wac', text: 'ls -la /projects/', delay: 4100 },
   { type: 'output', text: '', delay: 4400 },
-  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/heartbeat-demo\'">heartbeat-demo/</span>    Interactive scheduler visualization', delay: 4500 },
-  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/lab/\'">lab/</span>               Demos, book reports, experiments', delay: 4600 },
-  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">experiments/</span>       Tools, utilities, and more', delay: 4700 },
-  { type: 'output', text: '-rw-r--r--  README.md          You are here', delay: 4800 },
+  { type: 'output', text: 'drwxr-xr-x  <span class="link" onclick="window.location.href=\'/lab/\'">lab/</span>               Demos, book reports, experiments', delay: 4500 },
+  { type: 'output', text: '-rw-r--r--  README.md          You are here', delay: 4600 },
   { type: 'blank', delay: 4900 },
-  { type: 'command', prompt: 'root@wac', text: 'echo $LINKS', delay: 5000 },
-  { type: 'output', text: '', delay: 5200 },
-  { type: 'output', text: '  GitHub:  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">github.com/Web-and-Circuits</span>', delay: 5300 },
-  { type: 'blank', delay: 5700 },
-  { type: 'input', prompt: 'guest@wac', delay: 5800 },
+  { type: 'command', prompt: 'root@wac', text: 'echo $CONTACT', delay: 4800 },
+  { type: 'output', text: '', delay: 5000 },
+  { type: 'output', text: '  Email:   <span class="link" onclick="document.getElementById(\'contact-modal\').classList.add(\'open\')">hello@webandcircuits.com</span>', delay: 5100 },
+  { type: 'output', text: '  GitHub:  <span class="link" onclick="window.open(\'https://github.com/Web-and-Circuits\')">github.com/Web-and-Circuits</span>', delay: 5200 },
+  { type: 'blank', delay: 5400 },
+  { type: 'input', prompt: 'guest@wac', delay: 5500 },
 ];
 
 let currentLine = 0;
@@ -451,9 +450,11 @@ function setupInput() {
   const input = document.getElementById('user-input');
   
   const commands = {
-    help: 'Available commands: help, projects, about, github, clear, matrix',
-    projects: 'Navigate to: <span class="link" onclick="location.href=\'/heartbeat-demo\'">heartbeat-demo</span> | <span class="link" onclick="location.href=\'/lab/\'">lab</span>',
-    about: 'Web and Circuits LLC — Building the future, one commit at a time.',
+    help: 'Available commands: help, projects, about, who, contact, github, clear, matrix',
+    projects: 'Navigate to: <span class="link" onclick="location.href=\'/lab/\'">lab</span>',
+    about: 'MODAL',
+    who: 'MODAL',
+    contact: 'CONTACT_MODAL',
     github: 'Opening GitHub...',
     clear: 'CLEAR',
     matrix: 'Entering the Matrix...'
@@ -489,9 +490,15 @@ function setupInput() {
       } else if (cmd === 'github') {
         window.open('https://github.com/Web-and-Circuits');
         response.innerHTML = `<span class="output">${commands[cmd]}</span>`;
+      } else if (cmd === 'about' || cmd === 'who') {
+        document.getElementById('contact-modal').classList.add('open');
+        response.innerHTML = '<span class="output" style="color:#00ff41">cat /etc/about.txt</span>';
       } else if (cmd === 'matrix') {
         document.getElementById('matrix').style.opacity = '0.6';
         response.innerHTML = `<span class="output" style="color: #00ff41; text-shadow: 0 0 20px #00ff41">${commands[cmd]}</span>`;
+      } else if (cmd === 'contact') {
+        document.getElementById('contact-modal').classList.add('open');
+        response.innerHTML = `<span class="output">Opening contact...</span>`;
       } else if (commands[cmd]) {
         response.innerHTML = `<span class="output">${commands[cmd]}</span>`;
       } else if (cmd) {
@@ -508,6 +515,40 @@ function setupInput() {
 
 // Start boot sequence
 setTimeout(runBootSequence, 500);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('contact-modal').classList.remove('open')});
 </script>
+
+<div id="contact-modal" class="term-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="term-modal-card">
+    <div class="term-modal-header">
+      <span>guest@wac:~$ cat /etc/about.txt</span>
+      <button onclick="this.closest('.term-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="term-modal-body">
+      <p>┌─────────────────────────────────────┐</p>
+      <p>│  <span style="color:#00ff41">WEB AND CIRCUITS LLC</span>               │</p>
+      <p>├─────────────────────────────────────┤</p>
+      <p>│                                     │</p>
+      <p>│  Small team. We build software,     │</p>
+      <p>│  interactive demos, and experiment   │</p>
+      <p>│  with AI/ML. Show, don't tell.      │</p>
+      <p>│                                     │</p>
+      <p>│  <span style="color:#ffb86c">EMAIL:</span> <span class="link" onclick="location.href='mailto:hello@webandcircuits.com'" style="color:#8be9fd;cursor:pointer">hello@webandcircuits.com</span> │</p>
+      <p>│                                     │</p>
+      <p>└─────────────────────────────────────┘</p>
+    </div>
+  </div>
+</div>
+<style>
+.term-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);opacity:0;pointer-events:none;transition:opacity 0.3s}
+.term-modal.open{opacity:1;pointer-events:all}
+.term-modal-card{background:#0d1117;border:1px solid #00ff41;border-radius:8px;max-width:500px;width:90%;font-family:'Fira Code','Courier New',monospace;box-shadow:0 0 40px rgba(0,255,65,0.15);transform:translateY(20px);transition:transform 0.3s}
+.term-modal.open .term-modal-card{transform:translateY(0)}
+.term-modal-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #00ff41;color:#00ff41;font-size:13px}
+.term-modal-header button{background:none;border:none;color:#ff5555;font-size:20px;cursor:pointer;font-family:inherit}
+.term-modal-body{padding:20px;color:#f8f8f2;font-size:13px;line-height:1.6}
+.term-modal-body p{margin:0;white-space:pre}
+</style>
+
 </body>
 </html>

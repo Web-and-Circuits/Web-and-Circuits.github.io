@@ -253,20 +253,18 @@ h1 {
   <h1>Web &<br>Circuits LLC</h1>
   
   <p class="tagline">
-    Where human creativity flows into machine intelligence.
-    Fluid. Open. Evolving.
+    Software, demos, and experiments — always in motion.
   </p>
   
   <div class="buttons">
-    <a href="/heartbeat-demo" class="btn btn-blob">Explore Projects</a>
-    <a href="/lab/" class="btn btn-outline">The Lab</a>
-    <a href="https://github.com/Web-and-Circuits" class="btn btn-outline">GitHub</a>
+    <a href="/lab/" class="btn btn-blob">See Our Work</a>
+    <a href="#" class="btn btn-outline" onclick="document.getElementById('contact-modal').classList.add('open');return false">Dive In</a>
   </div>
 </div>
 
 <div class="links-strip">
   <a href="https://github.com/Web-and-Circuits">GitHub</a>
-  <a href="/heartbeat-demo">Heartbeat Demo</a>
+  <a href="/lab/">The Lab</a>
 </div>
 
 <script>
@@ -443,5 +441,32 @@ function animateBlob() {
 
 animateBlob();
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="liquid-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="liquid-modal-card">
+    <button class="liquid-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <svg class="liquid-modal-blob" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="modal-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#ff6b6b"/><stop offset="50%" style="stop-color:#a855f7"/><stop offset="100%" style="stop-color:#3b82f6"/></linearGradient></defs>
+      <path fill="url(#modal-grad)" opacity="0.15" d="M44,-76.1C55.6,-68.5,63,-53.3,71.4,-38.4C79.8,-23.4,89.1,-8.7,87.5,5.1C85.9,18.8,73.3,31.7,62,43.6C50.7,55.5,40.6,66.4,27.9,73.2C15.2,80,-0.2,82.8,-14.9,79.2C-29.6,75.6,-43.7,65.7,-55.3,54C-67,42.2,-76.3,28.7,-80.3,13.4C-84.3,-1.9,-83,-18.9,-75.5,-32.3C-68,-45.7,-54.3,-55.5,-40.4,-62.1C-26.5,-68.8,-12.5,-72.3,2.8,-77C18.1,-81.7,32.4,-83.7,44,-76.1Z" transform="translate(100 100)">
+        <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M44,-76.1C55.6,-68.5,63,-53.3,71.4,-38.4C79.8,-23.4,89.1,-8.7,87.5,5.1C85.9,18.8,73.3,31.7,62,43.6C50.7,55.5,40.6,66.4,27.9,73.2C15.2,80,-0.2,82.8,-14.9,79.2C-29.6,75.6,-43.7,65.7,-55.3,54C-67,42.2,-76.3,28.7,-80.3,13.4C-84.3,-1.9,-83,-18.9,-75.5,-32.3C-68,-45.7,-54.3,-55.5,-40.4,-62.1C-26.5,-68.8,-12.5,-72.3,2.8,-77C18.1,-81.7,32.4,-83.7,44,-76.1Z;M39.5,-65.3C52.4,-60.8,65,-51.1,72.8,-38.2C80.5,-25.3,83.3,-9.2,80.8,5.8C78.3,20.8,70.5,34.6,60.2,45.7C49.9,56.8,37.2,65.2,23,71.3C8.9,77.3,-6.7,81,-21.1,77.5C-35.5,74,-48.7,63.3,-58.6,50.4C-68.4,37.4,-74.9,22.3,-77.1,6.2C-79.3,-9.9,-77.1,-27,-68.2,-39.7C-59.3,-52.4,-43.6,-60.7,-29,-66.1C-14.4,-71.4,-0.9,-73.8,12.6,-72.8C26.1,-71.7,26.7,-69.9,39.5,-65.3Z;M44,-76.1C55.6,-68.5,63,-53.3,71.4,-38.4C79.8,-23.4,89.1,-8.7,87.5,5.1C85.9,18.8,73.3,31.7,62,43.6C50.7,55.5,40.6,66.4,27.9,73.2C15.2,80,-0.2,82.8,-14.9,79.2C-29.6,75.6,-43.7,65.7,-55.3,54C-67,42.2,-76.3,28.7,-80.3,13.4C-84.3,-1.9,-83,-18.9,-75.5,-32.3C-68,-45.7,-54.3,-55.5,-40.4,-62.1C-26.5,-68.8,-12.5,-72.3,2.8,-77C18.1,-81.7,32.4,-83.7,44,-76.1Z"/>
+      </path>
+    </svg>
+    <h2>Hey there 👋</h2>
+    <p>We're a small team that builds software, demos, and experiments with AI/ML. We like making things you can poke at.</p>
+    <a href="mailto:hello@webandcircuits.com" class="btn btn-blob" style="margin-top:24px;display:inline-block">hello@webandcircuits.com</a>
+  </div>
+</div>
+<style>
+.liquid-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(15,15,15,0.85);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity 0.5s}
+.liquid-modal.open{opacity:1;pointer-events:all}
+.liquid-modal-card{position:relative;background:rgba(30,30,30,0.9);border-radius:32px;padding:56px 48px;max-width:440px;text-align:center;color:#fff;overflow:hidden;transform:scale(0.9) translateY(20px);transition:transform 0.5s cubic-bezier(.175,.885,.32,1.275)}
+.liquid-modal.open .liquid-modal-card{transform:scale(1) translateY(0)}
+.liquid-modal-card h2{font-family:'Syne',sans-serif;font-size:32px;font-weight:700;margin-bottom:16px}
+.liquid-modal-card p{color:rgba(255,255,255,0.7);line-height:1.7;font-size:16px}
+.liquid-modal-blob{position:absolute;inset:-50px;width:calc(100% + 100px);height:calc(100% + 100px);pointer-events:none}
+.liquid-modal-close{position:absolute;top:20px;right:20px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:28px;cursor:pointer;z-index:1}
+.liquid-modal-close:hover{color:#fff}
+</style>
+<script>document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('contact-modal').classList.remove('open')})</script>
 </body>
 </html>

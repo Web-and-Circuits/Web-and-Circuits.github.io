@@ -251,21 +251,21 @@ main {
 
 <div class="marquee-top">
   <div class="marquee-content">
-    <span>OPEN SOURCE</span>
+    <span>BUILD</span>
     <span>★</span>
-    <span>EXPERIMENTS</span>
+    <span>BREAK</span>
     <span>★</span>
-    <span>CODE</span>
+    <span>EXPERIMENT</span>
+    <span>★</span>
+    <span>REPEAT</span>
     <span>★</span>
     <span>BUILD</span>
     <span>★</span>
-    <span>OPEN SOURCE</span>
+    <span>BREAK</span>
     <span>★</span>
-    <span>EXPERIMENTS</span>
+    <span>EXPERIMENT</span>
     <span>★</span>
-    <span>CODE</span>
-    <span>★</span>
-    <span>BUILD</span>
+    <span>REPEAT</span>
     <span>★</span>
   </div>
 </div>
@@ -282,7 +282,7 @@ main {
   
   <div class="info-block a">
     <h3>What</h3>
-    A collective of builders making tools, experiments, and things that probably shouldn't exist.
+    We build software, interactive demos, and experiment with AI/ML. Small team. Show don't tell.
   </div>
   
   <div class="info-block b">
@@ -305,9 +305,8 @@ main {
 <div class="shape dot"></div>
 
 <div class="links">
-  <a href="/heartbeat-demo">→ DEMO</a>
-  <a href="/lab/">→ LAB</a>
-  <a href="https://github.com/Web-and-Circuits">→ CODE</a>
+  <a href="/lab/">→ DEMOS</a>
+  <a href="#" onclick="document.getElementById('contact-modal').classList.add('open');return false">WHO</a>
 </div>
 
 <script>
@@ -351,5 +350,30 @@ setInterval(() => {
   setTimeout(() => randomCell.style.background = '', 200);
 }, 100);
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="brutal-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="brutal-modal-box">
+    <div class="brutal-modal-header">
+      <span>CONTACT.TXT</span>
+      <button onclick="this.closest('.brutal-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="brutal-modal-body">
+      <p><strong>WHO:</strong> Small team. Software, demos, AI/ML.</p>
+      <p><strong>WHAT:</strong> We build things. We break things. We ship.</p>
+      <p><strong>WHERE:</strong></p>
+      <a href="mailto:hello@webandcircuits.com" style="color:#ff0000;font-weight:700;font-size:16px">hello@webandcircuits.com</a>
+    </div>
+  </div>
+</div>
+<style>
+.brutal-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);opacity:0;pointer-events:none;transition:opacity 0.1s}
+.brutal-modal.open{opacity:1;pointer-events:all}
+.brutal-modal-box{background:#fff;border:6px solid #000;max-width:420px;width:90%;box-shadow:12px 12px 0 #000;transform:rotate(-1deg)}
+.brutal-modal-header{background:#000;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+.brutal-modal-header button{background:#ff0000;color:#fff;border:none;font-weight:700;font-size:16px;cursor:pointer;padding:2px 8px;font-family:inherit}
+.brutal-modal-body{padding:24px;font-size:14px;line-height:2;color:#000}
+.brutal-modal-body p{margin-bottom:8px}
+</style>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

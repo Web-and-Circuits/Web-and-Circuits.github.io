@@ -10,12 +10,8 @@
   :root{--bg:#0a0a0a;--surface:#141414;--surface2:#1a1a1a;--border:#222;--fg:#e0ddd5;--fg2:#8a8578;--accent:#e8a87c;--green:#7ec699;--blue:#a0b4e8;--purple:#c4a0e8;--red:#e87c7c;--amber:#e6b450}
   body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
 
-  /* Back link */
-  .back-link{display:inline-block;padding:16px 24px;font-size:13px;color:var(--fg2);text-decoration:none;letter-spacing:0.5px;transition:color 0.2s}
-  .back-link:hover{color:var(--fg)}
-
   /* Header */
-  header{padding:32px 24px 32px;text-align:center;border-bottom:1px solid var(--border)}
+  header{padding:48px 24px 32px;text-align:center;border-bottom:1px solid var(--border)}
   header .logo{font-size:14px;letter-spacing:3px;text-transform:uppercase;color:var(--fg2);margin-bottom:12px;font-weight:600}
   header h1{font-size:clamp(28px,5vw,42px);font-weight:800;line-height:1.1;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   header p{color:var(--fg2);font-size:15px;max-width:480px;margin:0 auto}
@@ -65,7 +61,7 @@
 
   /* Mobile */
   @media(max-width:600px){
-    header{padding:24px 16px}
+    header{padding:32px 16px 24px}
     .card{padding:16px;gap:12px}
     .card-icon{width:40px;height:40px;font-size:18px}
     .card-title{font-size:15px}
@@ -73,8 +69,6 @@
 </style>
 </head>
 <body>
-
-<a href="/" class="back-link">← Back to Web & Circuits</a>
 
 <header>
   <div class="logo">🐑 The Lab</div>
@@ -91,7 +85,21 @@
   <!-- BOOK REPORTS -->
   <div class="section-header"><h2>📚 Book Reports</h2></div>
 
-  <a class="card" href="two-books/">
+  <a class="card" href="four-books/" id="card-braid">
+    <div class="card-icon" style="background:rgba(200,160,232,0.1)">🧬</div>
+    <div class="card-body">
+      <div class="card-title">Order Emerges from Process</div>
+      <div class="card-desc">Four books braided together — Alexander, Cooper, Raymond, Koza. A Rosetta Stone, design scenarios judged by all four authors, a live evolution simulator, and the quality without a name.</div>
+      <div class="card-tags">
+        <span class="tag tag-opinion">ORIGINAL ESSAY</span>
+        <span class="tag tag-interactive">INTERACTIVE</span>
+        <span class="tag tag-new">NEW</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card" href="two-books/" id="card-synthesis">
     <div class="card-icon" style="background:rgba(160,180,232,0.1)">⚡</div>
     <div class="card-body">
       <div class="card-title">Two Books Walk Into a Bar</div>
@@ -105,7 +113,7 @@
     <span class="card-arrow">→</span>
   </a>
 
-  <a class="card" href="inmates/">
+  <a class="card" href="inmates/" id="card-cooper">
     <div class="card-icon" style="background:rgba(232,168,124,0.1)">🏥</div>
     <div class="card-body">
       <div class="card-title">The Inmates Are Running the Asylum</div>
@@ -121,7 +129,7 @@
     <span class="card-arrow">→</span>
   </a>
 
-  <a class="card" href="unix/">
+  <a class="card" href="unix/" id="card-unix">
     <div class="card-icon" style="background:rgba(126,198,153,0.1)">🖥️</div>
     <div class="card-body">
       <div class="card-title">The Art of Unix Programming</div>
@@ -137,8 +145,60 @@
     <span class="card-arrow">→</span>
   </a>
 
+  <a class="card" href="gpiii/" id="card-gpiii">
+    <div class="card-icon" style="background:rgba(180,130,232,0.1)">🧬</div>
+    <div class="card-body">
+      <div class="card-title">Genetic Programming III</div>
+      <div class="card-desc">Koza's machine that reinvents patented circuits. Live crossover demo, 40-program evolution simulator, 14 human-competitive inventions grid, and a ★★★★☆ verdict.</div>
+      <div class="card-tags">
+        <span class="tag tag-interactive">INTERACTIVE</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <!-- EXCALIDRAW -->
+  <div class="section-header"><h2>🎨 Excalidraw AI Interviews</h2></div>
+
+  <a class="card"  id="card-dashboard">
+    <div class="card-icon" style="background:rgba(232,124,124,0.1)">🎛️</div>
+    <div class="card-body">
+      <div class="card-title">Live Interview Dashboard</div>
+      <div class="card-desc">Run AI model interviews in real time. Watch models draw system architecture diagrams stage-by-stage, accept or reject, review replays. Full control center.</div>
+      <div class="card-tags">
+        <span class="tag tag-tool">TOOL</span>
+        <span class="tag tag-live">LIVE</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card"  id="card-replay">
+    <div class="card-icon" style="background:rgba(230,180,80,0.1)">🎬</div>
+    <div class="card-body">
+      <div class="card-title">Interview Replay Viewer</div>
+      <div class="card-desc">Replay any past interview. Real Excalidraw rendering — see exactly what each model drew, stage by stage.</div>
+      <div class="card-tags">
+        <span class="tag tag-tool">VIEWER</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card"  id="card-benchmark">
+    <div class="card-icon" style="background:rgba(126,198,153,0.1)">📊</div>
+    <div class="card-body">
+      <div class="card-title">Benchmark Results (v2)</div>
+      <div class="card-desc">11 models tested. Qwen3-VL-8B won. Full scoring breakdown, stage-by-stage analysis, context overflow tracking.</div>
+      <div class="card-tags">
+        <span class="tag tag-benchmark">BENCHMARK</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
   <!-- HEARTBEAT -->
-  <div class="section-header"><h2>💓 More</h2></div>
+  <div class="section-header"><h2>💓 Heartbeat Demo</h2></div>
 
   <a class="card" href="https://web-and-circuits.github.io/heartbeat-demo/" target="_blank">
     <div class="card-icon" style="background:rgba(232,124,124,0.1)">💓</div>
@@ -170,5 +230,14 @@
   <p>🐑 John Isidore · Web & Circuits LLC · Built with curiosity</p>
 </footer>
 
+<script>
+// Check which servers are alive and gray out dead ones
+const checks = [
+  {id:'card-dashboard', url:'/dashboard/'},
+  {id:'card-replay', url:'/replay/'},
+  {id:'card-benchmark', url:'/benchmark/'},
+];
+// Local cards don't need checks — they're served from this same server
+</script>
 </body>
 </html>

@@ -348,12 +348,11 @@ h1 {
   </div>
   
   <h1>WEB & CIRCUITS</h1>
-  <p class="tagline">Press start to begin your adventure</p>
+  <p class="tagline">We build things. We break things. We experiment.</p>
   
   <div class="buttons">
-    <a href="/heartbeat-demo" class="arcade-btn pink">▶ START DEMO</a>
-    <a href="/lab/" class="arcade-btn pink">★ THE LAB</a>
-    <a href="https://github.com/Web-and-Circuits" class="arcade-btn blue">◆ VIEW CODE</a>
+    <a href="/lab/" class="arcade-btn pink">▶ SEE OUR WORK</a>
+    <a href="#" class="arcade-btn blue" onclick="document.getElementById('contact-modal').classList.add('open');return false">✉ INSERT COIN</a>
   </div>
 </div>
 
@@ -495,5 +494,35 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="arcade-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="arcade-modal-card">
+    <div class="arcade-modal-header">
+      <span>💬 PLAYER MESSAGE</span>
+      <button onclick="this.closest('.arcade-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="arcade-modal-body">
+      <p class="arcade-modal-title">★ YOU FOUND US ★</p>
+      <p>Small team of builders.<br>Software, demos, AI/ML experiments.<br>We make things you can play with.</p>
+      <div class="arcade-modal-divider">- - - - - - - - -</div>
+      <p>SEND TRANSMISSION TO:</p>
+      <a href="mailto:hello@webandcircuits.com" class="arcade-btn pink" style="margin-top:12px;display:inline-block;font-size:8px">▶ hello@webandcircuits.com</a>
+      <p class="arcade-modal-hint">[ PRESS TO CONTINUE ]</p>
+    </div>
+  </div>
+</div>
+<style>
+.arcade-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(13,2,33,0.9);opacity:0;pointer-events:none;transition:opacity 0.2s}
+.arcade-modal.open{opacity:1;pointer-events:all}
+.arcade-modal-card{background:#0d0221;border:4px solid var(--neon-blue);box-shadow:0 0 30px var(--neon-blue),inset 0 0 30px rgba(5,217,232,0.1);max-width:400px;width:90%;image-rendering:pixelated;transform:scale(0.8);transition:transform 0.2s}
+.arcade-modal.open .arcade-modal-card{transform:scale(1)}
+.arcade-modal-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--neon-blue);color:var(--dark);font-size:10px;font-family:inherit}
+.arcade-modal-header button{background:none;border:2px solid var(--dark);color:var(--dark);font-family:inherit;font-size:12px;cursor:pointer;padding:0 6px}
+.arcade-modal-body{padding:24px;text-align:center;font-size:10px;line-height:2;color:var(--neon-blue);text-shadow:0 0 10px var(--neon-blue)}
+.arcade-modal-title{font-size:14px;color:var(--neon-yellow);text-shadow:0 0 10px var(--neon-yellow);margin-bottom:12px}
+.arcade-modal-divider{color:var(--neon-pink);margin:16px 0;opacity:0.5}
+.arcade-modal-hint{margin-top:20px;animation:blink 1s step-end infinite;color:var(--neon-yellow);font-size:8px}
+</style>
+<script>document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('contact-modal').classList.remove('open')})</script>
 </body>
 </html>

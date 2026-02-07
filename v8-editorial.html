@@ -279,17 +279,17 @@ footer {
 <header class="masthead">
   <div class="date-line">Volume I • Issue 001 • Open Source Edition</div>
   <h1 class="logo">Web <span>&</span> Circuits</h1>
-  <div class="tagline-bar">The Journal of Digital Experiments</div>
+  <div class="tagline-bar">Software · Demos · Experiments</div>
 </header>
 
 <main class="main-grid">
   <article class="main-story">
-    <h1>Building Bridges Between Human Creativity and Machine Intelligence</h1>
-    <div class="byline">A Manifesto for the Curious</div>
+    <h1>We Build Things and Break Things</h1>
+    <div class="byline">Software, Demos, and Experiments</div>
     
     <p class="lead">
-      In an age of rapid technological change, a small collective of builders asks a simple question: 
-      What happens when we stop treating code as a tool and start treating it as a canvas?
+      Web & Circuits is a small team that builds software, interactive demos, 
+      and experiments with AI/ML. We'd rather show you than tell you.
     </p>
     
     <div class="body">
@@ -300,9 +300,9 @@ footer {
       </p>
       
       <p>
-        We believe that open source is more than a license; it's a philosophy. When code 
-        is shared freely, ideas compound. When experiments are public, failures become 
-        lessons for everyone. This is the foundation upon which we build.
+        We work in public because it keeps us honest. When experiments are visible, 
+        failures become lessons. When demos are interactive, ideas become tangible. 
+        This is the foundation upon which we build.
       </p>
       
       <div class="pull-quote">
@@ -310,21 +310,15 @@ footer {
       </div>
       
       <p>
-        Our projects span the spectrum from practical utilities to conceptual art pieces. 
-        The Heartbeat Demo, for instance, transforms a mundane scheduling algorithm into 
-        a living, breathing visualization—proof that even infrastructure can be beautiful.
+        Our projects span the spectrum from practical software to interactive demos 
+        and AI/ML experiments. We like making things you can click on, poke at, 
+        and learn from.
       </p>
       
       <p>
         We don't claim to have all the answers. We don't pretend our code is perfect. 
         What we offer instead is a commitment to exploration, a willingness to fail 
         publicly, and an invitation for others to join the journey.
-      </p>
-      
-      <p>
-        The tools we build today become the foundations of tomorrow's innovations. 
-        Every commit is a small act of optimism—a bet that someone, somewhere, will 
-        find value in what we've created.
       </p>
     </div>
   </article>
@@ -333,28 +327,6 @@ footer {
   
   <aside class="sidebar">
     <div class="sidebar-section">
-      <h3>Featured</h3>
-      <h4>The Heartbeat Demo</h4>
-      <p>An interactive visualization that brings a wake scheduler to life. Watch signals 
-      propagate, states change, and systems breathe.</p>
-      <a href="/heartbeat-demo" class="sidebar-link">Experience it →</a>
-    </div>
-    
-    <div class="sidebar-section">
-      <h3>From the Archives</h3>
-      <h4>On the Art of Building</h4>
-      <p>Why we choose to work in public, share our failures, and treat every project 
-      as an opportunity to learn something new.</p>
-    </div>
-    
-    <div class="sidebar-section">
-      <h3>The Workshop</h3>
-      <h4>Tools & Experiments</h4>
-      <p>A growing collection of utilities, prototypes, and occasionally inexplicable 
-      creations. All open source. All free to explore.</p>
-    </div>
-    
-    <div class="sidebar-section">
       <h3>The Lab</h3>
       <h4>Interactive Demos</h4>
       <p>Book reports, prototypes, and experiments — everything interactive. Cooper vs Raymond, 
@@ -362,23 +334,61 @@ footer {
       <a href="/lab/" class="sidebar-link">Enter the Lab →</a>
     </div>
     
+    <div class="sidebar-section">
+      <h3>From the Workshop</h3>
+      <h4>On the Art of Building</h4>
+      <p>Why we choose to work in public, share our failures, and treat every project 
+      as an opportunity to learn something new.</p>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>Get in Touch</h3>
+      <h4>Contact</h4>
+      <p>Questions, ideas, or just want to say hello? We're a small team and we read every message.</p>
+      <a href="#" class="sidebar-link" onclick="document.getElementById('contact-modal').classList.add('open');return false">About →</a>
+    </div>
+    
     <div class="index-box">
       <h3>Quick Links</h3>
       <ul>
         <li><a href="/lab/">→ The Lab</a></li>
-        <li><a href="/heartbeat-demo">→ Heartbeat Demo</a></li>
+        <li><a href="#" onclick="document.getElementById('contact-modal').classList.add('open');return false">About</a></li>
         <li><a href="https://github.com/Web-and-Circuits">→ Source Code</a></li>
-        <li><a href="https://github.com/Web-and-Circuits">→ All Projects</a></li>
       </ul>
     </div>
   </aside>
 </main>
 
 <footer>
-  © 2026 Web and Circuits LLC LLC — All content freely available under MIT License
+  © 2026 Web and Circuits LLC
 </footer>
 
 <div class="edition-number">EST. 2026 — DIGITAL EDITION</div>
 
+<!-- Contact Modal -->
+<div id="contact-modal" class="editorial-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="editorial-modal-card">
+    <button class="editorial-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <div class="editorial-modal-rule"></div>
+    <h3 class="editorial-modal-label">Correspondence</h3>
+    <h2>A Note to the Reader</h2>
+    <div class="editorial-modal-rule"></div>
+    <p>We are a small team that builds software, interactive demos, and experiments with AI and machine learning. We read every message.</p>
+    <a href="mailto:hello@webandcircuits.com" class="sidebar-link" style="margin-top:20px;display:inline-block;font-size:14px">hello@webandcircuits.com →</a>
+  </div>
+</div>
+<style>
+.editorial-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(26,26,26,0.6);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.5s}
+.editorial-modal.open{opacity:1;pointer-events:all}
+.editorial-modal-card{background:var(--paper);color:var(--ink);padding:56px 48px;max-width:460px;text-align:center;border:1px solid var(--rule);transform:translateY(20px);transition:transform 0.5s;position:relative}
+.editorial-modal.open .editorial-modal-card{transform:translateY(0)}
+.editorial-modal-card h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin:16px 0}
+.editorial-modal-card p{font-size:16px;line-height:1.8;color:#444;margin-top:16px}
+.editorial-modal-label{font-family:'Inter',sans-serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-top:16px}
+.editorial-modal-rule{width:60px;height:1px;background:var(--rule);margin:0 auto}
+.editorial-modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:24px;color:#999;cursor:pointer}
+.editorial-modal-close:hover{color:var(--ink)}
+</style>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

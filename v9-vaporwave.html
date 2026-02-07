@@ -306,8 +306,8 @@ body {
     </div>
   </div>
   <div class="win95-content">
-    <a href="/heartbeat-demo" style="color: #000080;">💾 heartbeat-demo.exe</a><br>
-    <a href="https://github.com/Web-and-Circuits" style="color: #000080;">🌐 source-code.zip</a>
+    <a href="/lab/" style="color: #000080;">🔬 the-lab.exe</a><br>
+    <a href="#" style="color: #000080;" onclick="document.getElementById('contact-modal').classList.add('open');return false">✉ contact.msg</a>
   </div>
 </div>
 
@@ -327,13 +327,12 @@ body {
 
 <div class="content">
   <h1 class="chrome-text">ＷＥＢ＆ＣＩＲＣＵＩＴＳ</h1>
-  <p class="subtitle">ＤＩＧＩＴＡＬ ＤＲＥＡＭＳ</p>
+  <p class="subtitle">ＳＯＦＴＷＡＲＥ ＆ ＥＸＰＥＲＩＭＥＮＴＳ</p>
   <p class="jp-text">ウェブとサーキット</p>
   
   <div class="vapor-buttons">
-    <a href="/heartbeat-demo" class="vapor-btn">▶ EXPLORE</a>
-    <a href="/lab/" class="vapor-btn">🔬 ＬＡＢ</a>
-    <a href="https://github.com/Web-and-Circuits" class="vapor-btn">💾 SOURCE</a>
+    <a href="/lab/" class="vapor-btn">🔬 ＤＥＭＯＳ</a>
+    <a href="#" class="vapor-btn" onclick="document.getElementById('contact-modal').classList.add('open');return false">ＡＢＯＵＴ</a>
   </div>
   
   <div class="loading-bar">
@@ -388,5 +387,32 @@ document.querySelectorAll('.win95-window').forEach(win => {
   });
 });
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="vapor-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="vapor-modal-win">
+    <div class="vapor-modal-titlebar">
+      <span>📧 Ｎｅｗ Ｍｅｓｓａｇｅ</span>
+      <div class="win95-buttons"><button class="win95-btn" onclick="this.closest('.vapor-modal').classList.remove('open')">×</button></div>
+    </div>
+    <div class="vapor-modal-body">
+      <p class="vapor-modal-jp">コンタクト</p>
+      <p>Small team. Software & experiments.<br>AI/ML dreams in full color.</p>
+      <div style="margin:20px 0;border-top:2px inset #808080"></div>
+      <p>Ｔｏ：</p>
+      <a href="mailto:hello@webandcircuits.com" style="color:#000080;font-size:18px;font-weight:bold">hello@webandcircuits.com</a>
+      <p style="margin-top:16px;font-size:14px;color:#808080">✨ Ａ Ｅ Ｓ Ｔ Ｈ Ｅ Ｔ Ｉ Ｃ ✨</p>
+    </div>
+  </div>
+</div>
+<style>
+.vapor-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity 0.3s}
+.vapor-modal.open{opacity:1;pointer-events:all}
+.vapor-modal-win{background:#c0c0c0;border:2px outset #fff;box-shadow:inset -1px -1px 0 #808080,inset 1px 1px 0 #fff,6px 6px 0 rgba(0,0,0,0.3);max-width:380px;width:90%;transform:scale(0.8);transition:transform 0.3s;animation:none}
+.vapor-modal.open .vapor-modal-win{transform:scale(1)}
+.vapor-modal-titlebar{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:4px 6px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.vapor-modal-body{padding:20px;text-align:center;font-size:16px;color:#000;line-height:1.8}
+.vapor-modal-jp{font-size:24px;color:rgba(0,0,128,0.6);letter-spacing:0.5em;margin-bottom:8px}
+</style>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

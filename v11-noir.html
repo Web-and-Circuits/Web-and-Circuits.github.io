@@ -324,13 +324,13 @@ footer {
   </div>
   
   <h1>Web <span>&</span> Circuits LLC</h1>
-  <p class="subtitle">Technology Consultancy</p>
+  <p class="subtitle">Software · Demos · Experiments</p>
   
   <div class="divider"></div>
   
   <p class="description">
-    We build intelligent systems at the intersection of software and hardware. 
-    From AI agents to custom electronics, we craft solutions that bridge the digital and physical.
+    We build things and break things. Software, interactive demos, 
+    and experiments with AI/ML. Small team, show-don't-tell culture.
   </p>
   
   <div class="services">
@@ -353,13 +353,40 @@ footer {
   </div>
   
   <div class="contact">
-    <a href="mailto:hello@webandcircuits.com">hello@webandcircuits.com</a>
+    <a href="#" onclick="document.getElementById('contact-modal').classList.add('open');return false">The Story</a>
   </div>
 </div>
 
 <footer>
-  © 2026 Web and Circuits LLC LLC
+  © 2026 Web and Circuits LLC
 </footer>
 
+<!-- Contact Modal -->
+<div id="contact-modal" class="noir-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="noir-modal-card">
+    <button class="noir-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <div class="noir-modal-mark">✦</div>
+    <h2>A Private Word</h2>
+    <div class="noir-modal-rule"></div>
+    <p>Small team. Software, demos, and experiments at the edge of what's possible with AI and code. We keep things honest and we keep things small.</p>
+    <div class="noir-modal-rule"></div>
+    <a href="mailto:hello@webandcircuits.com" class="contact"><span style="position:relative">hello@webandcircuits.com</span></a>
+  </div>
+</div>
+<style>
+.noir-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);opacity:0;pointer-events:none;transition:opacity 0.6s}
+.noir-modal.open{opacity:1;pointer-events:all}
+.noir-modal-card{position:relative;background:var(--charcoal);border:1px solid var(--gold);padding:56px 48px;max-width:440px;text-align:center;color:var(--cream);transform:translateY(20px);opacity:0;transition:transform 0.6s,opacity 0.6s}
+.noir-modal.open .noir-modal-card{transform:translateY(0);opacity:1}
+.noir-modal-card h2{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:28px;letter-spacing:0.15em;margin-bottom:16px}
+.noir-modal-card p{font-size:15px;line-height:2;color:var(--cream);opacity:0.7;font-weight:300}
+.noir-modal-mark{color:var(--gold);font-size:20px;margin-bottom:16px}
+.noir-modal-rule{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:20px auto}
+.noir-modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;font-family:'Cormorant Garamond',serif}
+.noir-modal-close:hover{color:var(--gold)}
+.noir-modal-card .contact{margin-top:0}
+.noir-modal-card .contact a{font-size:0.8rem}
+</style>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

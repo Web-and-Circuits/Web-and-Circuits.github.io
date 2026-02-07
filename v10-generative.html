@@ -145,12 +145,11 @@ h1 {
 
 <div class="content">
   <h1>Web and Circuits LLC</h1>
-  <p class="tagline">Every visit, a new creation. Reload for another.</p>
+  <p class="tagline">We build things and break things. Software, demos, experiments. Reload for a new one.</p>
   
   <div class="buttons">
-    <a href="/heartbeat-demo" class="btn btn-primary">Explore Projects</a>
-    <a href="/lab/" class="btn btn-outline">The Lab</a>
-    <a href="https://github.com/Web-and-Circuits" class="btn btn-outline">View Code</a>
+    <a href="/lab/" class="btn btn-primary">See Our Work</a>
+    <a href="#" class="btn btn-outline" onclick="document.getElementById('contact-modal').classList.add('open');return false">?</a>
   </div>
 </div>
 
@@ -498,5 +497,50 @@ document.getElementById('regenerate').addEventListener('click', () => {
 // Start
 generate();
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="gen-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="gen-modal-card">
+    <canvas class="gen-modal-canvas" id="modal-canvas"></canvas>
+    <button class="gen-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <h2>New Connection</h2>
+    <p>Small team building software, demos, and AI/ML experiments. Every project is a new seed.</p>
+    <a href="mailto:hello@webandcircuits.com" class="btn btn-primary" style="margin-top:24px;display:inline-block;position:relative;z-index:1">hello@webandcircuits.com</a>
+  </div>
+</div>
+<style>
+.gen-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);opacity:0;pointer-events:none;transition:opacity 0.4s}
+.gen-modal.open{opacity:1;pointer-events:all}
+.gen-modal-card{position:relative;background:#0a0a0a;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:48px;max-width:440px;text-align:center;color:#fff;overflow:hidden;transform:scale(0.9);transition:transform 0.4s cubic-bezier(.175,.885,.32,1.275)}
+.gen-modal.open .gen-modal-card{transform:scale(1)}
+.gen-modal-card h2{font-size:28px;margin-bottom:16px;position:relative;z-index:1;mix-blend-mode:difference}
+.gen-modal-card p{color:rgba(255,255,255,0.7);line-height:1.7;font-size:15px;position:relative;z-index:1;mix-blend-mode:difference}
+.gen-modal-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0.4;pointer-events:none}
+.gen-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:24px;cursor:pointer;z-index:2}
+.gen-modal-close:hover{color:#fff}
+</style>
+<script>
+(function(){
+  const mc=document.getElementById('modal-canvas');
+  const mctx=mc.getContext('2d');
+  function resizeMC(){mc.width=mc.parentElement.offsetWidth;mc.height=mc.parentElement.offsetHeight}
+  const obs=new MutationObserver(()=>{if(document.getElementById('contact-modal').classList.contains('open')){resizeMC();drawModalParticles()}});
+  obs.observe(document.getElementById('contact-modal'),{attributes:true});
+  function drawModalParticles(){
+    const w=mc.width,h=mc.height;mctx.clearRect(0,0,w,h);
+    const colors=['#ff6b6b','#4ecdc4','#45b7d1','#a29bfe','#fd79a8'];
+    for(let i=0;i<60;i++){
+      const x=Math.random()*w,y=Math.random()*h,r=Math.random()*3+1;
+      mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
+      mctx.fillStyle=colors[Math.floor(Math.random()*colors.length)];mctx.fill();
+    }
+    for(let i=0;i<20;i++){
+      const x1=Math.random()*w,y1=Math.random()*h,x2=Math.random()*w,y2=Math.random()*h;
+      mctx.beginPath();mctx.moveTo(x1,y1);mctx.lineTo(x2,y2);
+      mctx.strokeStyle='rgba(255,255,255,0.08)';mctx.stroke();
+    }
+  }
+})();
+</script>
+<script>document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("contact-modal").classList.remove("open")})</script>
 </body>
 </html>

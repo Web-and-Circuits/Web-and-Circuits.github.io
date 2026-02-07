@@ -116,11 +116,10 @@ h1 {
 
 <div class="content">
   <h1>Web and Circuits LLC</h1>
-  <p class="tagline">Building bridges between human creativity and machine intelligence. Open source. Community driven.</p>
+  <p class="tagline">We build things and break things. Software, demos, experiments.</p>
   <div class="cta">
-    <a href="/heartbeat-demo" class="btn btn-primary">Explore Projects</a>
-    <a href="/lab/" class="btn btn-ghost">The Lab</a>
-    <a href="https://github.com/Web-and-Circuits" class="btn btn-ghost">View Code</a>
+    <a href="/lab/" class="btn btn-primary">See Our Work</a>
+    <a href="#" class="btn btn-ghost" onclick="document.getElementById('contact-modal').classList.add('open');return false">Hail the Ship</a>
   </div>
 </div>
 
@@ -436,5 +435,29 @@ function animate() {
 
 init();
 </script>
+<!-- Contact Modal -->
+<div id="contact-modal" class="cosmos-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="cosmos-modal-card">
+    <button class="cosmos-modal-close" onclick="this.parentElement.parentElement.classList.remove('open')">&times;</button>
+    <div class="cosmos-modal-stars"></div>
+    <h2>Transmission Incoming</h2>
+    <p>Small team. We build software, interactive demos, and experiment with AI/ML. If you want to talk, we're listening.</p>
+    <a href="mailto:hello@webandcircuits.com" class="btn btn-primary" style="margin-top:20px;display:inline-block">hello@webandcircuits.com</a>
+  </div>
+</div>
+<style>
+.cosmos-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);opacity:0;pointer-events:none;transition:opacity 0.4s}
+.cosmos-modal.open{opacity:1;pointer-events:all}
+.cosmos-modal-card{position:relative;background:radial-gradient(ellipse at center,#1a1040 0%,#0a0a20 100%);border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:48px;max-width:440px;text-align:center;color:#fff;box-shadow:0 0 80px rgba(139,92,246,0.3);transform:scale(0.9);transition:transform 0.4s cubic-bezier(.175,.885,.32,1.275);overflow:hidden}
+.cosmos-modal.open .cosmos-modal-card{transform:scale(1)}
+.cosmos-modal-card h2{font-size:28px;margin-bottom:16px;background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cosmos-modal-card p{color:rgba(255,255,255,0.7);line-height:1.6;font-size:15px}
+.cosmos-modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:24px;cursor:pointer}
+.cosmos-modal-close:hover{color:#fff}
+.cosmos-modal-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.cosmos-modal-stars::before,.cosmos-modal-stars::after{content:'';position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;box-shadow:40px 20px 0 #fff,80px 60px 0 rgba(167,139,250,0.8),150px 30px 0 #fff,200px 80px 0 rgba(99,102,241,0.8),300px 50px 0 #fff,50px 100px 0 rgba(167,139,250,0.6),250px 120px 0 #fff,350px 100px 0 rgba(96,165,250,0.8),120px 140px 0 #fff;animation:twinkle-modal 3s ease-in-out infinite alternate}
+@keyframes twinkle-modal{0%{opacity:0.5}100%{opacity:1}}
+</style>
+<script>document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('contact-modal').classList.remove('open')})</script>
 </body>
 </html>
