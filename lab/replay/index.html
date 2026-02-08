@@ -52,28 +52,28 @@
   #badge { display: none; }
   #canvas-label { display: none; }
 
-  /* Chat overlay — MMO battle text: new at bottom, scrolls up, fades at top */
+  /* Chat overlay — MMO battle text: msgs scroll up and fade away */
   #chat {
     position: fixed; top: 44px; left: 0; right: 0; z-index: 40;
-    height: 40vh;
+    height: 45vh;
     display: flex; flex-direction: column; justify-content: flex-end;
     pointer-events: none; padding: 0 16px;
     overflow: hidden;
-    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 100%);
   }
   .msg {
     max-width: 80%; padding: 10px 16px; margin-bottom: 6px;
     border-radius: 16px; font-size: 13px; line-height: 1.5;
-    animation: msgSlideIn 0.3s ease-out;
-    opacity: 0.85; pointer-events: none;
+    pointer-events: none;
     word-wrap: break-word;
     flex-shrink: 0;
-    transition: opacity 0.5s, transform 0.5s;
+    animation: scrollFade 12s linear forwards;
   }
-  @keyframes msgSlideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 0.85; transform: translateY(0); }
+  @keyframes scrollFade {
+    0%   { opacity: 0; transform: translateY(0); }
+    5%   { opacity: 0.85; transform: translateY(0); }
+    60%  { opacity: 0.6; transform: translateY(-80px); }
+    85%  { opacity: 0.2; transform: translateY(-140px); }
+    100% { opacity: 0; transform: translateY(-180px); }
   }
   .msg.human, .msg.interviewer, .msg.vision-prompt {
     background: rgba(31, 111, 235, 0.25); border: 1px solid rgba(31, 111, 235, 0.3);
