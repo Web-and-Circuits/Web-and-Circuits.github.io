@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secrets of the JavaScript Ninja — Interactive Explorer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0e17;
+  --surface: #131a2b;
+  --surface2: #1a2340;
+  --border: #2a3555;
+  --text: #c8d6e5;
+  --text-dim: #6b7fa3;
+  --accent: #f7c948;
+  --accent2: #48c9f7;
+  --green: #4ade80;
+  --red: #f87171;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --pink: #f472b6;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  font-size: 16px;
+  overflow-x: hidden;
+}
+
+/* Progress bar */
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  z-index: 1000;
+  transition: width 0.3s;
+}
+
+/* Navigation dots */
+#nav-dots {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#nav-dots a {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  display: block;
+  transition: all 0.3s;
+  position: relative;
+}
+#nav-dots a.active { background: var(--accent); transform: scale(1.3); }
+#nav-dots a .tooltip {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+#nav-dots a:hover .tooltip { opacity: 1; }
+
+/* Hero */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: radial-gradient(ellipse at 50% 0%, #1a2340 0%, var(--bg) 70%);
+}
+.hero h1 {
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+}
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-bottom: 32px;
+}
+.hero .cta {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 44px;
+  min-width: 44px;
+}
+.hero .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(247,201,72,0.3); }
+
+/* Sections */
+section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+section h2 {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+section .section-num {
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+section p { margin: 12px 0; color: var(--text-dim); max-width: 700px; }
+section p strong { color: var(--text); }
+
+/* Code editor */
+.editor-wrap {
+  margin: 24px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.editor-header .dots { display: flex; gap: 6px; }
+.editor-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+.editor-header .dot:nth-child(1) { background: var(--red); }
+.editor-header .dot:nth-child(2) { background: var(--accent); }
+.editor-header .dot:nth-child(3) { background: var(--green); }
+
+.run-btn {
+  padding: 6px 20px;
+  background: var(--green);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+.run-btn:hover { filter: brightness(1.1); transform: scale(1.03); }
+.run-btn:active { transform: scale(0.97); }
+
+textarea.code-input {
+  width: 100%;
+  min-height: 160px;
+  padding: 16px;
+  background: transparent;
+  color: var(--accent2);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+}
+
+.output-area {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  min-height: 48px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--green);
+  background: rgba(0,0,0,0.2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.output-area .err { color: var(--red); }
+.output-area .log { color: var(--text-dim); }
+
+/* Visual diagrams */
+.visual-box {
+  margin: 20px 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow-x: auto;
+}
+.visual-box .node {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin: 4px;
+  border: 2px solid;
+}
+.visual-box .scope { border-color: var(--accent); background: rgba(247,201,72,0.08); }
+.visual-box .proto-node { border-color: var(--purple); background: rgba(167,139,250,0.08); }
+.visual-box .this-node { border-color: var(--pink); background: rgba(244,114,182,0.1); }
+.visual-box .arrow { color: var(--text-dim); margin: 0 6px; }
+.visual-box .highlight { border-color: var(--green); background: rgba(74,222,128,0.15); box-shadow: 0 0 12px rgba(74,222,128,0.2); }
+
+/* Next section cue */
+.next-cue {
+  text-align: center;
+  padding: 40px 0;
+}
+.next-cue a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+.next-cue a:hover { background: var(--surface); border-color: var(--accent); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  #nav-dots { display: none; }
+  textarea.code-input { font-size: 13px; min-height: 140px; }
+  section { padding: 60px 16px; }
+}
+
+/* Separator */
+.sep {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 3px;
+  margin: 16px 0 20px;
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:0%"></div>
+
+<nav id="nav-dots"></nav>
+
+<!-- HERO -->
+<div class="hero" id="top">
+  <h1>Secrets of the JavaScript Ninja</h1>
+  <p class="subtitle">An interactive explorer of John Resig's advanced JavaScript techniques. Write code, run it, see it visualized.</p>
+  <a href="#s1" class="cta">Start Exploring ↓</a>
+</div>
+
+<!-- SECTION 1: CLOSURES -->
+<section id="s1">
+  <div class="section-num">Chapter 1 of 7</div>
+  <h2>🔒 Closures & Scope Chains</h2>
+  <div class="sep"></div>
+  <p>A closure gives a function access to variables from its <strong>enclosing scope</strong>, even after that scope has finished executing. This is the foundation of private variables, callbacks, and most patterns in JavaScript.</p>
+  <p>Run the code below and watch the <strong>scope chain diagram</strong> update to show which variables each function can see.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e1')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e1">function createCounter(name) {
+  let count = 0;  // private — only accessible via closure
+  return {
+    increment() { count++; log(name + ': ' + count); },
+    decrement() { count--; log(name + ': ' + count); },
+    getCount()  { return count; }
+  };
+}
+
+const ninja = createCounter('Ninja');
+ninja.increment();
+ninja.increment();
+ninja.increment();
+ninja.decrement();
+log('Final count: ' + ninja.getCount());
+log('count directly? ' + (typeof count)); // undefined!</textarea>
+    <div class="output-area" id="e1-out"></div>
+  </div>
+
+  <div class="visual-box" id="v1">
+    <div style="color:var(--text-dim); margin-bottom:12px;">▸ Scope chain diagram — click <strong>Run</strong> to visualize</div>
+  </div>
+
+  <div class="next-cue"><a href="#s2">Next: Prototypes & Inheritance →</a></div>
+</section>
+
+<!-- SECTION 2: PROTOTYPES -->
+<section id="s2">
+  <div class="section-num">Chapter 2 of 7</div>
+  <h2>🧬 Prototypes & Inheritance</h2>
+  <div class="sep"></div>
+  <p>Every JavaScript object has a hidden <strong>[[Prototype]]</strong> link. When you access a property, the engine walks up this chain until it finds it (or hits <code>null</code>). This is how inheritance works — no classes needed.</p>
+  <p>Run the code and see the <strong>prototype chain</strong> visualized as connected nodes.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e2')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e2">function Person(name) {
+  this.name = name;
+}
+Person.prototype.greet = function() {
+  return 'Hello, I am ' + this.name;
+};
+
+function Ninja(name, weapon) {
+  Person.call(this, name);
+  this.weapon = weapon;
+}
+Ninja.prototype = Object.create(Person.prototype);
+Ninja.prototype.constructor = Ninja;
+Ninja.prototype.attack = function() {
+  return this.name + ' attacks with ' + this.weapon;
+};
+
+const yoshi = new Ninja('Yoshi', 'shuriken');
+log(yoshi.greet());     // from Person.prototype
+log(yoshi.attack());    // from Ninja.prototype
+log('Is Ninja? ' + (yoshi instanceof Ninja));
+log('Is Person? ' + (yoshi instanceof Person));</textarea>
+    <div class="output-area" id="e2-out"></div>
+  </div>
+
+  <div class="visual-box" id="v2">
+    <div style="color:var(--text-dim);">▸ Prototype chain — click <strong>Run</strong> to visualize</div>
+  </div>
+
+  <div class="next-cue"><a href="#s3">Next: Function Context (this) →</a></div>
+</section>
+
+<!-- SECTION 3: THIS BINDING -->
+<section id="s3">
+  <div class="section-num">Chapter 3 of 7</div>
+  <h2>🎯 Function Context: <code style="color:var(--pink)">this</code></h2>
+  <div class="sep"></div>
+  <p>The value of <strong><code>this</code></strong> is determined by <em>how</em> a function is called, not where it's defined. This is one of the trickiest parts of JavaScript. There are four rules: default, implicit, explicit (<code>call/apply/bind</code>), and <code>new</code>.</p>
+  <p>Run the code to see which object <code>this</code> points to in each context.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e3')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e3">const katana = {
+  name: 'Katana',
+  swing() { return 'this → ' + this.name; }
+};
+
+const shuriken = { name: 'Shuriken' };
+
+// Implicit: this = katana
+log('Implicit:  ' + katana.swing());
+
+// Explicit with call: this = shuriken  
+log('call():    ' + katana.swing.call(shuriken));
+
+// Explicit with apply
+log('apply():   ' + katana.swing.apply(shuriken));
+
+// bind creates a new function with locked this
+const bound = katana.swing.bind(shuriken);
+log('bind():    ' + bound());
+
+// Lost context: bare function reference
+const loose = katana.swing;
+log('Lost ctx:  ' + loose()); // this = undefined/window</textarea>
+    <div class="output-area" id="e3-out"></div>
+  </div>
+
+  <div class="visual-box" id="v3">
+    <div style="color:var(--text-dim);">▸ <code>this</code> binding diagram — click <strong>Run</strong> to visualize</div>
+  </div>
+
+  <div class="next-cue"><a href="#s4">Next: Timers & The Event Loop →</a></div>
+</section>
+
+<!-- SECTION 4: TIMERS -->
+<section id="s4">
+  <div class="section-num">Chapter 4 of 7</div>
+  <h2>⏱️ Timers & The Event Loop</h2>
+  <div class="sep"></div>
+  <p>JavaScript is <strong>single-threaded</strong>. Timers don't execute at exact times — they <em>queue</em> a callback for "at least" that delay. Resig's key insight: <code>setTimeout</code> chains guarantee a gap between executions; <code>setInterval</code> fires regardless of whether the previous callback finished.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e4')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e4">// Break expensive work into chunks to avoid UI freeze
+function processInChunks(items, chunkSize, process) {
+  let i = 0;
+  function nextChunk() {
+    const end = Math.min(i + chunkSize, items.length);
+    for (; i < end; i++) process(items[i], i);
+    log('Processed up to index ' + (i - 1));
+    if (i < items.length) setTimeout(nextChunk, 0);
+    else log('✅ All done! UI never froze.');
+  }
+  nextChunk();
+}
+
+const bigArray = Array.from({length: 1000}, (_, i) => i);
+processInChunks(bigArray, 250, (item, i) => {
+  // Simulate work — in real code this might be DOM updates
+  Math.sqrt(item * item + 1);
+});</textarea>
+    <div class="output-area" id="e4-out"></div>
+  </div>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e4b')">▶ Run: setTimeout vs setInterval</button>
+    </div>
+    <textarea class="code-input" id="e4b">// Demonstrate the difference
+let timeoutCount = 0, intervalCount = 0;
+const start = Date.now();
+
+// setTimeout chain: guarantees gap AFTER execution
+function chainTimeout() {
+  if (timeoutCount < 5) {
+    timeoutCount++;
+    const elapsed = Date.now() - start;
+    log('setTimeout #' + timeoutCount + ' at ' + elapsed + 'ms');
+    setTimeout(chainTimeout, 50);
+  }
+}
+
+// setInterval: fires every 50ms regardless
+const id = setInterval(() => {
+  intervalCount++;
+  const elapsed = Date.now() - start;
+  log('setInterval #' + intervalCount + ' at ' + elapsed + 'ms');
+  if (intervalCount >= 5) clearInterval(id);
+}, 50);
+
+chainTimeout();</textarea>
+    <div class="output-area" id="e4b-out"></div>
+  </div>
+
+  <div class="next-cue"><a href="#s5">Next: Regular Expressions →</a></div>
+</section>
+
+<!-- SECTION 5: REGEX -->
+<section id="s5">
+  <div class="section-num">Chapter 5 of 7</div>
+  <h2>🔍 Regular Expressions</h2>
+  <div class="sep"></div>
+  <p>Resig calls regex one of the most <strong>underused</strong> features in JavaScript. Key techniques: <strong>pre-compilation</strong> for performance, <strong>exec() in a loop</strong> for global search with captures, and <strong>replace with a function</strong> for powerful transformations.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e5')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e5">// 1. Replace with a function: camelCase converter
+const dashed = 'background-color';
+const camel = dashed.replace(/-(\w)/g, (match, letter) => {
+  log('Matched: "' + match + '" → "' + letter.toUpperCase() + '"');
+  return letter.toUpperCase();
+});
+log('Result: ' + camel);
+
+log('---');
+
+// 2. exec() loop: extract all tags with captures
+const html = '<div class="ninja"><b>Hello</b><i>world</i></div>';
+const tagRe = /<(\/?)(\w+)([^>]*)>/g;
+let m;
+while ((m = tagRe.exec(html)) !== null) {
+  const type = m[1] ? 'closing' : 'opening';
+  log(type + ' <' + m[2] + '>' + (m[3] ? ' attrs: ' + m[3] : ''));
+}
+
+log('---');
+
+// 3. Query string compressor (from the book!)
+function compress(data) {
+  const q = {};
+  data.replace(/([^=&]+)=([^&]*)/g, (_, key, val) => {
+    q[key] = (q[key] ? q[key] + ',' : '') + val;
+  });
+  return Object.entries(q).map(([k,v]) => k+'='+v).join('&');
+}
+log(compress('foo=1&foo=2&blah=a&blah=b&foo=3'));</textarea>
+    <div class="output-area" id="e5-out"></div>
+  </div>
+
+  <div class="next-cue"><a href="#s6">Next: Runtime Code Evaluation →</a></div>
+</section>
+
+<!-- SECTION 6: EVAL / NEW FUNCTION -->
+<section id="s6">
+  <div class="section-num">Chapter 6 of 7</div>
+  <h2>⚡ Runtime Code Evaluation</h2>
+  <div class="sep"></div>
+  <p>JavaScript can generate and execute code at runtime — via <code>eval()</code>, <code>new Function()</code>, and dynamic <code>&lt;script&gt;</code> tags. Resig shows this isn't just a footgun — it powers <strong>JSON parsing</strong>, <strong>templating engines</strong>, and even <strong>entire programming languages</strong> (Processing.js).</p>
+  <p><code>new Function()</code> creates a function <strong>without closures</strong> — cleaner and safer than eval.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e6')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e6">// 1. new Function — dynamic function creation
+const add = new Function('a', 'b', 'return a + b');
+log('new Function: 3 + 4 = ' + add(3, 4));
+
+// 2. Micro-templating (inspired by Resig's 20-line engine)
+function tmpl(str, data) {
+  const fn = new Function('d',
+    'var p=[];with(d){p.push(\'' +
+    str.replace(/[\r\t\n]/g, ' ')
+       .replace(/'(?=[^%]*%>)/g, "\t")
+       .split("'").join("\\'")
+       .split("\t").join("'")
+       .replace(/<%=(.+?)%>/g, "',$1,'")
+       .split('<%').join("');")
+       .split('%>').join("p.push('") +
+    "');}return p.join('');");
+  return fn(data);
+}
+
+const result = tmpl(
+  'Hello <%= name %>! You have <%= items.length %> items: <%for(var i=0;i<items.length;i++){%> [<%= items[i] %>]<%}%>',
+  { name: 'Ninja', items: ['shuriken', 'katana', 'smoke bomb'] }
+);
+log(result);
+
+// 3. Function decompilation
+function secret(x) { return x * 42; }
+log('Decompiled: ' + secret.toString().slice(0, 50) + '...');
+log('Arg count: ' + secret.length);</textarea>
+    <div class="output-area" id="e6-out"></div>
+  </div>
+
+  <div class="next-cue"><a href="#s7">Next: Cross-Browser & DOM →</a></div>
+</section>
+
+<!-- SECTION 7: CROSS-BROWSER / DOM -->
+<section id="s7">
+  <div class="section-num">Chapter 7 of 7</div>
+  <h2>🌐 Cross-Browser & DOM Mastery</h2>
+  <div class="sep"></div>
+  <p>Resig's #1 rule: <strong>test the feature, not the browser.</strong> Use object detection and feature simulation instead of user-agent sniffing. Bugs get fixed — your workarounds should survive.</p>
+  <p>Try DOM manipulation with the live playground below. The preview updates in real time.</p>
+
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <button class="run-btn" onclick="runEditor('e7')">▶ Run</button>
+    </div>
+    <textarea class="code-input" id="e7">// Feature detection (Resig's approach)
+const features = {
+  querySelector: typeof document.querySelector === 'function',
+  classList: 'classList' in document.createElement('div'),
+  addEventListener: 'addEventListener' in window,
+  promises: typeof Promise !== 'undefined',
+  fetch: typeof fetch !== 'undefined',
+  proxy: typeof Proxy !== 'undefined',
+};
+log('Feature Detection Results:');
+Object.entries(features).forEach(([name, supported]) => {
+  log('  ' + (supported ? '✅' : '❌') + ' ' + name);
+});
+
+log('---');
+
+// DOM manipulation — build a table dynamically
+const data = [
+  ['Technique', 'Chapter'],
+  ['Closures', '3'],
+  ['Prototypes', '5'],
+  ['Timers', '4'],
+  ['Regex', '6'],
+];
+let html = '<table style="border-collapse:collapse;width:100%">';
+data.forEach((row, i) => {
+  const tag = i === 0 ? 'th' : 'td';
+  const bg = i === 0 ? '#1a2340' : (i % 2 ? '#131a2b' : '#0a0e17');
+  html += '<tr style="background:' + bg + '">';
+  row.forEach(cell => {
+    html += '<' + tag + ' style="padding:8px 12px;border:1px solid #2a3555;color:#c8d6e5">' + cell + '</' + tag + '>';
+  });
+  html += '</tr>';
+});
+html += '</table>';
+log('Table HTML generated (' + html.length + ' chars)');
+
+// Inject into preview
+const preview = document.getElementById('dom-preview');
+if (preview) preview.innerHTML = html;</textarea>
+    <div class="output-area" id="e7-out"></div>
+  </div>
+
+  <div class="visual-box" id="dom-preview">
+    <div style="color:var(--text-dim);">▸ DOM preview — click <strong>Run</strong> to render</div>
+  </div>
+
+  <div class="next-cue"><a href="#finale">↓ The Way of the Ninja</a></div>
+</section>
+
+<!-- FINALE -->
+<section id="finale" style="text-align:center; padding-bottom: 120px;">
+  <h2 style="background:linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">The Way of the Ninja</h2>
+  <div class="sep" style="margin: 16px auto 20px;"></div>
+  <p style="max-width:600px; margin:0 auto; font-size:1.1rem; color:var(--text);">
+    "There is nothing simple about creating effective, cross-browser, JavaScript code. But understanding how the very best libraries are constructed can provide great insight into how your own code can be constructed."
+  </p>
+  <p style="color:var(--accent); margin-top:8px;">— John Resig</p>
+  <p style="max-width:500px; margin:24px auto 0; font-size:0.95rem;">
+    Every editor above is live. Modify the code, run it again, break things, fix them. That's how ninjas learn.
+  </p>
+</section>
+
+<script>
+// === CODE EXECUTION ENGINE ===
+const timerRegistry = [];
+
+function runEditor(id) {
+  const textarea = document.getElementById(id);
+  const output = document.getElementById(id + '-out');
+  if (!textarea || !output) return;
+  output.innerHTML = '';
+
+  // Clear any lingering timers from previous runs
+  timerRegistry.forEach(t => { clearTimeout(t.t); clearInterval(t.i); });
+  timerRegistry.length = 0;
+
+  const code = textarea.value;
+  const lines = [];
+
+  const log = (...args) => {
+    const text = args.map(a => {
+      if (a === undefined) return 'undefined';
+      if (a === null) return 'null';
+      if (typeof a === 'object') try { return JSON.stringify(a); } catch(e) { return String(a); }
+      return String(a);
+    }).join(' ');
+    lines.push(text);
+    output.innerHTML = lines.map(l => '<div class="log">' + escHtml(l) + '</div>').join('');
+    output.scrollTop = output.scrollHeight;
+  };
+
+  // Wrap setTimeout/setInterval to track and to pass log
+  const _setTimeout = (fn, ms, ...args) => {
+    const t = setTimeout(fn, ms, ...args);
+    timerRegistry.push({ t });
+    return t;
+  };
+  const _setInterval = (fn, ms, ...args) => {
+    const i = setInterval(fn, ms, ...args);
+    timerRegistry.push({ i });
+    return i;
+  };
+
+  try {
+    const fn = new Function('log', 'setTimeout', 'setInterval', 'clearInterval', 'clearTimeout', code);
+    fn(log, _setTimeout, _setInterval, clearInterval, clearTimeout);
+  } catch (e) {
+    output.innerHTML += '<div class="err">❌ ' + escHtml(e.toString()) + '</div>';
+  }
+
+  // Trigger visualizations
+  if (id === 'e1') vizClosure();
+  if (id === 'e2') vizPrototype();
+  if (id === 'e3') vizThis();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// === VISUALIZATIONS ===
+
+function vizClosure() {
+  const el = document.getElementById('v1');
+  el.innerHTML = `
+    <div style="margin-bottom:10px;color:var(--accent);font-weight:600;">Scope Chain Visualization</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;">
+      <div class="node scope" style="border-color:var(--text-dim);">
+        <div style="color:var(--text-dim);font-size:11px;">Global Scope</div>
+        <div style="color:var(--accent2);">createCounter</div>
+        <div style="color:var(--green);">ninja</div>
+      </div>
+      <div style="display:flex;align-items:center;"><span class="arrow" style="font-size:24px;">→</span></div>
+      <div class="node scope highlight">
+        <div style="color:var(--accent);font-size:11px;">createCounter() Scope</div>
+        <div style="color:var(--orange);">name <span style="color:var(--text-dim);">= 'Ninja'</span></div>
+        <div style="color:var(--red);">count <span style="color:var(--text-dim);">= 3 🔒</span></div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">← private via closure</div>
+      </div>
+      <div style="display:flex;align-items:center;"><span class="arrow" style="font-size:24px;">→</span></div>
+      <div class="node scope">
+        <div style="color:var(--accent);font-size:11px;">Returned Object Methods</div>
+        <div style="color:var(--green);">increment() <span style="color:var(--text-dim);">→ closes over count</span></div>
+        <div style="color:var(--green);">decrement() <span style="color:var(--text-dim);">→ closes over count</span></div>
+        <div style="color:var(--green);">getCount() <span style="color:var(--text-dim);">→ closes over count</span></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;color:var(--text-dim);font-size:12px;">
+      ↑ Each method has a closure reference to the <span style="color:var(--red);">count</span> variable. It's not accessible any other way — true privacy.
+    </div>`;
+}
+
+function vizPrototype() {
+  const el = document.getElementById('v2');
+  el.innerHTML = `
+    <div style="margin-bottom:10px;color:var(--purple);font-weight:600;">Prototype Chain: yoshi</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <div class="node proto-node highlight">
+        <div style="font-size:11px;color:var(--green);">yoshi (instance)</div>
+        <div>name: <span style="color:var(--accent2);">'Yoshi'</span></div>
+        <div>weapon: <span style="color:var(--accent2);">'shuriken'</span></div>
+      </div>
+      <div><span class="arrow" style="font-size:18px;">__proto__→</span></div>
+      <div class="node proto-node">
+        <div style="font-size:11px;color:var(--purple);">Ninja.prototype</div>
+        <div>constructor: <span style="color:var(--accent2);">Ninja</span></div>
+        <div>attack: <span style="color:var(--accent2);">fn()</span></div>
+      </div>
+      <div><span class="arrow" style="font-size:18px;">__proto__→</span></div>
+      <div class="node proto-node">
+        <div style="font-size:11px;color:var(--purple);">Person.prototype</div>
+        <div>greet: <span style="color:var(--accent2);">fn()</span></div>
+      </div>
+      <div><span class="arrow" style="font-size:18px;">__proto__→</span></div>
+      <div class="node proto-node" style="border-color:var(--text-dim);">
+        <div style="font-size:11px;color:var(--text-dim);">Object.prototype</div>
+        <div style="color:var(--text-dim);">toString, hasOwnProperty...</div>
+      </div>
+      <div><span class="arrow" style="font-size:18px;">→</span></div>
+      <div style="color:var(--red);font-weight:bold;">null</div>
+    </div>
+    <div style="margin-top:14px;color:var(--text-dim);font-size:12px;">
+      yoshi.greet() → not on yoshi → not on Ninja.prototype → <span style="color:var(--green);">found on Person.prototype ✓</span>
+    </div>`;
+}
+
+function vizThis() {
+  const el = document.getElementById('v3');
+  el.innerHTML = `
+    <div style="margin-bottom:10px;color:var(--pink);font-weight:600;"><code>this</code> Binding Rules</div>
+    <div style="display:grid;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="node this-node" style="min-width:140px;">
+          <div style="font-size:11px;color:var(--pink);">katana.swing()</div>
+          <div>this → <span style="color:var(--green);font-weight:bold;">katana</span></div>
+        </div>
+        <span style="color:var(--text-dim);font-size:12px;">Implicit binding: object before the dot</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="node this-node highlight" style="min-width:140px;">
+          <div style="font-size:11px;color:var(--pink);">swing.call(shuriken)</div>
+          <div>this → <span style="color:var(--accent);font-weight:bold;">shuriken</span></div>
+        </div>
+        <span style="color:var(--text-dim);font-size:12px;">Explicit binding: you choose with call/apply</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="node this-node" style="min-width:140px;border-color:var(--accent2);">
+          <div style="font-size:11px;color:var(--accent2);">swing.bind(shuriken)()</div>
+          <div>this → <span style="color:var(--accent);font-weight:bold;">shuriken</span></div>
+        </div>
+        <span style="color:var(--text-dim);font-size:12px;">Hard binding: locked forever, closure-based</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="node this-node" style="min-width:140px;border-color:var(--red);">
+          <div style="font-size:11px;color:var(--red);">const fn = swing; fn()</div>
+          <div>this → <span style="color:var(--red);font-weight:bold;">undefined</span></div>
+        </div>
+        <span style="color:var(--text-dim);font-size:12px;">Lost context: no object, no this</span>
+      </div>
+    </div>`;
+}
+
+// === PROGRESS BAR & NAV ===
+const sections = ['top','s1','s2','s3','s4','s5','s6','s7','finale'];
+const sectionNames = ['Top','Closures','Prototypes','this','Timers','Regex','eval','DOM','Fin'];
+
+(function buildNav() {
+  const nav = document.getElementById('nav-dots');
+  sections.forEach((id, i) => {
+    if (i === 0) return; // skip top
+    const a = document.createElement('a');
+    a.href = '#' + id;
+    a.dataset.idx = i;
+    const tip = document.createElement('span');
+    tip.className = 'tooltip';
+    tip.textContent = sectionNames[i];
+    a.appendChild(tip);
+    nav.appendChild(a);
+  });
+})();
+
+function updateProgress() {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = docHeight > 0 ? (scrollTop / docHeight * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+
+  // Update active dot
+  const dots = document.querySelectorAll('#nav-dots a');
+  let active = 0;
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < window.innerHeight * 0.5) active = i;
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i + 1 === active));
+}
+
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
+// === TAB KEY SUPPORT IN EDITORS ===
+document.querySelectorAll('textarea.code-input').forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(ta.selectionEnd);
+      ta.selectionStart = ta.selectionEnd = start + 2;
+    }
+    // Ctrl/Cmd+Enter to run
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      const btn = ta.closest('.editor-wrap').querySelector('.run-btn');
+      if (btn) btn.click();
+    }
+  });
+});
+</script>
+</body>
+</html>

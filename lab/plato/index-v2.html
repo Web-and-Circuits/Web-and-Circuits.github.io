@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dialogues of Plato — V2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#d4a843;--gold-dim:#8a6d2b;--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a24;
+  --text:#e8e4d9;--text-dim:#9a9486;--accent:#c4915e;--cave-fire:#ff6b35;
+  --sun:#ffd700;--red:#c0392b;--green:#27ae60;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;line-height:1.7;overflow-x:hidden}
+a{color:var(--gold)}
+::selection{background:var(--gold);color:var(--bg)}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(212,168,67,.15);padding:0 1rem}
+nav ul{display:flex;gap:.15rem;list-style:none;overflow-x:auto;max-width:1200px;margin:0 auto;scrollbar-width:none}
+nav ul::-webkit-scrollbar{display:none}
+nav li a{display:block;padding:.75rem .5rem;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;white-space:nowrap;transition:color .3s}
+nav li a:hover,nav li a.active{color:var(--gold)}
+
+section{min-height:100vh;padding:5rem 1.5rem 4rem;max-width:900px;margin:0 auto}
+h1{font-size:clamp(2rem,6vw,4rem);color:var(--gold);font-weight:400;letter-spacing:.04em;margin-bottom:1rem}
+h2{font-size:clamp(1.5rem,4vw,2.5rem);color:var(--gold);font-weight:400;margin-bottom:1.5rem}
+h3{color:var(--gold);font-weight:400}
+.subtitle{color:var(--text-dim);font-style:italic;font-size:1.1rem;margin-bottom:2rem}
+.quote-block{border-left:3px solid var(--gold-dim);padding:.75rem 1.25rem;margin:1.5rem 0;font-style:italic;color:var(--accent)}
+.quote-attr{text-align:right;color:var(--text-dim);font-size:.85rem;margin-top:.25rem}
+
+.btn{display:inline-block;padding:.75rem 1.5rem;min-height:44px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font-family:inherit;font-size:.9rem;cursor:pointer;transition:all .3s;border-radius:2px;text-decoration:none}
+.btn:hover{background:var(--gold);color:var(--bg)}
+.btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+.btn.active-choice{background:var(--gold);color:var(--bg)}
+.btn-row{display:flex;flex-wrap:wrap;gap:.65rem;margin:1.25rem 0}
+.btn-sm{padding:.5rem 1rem;font-size:.8rem}
+
+#hero{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100vh;position:relative}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(212,168,67,.06) 0%,transparent 70%)}
+.hero-icon{font-size:5rem;margin-bottom:1rem;opacity:.7}
+#hero h1{font-size:clamp(2.5rem,7vw,5rem);line-height:1.15}
+.scroll-hint{position:absolute;bottom:2rem;animation:bob 2s ease-in-out infinite;color:var(--text-dim);font-size:1.5rem}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Dialogue */
+.dialogue-box{background:var(--bg2);border:1px solid rgba(212,168,67,.2);border-radius:4px;padding:1.25rem;margin:1.25rem 0;min-height:180px;max-height:50vh;overflow-y:auto}
+.dialogue-line{margin:.6rem 0;padding:.5rem;border-radius:4px;animation:fadeUp .4s ease}
+.dialogue-line.socrates{border-left:3px solid var(--gold);padding-left:1rem}
+.dialogue-line.user{border-left:3px solid var(--accent);padding-left:1rem;background:rgba(196,145,94,.05)}
+.dialogue-line .speaker{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:.1rem}
+.dialogue-line .method{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-dim);background:rgba(212,168,67,.08);display:inline-block;padding:.1rem .4rem;border-radius:2px;margin-bottom:.3rem}
+
+/* Cave */
+#cave-canvas-wrap{position:relative;width:100%;height:70vh;min-height:400px;border-radius:4px;overflow:hidden;margin:1.5rem 0}
+#cave-canvas{width:100%;height:100%;display:block}
+#cave-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:1.5rem;pointer-events:none}
+#cave-stage{font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;color:var(--gold);position:absolute;top:1rem;left:1rem}
+#cave-quote{font-style:italic;color:var(--accent);font-size:.9rem;margin-bottom:.5rem;max-width:600px}
+#cave-narr{color:var(--text);font-size:.95rem;margin-bottom:.75rem;max-width:600px}
+#cave-action{pointer-events:all}
+.cave-btn{display:inline-block;padding:.6rem 1.2rem;border:1px solid var(--gold-dim);background:rgba(10,10,15,.7);color:var(--gold);font-family:inherit;font-size:.85rem;cursor:pointer;border-radius:2px;transition:all .3s;margin-right:.5rem;margin-bottom:.5rem}
+.cave-btn:hover{background:var(--gold);color:var(--bg)}
+
+/* Line sorting */
+.line-zones{display:grid;grid-template-columns:1fr;gap:.5rem;margin:1.5rem 0}
+.line-zone{border:2px dashed rgba(212,168,67,.2);border-radius:4px;padding:1rem;min-height:80px;transition:all .3s}
+.line-zone.drag-over{border-color:var(--gold);background:rgba(212,168,67,.06)}
+.line-zone h3{font-size:.85rem;margin-bottom:.5rem}
+.line-zone-items{display:flex;flex-wrap:wrap;gap:.5rem;min-height:36px}
+.line-item{padding:.4rem .8rem;background:var(--bg3);border:1px solid rgba(212,168,67,.15);border-radius:3px;cursor:grab;font-size:.85rem;transition:all .3s;user-select:none;touch-action:none}
+.line-item:active{cursor:grabbing;opacity:.7}
+.line-item.correct{border-color:var(--green);background:rgba(39,174,96,.1)}
+.line-item.wrong{border-color:var(--red);background:rgba(192,57,43,.1)}
+#line-tray{display:flex;flex-wrap:wrap;gap:.5rem;padding:1rem;background:var(--bg2);border-radius:4px;margin:1rem 0;min-height:50px}
+
+/* Meno geometry */
+#meno-canvas{width:100%;max-width:400px;height:400px;display:block;margin:1rem auto;border:1px solid rgba(212,168,67,.15);border-radius:4px;background:var(--bg2)}
+.meno-dialogue{background:var(--bg2);border:1px solid rgba(212,168,67,.2);border-radius:4px;padding:1rem;margin:1rem 0;min-height:100px}
+
+/* Meta cave */
+.meta-layer{border:1px solid rgba(212,168,67,.15);border-radius:4px;padding:1.5rem;margin:1rem 0;cursor:pointer;transition:all .5s;position:relative;overflow:hidden}
+.meta-layer:hover{border-color:var(--gold)}
+.meta-layer .meta-depth{position:absolute;top:.5rem;right:.75rem;font-size:.7rem;color:var(--gold-dim);text-transform:uppercase;letter-spacing:.1em}
+.meta-nested{margin-top:1rem;padding:1rem;border-left:3px solid var(--gold-dim);display:none;animation:fadeUp .4s ease}
+.meta-layer.open .meta-nested{display:block}
+
+/* Symposium */
+.speech-card{background:var(--bg2);border:1px solid rgba(212,168,67,.15);border-radius:4px;padding:1.25rem;margin:1rem 0;transition:all .3s}
+.speech-card.active-speech{border-color:var(--gold)}
+.speech-name{font-size:1rem;color:var(--gold);margin-bottom:.25rem}
+.speech-theory{font-size:.85rem;color:var(--text-dim);margin-bottom:.5rem}
+.speech-text{display:none;margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(212,168,67,.1)}
+.speech-card.active-speech .speech-text{display:block}
+.rating-stars{display:flex;gap:.25rem;margin-top:.5rem}
+.rating-stars span{cursor:pointer;font-size:1.2rem;opacity:.3;transition:opacity .2s}
+.rating-stars span.lit{opacity:1}
+
+/* Ship */
+#ship-canvas{width:100%;max-width:600px;height:350px;display:block;margin:1.5rem auto;border-radius:4px;background:var(--bg2)}
+.ship-candidates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin:1.5rem 0}
+.ship-candidate{background:var(--bg2);border:1px solid rgba(212,168,67,.15);border-radius:4px;padding:1rem;cursor:pointer;transition:all .3s;text-align:center}
+.ship-candidate:hover{border-color:var(--gold)}
+.ship-candidate.voted{border-color:var(--gold);background:rgba(212,168,67,.08)}
+.ship-candidate .icon{font-size:2rem;margin-bottom:.5rem}
+.ship-candidate .name{color:var(--gold);font-size:.9rem}
+.ship-candidate .desc{color:var(--text-dim);font-size:.8rem;margin-top:.25rem}
+.ship-votes{height:6px;background:var(--bg);border-radius:3px;margin-top:.5rem;overflow:hidden}
+.ship-votes-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .5s}
+
+footer{text-align:center;padding:3rem 1.5rem;color:var(--text-dim);font-style:italic;border-top:1px solid rgba(212,168,67,.1)}
+
+@media(max-width:600px){
+  section{padding:4.5rem 1rem 3rem}
+  nav li a{padding:.7rem .35rem;font-size:.6rem}
+  #cave-canvas-wrap{height:55vh;min-height:320px}
+  #meno-canvas{height:300px}
+  .ship-candidates{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+<ul>
+  <li><a href="#hero">Plato</a></li>
+  <li><a href="#socratic">Dialectic</a></li>
+  <li><a href="#cave">Cave</a></li>
+  <li><a href="#line">Line</a></li>
+  <li><a href="#meno">Meno</a></li>
+  <li><a href="#meta">Meta</a></li>
+  <li><a href="#symposium">Symposium</a></li>
+  <li><a href="#ship">Ship</a></li>
+</ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-icon">🏛️</div>
+  <h1>The Dialogues of Plato</h1>
+  <p class="subtitle">An Interactive Journey — Volume II</p>
+  <p style="max-width:550px;text-align:center;margin:1.5rem auto;color:var(--text-dim)">Seven experiences. Each one a dialogue — not between you and a screen, but between you and 2,400 years of thought. Socrates asks; you answer. The Cave awaits; you descend. The ship needs a captain; you vote. Begin.</p>
+  <a href="#socratic" class="btn" style="margin-top:1.5rem">Enter the Agora ↓</a>
+  <div class="scroll-hint">↓</div>
+</section>
+
+<!-- I. SOCRATIC DIALOGUE ENGINE -->
+<section id="socratic">
+  <h2>I. The Socratic Dialogue Engine</h2>
+  <div class="quote-block">
+    "I am the gadfly of the Athenian people, given to them by God, and they will not easily find another like me."
+    <div class="quote-attr">— Apology, 30e</div>
+  </div>
+  <p>Choose a topic. Socrates will question you using the actual methods from the dialogues: <em>counterexample</em>, <em>reductio ad absurdum</em>, and <em>elenchus</em> — the cross-examination that made Athens both love and condemn him.</p>
+
+  <div class="btn-row" id="topic-select">
+    <button class="btn btn-sm" onclick="startTopic('justice')">Justice</button>
+    <button class="btn btn-sm" onclick="startTopic('courage')">Courage</button>
+    <button class="btn btn-sm" onclick="startTopic('piety')">Piety</button>
+    <button class="btn btn-sm" onclick="startTopic('beauty')">Beauty</button>
+    <button class="btn btn-sm" onclick="startTopic('knowledge')">Knowledge</button>
+  </div>
+
+  <div class="dialogue-box" id="s-box"></div>
+  <div class="btn-row" id="s-choices"></div>
+</section>
+
+<!-- II. THE CAVE — FULL EXPERIENCE -->
+<section id="cave">
+  <h2>II. The Allegory of the Cave</h2>
+  <div class="quote-block">
+    "And now, I said, let me show in a figure how far our nature is enlightened or unenlightened."
+    <div class="quote-attr">— Republic, Book VII, 514a</div>
+  </div>
+
+  <div id="cave-canvas-wrap">
+    <canvas id="cave-canvas"></canvas>
+    <div id="cave-overlay">
+      <div id="cave-stage">STAGE I — CHAINED</div>
+      <div id="cave-quote"></div>
+      <div id="cave-narr"></div>
+      <div id="cave-action"></div>
+    </div>
+  </div>
+</section>
+
+<!-- III. THE ALLEGORY OF THE LINE -->
+<section id="line">
+  <h2>III. The Allegory of the Line</h2>
+  <div class="quote-block">
+    "There are four states of mind corresponding to four segments of the line: understanding, reasoning, belief, and imagination."
+    <div class="quote-attr">— Republic, Book VI, 511d</div>
+  </div>
+  <p>Drag each item into the correct level of Plato's Divided Line. Where does each belong — in the realm of shadows, physical objects, mathematical reasoning, or the Forms themselves?</p>
+
+  <div class="line-zones" id="line-zones">
+    <div class="line-zone" data-zone="noesis" ondragover="lineDragOver(event)" ondragleave="lineDragLeave(event)" ondrop="lineDrop(event)">
+      <h3>IV. Noesis — Understanding / The Forms</h3>
+      <div class="line-zone-items"></div>
+    </div>
+    <div class="line-zone" data-zone="dianoia" ondragover="lineDragOver(event)" ondragleave="lineDragLeave(event)" ondrop="lineDrop(event)">
+      <h3>III. Dianoia — Mathematical Reasoning</h3>
+      <div class="line-zone-items"></div>
+    </div>
+    <div class="line-zone" data-zone="pistis" ondragover="lineDragOver(event)" ondragleave="lineDragLeave(event)" ondrop="lineDrop(event)">
+      <h3>II. Pistis — Belief / Physical Objects</h3>
+      <div class="line-zone-items"></div>
+    </div>
+    <div class="line-zone" data-zone="eikasia" ondragover="lineDragOver(event)" ondragleave="lineDragLeave(event)" ondrop="lineDrop(event)">
+      <h3>I. Eikasia — Imagination / Shadows</h3>
+      <div class="line-zone-items"></div>
+    </div>
+  </div>
+  <div id="line-tray"></div>
+  <p id="line-score" style="color:var(--text-dim);font-size:.9rem;margin-top:.5rem"></p>
+  <button class="btn btn-sm" onclick="lineCheck()" id="line-check-btn" style="display:none">Check Answers</button>
+  <button class="btn btn-sm" onclick="lineReset()" id="line-reset-btn" style="display:none;margin-left:.5rem">Reset</button>
+</section>
+
+<!-- IV. MENO'S SLAVE BOY -->
+<section id="meno">
+  <h2>IV. Meno's Slave Boy</h2>
+  <div class="quote-block">
+    "He did not know before, and he does not know now — but he once had true opinions about these things, which were stirred up in him as in a dream."
+    <div class="quote-attr">— Meno, 85c</div>
+  </div>
+  <p>You are the slave boy. Socrates will guide you — through questions alone — to discover how to double the area of a square. He won't tell you anything. You already know the answer. You just don't know that you know.</p>
+
+  <canvas id="meno-canvas"></canvas>
+  <div class="meno-dialogue" id="meno-dialogue"></div>
+  <div class="btn-row" id="meno-choices"></div>
+</section>
+
+<!-- V. THE ALLEGORY OF THE ALLEGORY -->
+<section id="meta">
+  <h2>V. The Allegory of the Allegory</h2>
+  <div class="quote-block">
+    "The allegory of the cave is itself a shadow cast by the Form of philosophical liberation."
+    <div class="quote-attr">— (A Platonic inference)</div>
+  </div>
+  <p>The Cave is an allegory. But allegories are themselves <em>images</em> — shadows of ideas. So the Cave allegory is a shadow of the idea of liberation. And this explanation is a shadow of that shadow. Click each layer to descend into the recursion.</p>
+
+  <div id="meta-layers">
+    <div class="meta-layer" onclick="toggleMeta(this,0)">
+      <div class="meta-depth">Layer 0 — You Reading This</div>
+      <h3>You are reading about Plato's Cave on a screen.</h3>
+      <p style="color:var(--text-dim);margin-top:.5rem">Pixels on glass. Shadows on a wall. You are a prisoner watching images of images of ideas.</p>
+      <div class="meta-nested">
+        <div class="meta-layer" onclick="event.stopPropagation();toggleMeta(this,1)">
+          <div class="meta-depth">Layer 1 — The Text</div>
+          <h3>Plato wrote a story about prisoners watching shadows.</h3>
+          <p style="color:var(--text-dim);margin-top:.5rem">But writing is itself what Plato warned against in the <em>Phaedrus</em>: "Writing is like painting — the creatures stand there as if alive, but if you ask them a question, they maintain a solemn silence." The text is a shadow of the living dialogue.</p>
+          <div class="meta-nested">
+            <div class="meta-layer" onclick="event.stopPropagation();toggleMeta(this,2)">
+              <div class="meta-depth">Layer 2 — The Allegory</div>
+              <h3>The Cave story is an image — an allegory.</h3>
+              <p style="color:var(--text-dim);margin-top:.5rem">Allegories use concrete images to point toward abstract truths. They belong to the level of <em>eikasia</em> — imagination, the lowest segment of the Divided Line. The Cave allegory lives in the Cave.</p>
+              <div class="meta-nested">
+                <div class="meta-layer" onclick="event.stopPropagation();toggleMeta(this,3)">
+                  <div class="meta-depth">Layer 3 — The Idea</div>
+                  <h3>Behind the allegory is the Form of Liberation itself.</h3>
+                  <p style="color:var(--text-dim);margin-top:.5rem">The thing the Cave points to: that turning from shadows to reality is painful, necessary, and ultimately illuminating. This is the Form — but you can't see it directly. You need the allegory. You need the shadow.</p>
+                  <div class="meta-nested">
+                    <div class="meta-layer" onclick="event.stopPropagation();toggleMeta(this,4)">
+                      <div class="meta-depth">Layer 4 — The Paradox</div>
+                      <h3>∞ — You cannot escape images by using images.</h3>
+                      <p style="color:var(--text-dim);margin-top:.5rem">This is Plato's deepest problem. He wrote dialogues to convey truths that transcend writing. He used allegories to point beyond allegory. He made shadows to help you see the sun. Every attempt to explain the Cave <em>is</em> the Cave. Including this one.</p>
+                      <div class="meta-nested">
+                        <p style="color:var(--gold);font-style:italic;text-align:center;padding:1rem">You are now watching a shadow of a shadow of a shadow of a shadow of the Form of understanding shadows. Welcome to philosophy.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem;padding:1.5rem;border:1px solid rgba(212,168,67,.15);border-radius:4px;text-align:center">
+    <p style="color:var(--gold);font-size:1.1rem">The irony is structural.</p>
+    <p style="color:var(--text-dim);margin-top:.5rem">Plato — who warned that writing produces "the appearance of wisdom, not true wisdom" (Phaedrus 275a) — is the most influential <em>writer</em> in Western history. The man who said images deceive created the most powerful <em>image</em> in philosophy. The Cave is a shadow that helps you see.</p>
+  </div>
+</section>
+
+<!-- VI. SYMPOSIUM -->
+<section id="symposium">
+  <h2>VI. The Symposium: Speeches on Love</h2>
+  <div class="quote-block">
+    "He whom love touches does not walk in darkness."
+    <div class="quote-attr">— Symposium</div>
+  </div>
+  <p>Athens, ~416 BC. A dinner party at the poet Agathon's house. Each guest must give a speech in praise of Love (Eros). Listen to each, rate them — then watch Socrates dismantle them all.</p>
+
+  <div id="symposium-speeches"></div>
+  <div id="symposium-result" style="display:none;margin-top:1.5rem;padding:1.5rem;border:1px solid rgba(212,168,67,.3);border-radius:4px"></div>
+</section>
+
+<!-- VII. THE SHIP -->
+<section id="ship">
+  <h2>VII. The Allegory of the Ship</h2>
+  <div class="quote-block">
+    "Imagine a ship in which the captain is larger and stronger than any of the crew, but is deaf and has similarly impaired vision, and his knowledge of navigation is equally limited."
+    <div class="quote-attr">— Republic, Book VI, 488a</div>
+  </div>
+  <p>The ship of state needs a captain. The crew is fighting over the helm. Cast your vote. But here's the problem: the only person who actually knows navigation is the one nobody listens to.</p>
+
+  <canvas id="ship-canvas"></canvas>
+  <div class="ship-candidates" id="ship-candidates"></div>
+  <div id="ship-result" style="display:none;margin-top:1.5rem;padding:1.5rem;border:1px solid rgba(212,168,67,.3);border-radius:4px"></div>
+</section>
+
+<footer>
+  <p>γνῶθι σεαυτόν — Know Thyself</p>
+  <p style="margin-top:.5rem;font-size:.85rem">The Dialogues of Plato — An Interactive Exploration, Volume II</p>
+</footer>
+
+<script>
+// ============================================================
+// NAV
+// ============================================================
+const sections=document.querySelectorAll('section');
+const navLinks=document.querySelectorAll('nav a');
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(l=>l.classList.remove('active'));const l=document.querySelector(`nav a[href="#${e.target.id}"]`);if(l)l.classList.add('active');}});},{threshold:.2});
+sections.forEach(s=>obs.observe(s));
+
+// ============================================================
+// I. SOCRATIC DIALOGUE ENGINE
+// ============================================================
+const TOPICS={
+justice:{
+  opening:"Greetings, friend. I hear you consider yourself someone who thinks about what is right. Tell me then — what is <strong>justice</strong>?",
+  branches:[
+    {text:"Justice is following the law",rounds:[
+      {method:"Counterexample",s:"A thoughtful beginning! But consider the laws of a tyrant — Critias and the Thirty imposed laws in Athens that required citizens to arrest fellow democrats for execution. Those were the laws. Were those who obeyed them just?",choices:[
+        {text:"No — unjust laws aren't truly laws",next:0},
+        {text:"They were legally just but morally unjust",next:1}
+      ]},
+      [{method:"Elenchus",s:"But now you distinguish between true laws and false laws. By what standard do you judge? You said justice <em>is</em> following the law — but now you say some laws aren't just. You're using a concept of justice <em>independent</em> of law to judge the law itself. Your definition has consumed itself, like a snake eating its tail.",choices:[
+        {text:"Then justice must be something beyond the law",next:"end0"},
+        {text:"I think I need to start over",next:"end1"}
+      ]},
+      {method:"Reductio ad Absurdum",s:"'Legally just but morally unjust' — you've just admitted there are <em>two</em> kinds of justice, and they can contradict each other. But if justice can be both present and absent in the same act, then what does 'justice' mean? A word that means both a thing and its opposite means nothing at all. We've reduced your position to absurdity.",choices:[
+        {text:"Then there must be one true justice above the legal kind",next:"end0"},
+        {text:"Maybe justice is more complicated than one definition",next:"end1"}
+      ]}]
+    ]},
+    {text:"Justice is giving each person what they deserve",rounds:[
+      {method:"Counterexample",s:"Polemarchus said almost exactly that in the Republic! But tell me — a friend lends you a knife while sane. Later, gripped by madness, he demands it back. He <em>deserves</em> his property, does he not? Do you return it?",choices:[
+        {text:"No — returning it could cause harm",next:0},
+        {text:"Yes — it's rightfully his",next:1}
+      ]},
+      [{method:"Elenchus",s:"So justice is giving people what they deserve — <em>unless</em> doing so causes harm. But who decides what constitutes harm? And if you withhold what someone deserves for their own good, aren't you imposing your judgment over their rights? Your definition of justice now requires a definition of 'good' — which is the much harder question you were trying to avoid.",choices:[
+        {text:"I suppose justice requires wisdom to apply",next:"end0"},
+        {text:"Maybe desert isn't the whole picture",next:"end1"}
+      ]},
+      {method:"Reductio ad Absurdum",s:"So if a madman deserves his weapon, justice requires giving it to him. He kills someone. Was the killing a just outcome of a just act? If yes, then justice produces injustice — a contradiction. If no, then giving people what they 'deserve' is not always just. Either way, your definition fails.",choices:[
+        {text:"There must be a higher principle that governs when desert applies",next:"end0"},
+        {text:"I was wrong — desert alone isn't justice",next:"end1"}
+      ]}]
+    ]},
+    {text:"Justice is fairness — treating everyone equally",rounds:[
+      {method:"Counterexample",s:"A noble sentiment! But should a doctor give the same dose of medicine to a child and an adult? Should a teacher give an advanced student the same instruction as a beginner? In these cases, equal treatment produces <em>unequal</em> outcomes. Is that fair?",choices:[
+        {text:"Fairness means equal treatment in equal circumstances",next:0},
+        {text:"No — sometimes unequal treatment is more fair",next:1}
+      ]},
+      [{method:"Elenchus",s:"'Equal treatment in equal circumstances' — but who determines which circumstances are equal? Two workers do the same job, but one has children to feed. Two crimes are identical, but one criminal was coerced. Every situation differs. Your principle of equality requires a <em>prior</em> principle for determining relevant similarities — and that prior principle is doing all the real work. What is <em>it</em>?",choices:[
+        {text:"I suppose justice requires judgment, not just rules",next:"end0"},
+        {text:"Maybe fairness is the wrong frame entirely",next:"end1"}
+      ]},
+      {method:"Counterexample",s:"So unequal treatment can be more fair? Then justice is <em>not</em> treating people equally — it's treating them <em>appropriately</em>. But now your definition has shifted entirely! You've abandoned equality for appropriateness. And 'appropriate' is just another word for 'just' — so you've defined justice as... justice. We've gone in a circle, my friend.",choices:[
+        {text:"You're right — I can't pin it down",next:"end1"},
+        {text:"Maybe justice can't be defined in a single sentence",next:"end0"}
+      ]}]
+    ]}
+  ],
+  endings:[
+    "Now you begin to see! Every simple definition of justice, when examined, requires a <em>deeper</em> principle. The Form of Justice — if it exists — lies beyond any particular rule or formula. You can't capture it in a sentence, but you can spend a lifetime turning toward it. That turning <em>is</em> philosophy.",
+    "Excellent! Most people Socrates questioned stormed off in frustration — like Thrasymachus in the Republic. But you've done something rare: you've admitted confusion. And <em>that</em> is the beginning of wisdom. 'I know that I know nothing' is not despair — it's the first real thought."
+  ]
+},
+courage:{
+  opening:"You there — you look like a person of spirit. Tell me, what is <strong>courage</strong>? Surely a citizen of your city knows what makes a person brave.",
+  branches:[
+    {text:"Courage is standing firm in battle and not running away",rounds:[
+      {method:"Counterexample",s:"Laches said the very same thing! But what of the Scythian cavalry, who fight by retreating — drawing the enemy into pursuit, then turning to strike? Their tactical retreat <em>is</em> their courage. And what of a nurse who bravely tends plague victims? She stands firm — but there's no battle.",choices:[
+        {text:"Courage is enduring what is frightening, not just in battle",next:0},
+        {text:"I was too narrow — courage exists outside war",next:1}
+      ]},
+      [{method:"Elenchus",s:"'Enduring what is frightening' — but a fool who doesn't understand danger endures fearful things too. Is the person who walks into fire out of ignorance courageous? Surely not. So courage requires some <em>knowledge</em> of what is truly dangerous. But if courage is knowledge, can a coward become brave simply by learning? Is courage a kind of <em>wisdom</em>?",choices:[
+        {text:"Yes — true courage requires understanding the danger",next:"end0"},
+        {text:"No — courage is more than knowledge, it's a feeling",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"Good — so courage applies everywhere, not just war. But then what <em>exactly</em> makes an act courageous? Is the gambler who risks everything courageous? The reckless climber? If courage is just facing fear, then every foolish risk-taker is brave. There must be some <em>wisdom</em> in true courage — knowing which fears are worth facing.",choices:[
+        {text:"Courage means facing the right fears for the right reasons",next:"end0"},
+        {text:"I think courage and wisdom are connected",next:"end1"}
+      ]}]
+    ]},
+    {text:"Courage is overcoming your fear",rounds:[
+      {method:"Counterexample",s:"An interesting idea! But consider: a mother runs into a burning building for her child without a moment's hesitation — she feels no fear at all. Is she not courageous? Or must she feel fear first in order to overcome it? Must the bravest person also be the most frightened?",choices:[
+        {text:"She is courageous — maybe courage doesn't require fear",next:0},
+        {text:"She must have felt some fear, even briefly",next:1}
+      ]},
+      [{method:"Reductio ad Absurdum",s:"So courage doesn't require fear. But then it can't be 'overcoming fear' — since it can exist without fear. Your definition excludes the most naturally courageous people! The person who is brave without effort is <em>more</em> courageous than the one who struggles, yet your definition calls only the struggler brave. The bravest person is, by your account, the least courageous. Absurd!",choices:[
+        {text:"Then courage must be about something deeper than fear",next:"end0"},
+        {text:"I need a better definition",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"Perhaps — but now you're defining courage as a <em>subjective feeling</em>. If the mother briefly felt fear, that's invisible to us. Are we saying courage depends on inner states no one can observe? Then we can never know who is courageous and who is merely reckless. And if courage is unknowable, how can it be taught? How can a city cultivate it?",choices:[
+        {text:"There must be an objective standard for courage",next:"end0"},
+        {text:"Maybe courage is too complex to define simply",next:"end1"}
+      ]}]
+    ]},
+    {text:"Courage is knowing what is truly worth fearing",rounds:[
+      {method:"Elenchus",s:"Now that is close to what Nicias argued in the <em>Laches</em>! But think carefully: if courage is knowledge of what to fear and what not to fear — then courage is a kind of <em>wisdom</em>. But wisdom covers all things, not just danger. Wouldn't a person with complete knowledge of what to fear also know what to hope for, what is good and bad in all cases? Then courage is not one virtue among many — it's <em>all</em> virtue!",choices:[
+        {text:"Maybe all virtues are really one — wisdom",next:0},
+        {text:"No — courage must be distinct from other virtues",next:1}
+      ]},
+      [{method:"Elenchus",s:"The unity of virtue! Protagoras resisted this idea — but Socrates pressed it relentlessly. If all virtue is wisdom, then no one does wrong willingly — they simply lack knowledge. A bold claim. But it means the cruel tyrant is not evil, merely <em>ignorant</em>. Can you accept that? Is every villain just a fool?",choices:[
+        {text:"It's uncomfortable, but maybe Socrates is right",next:"end0"},
+        {text:"No — some people know the good and choose evil anyway",next:"end1"}
+      ]},
+      {method:"Counterexample",s:"But if courage is distinct from wisdom, justice, temperance — then a person could be courageous but unjust. The brave villain. The fearless criminal. We admire their courage while condemning their character. Is 'courage' even a virtue if it can serve evil? Or is true courage <em>always</em> in service of the good?",choices:[
+        {text:"True courage must serve the good — otherwise it's just recklessness",next:"end0"},
+        {text:"Courage is morally neutral — like strength",next:"end1"}
+      ]}]
+    ]}
+  ],
+  endings:[
+    "We've arrived where Socrates always arrives: at the threshold of something real but elusive. Courage isn't a simple feeling or behavior — it requires wisdom about what truly matters. In the <em>Laches</em>, Socrates and two Athenian generals spend the entire dialogue failing to define courage. They walk away wiser for the failure.",
+    "Don't be disheartened. In the <em>Laches</em>, the two greatest generals of Athens — Laches and Nicias — couldn't define courage either. Socrates' point was never to humiliate, but to show that the things we think we understand best are the ones we understand least. Your confusion is closer to truth than their confidence was."
+  ]
+},
+piety:{
+  opening:"Ah, you must be a person who honors the gods! Tell me — what is <strong>piety</strong>? I ask because I'm about to stand trial for impiety, and I'd love to know what I'm accused of lacking.",
+  branches:[
+    {text:"Piety is doing what the gods love",rounds:[
+      {method:"Elenchus",s:"This is the famous Euthyphro dilemma — and I will press you as I pressed Euthyphro himself. Is an act pious <em>because</em> the gods love it? Or do the gods love it <em>because</em> it is pious? Think carefully — everything hangs on this.",choices:[
+        {text:"It's pious because the gods love it",next:0},
+        {text:"The gods love it because it is pious",next:1}
+      ]},
+      [{method:"Reductio ad Absurdum",s:"Then piety is arbitrary! If the gods decided tomorrow to love cruelty, cruelty would become pious. Piety would have no nature of its own — it would be merely the gods' whim. But surely we mean <em>something</em> when we call an act pious, something beyond 'the gods happen to approve.' You've made piety meaningless — a label, not a quality.",choices:[
+        {text:"Then piety must have its own nature, independent of the gods",next:"end0"},
+        {text:"Maybe the gods' nature guarantees they always love what's right",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"Then there is a quality — call it 'piety' — that exists independently, and the gods merely <em>recognize</em> it. But then the gods are not the <em>source</em> of piety — they're its admirers. Piety would exist even without the gods. You've just made the gods subordinate to a higher standard. Is that not itself... impious?",choices:[
+        {text:"This is a genuine paradox — I see no way out",next:"end0"},
+        {text:"Maybe piety and the gods' nature are the same thing",next:"end1"}
+      ]}]
+    ]},
+    {text:"Piety is proper reverence — ritual, prayer, sacrifice",rounds:[
+      {method:"Counterexample",s:"So piety is a kind of transaction with the gods? We sacrifice, they bless. But what do the gods <em>need</em> from us? If they are perfect and self-sufficient, our sacrifices add nothing to them. And if they're not self-sufficient, they're not truly gods. Either way, the transaction model collapses.",choices:[
+        {text:"It's not about what gods need — it's about expressing gratitude",next:0},
+        {text:"The gods might value our devotion without needing it",next:1}
+      ]},
+      [{method:"Elenchus",s:"Gratitude — but gratitude for <em>what</em>? If for life's blessings, then piety is just a response to good fortune. The person struck by tragedy has less to be grateful for — are they less pious? And the tyrant who prospers — does his success demand more gratitude, more piety? Your definition accidentally makes piety proportional to luck.",choices:[
+        {text:"Piety must be something beyond gratitude or luck",next:"end0"},
+        {text:"Maybe piety is about the relationship, not the transaction",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"'Value without needing' — an interesting phrase. But if their happiness is unchanged by our devotion, what exactly does our worship accomplish? You've described piety as an offering to beings who are completely indifferent to the offering. Euthyphro struggled with exactly this — and eventually found a reason to leave.",choices:[
+        {text:"I see the problem — I can't define what piety does",next:"end1"},
+        {text:"Maybe piety transforms us, not the gods",next:"end0"}
+      ]}]
+    ]},
+    {text:"Piety is living a life that aligns with divine order",rounds:[
+      {method:"Elenchus",s:"Beautiful — but this raises the essential question: how do you <em>know</em> what the divine order is? Through sacred texts? They contradict each other. Through priests? They disagree. Through your own reason? But then you're using <em>human</em> judgment to determine <em>divine</em> will — making reason, not revelation, the final authority. Is philosophy then the most pious activity?",choices:[
+        {text:"Maybe reason is how we access divine truth",next:0},
+        {text:"We need faith beyond reason",next:1}
+      ]},
+      [{method:"Elenchus",s:"Now you sound like Socrates himself! He claimed his <em>daimonion</em> — his inner divine voice — guided him. And his philosophical questioning was, he said, a service to the god Apollo. But Athens disagreed. They called his questioning impiety and sentenced him to death. If reason reveals the divine, yet the pious community condemns the reasoner — who is truly pious?",choices:[
+        {text:"Socrates was pious; Athens was wrong",next:"end0"},
+        {text:"This is why piety is so dangerous to define",next:"end1"}
+      ]},
+      {method:"Counterexample",s:"Faith beyond reason — but which faith? The Athenians had faith in their gods; the Persians in theirs; the Egyptians in theirs. Each accuses the others of impiety. Without reason to adjudicate between faiths, piety becomes whatever your culture tells you it is. And Socrates was put to death by the faithful. Was his execution pious?",choices:[
+        {text:"Faith without reason can become mere conformity",next:"end0"},
+        {text:"Maybe true piety is the search itself",next:"end1"}
+      ]}]
+    ]}
+  ],
+  endings:[
+    "In the <em>Euthyphro</em>, the self-proclaimed expert on piety fled rather than face one more question. You stayed. The Euthyphro dilemma remains unsolved after 2,400 years — it's one of the most powerful arguments in the history of philosophy. If piety exists, it exists beyond any simple formula. The search for it <em>is</em> the thing itself.",
+    "The dialogue <em>Euthyphro</em> ends in <em>aporia</em> — genuine puzzlement. Euthyphro can't define piety. Neither could Socrates. But Socrates went to his trial — and death — still asking. Perhaps the most pious act is to never stop questioning what piety means."
+  ]
+},
+beauty:{
+  opening:"My friend, I notice you appreciate beautiful things — who doesn't? But tell me: what is <strong>beauty</strong> itself? Not a beautiful person or a beautiful sunset, but the quality that makes all beautiful things beautiful.",
+  branches:[
+    {text:"Beauty is what gives pleasure to the senses",rounds:[
+      {method:"Counterexample",s:"In the <em>Hippias Major</em>, Hippias tried this answer too! But consider: a beautiful mathematical proof gives pleasure, yet not to the senses. And a corpse arranged beautifully for burial is pleasing to the eye but fills us with sorrow. Is it beautiful? Does beauty require a <em>specific kind</em> of pleasure?",choices:[
+        {text:"Beauty is a special kind of pleasure — aesthetic pleasure",next:0},
+        {text:"Beauty can be non-sensory — ideas can be beautiful too",next:1}
+      ]},
+      [{method:"Elenchus",s:"'Aesthetic pleasure' — but you've just defined beauty using a word that means 'relating to beauty.' We ask what beauty is, and you answer: 'the beautiful kind of pleasure.' We've gone in a circle. Hippias tried three definitions of beauty and each one collapsed. Can you do better than the man who claimed to know everything?",choices:[
+        {text:"I admit I'm going in circles",next:"end1"},
+        {text:"Maybe beauty can't be reduced to pleasure",next:"end0"}
+      ]},
+      {method:"Elenchus",s:"Now you're moving toward Plato's view! If ideas can be beautiful, then beauty is not tied to the senses at all. But if beauty exists in mathematics, in justice, in truth — then beauty starts to look like a <em>Form</em>: something eternal, invisible, graspable only by the mind. The Symposium's Ladder of Love leads exactly here: from beautiful bodies to Beauty itself.",choices:[
+        {text:"Beauty is a Form — something beyond the physical",next:"end0"},
+        {text:"But I still experience beauty through my senses",next:"end1"}
+      ]}]
+    ]},
+    {text:"Beauty is harmony and proportion",rounds:[
+      {method:"Counterexample",s:"The Pythagoreans would agree! But consider a wild, craggy mountain — jagged, asymmetrical, disproportionate. Many people find it breathtakingly beautiful. And a perfectly proportioned face can be boring — beauty sometimes lies in the <em>imperfection</em>. Is a scar that tells a story ugly because it breaks the proportion?",choices:[
+        {text:"Maybe beauty is more than mathematical proportion",next:0},
+        {text:"There's a deeper proportion we don't yet understand",next:1}
+      ]},
+      [{method:"Elenchus",s:"More than proportion — but what? You've acknowledged that your definition is incomplete. Every particular standard of beauty has counterexamples. This is exactly the problem with particulars: they shift, they contradict. If beauty were <em>only</em> proportion, it would be measurable and there would be no disagreement. But beauty is the most argued-about quality in the world.",choices:[
+        {text:"Maybe beauty is something we recognize but can't define",next:"end1"},
+        {text:"There must be a Form of Beauty beyond all particular beauties",next:"end0"}
+      ]},
+      {method:"Reductio ad Absurdum",s:"A deeper proportion we don't understand? Then you're saying: 'beauty is proportion, but we don't know what proportion means.' You've explained the unknown with something more unknown. That's not a definition — it's a hope. And if this hidden proportion explains <em>everything</em> beautiful — including ugly-seeming things — then 'proportion' has lost all meaning. Everything is proportional. The word explains nothing.",choices:[
+        {text:"You're right — I need to think deeper",next:"end1"},
+        {text:"Perhaps beauty points to something beyond definition",next:"end0"}
+      ]}]
+    ]},
+    {text:"Beauty is subjective — it's in the eye of the beholder",rounds:[
+      {method:"Reductio ad Absurdum",s:"If beauty is purely subjective, then no one can be wrong about beauty. A child who finds a mud pie more beautiful than the Parthenon is not mistaken — just different. A torturer who finds suffering beautiful cannot be corrected. Do you truly accept this? There is no such thing as bad taste, bad art, bad beauty?",choices:[
+        {text:"I do accept it — beauty is personal",next:0},
+        {text:"Maybe there's an objective element too",next:1}
+      ]},
+      [{method:"Elenchus",s:"Then 'beauty' means nothing more than 'I like this.' It has no content beyond individual preference. But then why does the word exist in every human language? Why do people argue about beauty if it's purely private? You can't argue about a sneeze — it just happens. But people argue about beauty because they sense it <em>reaches toward something real</em>. Your radical subjectivism makes beauty less real than a sneeze.",choices:[
+        {text:"I take your point — beauty must be more than preference",next:"end0"},
+        {text:"Maybe beauty is socially constructed, not purely private",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"Objective <em>and</em> subjective? Then what's the relationship? If beauty is partly 'out there' — a real quality — then some perceptions of beauty are more accurate than others. Some people <em>see more clearly</em>. We're back to Plato's Cave: most of us see shadows of beauty, but the Form of Beauty itself exists independently, waiting to be apprehended by the trained soul.",choices:[
+        {text:"The Cave applies to beauty too — we see shadows of it",next:"end0"},
+        {text:"I'm not sure I believe in Forms",next:"end1"}
+      ]}]
+    ]}
+  ],
+  endings:[
+    "In the <em>Symposium</em>, Diotima describes the Form of Beauty: 'absolute, separate, simple, and everlasting — which is imparted to the ever-growing and perishing beauties of all other things.' Every beautiful thing you've ever seen was a shadow of this. You can't define it. But you've been reaching toward it your whole life. That reaching is Eros — Love — and it is the philosophical impulse itself.",
+    "Hippias the sophist confidently offered three definitions of beauty. Socrates demolished all three. Hippias left furious. But Socrates — who admitted he couldn't define beauty either — left <em>wiser</em>. The difference between them wasn't knowledge. It was knowing what they didn't know. You've just had that experience."
+  ]
+},
+knowledge:{
+  opening:"Friend, you seem well-educated. But tell me: what is <strong>knowledge</strong>? Not an example of knowledge, but the thing itself — what makes knowledge <em>knowledge</em>?",
+  branches:[
+    {text:"Knowledge is true belief",rounds:[
+      {method:"Counterexample",s:"In the <em>Theaetetus</em>, this is the first answer offered — and the first demolished. A jury hears a persuasive lawyer and forms a true belief that the defendant is guilty. They happen to be right. But they have no evidence — only the lawyer's rhetoric. Do they <em>know</em> the defendant is guilty?",choices:[
+        {text:"No — they lucked into truth, that's not knowledge",next:0},
+        {text:"If the belief is true, it's knowledge regardless of how they got it",next:1}
+      ]},
+      [{method:"Elenchus",s:"So true belief isn't enough — you need something <em>more</em>. This is the famous 'justified true belief' problem. But what counts as justification? A dream that happens to be prophetic? A chain of reasoning based on false premises that accidentally reaches truth? Every proposed justification opens new problems. The <em>Theaetetus</em> ends without resolving this — 2,400 years later, epistemologists still haven't.",choices:[
+        {text:"Knowledge might be impossible to define precisely",next:"end1"},
+        {text:"There must be some foundation — some bedrock of certainty",next:"end0"}
+      ]},
+      {method:"Reductio ad Absurdum",s:"Then a person who guesses correctly on every exam question — by pure chance — <em>knows</em> the material? A coin that always lands heads 'knows' it will land heads? If any true belief counts as knowledge, knowledge becomes indistinguishable from luck. The word loses all meaning. We can never distinguish the wise from the fortunate.",choices:[
+        {text:"Okay — there must be more to knowledge than true belief",next:"end0"},
+        {text:"You've convinced me that defining knowledge is harder than I thought",next:"end1"}
+      ]}]
+    ]},
+    {text:"Knowledge is what you can prove through reason",rounds:[
+      {method:"Counterexample",s:"A Pythagorean answer! But consider: you know the sun will rise tomorrow. Can you <em>prove</em> it through pure reason? You know your own name. Can you deduce it from first principles? Much of what we most confidently know resists formal proof. Is experiential knowledge not knowledge?",choices:[
+        {text:"There are different kinds of knowledge",next:0},
+        {text:"Maybe only proven things count as true knowledge",next:1}
+      ]},
+      [{method:"Elenchus",s:"Different kinds! But then 'knowledge' is not one thing — it's a family of loosely related things. Which is the <em>real</em> knowledge? Plato's Divided Line ranks them: imagination, belief, reasoning, and understanding. Only the highest — direct apprehension of the Forms through dialectic — is true knowledge. Everything below is opinion in various grades. Is your 'different kinds' answer a way of avoiding the ranking?",choices:[
+        {text:"Maybe there is a hierarchy — some knowledge is higher",next:"end0"},
+        {text:"I resist hierarchies — all knowledge matters",next:"end1"}
+      ]},
+      {method:"Reductio ad Absurdum",s:"If only proven things count as knowledge, then you don't <em>know</em> that fire burns — you merely believe it from experience. You don't <em>know</em> other people have minds — you can't prove it. You don't <em>know</em> the past happened — memory isn't proof. You've just eliminated 99% of what everyone calls knowledge. You're left with logic and mathematics — and even those rest on axioms that can't themselves be proven.",choices:[
+        {text:"Knowledge must include more than formal proof",next:"end0"},
+        {text:"Maybe certainty is rarer than we think",next:"end1"}
+      ]}]
+    ]},
+    {text:"Knowledge is understanding how things really are",rounds:[
+      {method:"Elenchus",s:"'How things really are' — but that's precisely what's in question! The prisoners in the Cave think the shadows are 'how things really are.' How do you know your understanding isn't just a more sophisticated shadow? What gives you confidence that you see reality and not an illusion?",choices:[
+        {text:"Through questioning and testing our beliefs",next:0},
+        {text:"We can never be fully certain — but we can get closer",next:1}
+      ]},
+      [{method:"Elenchus",s:"Questioning and testing — you've just described the Socratic method! But notice: this method never arrives at a <em>final</em> answer. Every conclusion opens new questions. If knowledge requires questioning, and questioning never ends, then knowledge is not a <em>state</em> you achieve but a <em>process</em> you engage in. The examined life is not a destination — it's a way of walking.",choices:[
+        {text:"Knowledge is the process of seeking, not a final answer",next:"end0"},
+        {text:"Surely some knowledge is settled — I know 2+2=4",next:"end1"}
+      ]},
+      {method:"Elenchus",s:"'Closer' to what? If you can't fully know reality, how do you measure the distance? You need to already know the truth in order to judge how close your approximation is. But if you already know the truth, you don't need the approximation. This is Meno's paradox: you can't search for what you don't know, because you wouldn't recognize it if you found it. And you don't need to search for what you already know.",choices:[
+        {text:"Meno's paradox is devastating — how do we learn anything?",next:"end0"},
+        {text:"Maybe knowledge is remembering what the soul already knows",next:"end1"}
+      ]}]
+    ]}
+  ],
+  endings:[
+    "The <em>Theaetetus</em> — Plato's dialogue dedicated entirely to the question 'What is knowledge?' — ends in <em>aporia</em>. No answer survives. But Socrates compares himself to a midwife: his questioning helps others give birth to ideas, even if the ideas turn out to be 'wind-eggs.' The failure to define knowledge is itself a kind of knowledge — the highest kind: knowing what you don't know.",
+    "Plato's answer — hinted at but never fully stated — involves the theory of recollection. The soul, before birth, dwelt among the Forms and knew everything. Learning is remembering. That's why Socrates can help the slave boy 'discover' geometry — the knowledge was already there. Whether you believe this literally or as metaphor, it captures something profound: understanding feels like recognition, not acquisition."
+  ]
+}
+};
+
+let currentTopic=null,currentStep=0,currentBranch=0;
+function startTopic(t){
+  currentTopic=t;currentStep=0;
+  const d=TOPICS[t];
+  const box=document.getElementById('s-box');
+  box.innerHTML=`<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div>${d.opening}</div></div>`;
+  const ch=document.getElementById('s-choices');
+  ch.innerHTML='';
+  d.branches.forEach((b,i)=>{
+    const btn=document.createElement('button');btn.className='btn';btn.textContent=b.text;
+    btn.onclick=()=>socR1(i,b.text);ch.appendChild(btn);
+  });
+  document.querySelectorAll('#topic-select .btn').forEach(b=>{b.classList.remove('active-choice');if(b.textContent.toLowerCase()===t)b.classList.add('active-choice');});
+  box.scrollTop=box.scrollHeight;
+}
+function socR1(bi,txt){
+  currentBranch=bi;
+  const box=document.getElementById('s-box'),ch=document.getElementById('s-choices');
+  box.innerHTML+=`<div class="dialogue-line user"><div class="speaker">You</div><div>${txt}</div></div>`;
+  const round=TOPICS[currentTopic].branches[bi].rounds[0];
+  setTimeout(()=>{
+    box.innerHTML+=`<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div class="method">${round.method}</div><div>${round.s}</div></div>`;
+    ch.innerHTML='';
+    round.choices.forEach(c=>{
+      const btn=document.createElement('button');btn.className='btn';btn.textContent=c.text;
+      btn.onclick=()=>socR2(c.next,c.text);ch.appendChild(btn);
+    });
+    box.scrollTop=box.scrollHeight;
+  },500);
+}
+function socR2(ni,txt){
+  const box=document.getElementById('s-box'),ch=document.getElementById('s-choices');
+  box.innerHTML+=`<div class="dialogue-line user"><div class="speaker">You</div><div>${txt}</div></div>`;
+  const branch=TOPICS[currentTopic].branches[currentBranch];
+  if(typeof ni==='string'){
+    // ending
+    const ei=parseInt(ni.replace('end',''));
+    setTimeout(()=>{
+      box.innerHTML+=`<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div>${TOPICS[currentTopic].endings[ei]}</div></div>`;
+      ch.innerHTML='<p style="color:var(--text-dim);font-style:italic">The dialogue rests — but never ends. Choose another topic above.</p>';
+      box.scrollTop=box.scrollHeight;
+    },500);
+  } else {
+    const round=branch.rounds[1][ni];
+    setTimeout(()=>{
+      box.innerHTML+=`<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div class="method">${round.method}</div><div>${round.s}</div></div>`;
+      ch.innerHTML='';
+      round.choices.forEach(c=>{
+        const btn=document.createElement('button');btn.className='btn';btn.textContent=c.text;
+        btn.onclick=()=>socEnd(c.next,c.text);ch.appendChild(btn);
+      });
+      box.scrollTop=box.scrollHeight;
+    },500);
+  }
+}
+function socEnd(key,txt){
+  const box=document.getElementById('s-box'),ch=document.getElementById('s-choices');
+  box.innerHTML+=`<div class="dialogue-line user"><div class="speaker">You</div><div>${txt}</div></div>`;
+  const ei=parseInt(key.replace('end',''));
+  setTimeout(()=>{
+    box.innerHTML+=`<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div>${TOPICS[currentTopic].endings[ei]}</div></div>`;
+    ch.innerHTML='<p style="color:var(--text-dim);font-style:italic">The dialogue rests — but never ends. Choose another topic above.</p>';
+    box.scrollTop=box.scrollHeight;
+  },500);
+}
+
+// Start with justice by default
+startTopic('justice');
+
+// ============================================================
+// II. THE CAVE — FULL EXPERIENCE
+// ============================================================
+const cCanvas=document.getElementById('cave-canvas');
+const cCtx=cCanvas.getContext('2d');
+let caveStage=0;
+
+const CAVE_STAGES=[
+  {label:"STAGE I — CHAINED",
+   quote:'"Allegiance! Allegiance! From their childhood they have been fixed in the same place, with their legs and necks chained so that they cannot move." — 515a',
+   narr:"You are chained in darkness. Before you, a rough stone wall. On it, shadows dance — vague shapes moving left and right. You hear echoes. This is the world. This is all there has ever been.",
+   actions:[{text:"Watch the shadows",next:0},{text:"Try to turn around",next:1}]},
+  {label:"STAGE II — THE SHADOWS",
+   quote:'"To them, the truth would be literally nothing but the shadows of the images." — 515c',
+   narr:"You watch. A shadow that looks like a horse passes by. Another that looks like a person carrying something. The other prisoners name the shadows — they compete to predict which shadow comes next. The best predictor is considered the wisest. You feel a strange unease.",
+   actions:[{text:"Name the shadows (join them)",next:1},{text:"Strain against the chains",next:1}]},
+  {label:"STAGE III — UNCHAINED",
+   quote:'"At first, when any of them is liberated and compelled suddenly to stand up and turn his neck round, he will suffer sharp pains." — 515c',
+   narr:"Something breaks. The chains fall. You stand — agony shoots through your legs, your neck. You turn around and see a blazing fire. Between the fire and where you sat, people are carrying objects — statues, figures of animals. Their shadows are what you've been watching your whole life. The 'world' was a puppet show.",
+   actions:[{text:"Go back to the shadows (the pain is too much)",next:2},{text:"Walk toward the fire",next:3}]},
+  {label:"STAGE IV — THE FIRE",
+   quote:'"Will he not fancy that the shadows which he formerly saw are truer than the objects which are now shown to him?" — 515d',
+   narr:"The fire blinds you. The real objects — you see them for the first time. A wooden horse. A clay figure. They're so much more vivid than the shadows, but your eyes burn. Part of you wants to go back. The shadows were comfortable. The shadows made sense. This — this is overwhelming.",
+   actions:[{text:"Retreat to the shadows",next:3},{text:"Climb toward the light above",next:4}]},
+  {label:"STAGE V — THE ASCENT",
+   quote:'"The ascent and the vision of the things above you may take to be the rising of the soul into the intellectual world." — 517b',
+   narr:"You climb a steep, rocky passage. Light grows brighter. It hurts. Your eyes stream with tears. You stumble. Every step is harder than the last. Behind you, the comfortable darkness beckons. Ahead — an unbearable brightness.",
+   actions:[{text:"Keep climbing",next:5}]},
+  {label:"STAGE VI — THE WORLD",
+   quote:'"Last of all he will be able to see the sun, and not mere reflections of it in the water, but he will see it in its own proper place." — 516b',
+   narr:"You emerge. The sky — you have never imagined the sky. Trees, rivers, mountains. Colors that have no name in the language of shadows. You see a flower and weep. Not because it is sad, but because it is <em>real</em>. For the first time in your life, you see a real thing.",
+   actions:[{text:"Look at the sun",next:6}]},
+  {label:"STAGE VII — THE SUN (THE FORM OF THE GOOD)",
+   quote:'"In the world of knowledge the idea of good appears last of all, and is seen only with an effort." — 517b',
+   narr:"You look up. The sun — the source of all light, all life, all vision. Without it, nothing can be seen. Plato says the Form of the Good is like this sun: it illuminates all other Forms, makes knowledge possible, is the source of truth and being itself. You understand now. Everything you thought you knew was a shadow.",
+   actions:[{text:"Return to the cave",next:7}]},
+  {label:"STAGE VIII — THE RETURN",
+   quote:'"Would he not provoke laughter, and would it not be said of him that he went up and came back without his eyes?" — 517a',
+   narr:"You descend. Back into darkness. Your eyes, adjusted to sunlight, are now blind in the cave. You stumble. You try to tell the prisoners what you've seen — the sun, the real world, the truth about the shadows. They think you're mad. They think the journey damaged you. They say: 'Look — he can't even see the shadows properly anymore.' If they could, they would kill you.",
+   actions:[{text:"Try to convince them",next:8}]},
+  {label:"STAGE IX — THEY DON'T BELIEVE YOU",
+   quote:'"And if they were able to seize and kill the one who attempted to release them, would they not kill him?" — 517a',
+   narr:"They laugh. They mock. The best shadow-namer — the one they consider wisest — says you are a fool who lost his mind in the upper world. He says: 'I can <em>see</em> the shadows clearly. You cannot. Who is the blind one?' And he is right, in a way. You <em>can't</em> see the shadows anymore. You see something they cannot imagine. This is the loneliness of philosophy. This is the fate of Socrates.",
+   actions:[{text:"Begin again — from the beginning",next:-1}]}
+];
+
+function resizeCaveCanvas(){
+  const r=cCanvas.parentElement.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  cCanvas.width=r.width*dpr;cCanvas.height=r.height*dpr;
+  cCtx.setTransform(dpr,0,0,dpr,0,0);
+  drawCaveStage();
+}
+
+function drawCaveStage(){
+  const w=cCanvas.width/(window.devicePixelRatio||1);
+  const h=cCanvas.height/(window.devicePixelRatio||1);
+  const s=caveStage;
+  const t=Date.now()/1000;
+
+  // Background
+  if(s<=2){
+    // Cave darkness
+    const g=cCtx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#030306');g.addColorStop(1,'#080810');
+    cCtx.fillStyle=g;cCtx.fillRect(0,0,w,h);
+    // Faint fire glow
+    const fg=cCtx.createRadialGradient(w/2,h*1.1,0,w/2,h*1.1,h*.8);
+    fg.addColorStop(0,'rgba(255,107,53,.06)');fg.addColorStop(1,'transparent');
+    cCtx.fillStyle=fg;cCtx.fillRect(0,0,w,h);
+  } else if(s===3){
+    // Fire stage
+    const g=cCtx.createRadialGradient(w/2,h*.5,0,w/2,h*.5,w*.5);
+    g.addColorStop(0,'#1a0800');g.addColorStop(1,'#080406');
+    cCtx.fillStyle=g;cCtx.fillRect(0,0,w,h);
+    // Big fire
+    const fg=cCtx.createRadialGradient(w/2,h*.5,0,w/2,h*.5,w*.35);
+    fg.addColorStop(0,'rgba(255,107,53,.3)');fg.addColorStop(.5,'rgba(255,60,0,.1)');fg.addColorStop(1,'transparent');
+    cCtx.fillStyle=fg;cCtx.fillRect(0,0,w,h);
+    for(let i=0;i<7;i++){
+      cCtx.fillStyle=`rgba(255,${80+i*25},0,.25)`;
+      const fx=w/2+Math.sin(t*1.3+i)*30-45+i*15;
+      const fy=h*.45-Math.abs(Math.sin(t*1.5+i*.8))*35;
+      cCtx.beginPath();cCtx.ellipse(fx,fy,10,25+Math.sin(t+i)*10,0,0,Math.PI*2);cCtx.fill();
+    }
+  } else if(s===4){
+    // Ascent
+    const g=cCtx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#2a2030');g.addColorStop(1,'#0a0810');
+    cCtx.fillStyle=g;cCtx.fillRect(0,0,w,h);
+    // Light from above
+    const lg=cCtx.createRadialGradient(w/2,0,0,w/2,0,h*.7);
+    lg.addColorStop(0,'rgba(255,250,200,.15)');lg.addColorStop(1,'transparent');
+    cCtx.fillStyle=lg;cCtx.fillRect(0,0,w,h);
+    // Rocks
+    cCtx.fillStyle='#1a1520';
+    for(let i=0;i<6;i++){
+      cCtx.beginPath();cCtx.arc(w*.1+i*w*.18,h*.6+Math.sin(i)*30,20+i*5,0,Math.PI*2);cCtx.fill();
+    }
+  } else if(s>=5&&s<=6){
+    // Outside / sun
+    const sunT=s===6?1:0;
+    const g=cCtx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#5b9bd5');g.addColorStop(.6,'#87CEEB');g.addColorStop(.6,'#228B22');g.addColorStop(1,'#1a5c1a');
+    cCtx.fillStyle=g;cCtx.fillRect(0,0,w,h);
+    // Trees
+    for(let i=0;i<6;i++){
+      const tx=w*.08+i*w*.18;
+      cCtx.fillStyle='#5a3a1a';cCtx.fillRect(tx-3,h*.4,6,h*.2);
+      cCtx.fillStyle='#2a7a2a';cCtx.beginPath();cCtx.arc(tx,h*.38,22,0,Math.PI*2);cCtx.fill();
+    }
+    // Flowers
+    for(let i=0;i<4;i++){
+      cCtx.fillStyle=['#e74c3c','#f1c40f','#9b59b6','#e67e22'][i];
+      cCtx.beginPath();cCtx.arc(w*.15+i*w*.22,h*.72+Math.sin(i*2)*8,4,0,Math.PI*2);cCtx.fill();
+    }
+    // Sun
+    if(s===6){
+      const sg=cCtx.createRadialGradient(w/2,h*.15,0,w/2,h*.15,w*.4);
+      sg.addColorStop(0,'rgba(255,215,0,.8)');sg.addColorStop(.2,'rgba(255,235,100,.3)');sg.addColorStop(1,'transparent');
+      cCtx.fillStyle=sg;cCtx.fillRect(0,0,w,h);
+      cCtx.fillStyle='#ffd700';cCtx.beginPath();cCtx.arc(w/2,h*.15,35,0,Math.PI*2);cCtx.fill();
+      // Rays
+      cCtx.strokeStyle='rgba(255,215,0,.3)';cCtx.lineWidth=2;
+      for(let i=0;i<12;i++){
+        const a=i*Math.PI/6+t*.1;
+        cCtx.beginPath();cCtx.moveTo(w/2+Math.cos(a)*45,h*.15+Math.sin(a)*45);
+        cCtx.lineTo(w/2+Math.cos(a)*80,h*.15+Math.sin(a)*80);cCtx.stroke();
+      }
+      cCtx.fillStyle='rgba(0,0,0,.5)';cCtx.font='14px Georgia';cCtx.textAlign='center';
+      cCtx.fillText('τὸ ἀγαθόν — The Form of the Good',w/2,h*.9);
+    }
+  } else if(s>=7){
+    // Return to cave — dark again
+    const g=cCtx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#050508');g.addColorStop(1,'#0a0a12');
+    cCtx.fillStyle=g;cCtx.fillRect(0,0,w,h);
+    const fg=cCtx.createRadialGradient(w/2,h*1.1,0,w/2,h*1.1,h*.7);
+    fg.addColorStop(0,'rgba(255,107,53,.04)');fg.addColorStop(1,'transparent');
+    cCtx.fillStyle=fg;cCtx.fillRect(0,0,w,h);
+    // Faint prisoner shapes
+    for(let i=0;i<3;i++){
+      cCtx.fillStyle='rgba(40,30,25,.5)';
+      const px=w*.2+i*w*.3;
+      cCtx.beginPath();cCtx.ellipse(px,h*.45,10,8,0,0,Math.PI*2);cCtx.fill();
+      cCtx.fillRect(px-4,h*.45+6,8,25);
+    }
+  }
+
+  // Shadows on wall (stages 0-1)
+  if(s<=1){
+    for(let i=0;i<4;i++){
+      const x=w*.12+i*w*.22;
+      const sway=Math.sin(t+i*1.5)*10;
+      cCtx.fillStyle='rgba(20,15,10,.6)';
+      cCtx.beginPath();cCtx.ellipse(x+sway,h*.3,12,10,0,0,Math.PI*2);cCtx.fill();
+      cCtx.fillRect(x+sway-5,h*.3+8,10,h*.2+Math.sin(t*.7+i)*8);
+    }
+    // Chains
+    cCtx.strokeStyle='rgba(100,80,60,.25)';cCtx.lineWidth=2;
+    cCtx.setLineDash([4,4]);
+    cCtx.beginPath();cCtx.moveTo(w*.05,h*.7);cCtx.lineTo(w*.95,h*.7);cCtx.stroke();
+    cCtx.setLineDash([]);
+  }
+
+  updateCaveUI();
+}
+
+function updateCaveUI(){
+  const st=CAVE_STAGES[caveStage];
+  document.getElementById('cave-stage').textContent=st.label;
+  document.getElementById('cave-quote').innerHTML=st.quote;
+  document.getElementById('cave-narr').innerHTML=st.narr;
+  const act=document.getElementById('cave-action');
+  act.innerHTML='';
+  st.actions.forEach(a=>{
+    const btn=document.createElement('button');btn.className='cave-btn';btn.textContent=a.text;
+    btn.onclick=()=>{
+      if(a.next===-1){caveStage=0;}else{caveStage=a.next;}
+      drawCaveStage();
+    };
+    act.appendChild(btn);
+  });
+}
+
+window.addEventListener('resize',resizeCaveCanvas);
+resizeCaveCanvas();
+// Animate stages with fire flicker
+(function animCave(){requestAnimationFrame(animCave);if(caveStage<=1||caveStage===3||caveStage===6)drawCaveStage();})();
+
+// ============================================================
+// III. ALLEGORY OF THE LINE — SORTING
+// ============================================================
+const LINE_ITEMS=[
+  {text:"A photograph of a sunset",zone:"eikasia"},
+  {text:"A political slogan",zone:"eikasia"},
+  {text:"A reflection in a mirror",zone:"eikasia"},
+  {text:"A social media post about justice",zone:"eikasia"},
+  {text:"A living oak tree",zone:"pistis"},
+  {text:"A handshake between friends",zone:"pistis"},
+  {text:"A stone in your hand",zone:"pistis"},
+  {text:"A courtroom verdict",zone:"pistis"},
+  {text:"The Pythagorean theorem",zone:"dianoia"},
+  {text:"A geometric proof using diagrams",zone:"dianoia"},
+  {text:"The number π",zone:"dianoia"},
+  {text:"A logical syllogism",zone:"dianoia"},
+  {text:"Justice itself — perfect and eternal",zone:"noesis"},
+  {text:"The Form of the Good",zone:"noesis"},
+  {text:"Beauty itself, unmixed and absolute",zone:"noesis"},
+  {text:"The essence of Equality",zone:"noesis"},
+];
+
+let lineItems=[...LINE_ITEMS];
+let dragItem=null;
+
+function initLine(){
+  const tray=document.getElementById('line-tray');
+  tray.innerHTML='';
+  // Shuffle
+  lineItems=[...LINE_ITEMS].sort(()=>Math.random()-.5);
+  lineItems.forEach((item,i)=>{
+    const el=document.createElement('div');el.className='line-item';el.textContent=item.text;
+    el.draggable=true;el.dataset.idx=i;
+    el.addEventListener('dragstart',e=>{dragItem=i;e.dataTransfer.setData('text/plain',i);});
+    // Touch support
+    el.addEventListener('touchstart',e=>{dragItem=i;el.style.opacity='.5';},{passive:true});
+    el.addEventListener('touchend',e=>{
+      el.style.opacity='1';
+      const touch=e.changedTouches[0];
+      const zones=document.querySelectorAll('.line-zone');
+      zones.forEach(z=>{
+        const r=z.getBoundingClientRect();
+        if(touch.clientX>=r.left&&touch.clientX<=r.right&&touch.clientY>=r.top&&touch.clientY<=r.bottom){
+          z.querySelector('.line-zone-items').appendChild(el);
+        }
+      });
+      dragItem=null;
+      checkLineReady();
+    });
+    tray.appendChild(el);
+  });
+  document.querySelectorAll('.line-zone-items').forEach(z=>z.innerHTML='');
+  document.getElementById('line-score').textContent='Drag items from the tray into the correct zone.';
+  document.getElementById('line-check-btn').style.display='inline-block';
+  document.getElementById('line-reset-btn').style.display='inline-block';
+}
+
+function lineDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function lineDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function lineDrop(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  const idx=e.dataTransfer.getData('text/plain');
+  const el=document.querySelector(`.line-item[data-idx="${idx}"]`);
+  if(el)e.currentTarget.querySelector('.line-zone-items').appendChild(el);
+  checkLineReady();
+}
+
+function checkLineReady(){
+  const tray=document.getElementById('line-tray');
+  document.getElementById('line-check-btn').disabled=tray.children.length>0;
+}
+
+function lineCheck(){
+  let correct=0,total=LINE_ITEMS.length;
+  document.querySelectorAll('.line-zone').forEach(zone=>{
+    const zName=zone.dataset.zone;
+    zone.querySelectorAll('.line-item').forEach(el=>{
+      const idx=parseInt(el.dataset.idx);
+      if(lineItems[idx].zone===zName){el.classList.add('correct');el.classList.remove('wrong');correct++;}
+      else{el.classList.add('wrong');el.classList.remove('correct');}
+    });
+  });
+  const pct=Math.round(correct/total*100);
+  let msg=`${correct}/${total} correct (${pct}%).`;
+  if(pct===100)msg+=" Perfect! You see the Line as Plato intended.";
+  else if(pct>=75)msg+=" Good — but the boundaries between levels are tricky. Even Plato's students debated them.";
+  else if(pct>=50)msg+=" The middle levels are hardest. Is a logical proof a Form? Or merely reasoning about Forms?";
+  else msg+=" The levels blur — that's part of Plato's point. The Line is a gradient, not a ladder.";
+  document.getElementById('line-score').textContent=msg;
+}
+
+function lineReset(){
+  document.querySelectorAll('.line-item').forEach(el=>{el.classList.remove('correct','wrong');});
+  initLine();
+}
+
+initLine();
+
+// ============================================================
+// IV. MENO'S SLAVE BOY
+// ============================================================
+const menoCanvas=document.getElementById('meno-canvas');
+const menoCtx=menoCanvas.getContext('2d');
+let menoStep=0;
+
+const MENO_STEPS=[
+  {dialogue:"<strong>Socrates:</strong> Tell me, boy — do you see this square? Each side is 2 feet long. What is its area?",
+   choices:["4 square feet","8 square feet","2 square feet"],correct:0,
+   draw:d=>{drawSquare(d,2,false,false);}},
+  {dialogue:"<strong>Socrates:</strong> Good — 4 square feet. Now, I want a square with <em>double</em> the area — 8 square feet. How long should each side be?",
+   choices:["4 feet","3 feet","I'm not sure"],correct:2,
+   draw:d=>{drawSquare(d,2,false,false);drawLabel(d,"Area = 4",2);drawLabel(d,"Want: Area = 8",3);}},
+  {dialogue:"<strong>Socrates:</strong> Let's test your first instinct. Many people say 'double the side' — make it 4 feet. Let's draw that square. What's its area?",
+   choices:["16 square feet","8 square feet","12 square feet"],correct:0,
+   draw:d=>{drawSquare(d,2,false,false);drawSquare(d,4,true,false);drawLabel(d,"4×4 = 16!",4);}},
+  {dialogue:"<strong>Socrates:</strong> 16! That's four times the area, not double. The 4-foot side gives too much. The 2-foot side gives too little. What about 3 feet?",
+   choices:["9 square feet","8 square feet","6 square feet"],correct:0,
+   draw:d=>{drawSquare(d,2,false,false);drawSquare(d,3,true,false);drawLabel(d,"3×3 = 9 — still too much!",4);}},
+  {dialogue:"<strong>Socrates:</strong> 9 — still not 8! So the side we want is between 2 and 3, but it's not a whole number. Now you're confused. But watch — I'll draw the diagonal of the original square. Do you see the triangle it creates?",
+   choices:["Yes — I see the diagonal","What's a diagonal?"],correct:0,
+   draw:d=>{drawSquare(d,2,false,true);}},
+  {dialogue:"<strong>Socrates:</strong> Now — if I build a new square on that diagonal... look. Each side of the new square is the diagonal of a 2×2 square. Inside the new square, I can fit exactly <em>two</em> of the original squares. The area is 8. <strong>You found it.</strong>",
+   choices:["I see it! The diagonal is the answer!","How does that work?"],correct:0,
+   draw:d=>{drawSquare(d,2,false,true);drawDiagonalSquare(d,2);}},
+  {dialogue:"<strong>Socrates:</strong> You see? I told you nothing. I only asked questions. And yet you <em>discovered</em> that the square on the diagonal has double the area. Plato says this proves the soul already knows all truth — learning is <em>recollection</em>. The knowledge was in you before I asked. I was only the midwife.",
+   choices:["Begin again"],correct:0,
+   draw:d=>{drawSquare(d,2,false,true);drawDiagonalSquare(d,2);drawLabel(d,"√8 ≈ 2.83 — the irrational answer",4);}}
+];
+
+function resizeMeno(){
+  const r=menoCanvas.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  menoCanvas.width=r.width*dpr;menoCanvas.height=r.height*dpr;
+  menoCtx.setTransform(dpr,0,0,dpr,0,0);
+  drawMenoStep();
+}
+
+function drawMenoStep(){
+  const w=menoCanvas.width/(window.devicePixelRatio||1);
+  const h=menoCanvas.height/(window.devicePixelRatio||1);
+  menoCtx.clearRect(0,0,w,h);
+  menoCtx.fillStyle='#12121a';menoCtx.fillRect(0,0,w,h);
+
+  const unit=Math.min(w,h)*.18;
+  const ox=w/2-unit*2;const oy=h/2-unit*2;
+  const d={ctx:menoCtx,ox,oy,unit,w,h};
+
+  // Grid
+  menoCtx.strokeStyle='rgba(212,168,67,.08)';menoCtx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    menoCtx.beginPath();menoCtx.moveTo(ox+i*unit,oy);menoCtx.lineTo(ox+i*unit,oy+4*unit);menoCtx.stroke();
+    menoCtx.beginPath();menoCtx.moveTo(ox,oy+i*unit);menoCtx.lineTo(ox+4*unit,oy+i*unit);menoCtx.stroke();
+  }
+
+  MENO_STEPS[menoStep].draw(d);
+
+  // Update dialogue
+  const md=document.getElementById('meno-dialogue');
+  md.innerHTML=MENO_STEPS[menoStep].dialogue;
+  const mc=document.getElementById('meno-choices');
+  mc.innerHTML='';
+  MENO_STEPS[menoStep].choices.forEach((c,i)=>{
+    const btn=document.createElement('button');btn.className='btn btn-sm';btn.textContent=c;
+    btn.onclick=()=>{
+      if(menoStep===MENO_STEPS.length-1){menoStep=0;}
+      else if(i===MENO_STEPS[menoStep].correct){menoStep++;}
+      else{
+        // Wrong — Socrates guides
+        const hint=document.createElement('p');hint.style.cssText='color:var(--accent);font-style:italic;margin-top:.5rem';
+        hint.textContent="Hmm — let's think about that more carefully. Try again.";
+        md.appendChild(hint);return;
+      }
+      drawMenoStep();
+    };
+    mc.appendChild(btn);
+  });
+}
+
+function drawSquare(d,size,ghost,diagonal){
+  const {ctx,ox,oy,unit}=d;
+  ctx.strokeStyle=ghost?'rgba(212,168,67,.25)':'var(--gold)';
+  ctx.lineWidth=ghost?1:2;
+  ctx.strokeRect(ox,oy,size*unit,size*unit);
+  if(!ghost){
+    ctx.fillStyle='rgba(212,168,67,.06)';ctx.fillRect(ox,oy,size*unit,size*unit);
+    // Side labels
+    ctx.fillStyle='var(--gold)';ctx.font='13px Georgia';ctx.textAlign='center';
+    ctx.fillText(size,ox+size*unit/2,oy-8);
+    ctx.save();ctx.translate(ox-10,oy+size*unit/2);ctx.rotate(-Math.PI/2);ctx.fillText(size,0,0);ctx.restore();
+  }
+  if(diagonal){
+    ctx.strokeStyle='#c0392b';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(ox+size*unit,oy+size*unit);ctx.stroke();
+    ctx.fillStyle='#c0392b';ctx.font='11px Georgia';ctx.textAlign='left';
+    ctx.fillText('diagonal',ox+size*unit*.3,oy+size*unit*.6-5);
+  }
+}
+
+function drawDiagonalSquare(d,size){
+  const {ctx,ox,oy,unit}=d;
+  const s=size*unit;
+  const cx=ox+s/2,cy=oy+s/2;
+  // The square built on the diagonal: rotated 45°
+  ctx.strokeStyle='#27ae60';ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(ox+s,oy);ctx.lineTo(ox+s*2,oy+s);ctx.lineTo(ox+s,oy+s*2);ctx.lineTo(ox,oy+s);ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle='rgba(39,174,96,.08)';ctx.fill();
+  // Label
+  ctx.fillStyle='#27ae60';ctx.font='13px Georgia';ctx.textAlign='center';
+  ctx.fillText('Area = 8',ox+s,oy+s);
+}
+
+function drawLabel(d,text,row){
+  const {ctx,ox,oy,unit,w}=d;
+  ctx.fillStyle='var(--text-dim)';ctx.font='12px Georgia';ctx.textAlign='center';
+  ctx.fillText(text,d.w/2,oy+row*unit+unit*.7);
+}
+
+window.addEventListener('resize',resizeMeno);
+resizeMeno();
+
+// ============================================================
+// V. META — just toggle
+// ============================================================
+function toggleMeta(el,depth){
+  el.classList.toggle('open');
+}
+
+// ============================================================
+// VI. SYMPOSIUM
+// ============================================================
+const SPEECHES=[
+  {name:"Phaedrus",icon:"📜",theory:"Love is the oldest god — the source of our greatest goods.",
+   text:"Love is the most ancient of the gods and the most honored. There is no greater good for a young man than a loving mentor, nor for a mentor than a beloved youth. Love inspires us to noble deeds — for who would show cowardice before their beloved? An army of lovers would conquer the world. Love makes us willing to die for another — as Alcestis died for Admetus.",
+   demolish:"A beautiful beginning — but Phaedrus merely praises Love's <em>effects</em> without explaining its <em>nature</em>. An army of lovers might conquer the world, but so might an army driven by rage. What is special about love itself?"},
+  {name:"Pausanias",icon:"⚖️",theory:"There are two loves — Common (physical) and Heavenly (spiritual).",
+   text:"There is not one Aphrodite but two: Common Aphrodite, daughter of Zeus and Dione, who inspires love of the body — indiscriminate, fleeting, and base. And Heavenly Aphrodite, born from the sea-foam of Uranus alone, who inspires love of the soul — enduring, noble, and oriented toward wisdom. The lover of Heavenly Aphrodite values the beloved's character over their appearance.",
+   demolish:"Pausanias creates a useful distinction — but his 'Heavenly Love' conveniently justifies exactly his own lifestyle. And by splitting love in two, he avoids the harder question: what <em>unifies</em> all love? What makes both kinds 'love'?"},
+  {name:"Aristophanes",icon:"🎭",theory:"We were once whole — love is the search for our other half.",
+   text:"Originally, humans were round — four arms, four legs, two faces. Three sexes: male, female, and androgynous. We were powerful, and threatened the gods. Zeus split us in half. Now we wander the earth, searching for our other half. When we find them — that overwhelming feeling of recognition and longing? That is love. We want to be melted together, to become one again. Love is the desire for wholeness.",
+   demolish:"The most charming speech — and the most revealing. Aristophanes says love is the desire for <em>wholeness</em>. But this makes love a symptom of <em>lack</em>. We love because we are broken. Is that all love is — a wound seeking a bandage? And if we found our other half and were fused, would love end?"},
+  {name:"Agathon",icon:"🌟",theory:"Love is the most beautiful, youngest, and most virtuous of the gods.",
+   text:"Love is young — for Love flees old age. Love is beautiful — for Love dwells only in beauty. Love is temperate, courageous, wise, and just. Love is the greatest poet, for all creation springs from Love. Love is the god who brings peace among humans and calm upon the sea.",
+   demolish:"Agathon gives the most polished speech — and the most empty. He praises Love by attributing every good quality to it. But a word that means everything means nothing. He has told us Love is good, beautiful, and wise — which is just saying 'Love is wonderful.' We are no closer to understanding what Love <em>is</em>."},
+  {name:"Socrates / Diotima",icon:"🔥",theory:"Love is not a god but a spirit — the desire for what we lack, driving us toward the eternal.",
+   text:"Love is not beautiful or good — for we desire what we lack, and Love is desire itself. Love is a <em>daimon</em> — a spirit between mortal and divine, between ignorance and wisdom. Love is the child of Poverty and Resourcefulness: always wanting, always scheming.<br><br>The true path of Love is a ladder: begin with love of <strong>one</strong> beautiful body. Then see beauty in <strong>all</strong> bodies. Then discover that beauty of the <strong>soul</strong> surpasses the body. Then see beauty in <strong>knowledge, laws, and institutions</strong>. Finally — if you persevere — you will glimpse <strong>Beauty itself</strong>: 'absolute, separate, simple, and everlasting, which is imparted to the ever-growing and perishing beauties of all other things.'<br><br>This is what Love drives us toward. Not a person. Not a body. The eternal.",
+   demolish:null}
+];
+
+let speechRatings=new Array(SPEECHES.length).fill(0);
+let revealedCount=0;
+
+function initSymposium(){
+  const container=document.getElementById('symposium-speeches');
+  container.innerHTML='';
+  SPEECHES.forEach((sp,i)=>{
+    const card=document.createElement('div');card.className='speech-card';card.id=`speech-${i}`;
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:.75rem;cursor:pointer" onclick="toggleSpeech(${i})">
+        <span style="font-size:1.5rem">${sp.icon}</span>
+        <div><div class="speech-name">${sp.name}</div><div class="speech-theory">${sp.theory}</div></div>
+      </div>
+      <div class="speech-text">
+        <p>${sp.text}</p>
+        ${sp.demolish?`<div class="rating-stars" id="stars-${i}">${[1,2,3,4,5].map(n=>`<span onclick="event.stopPropagation();rateSpeech(${i},${n})">★</span>`).join('')}</div>`:''}
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function toggleSpeech(i){
+  const card=document.getElementById(`speech-${i}`);
+  const wasActive=card.classList.contains('active-speech');
+  document.querySelectorAll('.speech-card').forEach(c=>c.classList.remove('active-speech'));
+  if(!wasActive)card.classList.add('active-speech');
+}
+
+function rateSpeech(i,n){
+  speechRatings[i]=n;
+  const stars=document.querySelectorAll(`#stars-${i} span`);
+  stars.forEach((s,j)=>s.classList.toggle('lit',j<n));
+  revealedCount++;
+
+  // After rating, show Socrates' demolition
+  const card=document.getElementById(`speech-${i}`);
+  if(!card.querySelector('.demolish')&&SPEECHES[i].demolish){
+    const d=document.createElement('div');d.className='demolish';
+    d.style.cssText='margin-top:1rem;padding-top:.75rem;border-top:1px solid rgba(212,168,67,.2)';
+    d.innerHTML=`<p style="color:var(--text-dim);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Socrates responds:</p><p style="color:var(--accent);font-style:italic">${SPEECHES[i].demolish}</p>`;
+    card.querySelector('.speech-text').appendChild(d);
+  }
+
+  // After rating 4 speeches, reveal Socrates
+  if(revealedCount>=4){
+    const result=document.getElementById('symposium-result');
+    result.style.display='block';
+    const avg=(speechRatings.reduce((a,b)=>a+b,0)/SPEECHES.filter(s=>s.demolish).length).toFixed(1);
+    result.innerHTML=`
+      <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem">Your average rating of the pre-Socratic speeches: ${avg}/5</p>
+      <p style="color:var(--text-dim)">Now open Socrates/Diotima's speech above. Notice: Socrates doesn't praise Love. He <em>analyzes</em> it. Every previous speaker made Love a god or a person. Diotima makes Love a <em>process</em> — the engine that drives the soul from the physical to the eternal. The other speeches were beautiful. Socrates' was <em>true</em>.</p>
+      <p style="color:var(--accent);font-style:italic;margin-top:1rem">"The myth of Aristophanes is the most beloved. The speech of Diotima is the most important. One makes you feel understood. The other makes you want to ascend."</p>`;
+  }
+}
+
+initSymposium();
+
+// ============================================================
+// VII. THE SHIP
+// ============================================================
+const CANDIDATES=[
+  {name:"The Strongman",icon:"💪",desc:"Biggest crew member. Gets things done. No patience for debate.",votes:0,pct:35},
+  {name:"The Orator",icon:"🗣️",desc:"Charismatic speaker. Promises everyone what they want to hear.",votes:0,pct:30},
+  {name:"The Merchant",icon:"💰",desc:"Wealthy. Will fund the voyage. Expects to profit from it.",votes:0,pct:20},
+  {name:"The Navigator",icon:"🧭",desc:"Studied the stars. Knows the currents. Crew thinks they're useless because they can't fight or give speeches.",votes:0,pct:8},
+  {name:"The Mob",icon:"👥",desc:"Let everyone vote on every decision. Who needs a captain?",votes:0,pct:7},
+];
+
+let shipVoted=false;
+let shipTotalVotes=237; // simulated
+
+function initShip(){
+  const container=document.getElementById('ship-candidates');
+  container.innerHTML='';
+  CANDIDATES.forEach((c,i)=>{
+    const card=document.createElement('div');card.className='ship-candidate';card.id=`cand-${i}`;
+    card.onclick=()=>voteShip(i);
+    card.innerHTML=`
+      <div class="icon">${c.icon}</div>
+      <div class="name">${c.name}</div>
+      <div class="desc">${c.desc}</div>
+      <div class="ship-votes"><div class="ship-votes-fill" id="votes-fill-${i}" style="width:0%"></div></div>
+      <div style="font-size:.75rem;color:var(--text-dim);margin-top:.25rem" id="votes-label-${i}"></div>`;
+    container.appendChild(card);
+  });
+  drawShip();
+}
+
+function voteShip(i){
+  if(shipVoted)return;
+  shipVoted=true;
+  CANDIDATES[i].votes++;
+  document.getElementById(`cand-${i}`).classList.add('voted');
+
+  // Simulate other votes
+  const total=shipTotalVotes+1;
+  const simVotes=CANDIDATES.map((c,j)=>j===i?Math.round(c.pct/100*shipTotalVotes)+1:Math.round(c.pct/100*shipTotalVotes));
+
+  // Animate
+  setTimeout(()=>{
+    CANDIDATES.forEach((c,j)=>{
+      const pct=Math.round(simVotes[j]/total*100);
+      document.getElementById(`votes-fill-${j}`).style.width=pct+'%';
+      document.getElementById(`votes-label-${j}`).textContent=`${pct}% (${simVotes[j]} votes)`;
+    });
+
+    const result=document.getElementById('ship-result');
+    result.style.display='block';
+
+    if(i===3){
+      result.innerHTML=`
+        <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.75rem">You voted for the Navigator.</p>
+        <p>You are in the minority. In the simulation — as in Plato's allegory — almost no one votes for the person who actually knows how to steer. The Strongman and the Orator win every time.</p>
+        <p style="margin-top:.75rem;color:var(--accent);font-style:italic">"The sailors quarrel with one another about the steering — every one is of opinion that he has a right to steer, though he has never learned the art of navigation." — Republic, 488b</p>
+        <p style="margin-top:.75rem;color:var(--text-dim)">This is Plato's case against democracy: the masses choose leaders based on strength, charm, or wealth — never expertise. The philosopher (navigator) is mocked as a "stargazer" with no practical skills. The ship sails without anyone who knows the stars. It doesn't end well.</p>`;
+    } else {
+      const chosen=CANDIDATES[i].name;
+      result.innerHTML=`
+        <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.75rem">You voted for ${chosen}.</p>
+        <p>So did most people. The Navigator — the only one who actually knows how to steer — got ${Math.round(simVotes[3]/total*100)}% of the vote.</p>
+        <p style="margin-top:.75rem;color:var(--accent);font-style:italic">"The true pilot must pay attention to the year and seasons and sky and stars and winds, and whatever else belongs to his art, if he intends to be really qualified for the command of a ship." — Republic, 488d</p>
+        <p style="margin-top:.75rem;color:var(--text-dim)">This is Plato's paradox of democracy: we would never let passengers vote on who pilots an airplane, but we let citizens vote on who governs a nation — with no requirement of wisdom. The Strongman promises action, the Orator promises everything, the Merchant promises prosperity. The Navigator promises only truth — and truth is never popular.</p>`;
+    }
+  },300);
+}
+
+function drawShip(){
+  const canvas=document.getElementById('ship-canvas');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const r=canvas.getBoundingClientRect();
+  canvas.width=r.width*dpr;canvas.height=r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width,h=r.height;
+
+  // Sea
+  const sea=ctx.createLinearGradient(0,h*.5,0,h);
+  sea.addColorStop(0,'#0a1628');sea.addColorStop(1,'#061020');
+  ctx.fillStyle=sea;ctx.fillRect(0,0,w,h);
+
+  // Waves
+  const t=Date.now()/1000;
+  ctx.strokeStyle='rgba(100,150,200,.15)';ctx.lineWidth=1;
+  for(let row=0;row<5;row++){
+    ctx.beginPath();
+    for(let x=0;x<w;x+=2){
+      const y=h*.55+row*h*.1+Math.sin(x*.015+t+row)*8;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  // Ship hull
+  const cx=w/2,cy=h*.45;
+  ctx.fillStyle='#3a2a1a';
+  ctx.beginPath();
+  ctx.moveTo(cx-80,cy+10);ctx.lineTo(cx-60,cy+40);ctx.lineTo(cx+60,cy+40);ctx.lineTo(cx+80,cy+10);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#5a4a3a';ctx.lineWidth=2;ctx.stroke();
+
+  // Mast
+  ctx.strokeStyle='#4a3a2a';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx,cy+10);ctx.lineTo(cx,cy-80);ctx.stroke();
+
+  // Sail
+  ctx.fillStyle='rgba(230,220,200,.8)';
+  ctx.beginPath();ctx.moveTo(cx,cy-75);ctx.lineTo(cx+50,cy-30);ctx.lineTo(cx,cy-20);ctx.closePath();ctx.fill();
+
+  // Stars
+  ctx.fillStyle='rgba(255,255,255,.3)';
+  for(let i=0;i<20;i++){
+    const sx=(i*137)%w,sy=(i*97)%Math.floor(h*.4);
+    ctx.beginPath();ctx.arc(sx,sy,1,0,Math.PI*2);ctx.fill();
+  }
+
+  // Crew fighting (stick figures on deck)
+  const figures=[cx-40,cx-15,cx+10,cx+35];
+  figures.forEach((fx,i)=>{
+    ctx.strokeStyle=i===2?'rgba(212,168,67,.6)':'rgba(200,180,160,.4)';ctx.lineWidth=1.5;
+    const sway=Math.sin(t*2+i*1.5)*3;
+    // Head
+    ctx.beginPath();ctx.arc(fx+sway,cy-5,4,0,Math.PI*2);ctx.stroke();
+    // Body
+    ctx.beginPath();ctx.moveTo(fx+sway,cy-1);ctx.lineTo(fx+sway,cy+8);ctx.stroke();
+    // Arms (fighting!)
+    const armAngle=Math.sin(t*3+i*2)*.5;
+    ctx.beginPath();ctx.moveTo(fx+sway,cy+2);ctx.lineTo(fx+sway-8*Math.cos(armAngle),cy+2-8*Math.sin(armAngle));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(fx+sway,cy+2);ctx.lineTo(fx+sway+8*Math.cos(armAngle+1),cy+2-8*Math.sin(armAngle+1));ctx.stroke();
+  });
+
+  // "No one at the helm" label
+  ctx.fillStyle='rgba(212,168,67,.4)';ctx.font='11px Georgia';ctx.textAlign='center';
+  ctx.fillText('The helm is empty.',cx,h*.88);
+}
+
+initShip();
+// Animate ship
+(function animShip(){requestAnimationFrame(animShip);drawShip();})();
+window.addEventListener('resize',()=>{drawShip();resizeCaveCanvas();resizeMeno();});
+</script>
+</body>
+</html>
