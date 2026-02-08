@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Timeless Way — V2: Build</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a25;
+  --surface3: #222230;
+  --text: #e8e4df;
+  --text-dim: #8a857e;
+  --text-faint: #5a5650;
+  --accent: #c4956a;
+  --accent2: #7a9e7e;
+  --alive: #8aba8e;
+  --dead: #ba6a6a;
+  --gold: #d4a55a;
+  --blue: #6a8aba;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* NAV */
+.nav-tabs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #1a1a25;
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s;
+  white-space: nowrap;
+  font-family: inherit;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  letter-spacing: 0.03em;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+@media (max-width: 700px) {
+  .nav-tab { padding: 12px 14px; font-size: 0.72rem; }
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg { position: absolute; inset: 0; z-index: 0; }
+.hero-bg canvas { width: 100%; height: 100%; }
+.hero-content { position: relative; z-index: 1; max-width: 700px; }
+
+.hero h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5em;
+}
+.hero h1 em { font-style: italic; color: var(--accent); }
+
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: var(--text-dim);
+  margin-bottom: 0.5em;
+  font-style: italic;
+}
+
+.hero .version {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  margin-bottom: 2em;
+  letter-spacing: 0.15em;
+}
+
+.cta {
+  display: inline-block;
+  padding: 14px 36px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+  cursor: pointer;
+  background: transparent;
+  font-family: inherit;
+}
+.cta:hover { background: var(--accent); color: var(--bg); }
+
+/* SECTIONS */
+.panel {
+  display: none;
+  min-height: 100vh;
+  padding: 80px 1.5rem 4rem;
+}
+.panel.active { display: block; }
+
+.panel-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.section-number {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 400;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.quote-block {
+  border-left: 2px solid var(--accent);
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+.quote-block cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-style: normal;
+}
+
+p + p { margin-top: 1rem; }
+
+.instruction {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* COMMON INTERACTIVE */
+.canvas-wrap {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+.canvas-wrap canvas {
+  width: 100%;
+  display: block;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.btn {
+  padding: 12px 24px;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+  min-height: 48px;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.active { background: rgba(196,149,106,0.15); border-color: var(--accent); color: var(--accent); }
+.btn.green.active { background: rgba(122,158,126,0.15); border-color: var(--accent2); color: var(--accent2); }
+
+.feedback-text {
+  text-align: center;
+  margin: 1rem 0;
+  min-height: 2.5rem;
+  font-style: italic;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  transition: opacity 0.5s;
+}
+
+.meter-bar {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease, background 0.6s;
+  width: 0%;
+}
+
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.meter-row .meter-bar { flex: 1; }
+.meter-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  min-width: 70px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.slider-row label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  min-width: 90px;
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  height: 44px;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: -8px;
+}
+
+/* ===== 1. QUALITY: PAIR CHOOSER ===== */
+.pair-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+@media (max-width: 600px) {
+  .pair-container { grid-template-columns: 1fr; }
+}
+
+.pair-option {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #2a2a35;
+  transition: all 0.3s;
+  min-height: 220px;
+}
+.pair-option:hover { border-color: var(--accent); transform: translateY(-2px); }
+.pair-option:active { transform: scale(0.98); }
+.pair-option canvas { width: 100%; height: 200px; display: block; }
+.pair-option .pair-label {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-align: center;
+  background: var(--surface);
+}
+.pair-option.chosen-right { border-color: var(--alive); }
+.pair-option.chosen-wrong { border-color: var(--dead); opacity: 0.5; }
+.pair-option.disabled { pointer-events: none; }
+
+.pair-progress {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.pair-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid #3a3a45;
+  transition: all 0.3s;
+}
+.pair-dot.done { background: var(--alive); border-color: var(--alive); }
+.pair-dot.current { border-color: var(--accent); transform: scale(1.3); }
+
+#qualityReveal {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0;
+  transition: opacity 1s;
+  font-size: 1.1rem;
+  color: var(--gold);
+  line-height: 1.8;
+}
+#qualityReveal.visible { opacity: 1; }
+
+/* ===== 2. PATTERN COMPOSER ===== */
+.pattern-lib {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+}
+
+.pat-card {
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.pat-card:hover { border-color: var(--accent); }
+.pat-card.selected { background: rgba(196,149,106,0.1); border-color: var(--accent); }
+.pat-card .pat-name { font-size: 0.9rem; margin-bottom: 4px; }
+.pat-card .pat-forces { font-size: 0.75rem; color: var(--text-dim); }
+.pat-card .pat-connections { font-size: 0.7rem; color: var(--text-faint); margin-top: 4px; }
+
+.composer-status {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.composer-status h3 {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--accent);
+  margin-bottom: 0.8rem;
+}
+
+.harmony-list, .conflict-list {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 0.5rem 0;
+  min-height: 1.5rem;
+}
+.harmony-list span { color: var(--alive); }
+.conflict-list span { color: var(--dead); }
+
+/* ===== 3. REPAIR ===== */
+.repair-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+@media (max-width: 700px) {
+  .repair-view { grid-template-columns: 1fr; }
+}
+
+.repair-side {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.repair-side canvas { width: 100%; height: 300px; display: block; }
+.repair-side .repair-label {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.repair-controls {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+.repair-decade {
+  font-size: 1.1rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.repair-choices {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.repair-choice {
+  padding: 10px 18px;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: all 0.3s;
+}
+.repair-choice:hover { border-color: var(--accent2); color: var(--accent2); }
+.repair-choice:disabled { opacity: 0.3; cursor: default; }
+
+.repair-log {
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  margin-top: 1rem;
+  padding: 0.5rem;
+  scrollbar-width: thin;
+}
+
+/* ===== 4. FORCES ===== */
+.forces-room {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.forces-room canvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  cursor: grab;
+}
+.forces-room canvas:active { cursor: grabbing; }
+
+.force-indicators {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+
+.force-ind {
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+.force-ind .force-name { color: var(--text-dim); margin-bottom: 4px; }
+.force-ind .force-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.force-ind .force-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+
+/* ===== 5. ALIVE VS DEAD ===== */
+.alive-dead-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+@media (max-width: 700px) {
+  .alive-dead-compare { grid-template-columns: 1fr; }
+}
+
+.ad-side {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ad-side canvas { width: 100%; height: 300px; display: block; cursor: pointer; }
+.ad-side .ad-label {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.ad-side.village .ad-label { color: var(--alive); }
+.ad-side.tract .ad-label { color: var(--dead); }
+
+#adInfo {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  min-height: 3rem;
+  transition: opacity 0.3s;
+}
+
+/* ===== 6. THE GATE ===== */
+.gate-container {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.gate-container canvas {
+  width: 100%;
+  height: 500px;
+  display: block;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+}
+
+.gate-patterns {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.gate-pat {
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+.gate-pat:hover { border-color: var(--accent); }
+.gate-pat.used { opacity: 0.3; pointer-events: none; }
+
+.feeling-slider {
+  margin: 1rem 0;
+  text-align: center;
+}
+.feeling-slider label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.feeling-slider input[type="range"] {
+  width: 80%;
+  max-width: 400px;
+  height: 44px;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.feeling-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: linear-gradient(90deg, var(--dead), var(--gold), var(--alive));
+  border-radius: 2px;
+}
+.feeling-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-top: -9px;
+}
+
+#gateStatus {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--text-dim);
+  margin: 1rem 0;
+  min-height: 2rem;
+}
+
+/* ===== 7. MORPHOGENESIS ===== */
+.morph-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+@media (max-width: 700px) {
+  .morph-compare { grid-template-columns: 1fr; }
+}
+
+.morph-side {
+  background: var(--surface);
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.morph-side canvas { width: 100%; height: 350px; display: block; }
+.morph-side .morph-label {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* FADE */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+.section-divider {
+  width: 60px;
+  height: 1px;
+  background: var(--accent);
+  margin: 3rem auto;
+  opacity: 0.4;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" data-panel="hero">Home</button>
+  <button class="nav-tab" data-panel="quality">I. Quality</button>
+  <button class="nav-tab" data-panel="composer">II. Composer</button>
+  <button class="nav-tab" data-panel="repair">III. Repair</button>
+  <button class="nav-tab" data-panel="forces">IV. Forces</button>
+  <button class="nav-tab" data-panel="alive-dead">V. Alive/Dead</button>
+  <button class="nav-tab" data-panel="gate">VI. Gate</button>
+  <button class="nav-tab" data-panel="morph">VII. Morphogenesis</button>
+</nav>
+
+<!-- HERO -->
+<div class="panel active" id="panel-hero">
+  <div class="hero">
+    <div class="hero-bg"><canvas id="heroCanvas"></canvas></div>
+    <div class="hero-content fade-in">
+      <h1>The <em>Timeless</em> Way</h1>
+      <p class="subtitle">An interactive exploration of Christopher Alexander's<br>theory of living buildings</p>
+      <p class="version">V2 — BUILD</p>
+      <button class="cta" onclick="switchPanel('quality')">Begin the journey</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== I. THE QUALITY WITHOUT A NAME ===== -->
+<div class="panel" id="panel-quality">
+  <div class="panel-inner">
+    <p class="section-number fade-in">I</p>
+    <h2 class="fade-in">The Quality Without a Name</h2>
+    <div class="quote-block fade-in">
+      "There is a central quality which is the root criterion of life and spirit in a man, a town, a building, or a wilderness. This quality is objective and precise, but it cannot be named."
+      <cite>— Chapter 2</cite>
+    </div>
+    <p class="fade-in">Alexander spent 500 pages trying to name a quality that every human recognizes but no word can capture. Let's see if <em>you</em> can feel it.</p>
+    <p class="instruction fade-in">You'll see pairs of spaces. Choose the one that feels more <em>alive</em>. Trust your gut.</p>
+
+    <div class="pair-progress fade-in" id="pairProgress"></div>
+    <div class="pair-container fade-in" id="pairContainer"></div>
+    <div class="feedback-text fade-in" id="pairFeedback"></div>
+    <div id="qualityReveal"></div>
+  </div>
+</div>
+
+<!-- ===== II. PATTERN LANGUAGE COMPOSER ===== -->
+<div class="panel" id="panel-composer">
+  <div class="panel-inner">
+    <p class="section-number fade-in">II</p>
+    <h2 class="fade-in">Pattern Language Composer</h2>
+    <div class="quote-block fade-in">
+      "A pattern language gives each person who uses it the power to create an infinite variety of new and unique buildings, just as his ordinary language gives him the power to create an infinite variety of sentences."
+      <cite>— Chapter 10</cite>
+    </div>
+    <p class="fade-in">A pattern is not a blueprint — it's a rule that resolves conflicting forces. Each pattern connects to others. Select patterns in sequence and watch a living building emerge.</p>
+    <p class="instruction fade-in">Click patterns to compose your building. Watch harmonies and conflicts emerge.</p>
+
+    <div class="pattern-lib fade-in" id="patternLib"></div>
+
+    <div class="composer-status fade-in" id="composerStatus">
+      <h3>Composition</h3>
+      <div class="harmony-list" id="harmonyList">Select patterns to begin...</div>
+      <div class="conflict-list" id="conflictList"></div>
+      <div class="meter-row">
+        <span class="meter-label">Aliveness</span>
+        <div class="meter-bar"><div class="meter-fill" id="composerMeter"></div></div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap fade-in">
+      <canvas id="composerCanvas" height="350"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== III. THE REPAIR PROCESS ===== -->
+<div class="panel" id="panel-repair">
+  <div class="panel-inner">
+    <p class="section-number fade-in">III</p>
+    <h2 class="fade-in">The Process of Repair</h2>
+    <div class="quote-block fade-in">
+      "Several acts of building, each one done to repair and magnify the product of the previous acts, will slowly generate a larger and more complex whole than any single act can generate."
+      <cite>— Chapter 24</cite>
+    </div>
+    <p class="fade-in">A living building is never finished. It grows through decades of small repairs — each one making it more itself. Compare: on the left, a building shaped by 200 years of repair. On the right, the same building designed all at once.</p>
+    <p class="instruction fade-in">Choose a repair each decade. Watch 200 years of growth — then compare.</p>
+
+    <div class="repair-controls fade-in">
+      <div class="repair-decade" id="repairDecade">Decade: 1800</div>
+      <div class="repair-choices" id="repairChoices"></div>
+      <div class="repair-log" id="repairLog"></div>
+    </div>
+
+    <div class="repair-view fade-in">
+      <div class="repair-side">
+        <canvas id="repairOrganic" height="300"></canvas>
+        <div class="repair-label">Grown through repair</div>
+      </div>
+      <div class="repair-side">
+        <canvas id="repairPlanned" height="300"></canvas>
+        <div class="repair-label">Designed all at once</div>
+      </div>
+    </div>
+
+    <div class="feedback-text fade-in" id="repairFeedback"></div>
+  </div>
+</div>
+
+<!-- ===== IV. FORCES VISUALIZER ===== -->
+<div class="panel" id="panel-forces">
+  <div class="panel-inner">
+    <p class="section-number fade-in">IV</p>
+    <h2 class="fade-in">Forces Visualizer</h2>
+    <div class="quote-block fade-in">
+      "A pattern lives when it allows its own internal forces to resolve themselves."
+      <cite>— Chapter 6</cite>
+    </div>
+    <p class="fade-in">Every room exists in a field of conflicting forces. Need for light pulls you toward windows. Need for privacy pushes you away. Need for warmth wants enclosure. Need for view wants openness. A living room resolves all four.</p>
+    <p class="instruction fade-in">Drag the window, alcove, and walls. Find the configuration where all forces balance.</p>
+
+    <div class="forces-room fade-in">
+      <canvas id="forcesCanvas" height="400"></canvas>
+    </div>
+
+    <div class="force-indicators fade-in" id="forceIndicators">
+      <div class="force-ind">
+        <div class="force-name">☀️ Light</div>
+        <div class="force-bar"><div class="force-fill" id="forceLight" style="width:30%;background:var(--gold)"></div></div>
+      </div>
+      <div class="force-ind">
+        <div class="force-name">🔒 Privacy</div>
+        <div class="force-bar"><div class="force-fill" id="forcePrivacy" style="width:70%;background:var(--blue)"></div></div>
+      </div>
+      <div class="force-ind">
+        <div class="force-name">🔥 Warmth</div>
+        <div class="force-bar"><div class="force-fill" id="forceWarmth" style="width:50%;background:var(--dead)"></div></div>
+      </div>
+      <div class="force-ind">
+        <div class="force-name">🌄 View</div>
+        <div class="force-bar"><div class="force-fill" id="forceView" style="width:30%;background:var(--accent2)"></div></div>
+      </div>
+    </div>
+
+    <div class="feedback-text fade-in" id="forcesFeedback">Drag elements in the room to resolve the forces.</div>
+
+    <div class="meter-row fade-in">
+      <span class="meter-label">Balance</span>
+      <div class="meter-bar"><div class="meter-fill" id="forcesMeter" style="width:20%;background:var(--dead)"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== V. ALIVE VS DEAD ===== -->
+<div class="panel" id="panel-alive-dead">
+  <div class="panel-inner">
+    <p class="section-number fade-in">V</p>
+    <h2 class="fade-in">Alive vs Dead</h2>
+    <div class="quote-block fade-in">
+      "The specific patterns out of which a building or a town is made may be alive or dead."
+      <cite>— Chapter 6</cite>
+    </div>
+    <p class="fade-in">On the left: a village that grew over centuries — irregular paths, varied rooflines, human-scale spaces. On the right: a developer's housing tract — identical units, optimized for efficiency, designed in a day.</p>
+    <p class="instruction fade-in">Click any element to see why one feels alive and the other feels dead.</p>
+
+    <div class="alive-dead-compare fade-in">
+      <div class="ad-side village">
+        <canvas id="villageCanvas" height="300"></canvas>
+        <div class="ad-label">Village grown over centuries</div>
+      </div>
+      <div class="ad-side tract">
+        <canvas id="tractCanvas" height="300"></canvas>
+        <div class="ad-label">Developer's housing tract</div>
+      </div>
+    </div>
+
+    <div id="adInfo" class="fade-in">Click any building, path, or tree to learn more.</div>
+  </div>
+</div>
+
+<!-- ===== VI. THE GATE ===== -->
+<div class="panel" id="panel-gate">
+  <div class="panel-inner">
+    <p class="section-number fade-in">VI</p>
+    <h2 class="fade-in">The Gate</h2>
+    <div class="quote-block fade-in">
+      "The language is a gate… But the gate is only a gate. It is not the thing itself. The thing itself can only be reached when you go through the gate, and forget about it."
+      <cite>— Chapter 27</cite>
+    </div>
+    <p class="fade-in">The pattern language is just a gate. It teaches you the rules — but the building only becomes alive when you forget the rules and build from <em>feeling</em>. Apply patterns mechanically and the gate stays shut. Add your own feeling, and it opens.</p>
+    <p class="instruction fade-in">Place patterns in the structure. Then adjust the feeling slider. The gate opens only when patterns meet personal feeling.</p>
+
+    <div class="gate-container fade-in">
+      <canvas id="gateCanvas" height="500"></canvas>
+    </div>
+
+    <div class="gate-patterns fade-in" id="gatePatterns"></div>
+
+    <div class="feeling-slider fade-in">
+      <label>Personal feeling: <span id="feelingLabel">Mechanical</span></label>
+      <input type="range" min="0" max="100" value="10" id="feelingSlider" oninput="updateGate()">
+    </div>
+
+    <div id="gateStatus" class="fade-in">Place at least 3 patterns, then raise the feeling...</div>
+  </div>
+</div>
+
+<!-- ===== VII. MORPHOGENESIS ===== -->
+<div class="panel" id="panel-morph">
+  <div class="panel-inner">
+    <p class="section-number fade-in">VII</p>
+    <h2 class="fade-in">Morphogenesis</h2>
+    <div class="quote-block fade-in">
+      "It is not a process of addition, in which preformed parts are combined to create a whole, but a process of unfolding, like the evolution of an embryo, in which the whole precedes the parts, and actually gives birth to them, by splitting."
+      <cite>— Chapter 19</cite>
+    </div>
+    <p class="fade-in">Modern construction assembles identical parts. The timeless way <em>differentiates</em> — like a cell dividing. Start with one space. Make a cut. Then another. Each cut creates rooms, alcoves, passages. The whole gives birth to the parts.</p>
+    <p class="instruction fade-in">Click "Cut" to differentiate space on the left. Compare with modular assembly on the right.</p>
+
+    <div class="btn-row fade-in">
+      <button class="btn" id="morphCutBtn" onclick="morphCut()">✂️ Make a Cut</button>
+      <button class="btn" id="morphAddBtn" onclick="morphAdd()">📦 Add a Module</button>
+      <button class="btn" onclick="morphReset()">↺ Reset</button>
+    </div>
+
+    <div class="morph-compare fade-in">
+      <div class="morph-side">
+        <canvas id="morphOrganic" height="350"></canvas>
+        <div class="morph-label">Differentiation — whole → parts</div>
+      </div>
+      <div class="morph-side">
+        <canvas id="morphModular" height="350"></canvas>
+        <div class="morph-label">Assembly — parts → whole</div>
+      </div>
+    </div>
+
+    <div class="feedback-text fade-in" id="morphFeedback"></div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <div class="footer">
+    <div class="fade-in">
+      <p style="font-size:1.1rem; color: var(--accent); margin-bottom: 1rem;"><em>"The power to make buildings beautiful lies in each of us already."</em></p>
+      <p>Based on <strong>The Timeless Way of Building</strong> by Christopher Alexander (1979)</p>
+      <p style="margin-top: 2rem; font-size: 0.75rem;">An interactive exploration. No images, no frameworks — just patterns in code,<br>like patterns in space.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== UTILITY =====
+const lerp = (a,b,t) => a+(b-a)*t;
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const rand = (a,b) => a+Math.random()*(b-a);
+const seeded = (i) => ((Math.sin(i*127.1+311.7)*43758.5453)%1+1)%1;
+const dpr = devicePixelRatio || 1;
+
+function getCtx(id, h) {
+  const c = document.getElementById(id);
+  c.width = c.offsetWidth * dpr;
+  c.height = (h || c.offsetHeight) * dpr;
+  const ctx = c.getContext('2d');
+  return { c, ctx, W: c.width, H: c.height };
+}
+
+// ===== PANEL NAVIGATION =====
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) {
+    panel.classList.add('active');
+    window.scrollTo(0, 0);
+    // trigger fade-ins
+    setTimeout(() => {
+      panel.querySelectorAll('.fade-in').forEach(el => el.classList.add('visible'));
+    }, 50);
+    // init section
+    if (name === 'quality') initQuality();
+    if (name === 'composer') initComposer();
+    if (name === 'repair') initRepair();
+    if (name === 'forces') initForces();
+    if (name === 'alive-dead') initAliveDead();
+    if (name === 'gate') initGate();
+    if (name === 'morph') initMorph();
+  }
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.dataset.panel === name) t.classList.add('active');
+  });
+}
+
+document.querySelectorAll('.nav-tab').forEach(t => {
+  t.addEventListener('click', () => switchPanel(t.dataset.panel));
+});
+
+// Init hero fade-ins
+document.querySelectorAll('#panel-hero .fade-in').forEach(el => el.classList.add('visible'));
+
+// ===== HERO CANVAS =====
+(function() {
+  const c = document.getElementById('heroCanvas');
+  const ctx = c.getContext('2d');
+  let W, H;
+  const pts = [];
+
+  function resize() {
+    W = c.width = c.offsetWidth * dpr;
+    H = c.height = c.offsetHeight * dpr;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 50; i++) {
+    pts.push({ x: rand(0,2000), y: rand(0,2000), vx: rand(-0.3,0.3), vy: rand(-0.3,0.3), r: rand(1,3), a: rand(0.05,0.2) });
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if (p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(196,149,106,${p.a})`;
+      ctx.fill();
+    });
+    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++) {
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if (d<120) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle=`rgba(196,149,106,${0.06*(1-d/120)})`; ctx.stroke(); }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===================================================================
+// I. THE QUALITY WITHOUT A NAME — Pair chooser
+// ===================================================================
+const spacePairs = [
+  {
+    alive: { name: "A courtyard with dappled shade, uneven stones, a single chair", draw: drawCourtyard },
+    dead: { name: "A concrete patio, perfectly level, fluorescent lit", draw: drawPatio },
+    why: "The courtyard grew over time — the stones settled, the tree found its place. The patio was poured in a day. One adapts; the other imposes."
+  },
+  {
+    alive: { name: "A narrow street with overhanging balconies, turns you can't see past", draw: drawNarrowStreet },
+    dead: { name: "A wide boulevard, straight for a mile, lined with identical facades", draw: drawBoulevard },
+    why: "The street turns because it follows the land. You discover each part as you walk. The boulevard reveals everything at once — there's nothing to find."
+  },
+  {
+    alive: { name: "A window seat with cushions, small panes, morning light", draw: drawWindowSeat },
+    dead: { name: "A floor-to-ceiling glass wall, no seat, nowhere to linger", draw: drawGlassWall },
+    why: "The window seat resolves two forces: your draw toward light and your need to sit. The glass wall gives light but no place — the forces stay in conflict."
+  },
+  {
+    alive: { name: "A kitchen where you can cook and see the garden and talk to guests", draw: drawKitchenAlive },
+    dead: { name: "A kitchen sealed off from the living room, no window to the yard", draw: drawKitchenDead },
+    why: "The alive kitchen resolves connection, nature, and work in one place. The dead kitchen forces you to choose: cook alone or abandon the food."
+  },
+  {
+    alive: { name: "A stairway that widens at a landing, with a window and a niche", draw: drawStairsAlive },
+    dead: { name: "A fire-stair: steel, narrow, enclosed, lit by a single bulb", draw: drawStairsDead },
+    why: "The stairway is a place in itself — you might pause, look out, set something in the niche. The fire-stair is a tube designed only to move bodies between floors."
+  },
+  {
+    alive: { name: "An entrance with a low gate, a garden path, a covered porch", draw: drawEntranceAlive },
+    dead: { name: "A door flush with the sidewalk, no transition, no threshold", draw: drawEntranceDead },
+    why: "The entrance creates a transition between worlds — public to private, outside to inside. The flush door gives you no time to shift. You're suddenly in someone's living room."
+  }
+];
+
+let qualityState = { current: 0, score: 0, done: false };
+
+function initQuality() {
+  if (qualityState.done) return;
+  const prog = document.getElementById('pairProgress');
+  prog.innerHTML = '';
+  for (let i = 0; i < spacePairs.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'pair-dot' + (i === 0 ? ' current' : '');
+    d.id = 'pdot-' + i;
+    prog.appendChild(d);
+  }
+  showPair(0);
+}
+
+function showPair(idx) {
+  if (idx >= spacePairs.length) {
+    finishQuality();
+    return;
+  }
+  qualityState.current = idx;
+  const pair = spacePairs[idx];
+  const container = document.getElementById('pairContainer');
+  const fb = document.getElementById('pairFeedback');
+  fb.textContent = `Pair ${idx + 1} of ${spacePairs.length}`;
+
+  // Randomize left/right
+  const aliveLeft = Math.random() > 0.5;
+  const left = aliveLeft ? pair.alive : pair.dead;
+  const right = aliveLeft ? pair.dead : pair.alive;
+
+  container.innerHTML = `
+    <div class="pair-option" id="pairL" data-alive="${aliveLeft}">
+      <canvas id="pairCanvasL" height="200"></canvas>
+      <div class="pair-label">${left.name}</div>
+    </div>
+    <div class="pair-option" id="pairR" data-alive="${!aliveLeft}">
+      <canvas id="pairCanvasR" height="200"></canvas>
+      <div class="pair-label">${right.name}</div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    left.draw('pairCanvasL');
+    right.draw('pairCanvasR');
+  }, 50);
+
+  document.getElementById('pairL').onclick = () => choosePair(aliveLeft, idx);
+  document.getElementById('pairR').onclick = () => choosePair(!aliveLeft, idx);
+}
+
+function choosePair(choseAlive, idx) {
+  const pair = spacePairs[idx];
+  const fb = document.getElementById('pairFeedback');
+
+  if (choseAlive) {
+    qualityState.score++;
+    fb.innerHTML = `<span style="color:var(--alive)">✓ ${pair.why}</span>`;
+  } else {
+    fb.innerHTML = `<span style="color:var(--dead)">The other space had more life. ${pair.why}</span>`;
+  }
+
+  // Mark options
+  document.querySelectorAll('.pair-option').forEach(opt => {
+    opt.classList.add('disabled');
+    if (opt.dataset.alive === 'true') opt.classList.add('chosen-right');
+    else opt.classList.add('chosen-wrong');
+  });
+
+  // Update dots
+  const dot = document.getElementById('pdot-' + idx);
+  if (dot) { dot.classList.remove('current'); dot.classList.add('done'); }
+  const nextDot = document.getElementById('pdot-' + (idx + 1));
+  if (nextDot) nextDot.classList.add('current');
+
+  setTimeout(() => showPair(idx + 1), 2000);
+}
+
+function finishQuality() {
+  qualityState.done = true;
+  document.getElementById('pairContainer').innerHTML = '';
+  document.getElementById('pairFeedback').textContent = '';
+  const reveal = document.getElementById('qualityReveal');
+  reveal.innerHTML = `
+    <p>You chose the alive space <strong>${qualityState.score} out of ${spacePairs.length}</strong> times.</p>
+    <p style="margin-top:1rem;">Here's the thing: you just identified the quality Alexander spent 500 pages trying to name.</p>
+    <p style="margin-top:1rem;"><em>You know it. You've always known it. You just can't say it.</em></p>
+    <p style="margin-top:1.5rem; font-size:0.9rem; color:var(--text-dim);">"Each word is an ellipse… No word can ever catch the quality without a name because the quality is too particular, and words too broad."</p>
+    <p style="margin-top:1.5rem; color:var(--accent); font-size:0.9rem;">It is alive. It is whole. It is comfortable. It is free. It is exact. It is egoless. It is eternal.<br>It is none of these. It is all of these. It is <em>slightly bitter</em>.</p>
+  `;
+  reveal.classList.add('visible');
+}
+
+// === PAIR DRAWING FUNCTIONS ===
+function drawCourtyard(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e1210'; ctx.fillRect(0,0,W,H);
+  // Uneven stone floor
+  for (let i = 0; i < 60; i++) {
+    const sx = seeded(i)*W*0.8+W*0.1, sy = seeded(i+100)*H*0.4+H*0.55;
+    const sw = 10+seeded(i+200)*20, sh = 8+seeded(i+300)*15;
+    ctx.fillStyle = `rgba(${60+seeded(i+400)*30},${55+seeded(i+500)*25},${40+seeded(i+600)*20},0.5)`;
+    ctx.fillRect(sx,sy,sw*dpr*0.3,sh*dpr*0.3);
+  }
+  // Tree with dappled shade
+  const tx = W*0.6, ty = H*0.3;
+  ctx.fillStyle = '#2a1e15';
+  ctx.fillRect(tx-3*dpr,ty,6*dpr,H*0.5);
+  ctx.fillStyle = '#2a4a2a';
+  for (let i = 0; i < 8; i++) {
+    ctx.beginPath();
+    ctx.arc(tx+Math.cos(i*0.8)*30*dpr, ty-10*dpr+Math.sin(i*1.1)*20*dpr, (12+seeded(i+700)*10)*dpr, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Dappled light spots
+  for (let i = 0; i < 15; i++) {
+    ctx.fillStyle = `rgba(200,180,100,${0.04+seeded(i+800)*0.06})`;
+    ctx.beginPath();
+    ctx.arc(W*0.3+seeded(i+900)*W*0.5, H*0.5+seeded(i+1000)*H*0.3, (5+seeded(i+1100)*10)*dpr, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Chair
+  ctx.fillStyle = '#3a2a1a';
+  ctx.fillRect(W*0.25, H*0.65, 15*dpr, 15*dpr);
+  // Walls with imperfections
+  ctx.strokeStyle = '#4a4535';
+  ctx.lineWidth = 2*dpr;
+  ctx.beginPath();
+  ctx.moveTo(W*0.05,H*0.4); ctx.lineTo(W*0.05,H*0.95); ctx.lineTo(W*0.95,H*0.95); ctx.lineTo(W*0.95,H*0.4);
+  ctx.stroke();
+}
+
+function drawPatio(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#14141c'; ctx.fillRect(0,0,W,H);
+  // Perfect grid of concrete squares
+  ctx.strokeStyle = '#252530';
+  ctx.lineWidth = 1;
+  const gs = W/8;
+  for (let x = 0; x < 9; x++) { ctx.beginPath(); ctx.moveTo(x*gs,H*0.4); ctx.lineTo(x*gs,H); ctx.stroke(); }
+  for (let y = 0; y < 6; y++) { ctx.beginPath(); ctx.moveTo(0,H*0.4+y*gs); ctx.lineTo(W,H*0.4+y*gs); ctx.stroke(); }
+  // Fluorescent light
+  ctx.fillStyle = 'rgba(180,190,210,0.06)';
+  ctx.fillRect(W*0.2, H*0.1, W*0.6, 4*dpr);
+  ctx.fillStyle = 'rgba(180,190,210,0.03)';
+  ctx.fillRect(0, 0, W, H);
+  // Plastic chair
+  ctx.fillStyle = '#2a2a35';
+  ctx.fillRect(W*0.45, H*0.6, 12*dpr, 12*dpr);
+  ctx.fillRect(W*0.45, H*0.55, 12*dpr, 3*dpr);
+}
+
+function drawNarrowStreet(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  // Perspective narrowing street
+  const vanX = W*0.45, vanY = H*0.3;
+  // Left buildings
+  ctx.fillStyle = '#1e1a16';
+  ctx.beginPath();
+  ctx.moveTo(0,H); ctx.lineTo(0,H*0.15); ctx.lineTo(vanX-W*0.05,vanY); ctx.lineTo(vanX-W*0.05,H); ctx.fill();
+  // Right buildings
+  ctx.fillStyle = '#1c1816';
+  ctx.beginPath();
+  ctx.moveTo(W,H); ctx.lineTo(W,H*0.1); ctx.lineTo(vanX+W*0.05,vanY); ctx.lineTo(vanX+W*0.05,H); ctx.fill();
+  // Balconies
+  ctx.fillStyle = '#2a2520';
+  for (let i = 0; i < 3; i++) {
+    const t = 0.3+i*0.25;
+    const lx = lerp(vanX-W*0.05,0,t);
+    const ly = lerp(vanY,H,t);
+    ctx.fillRect(lx, ly-5*dpr, (W*0.08*t), 4*dpr);
+    const rx = lerp(vanX+W*0.05,W,t);
+    ctx.fillRect(rx-(W*0.08*t), ly-8*dpr, (W*0.08*t), 4*dpr);
+  }
+  // Warm light from windows
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = `rgba(200,170,100,${0.05+seeded(i)*0.08})`;
+    const t = 0.2+i*0.18;
+    ctx.fillRect(lerp(vanX-W*0.03,W*0.02,t), lerp(vanY+5,H*0.8,t), 6*dpr*t, 8*dpr*t);
+  }
+  // Path stones
+  ctx.fillStyle = '#1a1815';
+  ctx.beginPath();
+  ctx.moveTo(vanX-W*0.05,vanY); ctx.lineTo(0,H); ctx.lineTo(W,H); ctx.lineTo(vanX+W*0.05,vanY);
+  ctx.fill();
+}
+
+function drawBoulevard(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#10101a'; ctx.fillRect(0,0,W,H);
+  // Perfectly straight vanishing point
+  const vanY = H*0.35;
+  // Road
+  ctx.fillStyle = '#18181e';
+  ctx.beginPath();
+  ctx.moveTo(W*0.3,vanY); ctx.lineTo(0,H); ctx.lineTo(W,H); ctx.lineTo(W*0.7,vanY); ctx.fill();
+  // Center line
+  ctx.strokeStyle = '#2a2a30';
+  ctx.setLineDash([8*dpr,8*dpr]);
+  ctx.beginPath(); ctx.moveTo(W*0.5,vanY); ctx.lineTo(W*0.5,H); ctx.stroke();
+  ctx.setLineDash([]);
+  // Identical facades
+  for (let side = 0; side < 2; side++) {
+    for (let i = 0; i < 5; i++) {
+      const t = 0.1+i*0.18;
+      const bw = W*0.12*t;
+      const bh = H*0.2*t;
+      const bx = side === 0 ? lerp(W*0.3,0,t)-bw : lerp(W*0.7,W,t);
+      const by = lerp(vanY,H*0.7,t);
+      ctx.fillStyle = '#1a1a22';
+      ctx.fillRect(bx, by-bh, bw, bh);
+      ctx.strokeStyle = '#2a2a30';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx, by-bh, bw, bh);
+    }
+  }
+}
+
+function drawWindowSeat(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  const mx=W*0.15,my=H*0.1,rw=W*0.7,rh=H*0.8;
+  ctx.fillStyle='#1a1a22'; ctx.fillRect(mx,my,rw,rh);
+  // Bay window
+  const bx=mx+rw*0.25,by=my,bw=rw*0.5,bd=rh*0.3;
+  ctx.fillStyle='#2a2520'; ctx.fillRect(bx,by-bd*0.3,bw,bd*0.3+4);
+  // Panes
+  for (let i=0;i<3;i++) {
+    const pw=bw/3;
+    ctx.fillStyle=`rgba(200,180,120,${0.12+i*0.04})`;
+    ctx.fillRect(bx+i*pw+3,by-bd*0.3+3,pw-6,bd*0.3-6);
+  }
+  // Seat
+  ctx.fillStyle='#2a2822'; ctx.fillRect(bx+4,by-6,bw-8,12);
+  // Cushions
+  ctx.fillStyle='#8a6a4a';
+  ctx.beginPath(); ctx.ellipse(bx+bw*0.35,by,12*dpr,7*dpr,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7a5a3a';
+  ctx.beginPath(); ctx.ellipse(bx+bw*0.65,by-2,10*dpr,6*dpr,0.2,0,Math.PI*2); ctx.fill();
+  // Warm glow
+  const grad=ctx.createRadialGradient(bx+bw/2,by,5,bx+bw/2,my+rh*0.5,rh*0.7);
+  grad.addColorStop(0,'rgba(200,170,100,0.12)'); grad.addColorStop(1,'rgba(200,170,100,0)');
+  ctx.fillStyle=grad; ctx.fillRect(mx,my,rw,rh);
+  // Book on seat
+  ctx.fillStyle='#5a4a3a'; ctx.fillRect(bx+bw*0.45,by-3,8*dpr,5*dpr);
+}
+
+function drawGlassWall(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  const mx=W*0.15,my=H*0.1,rw=W*0.7,rh=H*0.8;
+  ctx.fillStyle='#1a1a22'; ctx.fillRect(mx,my,rw,rh);
+  // Full glass wall
+  ctx.fillStyle='rgba(140,160,200,0.05)'; ctx.fillRect(mx,my,rw,4*dpr);
+  ctx.fillStyle='rgba(140,160,200,0.03)'; ctx.fillRect(mx,my,rw,rh*0.4);
+  // Thin frame lines
+  ctx.strokeStyle='#2a2a35'; ctx.lineWidth=1;
+  for (let i=0;i<5;i++) { ctx.beginPath(); ctx.moveTo(mx+i*rw/4,my); ctx.lineTo(mx+i*rw/4,my+rh*0.4); ctx.stroke(); }
+  // Cold feel
+  ctx.fillStyle='rgba(120,130,160,0.02)'; ctx.fillRect(mx,my,rw,rh);
+  // Sofa far from window
+  ctx.fillStyle='#1e1e28'; ctx.fillRect(mx+rw*0.3,my+rh*0.65,rw*0.4,rh*0.15);
+}
+
+function drawKitchenAlive(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  // Open kitchen
+  const mx=W*0.1,my=H*0.1,rw=W*0.8,rh=H*0.8;
+  ctx.fillStyle='#1a1a20'; ctx.fillRect(mx,my,rw,rh);
+  // Counter/island
+  ctx.fillStyle='#2a2520'; ctx.fillRect(mx+rw*0.3,my+rh*0.4,rw*0.4,rh*0.12);
+  // Window to garden
+  ctx.fillStyle='rgba(80,120,70,0.1)'; ctx.fillRect(mx+rw*0.6,my,rw*0.3,rh*0.2);
+  ctx.fillStyle='#3a5a3a';
+  ctx.beginPath(); ctx.arc(mx+rw*0.75,my+rh*0.05,8*dpr,0,Math.PI*2); ctx.fill();
+  // Warm overhead light
+  const grad=ctx.createRadialGradient(mx+rw*0.5,my+rh*0.3,5,mx+rw*0.5,my+rh*0.5,rh*0.5);
+  grad.addColorStop(0,'rgba(200,170,100,0.08)'); grad.addColorStop(1,'rgba(200,170,100,0)');
+  ctx.fillStyle=grad; ctx.fillRect(mx,my,rw,rh);
+  // People dots
+  ctx.fillStyle='rgba(200,180,140,0.4)';
+  ctx.beginPath(); ctx.arc(mx+rw*0.35,my+rh*0.55,4*dpr,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx+rw*0.65,my+rh*0.6,4*dpr,0,Math.PI*2); ctx.fill();
+}
+
+function drawKitchenDead(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  const mx=W*0.1,my=H*0.1,rw=W*0.8,rh=H*0.8;
+  ctx.fillStyle='#16161e'; ctx.fillRect(mx,my,rw,rh);
+  // Wall dividing kitchen from living room
+  ctx.fillStyle='#2a2a35'; ctx.fillRect(mx+rw*0.5-2,my,4*dpr,rh);
+  // Fluorescent strip
+  ctx.fillStyle='rgba(180,190,210,0.05)'; ctx.fillRect(mx+rw*0.1,my+2,rw*0.3,3*dpr);
+  // Counter against wall
+  ctx.fillStyle='#1e1e28'; ctx.fillRect(mx+4,my+rh*0.6,rw*0.45,rh*0.1);
+}
+
+function drawStairsAlive(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  // Wide stairway with landing
+  for (let i=0;i<6;i++) {
+    const sy=H*0.85-i*H*0.08;
+    const sw=W*0.5+i*W*0.02;
+    ctx.fillStyle=`rgba(${35+i*3},${30+i*2},${25+i*3},0.8)`;
+    ctx.fillRect(W*0.25-i*W*0.01,sy,sw,H*0.07);
+  }
+  // Landing window
+  ctx.fillStyle='rgba(200,180,120,0.1)'; ctx.fillRect(W*0.6,H*0.2,W*0.15,H*0.2);
+  ctx.strokeStyle='#4a4535'; ctx.lineWidth=1; ctx.strokeRect(W*0.6,H*0.2,W*0.15,H*0.2);
+  // Niche
+  ctx.fillStyle='#1a1815'; ctx.fillRect(W*0.2,H*0.3,W*0.1,H*0.12);
+  // Small object in niche
+  ctx.fillStyle='#6a5a4a'; ctx.beginPath(); ctx.arc(W*0.25,H*0.36,3*dpr,0,Math.PI*2); ctx.fill();
+  // Warm glow
+  const grad=ctx.createRadialGradient(W*0.67,H*0.3,5,W*0.5,H*0.5,H*0.5);
+  grad.addColorStop(0,'rgba(200,170,100,0.08)'); grad.addColorStop(1,'rgba(200,170,100,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+}
+
+function drawStairsDead(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e0e14'; ctx.fillRect(0,0,W,H);
+  // Narrow enclosed stairwell
+  ctx.fillStyle='#14141c'; ctx.fillRect(W*0.3,0,W*0.4,H);
+  // Steel steps
+  for (let i=0;i<8;i++) {
+    ctx.fillStyle='#1e1e28'; ctx.fillRect(W*0.32,H*0.9-i*H*0.1,W*0.36,H*0.08);
+    ctx.strokeStyle='#2a2a35'; ctx.lineWidth=1; ctx.strokeRect(W*0.32,H*0.9-i*H*0.1,W*0.36,H*0.08);
+  }
+  // Single bulb
+  ctx.fillStyle='rgba(180,190,210,0.1)';
+  ctx.beginPath(); ctx.arc(W*0.5,H*0.15,5*dpr,0,Math.PI*2); ctx.fill();
+  // Handrail
+  ctx.strokeStyle='#3a3a45'; ctx.lineWidth=2*dpr;
+  ctx.beginPath(); ctx.moveTo(W*0.35,H*0.9); ctx.lineTo(W*0.35,H*0.1); ctx.stroke();
+}
+
+function drawEntranceAlive(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#0e1210'; ctx.fillRect(0,0,W,H);
+  // Garden path
+  ctx.fillStyle='#1a1815';
+  ctx.beginPath(); ctx.moveTo(W*0.4,H); ctx.lineTo(W*0.45,H*0.5); ctx.lineTo(W*0.55,H*0.5); ctx.lineTo(W*0.6,H); ctx.fill();
+  // Path stones
+  for (let i=0;i<5;i++) {
+    ctx.fillStyle=`rgba(70,60,45,${0.3+seeded(i)*0.3})`;
+    ctx.fillRect(W*0.42+seeded(i+50)*W*0.12, H*0.55+i*H*0.08, 8*dpr, 6*dpr);
+  }
+  // Low gate
+  ctx.fillStyle='#3a2a1a'; ctx.fillRect(W*0.38,H*0.82,W*0.24,3*dpr);
+  ctx.fillRect(W*0.38,H*0.75,3*dpr,H*0.1); ctx.fillRect(W*0.6,H*0.75,3*dpr,H*0.1);
+  // Porch roof
+  ctx.fillStyle='#2a2520'; ctx.fillRect(W*0.3,H*0.38,W*0.4,H*0.06);
+  // Door
+  ctx.fillStyle='#2a1e15'; ctx.fillRect(W*0.45,H*0.44,W*0.1,H*0.18);
+  // Plants along path
+  ctx.fillStyle='#2a4a2a';
+  for (let i=0;i<4;i++) {
+    ctx.beginPath();
+    ctx.arc(W*(0.35+seeded(i+20)*0.05),H*(0.6+i*0.08),6*dpr,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(W*(0.6+seeded(i+30)*0.05),H*(0.6+i*0.08),5*dpr,0,Math.PI*2); ctx.fill();
+  }
+  // Warm porch light
+  const grad=ctx.createRadialGradient(W*0.5,H*0.45,3,W*0.5,H*0.5,H*0.3);
+  grad.addColorStop(0,'rgba(200,170,100,0.1)'); grad.addColorStop(1,'rgba(200,170,100,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+}
+
+function drawEntranceDead(id) {
+  const {ctx,W,H} = getCtx(id, 200);
+  ctx.fillStyle = '#10101a'; ctx.fillRect(0,0,W,H);
+  // Sidewalk
+  ctx.fillStyle='#18181e'; ctx.fillRect(0,H*0.7,W,H*0.3);
+  ctx.strokeStyle='#2a2a30'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,H*0.7); ctx.lineTo(W,H*0.7); ctx.stroke();
+  // Flat wall
+  ctx.fillStyle='#1a1a22'; ctx.fillRect(W*0.2,H*0.1,W*0.6,H*0.6);
+  // Door flush with wall
+  ctx.fillStyle='#14141c'; ctx.fillRect(W*0.45,H*0.35,W*0.1,H*0.35);
+  ctx.strokeStyle='#2a2a35'; ctx.strokeRect(W*0.45,H*0.35,W*0.1,H*0.35);
+  // Buzzer
+  ctx.fillStyle='#2a2a35'; ctx.fillRect(W*0.57,H*0.5,3*dpr,4*dpr);
+}
+
+// ===================================================================
+// II. PATTERN LANGUAGE COMPOSER
+// ===================================================================
+const PATTERNS = [
+  { id:'entrance-transition', name:'🚪 Entrance Transition', forces:'Public→private crossing; need for psychological shift', connects:['courtyard','garden-wall','front-door'], scale:3 },
+  { id:'light-two-sides', name:'💡 Light on Two Sides', forces:'Need for balanced light; avoid glare & dark corners', connects:['window-place','room-shape','alcoves'], scale:2 },
+  { id:'window-place', name:'🪟 Window Place', forces:'Draw toward light vs. need to sit comfortably', connects:['light-two-sides','alcoves','low-sill'], scale:1 },
+  { id:'alcoves', name:'🛋️ Alcoves', forces:'Need for intimacy within shared space', connects:['window-place','ceiling-height','thick-walls'], scale:1 },
+  { id:'courtyard', name:'🏛️ Inner Courtyard', forces:'Need for outdoor space; shelter vs. openness', connects:['entrance-transition','garden-growing-wild','crossing-paths'], scale:3 },
+  { id:'garden-growing-wild', name:'🌿 Garden Growing Wild', forces:'Need for nature; wildness vs. order', connects:['courtyard','tree-places','garden-wall'], scale:2 },
+  { id:'sheltering-roof', name:'🏠 Sheltering Roof', forces:'Need for enclosure; protection; archetypal shelter', connects:['ceiling-height','thick-walls','rooms-shape'], scale:3 },
+  { id:'ceiling-height', name:'📐 Ceiling Height Variety', forces:'Intimate spaces need low ceilings; grand spaces need high', connects:['sheltering-roof','alcoves','rooms-shape'], scale:2 },
+  { id:'sunny-place', name:'☀️ Sunny Place', forces:'Phototropism; warmth-seeking; seasonal gathering', connects:['courtyard','garden-growing-wild','outdoor-room'], scale:2 },
+  { id:'crossing-paths', name:'🚶 Crossing Paths', forces:'Need for chance encounters; community life', connects:['courtyard','entrance-transition','street-cafe'], scale:3 },
+  { id:'thick-walls', name:'🧱 Thick Walls', forces:'Deep reveals; niches; shelving; structural honesty', connects:['alcoves','sheltering-roof','window-place'], scale:2 },
+  { id:'outdoor-room', name:'🌳 Outdoor Room', forces:'Outside space that feels enclosed enough to linger', connects:['courtyard','garden-growing-wild','sunny-place'], scale:2 },
+  { id:'rooms-shape', name:'📦 Room Shape', forces:'Rooms need rough proportions to feel right (1:1 to 1:2)', connects:['ceiling-height','light-two-sides','sheltering-roof'], scale:2 },
+  { id:'building-edge', name:'🪨 Building Edge', forces:'Need for transition between building and land', connects:['entrance-transition','garden-wall','outdoor-room'], scale:2 },
+  { id:'garden-wall', name:'🧱 Garden Wall', forces:'Enclosure for garden; privacy without isolation', connects:['garden-growing-wild','building-edge','entrance-transition'], scale:2 },
+  { id:'low-sill', name:'🪴 Low Sill', forces:'Connection to outside while sitting; sense of ground', connects:['window-place','light-two-sides','thick-walls'], scale:1 },
+  { id:'tree-places', name:'🌲 Tree Places', forces:'Shade, beauty, seasonal rhythm; anchoring landmarks', connects:['garden-growing-wild','sunny-place','outdoor-room'], scale:2 },
+  { id:'street-cafe', name:'☕ Street Café', forces:'Public sociability; watching the world; lingering', connects:['crossing-paths','sunny-place','building-edge'], scale:3 },
+  { id:'front-door', name:'🚪 Front Door Bench', forces:'Transition; neighborliness; watching the street', connects:['entrance-transition','building-edge','street-cafe'], scale:2 },
+  { id:'ornament', name:'✨ Ornament', forces:'Need for beauty; personal expression; craft', connects:['thick-walls','front-door','sheltering-roof'], scale:1 },
+  { id:'fire', name:'🔥 The Fire', forces:'Warmth, gathering, archetypal center of a home', connects:['alcoves','rooms-shape','ceiling-height'], scale:1 },
+  { id:'sleeping-nook', name:'🛏️ Sleeping Nook', forces:'Privacy for sleep; enclosure; low ceiling desired', connects:['alcoves','ceiling-height','thick-walls'], scale:1 },
+];
+
+let composerSelected = new Set();
+
+function initComposer() {
+  const lib = document.getElementById('patternLib');
+  if (lib.children.length > 0) { drawComposerBuilding(); return; }
+  lib.innerHTML = '';
+  PATTERNS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'pat-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="pat-name">${p.name}</div>
+      <div class="pat-forces">${p.forces}</div>
+      <div class="pat-connections">→ ${p.connects.map(c => PATTERNS.find(pp=>pp.id===c)?.name?.replace(/^.\s/,'') || c).join(', ')}</div>
+    `;
+    card.onclick = () => {
+      if (composerSelected.has(p.id)) { composerSelected.delete(p.id); card.classList.remove('selected'); }
+      else { composerSelected.add(p.id); card.classList.add('selected'); }
+      updateComposer();
+    };
+    lib.appendChild(card);
+  });
+  updateComposer();
+}
+
+function updateComposer() {
+  const sel = Array.from(composerSelected);
+  const harmonies = [];
+  const conflicts = [];
+
+  // Find harmonies (connected patterns both selected)
+  sel.forEach(id => {
+    const p = PATTERNS.find(pp => pp.id === id);
+    if (!p) return;
+    p.connects.forEach(c => {
+      if (sel.includes(c) && !harmonies.find(h => (h[0]===id&&h[1]===c)||(h[0]===c&&h[1]===id))) {
+        harmonies.push([id, c]);
+      }
+    });
+  });
+
+  // Conflicts: patterns at same scale without connection
+  sel.forEach(id => {
+    const p = PATTERNS.find(pp => pp.id === id);
+    sel.forEach(id2 => {
+      if (id >= id2) return;
+      const p2 = PATTERNS.find(pp => pp.id === id2);
+      if (p.scale === p2.scale && !p.connects.includes(id2) && !p2.connects.includes(id)) {
+        if (!conflicts.find(c => (c[0]===id&&c[1]===id2))) {
+          conflicts.push([id, id2]);
+        }
+      }
+    });
+  });
+
+  const getName = id => PATTERNS.find(p=>p.id===id)?.name?.replace(/^.\s/,'') || id;
+
+  const hl = document.getElementById('harmonyList');
+  const cl = document.getElementById('conflictList');
+
+  if (sel.length === 0) {
+    hl.innerHTML = 'Select patterns to begin...';
+    cl.innerHTML = '';
+  } else {
+    hl.innerHTML = harmonies.length > 0
+      ? '🤝 Harmonies: ' + harmonies.map(h => `<span>${getName(h[0])} ↔ ${getName(h[1])}</span>`).join(', ')
+      : 'No harmonies yet — select connected patterns.';
+    cl.innerHTML = conflicts.length > 0
+      ? '⚡ Tensions: ' + conflicts.map(c => `<span>${getName(c[0])} ↔ ${getName(c[1])}</span>`).join(', ')
+      : '';
+  }
+
+  // Aliveness: more harmonies and fewer conflicts = more alive
+  const n = sel.length;
+  const hScore = harmonies.length * 15;
+  const cScore = conflicts.length * 10;
+  const coverage = Math.min(n * 5, 40);
+  const aliveness = clamp((hScore - cScore + coverage) / 100, 0, 1);
+
+  const meter = document.getElementById('composerMeter');
+  meter.style.width = (aliveness * 100) + '%';
+  meter.style.background = aliveness < 0.3 ? 'hsl(0,50%,50%)' : aliveness < 0.6 ? 'hsl(30,50%,50%)' : 'hsl(100,40%,45%)';
+
+  drawComposerBuilding();
+}
+
+function drawComposerBuilding() {
+  const {ctx,W,H} = getCtx('composerCanvas', 350);
+  ctx.fillStyle = '#12121a'; ctx.fillRect(0,0,W,H);
+
+  const sel = Array.from(composerSelected);
+  const n = sel.length;
+
+  if (n === 0) {
+    ctx.fillStyle = '#3a3a45';
+    ctx.font = `${14*dpr}px Georgia`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Select patterns to generate a building', W/2, H/2);
+    return;
+  }
+
+  const groundY = H * 0.82;
+  ctx.fillStyle = '#1a1a22';
+  ctx.fillRect(0, groundY, W, H - groundY);
+
+  const bx = W*0.15, bw = W*0.7, bh = H*0.55;
+  const by = groundY;
+
+  // Main structure
+  ctx.fillStyle = '#1e1e28';
+  ctx.fillRect(bx, by-bh, bw, bh);
+  ctx.strokeStyle = '#3a3a45';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx, by-bh, bw, bh);
+
+  const has = id => sel.includes(id);
+
+  // Sheltering roof
+  if (has('sheltering-roof')) {
+    ctx.fillStyle = '#2a2520';
+    ctx.beginPath();
+    ctx.moveTo(bx-15*dpr, by-bh);
+    ctx.lineTo(bx+bw/2, by-bh-bh*0.3);
+    ctx.lineTo(bx+bw+15*dpr, by-bh);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#4a4535'; ctx.stroke();
+  }
+
+  // Courtyard
+  if (has('courtyard')) {
+    const cw=bw*0.28, ch=bh*0.25;
+    ctx.fillStyle='#151520';
+    ctx.fillRect(bx+bw/2-cw/2, by-bh/2-ch/2, cw, ch);
+    ctx.strokeStyle='#3a3a45'; ctx.strokeRect(bx+bw/2-cw/2, by-bh/2-ch/2, cw, ch);
+    if (has('crossing-paths')) {
+      ctx.strokeStyle='rgba(180,160,120,0.3)'; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(bx+bw/2-cw/2,by-bh/2); ctx.lineTo(bx+bw/2+cw/2,by-bh/2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx+bw/2,by-bh/2-ch/2); ctx.lineTo(bx+bw/2,by-bh/2+ch/2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // Windows
+  if (has('window-place') || has('light-two-sides')) {
+    const nw = has('light-two-sides') ? 4 : 2;
+    for (let i=0;i<nw;i++) {
+      const wx=bx+bw*(0.12+i*0.22), wy=by-bh*0.7;
+      const ww=bw*0.1, wh=bh*0.2;
+      if (has('window-place')) {
+        ctx.fillStyle='#2a2520'; ctx.fillRect(wx-4,wy-8,ww+8,wh+16);
+      }
+      ctx.fillStyle='rgba(200,170,100,0.08)'; ctx.fillRect(wx,wy,ww,wh);
+      ctx.strokeStyle='#4a4535'; ctx.strokeRect(wx,wy,ww,wh);
+      if (has('low-sill')) {
+        ctx.fillStyle='#2a2822'; ctx.fillRect(wx-2,wy+wh-2,ww+4,4);
+      }
+    }
+  }
+
+  // Entrance transition
+  if (has('entrance-transition')) {
+    const ex=bx+bw/2-bw*0.06, ew=bw*0.12, eh=bh*0.25;
+    ctx.fillStyle='#0e0e16'; ctx.fillRect(ex,by-eh,ew,eh);
+    ctx.fillStyle='rgba(140,120,90,0.1)'; ctx.fillRect(ex-12,by-eh-10,ew+24,15);
+    if (has('front-door')) {
+      ctx.fillStyle='#2a2520'; ctx.fillRect(ex-15,by-8,ew+30,8);
+    }
+  }
+
+  // Alcoves
+  if (has('alcoves')) {
+    ctx.fillStyle='#1a1822';
+    ctx.fillRect(bx+8,by-bh*0.35,bw*0.1,bh*0.15);
+    ctx.fillRect(bx+bw-bw*0.1-8,by-bh*0.35,bw*0.1,bh*0.15);
+  }
+
+  // Thick walls
+  if (has('thick-walls')) {
+    ctx.fillStyle='rgba(60,55,45,0.3)';
+    ctx.fillRect(bx,by-bh,8*dpr,bh);
+    ctx.fillRect(bx+bw-8*dpr,by-bh,8*dpr,bh);
+  }
+
+  // Ceiling height variety
+  if (has('ceiling-height')) {
+    ctx.strokeStyle='rgba(100,95,85,0.2)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(bx+bw*0.35,by-bh*0.4); ctx.lineTo(bx+bw*0.35,by-bh*0.85); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx+bw*0.65,by-bh*0.4); ctx.lineTo(bx+bw*0.65,by-bh*0.95); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Room shape
+  if (has('rooms-shape')) {
+    ctx.strokeStyle='rgba(100,95,85,0.15)'; ctx.lineWidth=1;
+    ctx.strokeRect(bx+bw*0.05,by-bh*0.9,bw*0.4,bh*0.45);
+    ctx.strokeRect(bx+bw*0.5,by-bh*0.9,bw*0.45,bh*0.45);
+  }
+
+  // Garden
+  if (has('garden-growing-wild')) {
+    ctx.fillStyle='#2a3a2a';
+    for (let i=0;i<6;i++) {
+      ctx.beginPath(); ctx.arc(bx-15*dpr+i*12*dpr, by-5, (6+seeded(i)*4)*dpr, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Tree places
+  if (has('tree-places')) {
+    const tx = bx+bw+25*dpr;
+    ctx.fillStyle='#2a1e15'; ctx.fillRect(tx-2*dpr, by-60*dpr, 4*dpr, 60*dpr);
+    ctx.fillStyle='#2a4a2a';
+    ctx.beginPath(); ctx.arc(tx, by-65*dpr, 20*dpr, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Garden wall
+  if (has('garden-wall')) {
+    ctx.fillStyle='#3a3530';
+    ctx.fillRect(bx-30*dpr, by-15*dpr, 25*dpr, 15*dpr);
+    ctx.fillRect(bx+bw+5*dpr, by-12*dpr, 25*dpr, 12*dpr);
+  }
+
+  // Building edge
+  if (has('building-edge')) {
+    ctx.fillStyle='rgba(140,120,90,0.06)';
+    ctx.fillRect(bx-20*dpr, by-bh*0.15, 20*dpr, bh*0.15);
+    ctx.fillRect(bx+bw, by-bh*0.15, 20*dpr, bh*0.15);
+  }
+
+  // Sunny place
+  if (has('sunny-place')) {
+    const grad=ctx.createRadialGradient(bx+bw*0.8,by-bh*0.2,5,bx+bw*0.8,by-bh*0.2,80*dpr);
+    grad.addColorStop(0,'rgba(220,200,120,0.1)'); grad.addColorStop(1,'rgba(220,200,120,0)');
+    ctx.fillStyle=grad; ctx.fillRect(bx,by-bh,bw+60*dpr,bh+20);
+  }
+
+  // Outdoor room
+  if (has('outdoor-room')) {
+    ctx.strokeStyle='rgba(100,95,85,0.3)'; ctx.lineWidth=1;
+    ctx.strokeRect(bx+bw+5*dpr, by-bh*0.4, bw*0.2, bh*0.4);
+  }
+
+  // Ornament
+  if (has('ornament')) {
+    ctx.fillStyle='rgba(196,149,106,0.3)';
+    for (let i=0;i<6;i++) {
+      ctx.beginPath(); ctx.arc(bx+bw*0.1+i*bw*0.15, by-bh+8, 3*dpr, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Fire
+  if (has('fire')) {
+    ctx.fillStyle='rgba(200,100,30,0.15)';
+    ctx.beginPath(); ctx.arc(bx+bw*0.5, by-bh*0.3, 8*dpr, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(200,100,30,0.3)';
+    ctx.beginPath(); ctx.arc(bx+bw*0.5, by-bh*0.3, 4*dpr, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Sleeping nook
+  if (has('sleeping-nook')) {
+    ctx.fillStyle='#1a1822';
+    ctx.fillRect(bx+bw*0.7, by-bh*0.25, bw*0.15, bh*0.12);
+    ctx.fillStyle='#2a2530';
+    ctx.fillRect(bx+bw*0.72, by-bh*0.23, bw*0.11, bh*0.08);
+  }
+
+  // Street café
+  if (has('street-cafe')) {
+    ctx.fillStyle='#2a2520';
+    ctx.fillRect(bx-35*dpr, by-3, 8*dpr, 8*dpr);
+    ctx.fillRect(bx-20*dpr, by-3, 8*dpr, 8*dpr);
+    // Tiny umbrella
+    ctx.fillStyle='rgba(196,149,106,0.3)';
+    ctx.beginPath(); ctx.arc(bx-25*dpr, by-10*dpr, 12*dpr, Math.PI, 0); ctx.fill();
+  }
+}
+
+// ===================================================================
+// III. THE REPAIR PROCESS
+// ===================================================================
+let repairState = { decade: 0, maxDecades: 20, choices: [], initialized: false };
+
+const REPAIR_OPTIONS = [
+  'Add a window seat', 'Extend the kitchen', 'Plant a tree', 'Widen the path',
+  'Build a garden wall', 'Add an alcove', 'Put in a porch', 'Add a chimney',
+  'Build a bay window', 'Plant climbing roses', 'Add a bench by the door',
+  'Extend the roof overhang', 'Build a stone step', 'Add a small courtyard',
+  'Widen a doorway', 'Add a window box', 'Build a shed', 'Plant a hedge',
+  'Add a skylight', 'Build a terrace'
+];
+
+function initRepair() {
+  if (repairState.initialized) { drawRepair(); return; }
+  repairState.initialized = true;
+  repairState.decade = 0;
+  repairState.choices = [];
+  updateRepairUI();
+  drawRepair();
+}
+
+function updateRepairUI() {
+  const d = repairState.decade;
+  document.getElementById('repairDecade').textContent = `Decade: ${1800 + d * 10}`;
+
+  const choices = document.getElementById('repairChoices');
+  if (d >= repairState.maxDecades) {
+    choices.innerHTML = '<em style="color:var(--text-dim)">200 years complete. The building has lived.</em>';
+    document.getElementById('repairFeedback').innerHTML = `
+      <span style="color:var(--alive)">The left building grew through ${repairState.choices.length} acts of repair — each one adapting to real needs.<br>
+      The right building was designed all at once. It has no history, no adaptation, no life.</span>
+    `;
+    return;
+  }
+
+  // Pick 3 random options
+  const opts = [];
+  const available = REPAIR_OPTIONS.filter(o => !repairState.choices.slice(-3).includes(o));
+  while (opts.length < 3 && available.length > 0) {
+    const idx = Math.floor(Math.random() * available.length);
+    opts.push(available.splice(idx, 1)[0]);
+  }
+
+  choices.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'repair-choice';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      repairState.choices.push(opt);
+      repairState.decade++;
+      const log = document.getElementById('repairLog');
+      log.innerHTML += `<div>${1800 + (repairState.decade-1)*10}: ${opt}</div>`;
+      log.scrollTop = log.scrollHeight;
+      updateRepairUI();
+      drawRepair();
+    };
+    choices.appendChild(btn);
+  });
+}
+
+function drawRepair() {
+  // Organic side
+  drawRepairOrganic();
+  // Planned side
+  drawRepairPlanned();
+}
+
+function drawRepairOrganic() {
+  const {ctx,W,H} = getCtx('repairOrganic', 300);
+  ctx.fillStyle = '#0e0e16'; ctx.fillRect(0,0,W,H);
+
+  const t = repairState.decade / repairState.maxDecades;
+  const groundY = H * 0.78;
+  const choices = repairState.choices;
+
+  // Ground
+  ctx.fillStyle = '#1a1a22'; ctx.fillRect(0, groundY, W, H-groundY);
+
+  // Base building
+  const bx = W*0.25, bw = W*0.5, bh = H*0.35;
+  const by = groundY;
+
+  // Building grows slightly with extensions
+  const extensions = choices.filter(c => c.includes('Extend') || c.includes('Build a shed') || c.includes('courtyard') || c.includes('terrace')).length;
+  const totalBw = bw + extensions * W * 0.04;
+
+  ctx.fillStyle = '#252220';
+  ctx.fillRect(bx, by-bh, totalBw, bh);
+  ctx.strokeStyle = '#4a4535'; ctx.lineWidth = 1;
+  ctx.strokeRect(bx, by-bh, totalBw, bh);
+
+  // Roof
+  ctx.fillStyle = '#2a2520';
+  ctx.beginPath();
+  ctx.moveTo(bx-8*dpr, by-bh);
+  const roofH = choices.includes('Extend the roof overhang') ? bh*0.35 : bh*0.25;
+  ctx.lineTo(bx+totalBw/2, by-bh-roofH);
+  ctx.lineTo(bx+totalBw+8*dpr, by-bh);
+  ctx.closePath(); ctx.fill();
+
+  // Window seats
+  const windowSeats = choices.filter(c => c.includes('window seat') || c.includes('bay window')).length;
+  for (let i=0;i<Math.min(windowSeats,3);i++) {
+    const wx = bx+totalBw*(0.2+i*0.3), wy = by-bh*0.65;
+    ctx.fillStyle='#2a2520'; ctx.fillRect(wx-4,wy-6,totalBw*0.12+8,bh*0.2+12);
+    ctx.fillStyle='rgba(200,170,100,0.1)'; ctx.fillRect(wx,wy,totalBw*0.12,bh*0.2);
+  }
+
+  // Regular windows
+  const wCount = 2 + Math.floor(extensions * 0.5);
+  for (let i=0;i<wCount;i++) {
+    if (i < windowSeats) continue;
+    const wx = bx+totalBw*(0.15+i*0.22), wy = by-bh*0.65;
+    ctx.fillStyle='rgba(200,170,100,0.08)'; ctx.fillRect(wx,wy,totalBw*0.08,bh*0.18);
+    ctx.strokeStyle='#4a4535'; ctx.strokeRect(wx,wy,totalBw*0.08,bh*0.18);
+  }
+
+  // Porch
+  if (choices.includes('Put in a porch')) {
+    ctx.fillStyle='rgba(140,120,90,0.1)'; ctx.fillRect(bx+totalBw*0.35,by-bh*0.15,totalBw*0.3,bh*0.15);
+    ctx.fillStyle='#4a4535';
+    ctx.fillRect(bx+totalBw*0.37,by-bh*0.15,3*dpr,bh*0.15);
+    ctx.fillRect(bx+totalBw*0.62,by-bh*0.15,3*dpr,bh*0.15);
+  }
+
+  // Door
+  ctx.fillStyle='#1a1510'; ctx.fillRect(bx+totalBw*0.43,by-bh*0.3,totalBw*0.1,bh*0.3);
+
+  // Chimney
+  if (choices.includes('Add a chimney')) {
+    ctx.fillStyle='#3a3530'; ctx.fillRect(bx+totalBw*0.7,by-bh-roofH*0.8,8*dpr,roofH*0.8+bh*0.1);
+  }
+
+  // Bench
+  if (choices.includes('Add a bench by the door')) {
+    ctx.fillStyle='#3a2a1a'; ctx.fillRect(bx+totalBw*0.55,by-4,15*dpr,4*dpr);
+  }
+
+  // Trees
+  const trees = choices.filter(c => c.includes('tree')).length;
+  for (let i=0;i<trees;i++) {
+    const tx = bx-20*dpr-i*25*dpr;
+    const th = 40*dpr+i*10*dpr;
+    ctx.fillStyle='#2a1e15'; ctx.fillRect(tx-2*dpr,by-th,4*dpr,th);
+    ctx.fillStyle='#2a4a2a';
+    ctx.beginPath(); ctx.arc(tx,by-th-5*dpr,(12+i*3)*dpr,0,Math.PI*2); ctx.fill();
+  }
+
+  // Garden wall
+  if (choices.includes('Build a garden wall')) {
+    ctx.fillStyle='#3a3530'; ctx.fillRect(bx-35*dpr,by-12*dpr,30*dpr,12*dpr);
+  }
+
+  // Hedge
+  if (choices.includes('Plant a hedge')) {
+    ctx.fillStyle='#2a3a2a';
+    for (let i=0;i<8;i++) {
+      ctx.beginPath(); ctx.arc(bx+totalBw+10*dpr+i*8*dpr, by-6*dpr, 5*dpr, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Roses
+  if (choices.includes('Plant climbing roses')) {
+    ctx.fillStyle='#5a3a3a';
+    for (let i=0;i<5;i++) {
+      ctx.beginPath(); ctx.arc(bx+3*dpr, by-bh*0.3-i*bh*0.12, 3*dpr, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Path
+  const pathW = choices.includes('Widen the path') ? W*0.15 : W*0.08;
+  ctx.fillStyle='#1e1c18';
+  ctx.beginPath();
+  ctx.moveTo(bx+totalBw*0.4, by);
+  ctx.lineTo(W*0.5-pathW/2, H);
+  ctx.lineTo(W*0.5+pathW/2, H);
+  ctx.lineTo(bx+totalBw*0.56, by);
+  ctx.fill();
+
+  // Skylight
+  if (choices.includes('Add a skylight')) {
+    ctx.fillStyle='rgba(180,200,220,0.08)';
+    ctx.fillRect(bx+totalBw*0.55,by-bh-roofH*0.5,totalBw*0.08,roofH*0.3);
+  }
+
+  // Window boxes
+  if (choices.includes('Add a window box')) {
+    ctx.fillStyle='#3a4a3a';
+    ctx.fillRect(bx+totalBw*0.18,by-bh*0.45,totalBw*0.12,4*dpr);
+    ctx.fillStyle='#d45a7a';
+    for (let i=0;i<3;i++) { ctx.beginPath(); ctx.arc(bx+totalBw*(0.2+i*0.03),by-bh*0.47,2*dpr,0,Math.PI*2); ctx.fill(); }
+  }
+
+  // Grass
+  if (t > 0.1) {
+    ctx.fillStyle = `rgba(60,90,50,${clamp(t*0.5,0,0.3)})`;
+    for (let i=0;i<30;i++) {
+      ctx.fillRect(seeded(i)*W, groundY-2-seeded(i+50)*6*t*dpr, 2*dpr, seeded(i+50)*6*t*dpr);
+    }
+  }
+}
+
+function drawRepairPlanned() {
+  const {ctx,W,H} = getCtx('repairPlanned', 300);
+  ctx.fillStyle = '#0e0e16'; ctx.fillRect(0,0,W,H);
+
+  const groundY = H * 0.78;
+  ctx.fillStyle = '#1a1a22'; ctx.fillRect(0, groundY, W, H-groundY);
+
+  // The "planned" building: same every time, no variation
+  const bx = W*0.2, bw = W*0.6, bh = H*0.4;
+
+  // Perfectly rectangular
+  ctx.fillStyle = '#1e1e28';
+  ctx.fillRect(bx, groundY-bh, bw, bh);
+  ctx.strokeStyle = '#2a2a35'; ctx.lineWidth = 1;
+  ctx.strokeRect(bx, groundY-bh, bw, bh);
+
+  // Flat roof
+  ctx.fillStyle = '#222230';
+  ctx.fillRect(bx-2, groundY-bh-6*dpr, bw+4, 6*dpr);
+
+  // Identical windows
+  for (let i=0;i<4;i++) {
+    const wx = bx+bw*0.1+i*bw*0.22;
+    ctx.fillStyle = 'rgba(140,150,180,0.06)';
+    ctx.fillRect(wx, groundY-bh*0.7, bw*0.12, bh*0.2);
+    ctx.strokeStyle = '#2a2a35';
+    ctx.strokeRect(wx, groundY-bh*0.7, bw*0.12, bh*0.2);
+  }
+
+  // Plain door
+  ctx.fillStyle = '#14141c';
+  ctx.fillRect(bx+bw*0.44, groundY-bh*0.3, bw*0.12, bh*0.3);
+
+  // Concrete path
+  ctx.fillStyle = '#18181e';
+  ctx.fillRect(W*0.46, groundY, W*0.08, H-groundY);
+
+  // No trees, no garden, no life
+  ctx.fillStyle = '#3a3a45';
+  ctx.font = `${10*dpr}px Georgia`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Designed in 2000. Unchanged since.', W/2, H-10*dpr);
+}
+
+// ===================================================================
+// IV. FORCES VISUALIZER
+// ===================================================================
+let forcesState = {
+  windowX: 0.7, windowW: 0.25,
+  alcoveX: 0.05, alcoveW: 0.15,
+  wallOpenness: 0.3,
+  dragging: null,
+  initialized: false
+};
+
+function initForces() {
+  if (forcesState.initialized) { drawForces(); return; }
+  forcesState.initialized = true;
+
+  const canvas = document.getElementById('forcesCanvas');
+
+  canvas.addEventListener('mousedown', forcesMouseDown);
+  canvas.addEventListener('mousemove', forcesMouseMove);
+  canvas.addEventListener('mouseup', () => { forcesState.dragging = null; });
+  canvas.addEventListener('mouseleave', () => { forcesState.dragging = null; });
+
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); forcesTouchStart(e); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); forcesTouchMove(e); }, {passive:false});
+  canvas.addEventListener('touchend', () => { forcesState.dragging = null; });
+
+  drawForces();
+}
+
+function forcesMouseDown(e) {
+  const rect = e.target.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  forcesHitTest(x, y);
+}
+
+function forcesTouchStart(e) {
+  const rect = e.target.getBoundingClientRect();
+  const t = e.touches[0];
+  const x = (t.clientX - rect.left) / rect.width;
+  const y = (t.clientY - rect.top) / rect.height;
+  forcesHitTest(x, y);
+}
+
+function forcesHitTest(x, y) {
+  const s = forcesState;
+  // Window handle
+  if (Math.abs(x - s.windowX) < 0.08 && y < 0.4) { s.dragging = 'window'; return; }
+  // Alcove handle
+  if (Math.abs(x - (s.alcoveX + s.alcoveW/2)) < 0.1 && y > 0.3 && y < 0.7) { s.dragging = 'alcove'; return; }
+  // Wall openness (bottom area)
+  if (y > 0.7) { s.dragging = 'wall'; return; }
+}
+
+function forcesMouseMove(e) {
+  if (!forcesState.dragging) return;
+  const rect = e.target.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  forcesDrag(x);
+}
+
+function forcesTouchMove(e) {
+  if (!forcesState.dragging) return;
+  const rect = e.target.getBoundingClientRect();
+  const t = e.touches[0];
+  const x = (t.clientX - rect.left) / rect.width;
+  forcesDrag(x);
+}
+
+function forcesDrag(x) {
+  const s = forcesState;
+  x = clamp(x, 0.05, 0.95);
+  if (s.dragging === 'window') {
+    s.windowX = x;
+  } else if (s.dragging === 'alcove') {
+    s.alcoveX = clamp(x - s.alcoveW/2, 0.02, 0.5);
+  } else if (s.dragging === 'wall') {
+    s.wallOpenness = clamp(x, 0.05, 0.8);
+  }
+  drawForces();
+}
+
+function drawForces() {
+  const {ctx,W,H} = getCtx('forcesCanvas', 400);
+  ctx.fillStyle = '#0e0e16'; ctx.fillRect(0,0,W,H);
+
+  const s = forcesState;
+
+  const mx = W*0.1, my = H*0.1, rw = W*0.8, rh = H*0.8;
+
+  // Room
+  ctx.fillStyle = '#1a1a22'; ctx.fillRect(mx, my, rw, rh);
+  ctx.strokeStyle = '#3a3a45'; ctx.lineWidth = 2*dpr; ctx.strokeRect(mx, my, rw, rh);
+
+  // Window (on top wall, position controlled by windowX)
+  const winX = mx + s.windowX * rw - s.windowW * rw / 2;
+  const winW = s.windowW * rw;
+  const winH = rh * 0.15;
+
+  // Window bay
+  ctx.fillStyle = '#2a2520';
+  ctx.fillRect(winX, my - winH * 0.4, winW, winH * 0.4 + 4);
+
+  // Window panes
+  for (let i = 0; i < 3; i++) {
+    const pw = winW / 3;
+    ctx.fillStyle = `rgba(200,180,120,${0.1 + i * 0.03})`;
+    ctx.fillRect(winX + i * pw + 3, my - winH * 0.4 + 3, pw - 6, winH * 0.4 - 6);
+  }
+
+  // Light cone from window
+  const lightIntensity = s.windowW * 0.4 + 0.05;
+  const grad = ctx.createRadialGradient(winX + winW/2, my, 5, winX + winW/2, my + rh*0.6, rh*0.7);
+  grad.addColorStop(0, `rgba(200,180,120,${lightIntensity})`);
+  grad.addColorStop(1, 'rgba(200,180,120,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(mx, my, rw, rh);
+
+  // Alcove (cozy nook on left wall)
+  const alcX = mx + s.alcoveX * rw;
+  const alcW = s.alcoveW * rw;
+  const alcH = rh * 0.3;
+  const alcY = my + rh * 0.35;
+
+  ctx.fillStyle = '#151520';
+  ctx.fillRect(alcX, alcY, alcW, alcH);
+  ctx.strokeStyle = '#3a3a45'; ctx.lineWidth = 1;
+  ctx.strokeRect(alcX, alcY, alcW, alcH);
+
+  // Seat in alcove
+  ctx.fillStyle = '#2a2822';
+  ctx.fillRect(alcX + 4, alcY + alcH - 10*dpr, alcW - 8, 10*dpr);
+
+  // Wall openness (bottom wall gap)
+  const gap = s.wallOpenness * rw;
+  const gapX = mx + rw/2 - gap/2;
+
+  // Redraw bottom wall with gap
+  ctx.strokeStyle = '#3a3a45'; ctx.lineWidth = 2*dpr;
+  ctx.beginPath(); ctx.moveTo(mx, my+rh); ctx.lineTo(gapX, my+rh); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(gapX+gap, my+rh); ctx.lineTo(mx+rw, my+rh); ctx.stroke();
+
+  // View through gap
+  if (s.wallOpenness > 0.15) {
+    const vAlpha = (s.wallOpenness - 0.15) / 0.65;
+    ctx.fillStyle = `rgba(60,100,60,${vAlpha * 0.12})`;
+    ctx.fillRect(gapX, my+rh, gap, H-(my+rh));
+    ctx.fillStyle = `rgba(60,100,60,${vAlpha * 0.3})`;
+    for (let i=0;i<3;i++) {
+      ctx.beginPath(); ctx.arc(gapX+gap*(0.2+i*0.3), my+rh+15*dpr, 6*dpr, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Draggable indicators
+  ctx.fillStyle = 'rgba(196,149,106,0.6)';
+  // Window handle
+  ctx.beginPath(); ctx.arc(winX+winW/2, my-winH*0.2, 6*dpr, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#0e0e16'; ctx.font = `${8*dpr}px Georgia`; ctx.textAlign='center';
+  ctx.fillText('↔', winX+winW/2, my-winH*0.2+3*dpr);
+
+  // Alcove handle
+  ctx.fillStyle = 'rgba(196,149,106,0.6)';
+  ctx.beginPath(); ctx.arc(alcX+alcW/2, alcY+alcH/2, 6*dpr, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#0e0e16';
+  ctx.fillText('↔', alcX+alcW/2, alcY+alcH/2+3*dpr);
+
+  // Wall handle
+  ctx.fillStyle = 'rgba(196,149,106,0.6)';
+  ctx.beginPath(); ctx.arc(gapX+gap/2, my+rh+3*dpr, 6*dpr, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#0e0e16';
+  ctx.fillText('↔', gapX+gap/2, my+rh+6*dpr);
+
+  // Calculate forces
+  // Light: window size and position matter. Bigger window + centered = more light
+  const lightScore = clamp(s.windowW * 2 + (1 - Math.abs(s.windowX - 0.5)) * 0.5, 0, 1);
+
+  // Privacy: less wall openness + alcove present = more privacy
+  const privacyScore = clamp((1 - s.wallOpenness) * 0.6 + s.alcoveW * 1.5, 0, 1);
+
+  // Warmth: less openness + smaller window = warmer
+  const warmthScore = clamp((1 - s.wallOpenness) * 0.5 + (1 - s.windowW) * 0.5, 0, 1);
+
+  // View: more wall openness = more view. Window position toward center helps.
+  const viewScore = clamp(s.wallOpenness * 1.2 + s.windowW * 0.3, 0, 1);
+
+  // Update indicators
+  document.getElementById('forceLight').style.width = (lightScore*100)+'%';
+  document.getElementById('forceLight').style.background = lightScore > 0.5 ? 'var(--gold)' : 'var(--dead)';
+  document.getElementById('forcePrivacy').style.width = (privacyScore*100)+'%';
+  document.getElementById('forcePrivacy').style.background = privacyScore > 0.5 ? 'var(--blue)' : 'var(--dead)';
+  document.getElementById('forceWarmth').style.width = (warmthScore*100)+'%';
+  document.getElementById('forceWarmth').style.background = warmthScore > 0.4 ? 'var(--dead)' : 'var(--dead)';
+  document.getElementById('forceWarmth').style.background = warmthScore > 0.5 ? '#ba6a4a' : 'var(--dead)';
+  document.getElementById('forceView').style.width = (viewScore*100)+'%';
+  document.getElementById('forceView').style.background = viewScore > 0.5 ? 'var(--accent2)' : 'var(--dead)';
+
+  // Balance: all four forces > 0.4 is balanced
+  const min4 = Math.min(lightScore, privacyScore, warmthScore, viewScore);
+  const balance = clamp(min4 * 1.5, 0, 1);
+
+  const meter = document.getElementById('forcesMeter');
+  meter.style.width = (balance*100)+'%';
+  meter.style.background = balance < 0.3 ? 'var(--dead)' : balance < 0.6 ? 'var(--gold)' : 'var(--alive)';
+
+  const fb = document.getElementById('forcesFeedback');
+  if (balance < 0.2) fb.textContent = 'The forces are in deep conflict. The room is uncomfortable.';
+  else if (balance < 0.4) fb.textContent = 'Some forces resolve, but others are still in tension.';
+  else if (balance < 0.6) fb.textContent = 'Getting closer. The room is starting to feel right.';
+  else if (balance < 0.8) fb.textContent = 'The forces are nearly balanced. The room breathes.';
+  else fb.textContent = 'The forces resolve. Light, privacy, warmth, view — all in harmony. The room is alive.';
+}
+
+// ===================================================================
+// V. ALIVE VS DEAD
+// ===================================================================
+let adClickables = { village: [], tract: [] };
+
+function initAliveDead() {
+  drawVillage();
+  drawTract();
+
+  const vc = document.getElementById('villageCanvas');
+  const tc = document.getElementById('tractCanvas');
+
+  vc.onclick = e => handleAdClick(e, 'village');
+  tc.onclick = e => handleAdClick(e, 'tract');
+}
+
+function handleAdClick(e, side) {
+  const rect = e.target.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+
+  const items = adClickables[side];
+  let hit = null;
+  for (const item of items) {
+    if (x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h) {
+      hit = item;
+      break;
+    }
+  }
+
+  const info = document.getElementById('adInfo');
+  if (hit) {
+    info.innerHTML = `<strong style="color:${side === 'village' ? 'var(--alive)' : 'var(--dead)'}">${hit.name}</strong><br>${hit.desc}`;
+  }
+}
+
+function drawVillage() {
+  const {ctx,W,H} = getCtx('villageCanvas', 300);
+  ctx.fillStyle = '#0e1210'; ctx.fillRect(0,0,W,H);
+
+  const groundY = H * 0.75;
+  ctx.fillStyle = '#1a1c18'; ctx.fillRect(0, groundY, W, H-groundY);
+
+  adClickables.village = [];
+
+  // Irregular winding path
+  ctx.fillStyle = '#2a2520';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY+10*dpr);
+  ctx.quadraticCurveTo(W*0.2, groundY+5*dpr, W*0.35, groundY+12*dpr);
+  ctx.quadraticCurveTo(W*
