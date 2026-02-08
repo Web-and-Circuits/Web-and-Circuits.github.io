@@ -69,11 +69,9 @@
     animation: scrollFade 12s linear forwards;
   }
   @keyframes scrollFade {
-    0%   { opacity: 0; transform: translateY(0); }
-    5%   { opacity: 0.85; transform: translateY(0); }
-    60%  { opacity: 0.6; transform: translateY(-80px); }
-    85%  { opacity: 0.2; transform: translateY(-140px); }
-    100% { opacity: 0; transform: translateY(-180px); }
+    0%   { opacity: 0; transform: translateY(10px); }
+    3%   { opacity: 0.85; transform: translateY(5px); }
+    100% { opacity: 0; transform: translateY(-200px); }
   }
   .msg.human, .msg.interviewer, .msg.vision-prompt {
     background: rgba(31, 111, 235, 0.25); border: 1px solid rgba(31, 111, 235, 0.3);
@@ -592,11 +590,13 @@ function addChat(type, sender, text, isThinking) {
   if (isThinking) {
     div.innerHTML = `<div class="sender ${senderClass}">${sender}</div><span class="dots"></span>`;
   } else {
-    const escaped = text.replace(/</g, '&lt;').replace(/\n/g, '<br>');
-    div.innerHTML = `<div class="sender ${senderClass}">${sender}</div><div class="reasoning">${escaped}</div>`;
+    // Truncate long text to keep bubbles compact
+    let truncated = text.length > 150 ? text.substring(0, 147) + '...' : text;
+    // Strip linebreaks for cleaner bubbles
+    truncated = truncated.replace(/\n+/g, ' ').replace(/</g, '&lt;');
+    div.innerHTML = `<div class="sender ${senderClass}">${sender}</div><div class="reasoning">${truncated}</div>`;
   }
   chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
   return id;
 }
 
@@ -605,13 +605,11 @@ function updateStreamingMsg(id, fullText, charCount, stage) {
   if (!el) return;
   el.className = 'msg model';
   const senderName = '🤖 ' + (model.name || model.model);
-  const partial = fullText.substring(0, charCount).replace(/</g, '&lt;').replace(/\n/g, '<br>');
-  let diagramNote = '';
-  if (!stage.is_text_only && stage.element_count > 0) {
-    diagramNote = `<div class="diagram-note">📐 Canvas updated: <span class="count">${stage.element_count} elements</span></div>`;
-  }
-  el.innerHTML = `<div class="sender model-name">${senderName}</div>${diagramNote}<div class="reasoning">${partial}<span class="cursor"></span></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+  // Cap displayed text at 150 chars for clean bubbles
+  const capCount = Math.min(charCount, 150);
+  let partial = fullText.substring(0, capCount).replace(/\n+/g, ' ').replace(/</g, '&lt;');
+  if (fullText.length > 150 && capCount >= 150) partial += '...';
+  el.innerHTML = `<div class="sender model-name">${senderName}</div><div class="reasoning">${partial}<span class="cursor"></span></div>`;
 }
 
 function finalizeMsg(id, stage) {
@@ -619,15 +617,9 @@ function finalizeMsg(id, stage) {
   if (!el) return;
   el.className = 'msg model';
   const senderName = '🤖 ' + (model.name || model.model);
-  const reasoning = (stage.reasoning || '(no reasoning provided)').replace(/</g, '&lt;').replace(/\n/g, '<br>');
-  let diagramNote = '';
-  if (!stage.is_text_only && stage.element_count > 0) {
-    diagramNote = `<div class="diagram-note">📐 Canvas updated: <span class="count">${stage.element_count} elements</span></div>`;
-  }
-  const secs = (stage.time_ms / 1000).toFixed(1);
-  const tokens = stage.tokens ? ` · ${stage.tokens.completion_tokens || '?'} tokens` : '';
-  el.innerHTML = `<div class="sender model-name">${senderName}</div>${diagramNote}<div class="reasoning">${reasoning}</div><div class="meta"><span>⏱ ${secs}s${tokens}</span><span>${stage.is_vision ? '👁️ vision test' : stage.is_intervention ? '🔧 intervention response' : stage.is_text_only ? '📝 design review' : '📐 layout + reasoning'}</span></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+  let reasoning = (stage.reasoning || '').replace(/\n+/g, ' ').replace(/</g, '&lt;');
+  if (reasoning.length > 150) reasoning = reasoning.substring(0, 147) + '...';
+  el.innerHTML = `<div class="sender model-name">${senderName}</div><div class="reasoning">${reasoning}</div>`;
 }
 
 // CONTROLS
