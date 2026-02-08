@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psycho-Cybernetics — Your Mind as Machine</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;
+--text:#e0ddd8;--dim:#8a8780;--accent:#4fc3f7;--accent2:#7c4dff;
+--success:#66bb6a;--fail:#ef5350;--warm:#ffb74d;
+--radius:12px;
+}
+html{scroll-behavior:smooth}
+body{
+font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+background:var(--bg);color:var(--text);line-height:1.6;
+overflow-x:hidden;
+}
+.hero{
+min-height:100vh;display:flex;flex-direction:column;
+align-items:center;justify-content:center;text-align:center;
+padding:2rem;position:relative;overflow:hidden;
+}
+.hero::before{
+content:'';position:absolute;inset:0;
+background:radial-gradient(ellipse at 50% 40%,rgba(79,195,247,.08) 0%,transparent 70%),
+radial-gradient(ellipse at 30% 80%,rgba(124,77,255,.06) 0%,transparent 50%);
+}
+.hero h1{
+font-size:clamp(2.2rem,6vw,4.5rem);font-weight:200;
+letter-spacing:.02em;position:relative;z-index:1;
+}
+.hero h1 span{font-weight:700;color:var(--accent)}
+.hero .sub{
+font-size:clamp(1rem,2.5vw,1.3rem);color:var(--dim);
+max-width:600px;margin:1.5rem auto 2.5rem;position:relative;z-index:1;
+}
+.hero .quote{
+font-style:italic;color:var(--dim);font-size:.95rem;
+max-width:500px;margin-top:1rem;position:relative;z-index:1;
+border-left:2px solid var(--accent2);padding-left:1rem;text-align:left;
+}
+.scroll-hint{
+position:relative;z-index:1;margin-top:2rem;
+animation:bob 2s ease-in-out infinite;color:var(--dim);font-size:.85rem;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+section{padding:4rem 1.5rem;max-width:900px;margin:0 auto}
+.section-label{
+font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;
+color:var(--accent);margin-bottom:.5rem;
+}
+h2{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:300;margin-bottom:1rem}
+h2 strong{font-weight:700}
+.quote-block{
+border-left:3px solid var(--accent2);padding:.8rem 1.2rem;
+margin:1.5rem 0;background:rgba(124,77,255,.06);border-radius:0 var(--radius) var(--radius) 0;
+font-style:italic;color:var(--dim);font-size:.95rem;
+}
+.card{
+background:var(--bg2);border:1px solid rgba(255,255,255,.06);
+border-radius:var(--radius);padding:1.5rem;margin:1.5rem 0;
+}
+p+p{margin-top:1rem}
+/* ─── Servo Loop ─── */
+.servo-wrap{position:relative;width:100%;max-width:600px;margin:2rem auto}
+.servo-svg{width:100%;height:auto}
+.servo-svg text{font-family:inherit;font-size:13px;fill:var(--text)}
+.servo-svg .node{fill:var(--bg3);stroke:var(--accent);stroke-width:1.5}
+.servo-svg .arrow{fill:none;stroke:var(--dim);stroke-width:1.5;marker-end:url(#arrowhead)}
+.servo-svg .pulse{fill:none;stroke:var(--accent);stroke-width:2;opacity:0}
+.servo-controls{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:1rem}
+.btn{
+display:inline-flex;align-items:center;justify-content:center;
+padding:.65rem 1.3rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.12);
+background:var(--bg3);color:var(--text);cursor:pointer;
+font-size:.9rem;min-height:44px;min-width:44px;
+transition:all .2s;user-select:none;
+}
+.btn:hover,.btn:active{background:rgba(79,195,247,.12);border-color:var(--accent)}
+.btn.active{background:rgba(79,195,247,.18);border-color:var(--accent);color:var(--accent)}
+/* ─── Thermostat ─── */
+.thermo-container{display:flex;flex-direction:column;align-items:center;gap:1rem;margin:2rem 0}
+.thermo-bar-wrap{
+width:100%;max-width:500px;height:48px;background:var(--bg3);
+border-radius:var(--radius);overflow:hidden;position:relative;
+border:1px solid rgba(255,255,255,.06);
+}
+.thermo-bar{
+height:100%;transition:width .5s ease,background .5s ease;
+border-radius:var(--radius);display:flex;align-items:center;
+padding:0 1rem;font-weight:600;font-size:.9rem;
+}
+.thermo-label{display:flex;justify-content:space-between;width:100%;max-width:500px;font-size:.8rem;color:var(--dim)}
+.thermo-setpoint{
+position:absolute;top:0;bottom:0;width:3px;background:var(--warm);
+transition:left .5s ease;z-index:2;
+}
+.thermo-setpoint::after{
+content:'Goal';position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+font-size:.7rem;color:var(--warm);white-space:nowrap;
+}
+.thermo-readout{
+font-size:1.1rem;color:var(--accent);font-variant-numeric:tabular-nums;
+}
+.thermo-buttons{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+/* ─── Theater of Mind ─── */
+.theater{
+background:var(--bg2);border-radius:var(--radius);
+padding:2rem;text-align:center;margin:2rem 0;
+border:1px solid rgba(255,255,255,.06);
+}
+.theater-screen{
+width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;
+margin:1rem 0;display:flex;align-items:center;justify-content:center;
+font-size:1.1rem;color:var(--dim);position:relative;overflow:hidden;
+}
+.theater-screen .scene{
+position:absolute;inset:0;display:flex;flex-direction:column;
+align-items:center;justify-content:center;padding:1.5rem;
+opacity:0;transition:opacity .8s ease;
+}
+.theater-screen .scene.active{opacity:1}
+.theater-screen .scene h3{font-size:1.3rem;margin-bottom:.5rem;font-weight:400}
+.theater-screen .scene p{font-size:.9rem;color:var(--dim);max-width:400px}
+.theater-screen .scene .emoji{font-size:3rem;margin-bottom:.5rem}
+.theater-steps{display:flex;gap:.5rem;justify-content:center;margin-top:.75rem;flex-wrap:wrap}
+.step-dot{
+width:10px;height:10px;border-radius:50%;background:var(--bg3);
+border:1px solid var(--dim);cursor:pointer;transition:all .3s;
+}
+.step-dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3)}
+.breathe-circle{
+width:120px;height:120px;border-radius:50%;
+border:2px solid var(--accent);margin:0 auto 1rem;
+display:flex;align-items:center;justify-content:center;
+font-size:.85rem;color:var(--accent);
+}
+.breathe-circle.inhale{animation:breatheIn 4s ease-in-out forwards}
+.breathe-circle.exhale{animation:breatheOut 4s ease-in-out forwards}
+@keyframes breatheIn{0%{transform:scale(.7);opacity:.5}100%{transform:scale(1.2);opacity:1}}
+@keyframes breatheOut{0%{transform:scale(1.2);opacity:1}100%{transform:scale(.7);opacity:.5}}
+/* ─── Self-Image Mirror ─── */
+.mirror{
+background:var(--bg2);border-radius:var(--radius);padding:2rem;
+margin:2rem 0;border:1px solid rgba(255,255,255,.06);
+}
+.mirror-frame{
+border:2px solid rgba(255,255,255,.1);border-radius:var(--radius);
+padding:1.5rem;min-height:180px;margin:1rem 0;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+transition:all .6s ease;
+}
+.mirror-frame.positive{
+border-color:var(--success);
+background:radial-gradient(ellipse,rgba(102,187,106,.06),transparent 70%);
+}
+.mirror-frame.negative{
+border-color:var(--fail);
+background:radial-gradient(ellipse,rgba(239,83,80,.06),transparent 70%);
+}
+.mirror-text{
+font-size:1.2rem;text-align:center;transition:all .4s;
+max-width:400px;line-height:1.5;
+}
+.mirror-traits{
+display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;
+margin-top:1rem;
+}
+.trait{
+padding:.4rem .8rem;border-radius:20px;font-size:.8rem;
+border:1px solid;transition:all .4s;
+}
+.trait.pos{border-color:var(--success);color:var(--success)}
+.trait.neg{border-color:var(--fail);color:var(--fail)}
+textarea{
+width:100%;padding:.8rem;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+background:var(--bg3);color:var(--text);font-size:.95rem;resize:vertical;
+min-height:60px;font-family:inherit;margin:.75rem 0;
+}
+textarea:focus{outline:none;border-color:var(--accent)}
+/* ─── Success/Failure Toggle ─── */
+.sf-grid{
+display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;
+}
+@media(max-width:600px){.sf-grid{grid-template-columns:1fr}}
+.sf-col{padding:1.2rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.06)}
+.sf-col.success-col{background:rgba(102,187,106,.05)}
+.sf-col.fail-col{background:rgba(239,83,80,.05)}
+.sf-col h3{font-size:1rem;margin-bottom:.75rem;font-weight:600}
+.sf-col.success-col h3{color:var(--success)}
+.sf-col.fail-col h3{color:var(--fail)}
+.sf-item{
+display:flex;align-items:center;gap:.5rem;
+padding:.4rem 0;font-size:.85rem;color:var(--dim);
+}
+.sf-item .letter{
+font-weight:700;width:24px;text-align:center;flex-shrink:0;
+}
+.sf-col.success-col .letter{color:var(--success)}
+.sf-col.fail-col .letter{color:var(--fail)}
+/* ─── Winning Feeling ─── */
+.memory-prompt{
+background:var(--bg2);border-radius:var(--radius);padding:1.5rem;
+margin:1.5rem 0;border:1px solid rgba(255,255,255,.06);
+}
+.feeling-meter{
+width:100%;height:8px;background:var(--bg3);border-radius:4px;
+margin:1rem 0;overflow:hidden;
+}
+.feeling-meter-fill{
+height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));
+border-radius:4px;transition:width 1s ease;width:0;
+}
+/* ─── Quiet Room ─── */
+.quiet-room{
+background:linear-gradient(135deg,#0d1117,#111827);
+border-radius:var(--radius);padding:2rem;margin:2rem 0;
+border:1px solid rgba(79,195,247,.1);text-align:center;
+min-height:300px;display:flex;flex-direction:column;
+align-items:center;justify-content:center;
+transition:all 1s ease;
+}
+.quiet-room.entered{
+background:linear-gradient(135deg,#050a12,#0a0f1a);
+border-color:rgba(79,195,247,.2);
+}
+.quiet-room .room-text{
+font-size:1.1rem;max-width:450px;transition:opacity .8s;
+}
+.waves{
+width:100%;max-width:400px;height:60px;margin:1rem 0;
+opacity:.3;transition:opacity 1s;
+}
+.quiet-room.entered .waves{opacity:.6}
+/* ─── Footer ─── */
+footer{
+text-align:center;padding:3rem 1.5rem;color:var(--dim);
+font-size:.8rem;border-top:1px solid rgba(255,255,255,.06);
+margin-top:2rem;
+}
+footer a{color:var(--accent);text-decoration:none}
+/* ─── Animations ─── */
+.fade-in{opacity:0;transform:translateY(20px);transition:all .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+/* ─── Responsive ─── */
+@media(max-width:600px){
+section{padding:3rem 1rem}
+.hero h1{font-size:2rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ HERO ═══════ -->
+<div class="hero">
+<h1>Your Brain Is a <span>Goal-Seeking Machine</span></h1>
+<p class="sub">An interactive exploration of <em>Psycho-Cybernetics</em> by Maxwell Maltz — the book that launched the science of self-image psychology.</p>
+<div class="quote">"You are not a machine. But your physical brain and nervous system make up a servo-mechanism that <strong>you</strong> use."</div>
+<div class="scroll-hint">↓ Scroll to begin</div>
+</div>
+
+<!-- ═══════ 1. THE SERVO-MECHANISM ═══════ -->
+<section id="servo" class="fade-in">
+<div class="section-label">01 — The Servo-Mechanism</div>
+<h2>You Are the <strong>Operator</strong>, Not the Machine</h2>
+<p>Your brain works like a guided torpedo: it moves toward a goal, detects errors via feedback, and corrects course. You don't consciously control each muscle when you pick up a pen — your servo-mechanism handles it. The same system can steer your entire life.</p>
+<div class="quote-block">"All servo-mechanisms achieve a goal by negative feedback, or by going forward, making mistakes, and immediately correcting course."</div>
+
+<div class="servo-wrap">
+<svg class="servo-svg" viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+<polygon points="0 0, 8 3, 0 6" fill="var(--dim)"/>
+</marker>
+</defs>
+<!-- Nodes -->
+<rect class="node" x="20" y="80" width="110" height="50" rx="10"/>
+<text x="75" y="110" text-anchor="middle" font-size="12">🎯 GOAL</text>
+
+<rect class="node" x="170" y="80" width="110" height="50" rx="10"/>
+<text x="225" y="110" text-anchor="middle" font-size="12">⚡ ACTION</text>
+
+<rect class="node" x="320" y="80" width="110" height="50" rx="10"/>
+<text x="375" y="110" text-anchor="middle" font-size="12">📡 FEEDBACK</text>
+
+<rect class="node" x="320" y="160" width="110" height="50" rx="10"/>
+<text x="375" y="190" text-anchor="middle" font-size="12">🔧 CORRECT</text>
+
+<!-- Arrows -->
+<path class="arrow" d="M130,105 L168,105"/>
+<path class="arrow" d="M280,105 L318,105"/>
+<path class="arrow" d="M375,130 L375,158"/>
+<path class="arrow" d="M320,185 L225,130" style="stroke-dasharray:4,4"/>
+
+<!-- Pulse animation paths -->
+<circle class="pulse" id="pulse1" cx="150" cy="105" r="4"/>
+<circle class="pulse" id="pulse2" cx="300" cy="105" r="4"/>
+<circle class="pulse" id="pulse3" cx="375" cy="145" r="4"/>
+<circle class="pulse" id="pulse4" cx="270" cy="158" r="4"/>
+
+<!-- Result -->
+<rect class="node" x="450" y="80" width="90" height="50" rx="10" id="resultNode"/>
+<text x="495" y="110" text-anchor="middle" font-size="12" id="resultText">🏆 RESULT</text>
+<path class="arrow" d="M430,105 L448,105"/>
+</svg>
+</div>
+
+<div class="servo-controls">
+<button class="btn" onclick="runServo('success')">▶ Run Success Loop</button>
+<button class="btn" onclick="runServo('failure')">▶ Run Failure Loop</button>
+<button class="btn" onclick="resetServo()">↺ Reset</button>
+</div>
+<p id="servo-narration" style="text-align:center;color:var(--dim);margin-top:1rem;min-height:2.5em;font-size:.9rem"></p>
+</section>
+
+<!-- ═══════ 2. THE THERMOSTAT ═══════ -->
+<section id="thermostat" class="fade-in">
+<div class="section-label">02 — The Thermostat Analogy</div>
+<h2>Your Self-Image Is a <strong>Thermostat</strong></h2>
+<p>Just as a thermostat holds room temperature steady, your self-image holds your performance steady. A salesman who sees himself as a "$5,000/year man" will unconsciously coast or sabotage himself to stay at that level — regardless of territory or commission.</p>
+<div class="quote-block">"The self-image sets the boundaries of individual accomplishment. Expand the self-image and you expand the area of the possible."</div>
+
+<div class="thermo-container">
+<div class="thermo-readout">Self-Image Setting: <span id="thermo-val">50</span>%</div>
+<div class="thermo-bar-wrap">
+<div class="thermo-setpoint" id="thermo-setpoint" style="left:50%"></div>
+<div class="thermo-bar" id="thermo-bar" style="width:50%;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
+</div>
+<div class="thermo-label"><span>Low Self-Image</span><span>High Self-Image</span></div>
+<div class="thermo-buttons">
+<button class="btn" onclick="setThermo(25)">😟 "I'm not good enough"</button>
+<button class="btn" onclick="setThermo(50)">😐 Average</button>
+<button class="btn" onclick="setThermo(80)">😊 "I can do this"</button>
+<button class="btn" onclick="setThermo(95)">🔥 Expanded Self-Image</button>
+</div>
+</div>
+<p id="thermo-msg" style="text-align:center;color:var(--dim);font-size:.9rem;min-height:3em">
+Your performance drifts toward wherever your thermostat is set. Change the setting, change the performance.
+</p>
+</section>
+
+<!-- ═══════ 3. THEATER OF THE MIND ═══════ -->
+<section id="theater" class="fade-in">
+<div class="section-label">03 — Theater of the Mind</div>
+<h2><strong>Mental Rehearsal</strong> Is Real Practice</h2>
+<p>Your nervous system cannot distinguish between a vividly imagined experience and a real one. Basketball players who only <em>imagined</em> practicing free throws improved 23% — nearly matching the 24% of those who physically practiced.</p>
+<div class="quote-block">"Your nervous system cannot tell the difference between an imagined experience and a real experience. In either case, it reacts automatically to information that you give it."</div>
+
+<div class="theater">
+<div class="theater-screen" id="theater-screen">
+<div class="scene active" data-step="0">
+<div class="emoji">🎬</div>
+<h3>Your Mental Movie Theater</h3>
+<p>Step through a guided mental rehearsal. Each scene builds new neural patterns — synthetic experience your brain treats as real.</p>
+</div>
+<div class="scene" data-step="1">
+<div class="emoji">🪑</div>
+<h3>1. Sit & Relax</h3>
+<p>Close your eyes. Feel the weight of your body in the chair. Let tension drain from your shoulders, jaw, hands. You're entering the theater.</p>
+</div>
+<div class="scene" data-step="2">
+<div class="emoji">⏪</div>
+<h3>2. Recall a Success</h3>
+<p>Go back to a moment you succeeded — however small. Tying your shoes for the first time. Hitting a home run. Nailing a presentation. <em>Feel</em> it.</p>
+</div>
+<div class="scene" data-step="3">
+<div class="emoji">🔍</div>
+<h3>3. Add Sensory Detail</h3>
+<p>What did you see? Hear? Smell? The more vivid the detail, the more your nervous system believes it. This is real practice.</p>
+</div>
+<div class="scene" data-step="4">
+<div class="emoji">🔮</div>
+<h3>4. Project Forward</h3>
+<p>Now see yourself succeeding at your <em>future</em> goal. Same vivid detail. Same feeling. Your brain doesn't know this hasn't happened yet.</p>
+</div>
+<div class="scene" data-step="5">
+<div class="emoji">✨</div>
+<h3>5. Carry the Feeling</h3>
+<p>Open your eyes. That winning feeling? It's stored now. Your servo-mechanism has a new target. Let it guide you.</p>
+</div>
+</div>
+<div class="theater-steps" id="theater-steps">
+<div class="step-dot active" data-step="0"></div>
+<div class="step-dot" data-step="1"></div>
+<div class="step-dot" data-step="2"></div>
+<div class="step-dot" data-step="3"></div>
+<div class="step-dot" data-step="4"></div>
+<div class="step-dot" data-step="5"></div>
+</div>
+<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:center">
+<button class="btn" onclick="theaterPrev()">← Back</button>
+<button class="btn" onclick="theaterNext()">Next →</button>
+</div>
+</div>
+</section>
+
+<!-- ═══════ 4. SUCCESS vs FAILURE ═══════ -->
+<section id="sf" class="fade-in">
+<div class="section-label">04 — Success vs. Failure Mechanism</div>
+<h2>Same Machine, <strong>Different Data</strong></h2>
+<p>Your creative mechanism is impersonal. Feed it success goals and it becomes a Success Mechanism. Feed it failure goals — worry, self-doubt, resentment — and it dutifully steers you toward failure. Maltz encoded the signals into two acronyms:</p>
+
+<div class="sf-grid">
+<div class="sf-col success-col">
+<h3>✓ SUCCESS</h3>
+<div class="sf-item"><span class="letter">S</span>ense of direction</div>
+<div class="sf-item"><span class="letter">U</span>nderstanding</div>
+<div class="sf-item"><span class="letter">C</span>ourage</div>
+<div class="sf-item"><span class="letter">C</span>ompassion</div>
+<div class="sf-item"><span class="letter">E</span>steem</div>
+<div class="sf-item"><span class="letter">S</span>elf-confidence</div>
+<div class="sf-item"><span class="letter">S</span>elf-acceptance</div>
+</div>
+<div class="sf-col fail-col">
+<h3>✗ FAILURE</h3>
+<div class="sf-item"><span class="letter">F</span>rustration</div>
+<div class="sf-item"><span class="letter">A</span>ggressiveness (misdirected)</div>
+<div class="sf-item"><span class="letter">I</span>nsecurity</div>
+<div class="sf-item"><span class="letter">L</span>oneliness</div>
+<div class="sf-item"><span class="letter">U</span>ncertainty</div>
+<div class="sf-item"><span class="letter">R</span>esentment</div>
+<div class="sf-item"><span class="letter">E</span>mptiness</div>
+</div>
+</div>
+<div class="quote-block">"Glance at negatives, but focus on positives. The driver looks at the dashboard indicators, but keeps his eyes on the road ahead."</div>
+
+<div class="card" style="text-align:center">
+<p style="margin-bottom:1rem;font-size:.95rem">Which signals are you broadcasting right now? Tap to check:</p>
+<div id="sf-check" style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center"></div>
+<p id="sf-result" style="margin-top:1rem;font-size:.9rem;color:var(--dim);min-height:1.5em"></p>
+</div>
+</section>
+
+<!-- ═══════ 5. SELF-IMAGE MIRROR ═══════ -->
+<section id="mirror-section" class="fade-in">
+<div class="section-label">05 — The Self-Image Mirror</div>
+<h2>Change the <strong>Blueprint</strong>, Change the Person</h2>
+<p>Your self-image is the master program. Every action, feeling, and ability stays consistent with it. You literally <em>cannot</em> outperform your self-image for long — like a thermostat, you'll drift back. But the image can be rewritten.</p>
+<div class="quote-block">"You are not your mistakes. You may have made a mistake, but this does not mean that you are a mistake."</div>
+
+<div class="mirror">
+<p style="font-size:.9rem;color:var(--dim);margin-bottom:.75rem">Write a belief about yourself — true or false — and see how it shapes your mirror:</p>
+<textarea id="mirror-input" placeholder='Try: "I am capable of learning anything" or "I always mess things up"' rows="2"></textarea>
+<button class="btn" onclick="reflectMirror()" style="width:100%">Look in the Mirror 🪞</button>
+<div class="mirror-frame" id="mirror-frame">
+<div class="mirror-text" id="mirror-text">Your reflection appears here...</div>
+<div class="mirror-traits" id="mirror-traits"></div>
+</div>
+</div>
+</section>
+
+<!-- ═══════ 6. RELAXATION & THE QUIET ROOM ═══════ -->
+<section id="relax" class="fade-in">
+<div class="section-label">06 — Relaxation & The Quiet Room</div>
+<h2><strong>Relaxation</strong> Is the Master Key</h2>
+<p>Conscious effort jams your creative mechanism. Trying harder makes you worse — Maltz called it "purpose tremor." The antidote is relaxation: nature's own tranquilizer, the state where your servo-mechanism works best.</p>
+<div class="quote-block">"It is absolutely impossible to feel fear, anger, anxiety, or negative emotions of any kind while the muscles of the body are kept perfectly relaxed."</div>
+
+<div class="card" style="text-align:center">
+<p style="margin-bottom:1rem">Try the breathing exercise. Follow the circle:</p>
+<div class="breathe-circle" id="breathe-circle">Press Start</div>
+<button class="btn" id="breathe-btn" onclick="startBreathing()">Start Breathing ◯</button>
+<p id="breathe-count" style="margin-top:.75rem;color:var(--dim);font-size:.85rem"></p>
+</div>
+
+<h3 style="margin-top:2rem;font-weight:400;font-size:1.2rem">Build Your Quiet Room</h3>
+<p>Maltz prescribed building a mental sanctuary — a room in your imagination you can retreat to anytime. Truman called it his "foxhole in the mind." Marcus Aurelius said nowhere is more peaceful than "into thyself."</p>
+
+<div class="quiet-room" id="quiet-room">
+<div class="room-text" id="quiet-text">
+The room is waiting. Press the button to enter.
+</div>
+<svg class="waves" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,30 Q50,10 100,30 T200,30 T300,30 T400,30" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".4">
+<animate attributeName="d" dur="4s" repeatCount="indefinite"
+values="M0,30 Q50,10 100,30 T200,30 T300,30 T400,30;
+M0,30 Q50,50 100,30 T200,30 T300,30 T400,30;
+M0,30 Q50,10 100,30 T200,30 T300,30 T400,30"/>
+</path>
+<path d="M0,30 Q50,50 100,30 T200,30 T300,30 T400,30" fill="none" stroke="var(--accent2)" stroke-width="1" opacity=".3">
+<animate attributeName="d" dur="5s" repeatCount="indefinite"
+values="M0,30 Q50,50 100,30 T200,30 T300,30 T400,30;
+M0,30 Q50,10 100,30 T200,30 T300,30 T400,30;
+M0,30 Q50,50 100,30 T200,30 T300,30 T400,30"/>
+</path>
+</svg>
+<button class="btn" id="quiet-btn" onclick="toggleQuietRoom()">Enter the Quiet Room 🚪</button>
+</div>
+</section>
+
+<!-- ═══════ 7. THE WINNING FEELING ═══════ -->
+<section id="winning" class="fade-in">
+<div class="section-label">07 — The Winning Feeling</div>
+<h2>Reactivate Your <strong>Success Engrams</strong></h2>
+<p>Every success you've ever had is recorded in your brain's neural patterns. When you recall the <em>feeling</em> of success, you reactivate those patterns — and your servo-mechanism locks onto them. This is the "winning feeling" that money players carry into the clutch.</p>
+<div class="quote-block">"When you feel successful and self-confident, you will act successfully. When the feeling is strong, you can literally do no wrong."</div>
+
+<div class="memory-prompt">
+<p style="font-size:.95rem;margin-bottom:.75rem"><strong>Exercise:</strong> Recall a moment you succeeded at something — anything. Write it here and let the feeling build:</p>
+<textarea id="winning-input" placeholder="I remember when I..." rows="3"></textarea>
+<button class="btn" onclick="buildWinning()" style="width:100%;margin-top:.5rem">Reactivate the Feeling ⚡</button>
+<div class="feeling-meter"><div class="feeling-meter-fill" id="winning-meter"></div></div>
+<p id="winning-msg" style="text-align:center;color:var(--dim);font-size:.9rem;min-height:1.5em"></p>
+</div>
+</section>
+
+<!-- ═══════ 8. DEHYPNOTIZE ═══════ -->
+<section id="dehyp" class="fade-in">
+<div class="section-label">08 — Dehypnotize Yourself</div>
+<h2>Challenge Your <strong>False Beliefs</strong></h2>
+<p>You are hypnotized — not by a hypnotist, but by ideas you've uncritically accepted. "I'm not smart enough." "I don't deserve success." "People like me don't..." These beliefs have the same power as a hypnotist's words. But they can be broken.</p>
+<div class="quote-block">"Within you right now is the power to do things you never dreamed possible. This power becomes available to you just as soon as you can change your beliefs."</div>
+
+<div class="card">
+<p style="font-size:.95rem;margin-bottom:.75rem"><strong>Maltz's 4 Questions:</strong> Write a limiting belief, then challenge it:</p>
+<textarea id="belief-input" placeholder='e.g., "I could never be a public speaker"' rows="2"></textarea>
+<button class="btn" onclick="challengeBelief()" style="width:100%;margin-top:.5rem">Challenge This Belief 🔓</button>
+<div id="belief-questions" style="margin-top:1rem"></div>
+</div>
+</section>
+
+<!-- ═══════ CLOSING ═══════ -->
+<section class="fade-in" style="text-align:center;padding-bottom:2rem">
+<h2 style="font-weight:200">The Choice Is <strong>Yours</strong></h2>
+<p style="max-width:550px;margin:1rem auto;color:var(--dim)">
+Your mental storehouse contains recordings of both failures and successes. One is as real as the other. You choose which record to play.
+</p>
+<div class="quote-block" style="max-width:500px;margin:1.5rem auto;text-align:left">
+"Develop a nostalgia for the future instead of for the past."
+<br><span style="color:var(--accent);font-style:normal;font-size:.8rem">— Maxwell Maltz</span>
+</div>
+</section>
+
+<footer>
+<p>Based on <strong>Psycho-Cybernetics</strong> by Maxwell Maltz, MD (1960)</p>
+<p style="margin-top:.5rem">Interactive demo — not affiliated with the Psycho-Cybernetics Foundation</p>
+</footer>
+
+<script>
+// ─── Scroll Fade In ───
+const observer = new IntersectionObserver((entries) => {
+entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') });
+}, {threshold: 0.15});
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ─── 1. Servo Loop Animation ───
+let servoRunning = false;
+const servoSteps = {
+success: [
+{id:'pulse1',msg:'Goal set: "I want to succeed at this."'},
+{id:'pulse2',msg:'Action taken — moving toward the goal...'},
+{id:'pulse3',msg:'Feedback received: slightly off course.'},
+{id:'pulse4',msg:'Course corrected. Trying again...'},
+{id:null,msg:'🏆 Target reached! Success pattern stored in memory.', result:'success'}
+],
+failure: [
+{id:'pulse1',msg:'Goal set: "I hope I don\'t fail..."'},
+{id:'pulse2',msg:'Hesitant action — half-hearted effort...'},
+{id:'pulse3',msg:'Negative feedback amplified by worry.'},
+{id:'pulse4',msg:'Over-correction. Panic sets in...'},
+{id:null,msg:'❌ Failure mechanism engaged. But you can reset and try again.', result:'failure'}
+]
+};
+function runServo(type){
+if(servoRunning) return;
+servoRunning = true;
+const steps = servoSteps[type];
+const narr = document.getElementById('servo-narration');
+const node = document.getElementById('resultNode');
+const txt = document.getElementById('resultText');
+let i = 0;
+function next(){
+if(i >= steps.length){ servoRunning = false; return; }
+const step = steps[i];
+narr.textContent = step.msg;
+if(step.id){
+const p = document.getElementById(step.id);
+p.style.opacity = '1';
+p.style.fill = type === 'success' ? 'var(--success)' : 'var(--fail)';
+setTimeout(()=>{ p.style.opacity = '0'; }, 600);
+}
+if(step.result === 'success'){
+node.style.fill = 'rgba(102,187,106,.15)';
+node.style.stroke = 'var(--success)';
+txt.textContent = '🏆 HIT';
+} else if(step.result === 'failure'){
+node.style.fill = 'rgba(239,83,80,.15)';
+node.style.stroke = 'var(--fail)';
+txt.textContent = '❌ MISS';
+}
+i++;
+setTimeout(next, 1200);
+}
+next();
+}
+function resetServo(){
+servoRunning = false;
+document.getElementById('servo-narration').textContent = '';
+const node = document.getElementById('resultNode');
+node.style.fill = 'var(--bg3)';
+node.style.stroke = 'var(--accent)';
+document.getElementById('resultText').textContent = '🏆 RESULT';
+document.querySelectorAll('.pulse').forEach(p => p.style.opacity = '0');
+}
+
+// ─── 2. Thermostat ───
+const thermoMsgs = {
+25: "At 25%, your mechanism fights to keep you small. You coast when ahead, sabotage when close to a win. The $5,000 salesman can't break through — not from lack of ability, but from a thermostat set too low.",
+50: "Average setting. You perform adequately but never break out. Your servo-mechanism sees 'good enough' as the target and steers you right back to it.",
+80: "Your self-image now permits high performance. Goals that once seemed impossible now feel natural. The thermostat is set high enough that your mechanism actively pulls you toward success.",
+95: "Expanded self-image. You believe deeply in your capabilities. Your creative mechanism works overtime, supplying ideas, energy, and courage. This is what Maltz meant by 'expanding the area of the possible.'"
+};
+function setThermo(val){
+const bar = document.getElementById('thermo-bar');
+const sp = document.getElementById('thermo-setpoint');
+const display = document.getElementById('thermo-val');
+const msg = document.getElementById('thermo-msg');
+bar.style.width = val + '%';
+sp.style.left = val + '%';
+display.textContent = val;
+msg.textContent = thermoMsgs[val] || '';
+const hue = val < 40 ? `var(--fail)` : val < 60 ? `var(--warm)` : val < 85 ? `var(--accent)` : `var(--success)`;
+bar.style.background = `linear-gradient(90deg, var(--accent2), ${hue})`;
+}
+
+// ─── 3. Theater of the Mind ───
+let theaterStep = 0;
+function setTheaterStep(s){
+theaterStep = Math.max(0, Math.min(5, s));
+document.querySelectorAll('#theater-screen .scene').forEach(el => el.classList.remove('active'));
+document.querySelector(`#theater-screen .scene[data-step="${theaterStep}"]`).classList.add('active');
+document.querySelectorAll('#theater-steps .step-dot').forEach(el => {
+el.classList.toggle('active', parseInt(el.dataset.step) === theaterStep);
+});
+}
+function theaterNext(){ setTheaterStep(theaterStep + 1) }
+function theaterPrev(){ setTheaterStep(theaterStep - 1) }
+document.querySelectorAll('#theater-steps .step-dot').forEach(dot => {
+dot.addEventListener('click', () => setTheaterStep(parseInt(dot.dataset.step)));
+});
+
+// ─── 4. Success/Failure Check ───
+const sfTraits = [
+{label:'Sense of direction',type:'s'},{label:'Courage',type:'s'},{label:'Self-confidence',type:'s'},
+{label:'Compassion',type:'s'},{label:'Self-acceptance',type:'s'},
+{label:'Frustration',type:'f'},{label:'Resentment',type:'f'},{label:'Insecurity',type:'f'},
+{label:'Emptiness',type:'f'},{label:'Uncertainty',type:'f'}
+];
+const sfCheck = document.getElementById('sf-check');
+const sfState = {};
+sfTraits.forEach(t => {
+sfState[t.label] = false;
+const btn = document.createElement('button');
+btn.className = 'btn';
+btn.textContent = t.label;
+btn.style.fontSize = '.8rem';
+btn.addEventListener('click', () => {
+sfState[t.label] = !sfState[t.label];
+btn.classList.toggle('active', sfState[t.label]);
+btn.style.borderColor = sfState[t.label] ? (t.type === 's' ? 'var(--success)' : 'var(--fail)') : '';
+btn.style.color = sfState[t.label] ? (t.type === 's' ? 'var(--success)' : 'var(--fail)') : '';
+updateSF();
+});
+sfCheck.appendChild(btn);
+});
+function updateSF(){
+let s=0,f=0;
+sfTraits.forEach(t => { if(sfState[t.label]){ t.type==='s'?s++:f++ }});
+const el = document.getElementById('sf-result');
+if(s+f===0) el.textContent='';
+else if(s > f) el.textContent = `Success signals dominating (${s}S/${f}F). Your mechanism is oriented toward goals.`;
+else if(f > s) el.textContent = `Warning: failure signals detected (${s}S/${f}F). Time to redirect — not by force, but by changing the goal-image.`;
+else el.textContent = `Balanced (${s}S/${f}F). Tip the scales toward success by adding one more positive signal.`;
+}
+
+// ─── 5. Self-Image Mirror ───
+function reflectMirror(){
+const input = document.getElementById('mirror-input').value.trim();
+if(!input) return;
+const frame = document.getElementById('mirror-frame');
+const text = document.getElementById('mirror-text');
+const traits = document.getElementById('mirror-traits');
+const lower = input.toLowerCase();
+const negative = /(can't|cannot|never|always fail|not good|mess up|stupid|ugly|worthless|inferior|afraid|hate myself|no good|dumb|loser|hopeless)/i.test(lower);
+frame.className = 'mirror-frame ' + (negative ? 'negative' : 'positive');
+if(negative){
+text.innerHTML = `"${input}"<br><br><span style="font-size:.85rem;color:var(--fail)">This belief acts as a ceiling. Your servo-mechanism will steer you to match it — not because it's true, but because you've accepted it as your self-image. Challenge it.</span>`;
+traits.innerHTML = ['Limited','Defensive','Inhibited','Stuck'].map(t=>`<span class="trait neg">${t}</span>`).join('');
+} else {
+text.innerHTML = `"${input}"<br><br><span style="font-size:.85rem;color:var(--success)">This belief expands your area of the possible. Your creative mechanism now has a target to steer toward. It will supply the means — you supply the goal.</span>`;
+traits.innerHTML = ['Expansive','Creative','Confident','Growing'].map(t=>`<span class="trait pos">${t}</span>`).join('');
+}
+}
+
+// ─── 6. Breathing Exercise ───
+let breatheInterval = null;
+let breatheCount = 0;
+function startBreathing(){
+const circle = document.getElementById('breathe-circle');
+const btn = document.getElementById('breathe-btn');
+const count = document.getElementById('breathe-count');
+if(breatheInterval){
+clearInterval(breatheInterval);
+breatheInterval = null;
+btn.textContent = 'Start Breathing ◯';
+circle.className = 'breathe-circle';
+circle.textContent = 'Press Start';
+count.textContent = '';
+breatheCount = 0;
+return;
+}
+btn.textContent = 'Stop';
+breatheCount = 0;
+let phase = 'inhale';
+function tick(){
+breatheCount++;
+circle.className = 'breathe-circle ' + phase;
+circle.textContent = phase === 'inhale' ? 'Breathe In...' : 'Breathe Out...';
+count.textContent = `Cycle ${Math.ceil(breatheCount/2)} of 5`;
+phase = phase === 'inhale' ? 'exhale' : 'inhale';
+if(breatheCount >= 10){
+clearInterval(breatheInterval);
+breatheInterval = null;
+circle.className = 'breathe-circle';
+circle.textContent = '☮ Calm';
+circle.style.borderColor = 'var(--success)';
+btn.textContent = 'Start Breathing ◯';
+count.textContent = 'Relaxation is nature\'s own tranquilizer. Carry this feeling with you.';
+setTimeout(()=>{ circle.style.borderColor = ''; }, 5000);
+}
+}
+tick();
+breatheInterval = setInterval(tick, 4000);
+}
+
+// ─── 6b. Quiet Room ───
+let quietEntered = false;
+const quietTexts = [
+"You close the door behind you. The room is simple, quiet, beautiful. Soft blue walls. Your favorite chair. Through a small window, you see waves rolling silently onto a beach.",
+"Nothing can touch you here. There are no decisions to make, no one to please, no deadlines. You left your worries at the foot of the stairs.",
+"Feel the tension leaving your body like steam escaping through the top of your head. Old Faithful, releasing pressure. This is your foxhole. Your decompression chamber.",
+"Stay as long as you need. When you leave, you'll carry this calm with you — a psychic umbrella against whatever comes next."
+];
+let quietIdx = 0;
+function toggleQuietRoom(){
+const room = document.getElementById('quiet-room');
+const text = document.getElementById('quiet-text');
+const btn = document.getElementById('quiet-btn');
+if(!quietEntered){
+quietEntered = true;
+room.classList.add('entered');
+btn.textContent = 'Continue →';
+quietIdx = 0;
+text.style.opacity = '0';
+setTimeout(()=>{ text.innerHTML = quietTexts[0]; text.style.opacity = '1'; }, 400);
+} else {
+quietIdx++;
+if(quietIdx < quietTexts.length){
+text.style.opacity = '0';
+setTimeout(()=>{ text.innerHTML = quietTexts[quietIdx]; text.style.opacity = '1'; }, 400);
+if(quietIdx === quietTexts.length - 1) btn.textContent = 'Leave the Room 🚪';
+} else {
+quietEntered = false;
+room.classList.remove('entered');
+btn.textContent = 'Enter the Quiet Room 🚪';
+text.style.opacity = '0';
+setTimeout(()=>{ text.innerHTML = 'The room is always here. Return whenever you need to.'; text.style.opacity = '1'; }, 400);
+}
+}
+}
+
+// ─── 7. Winning Feeling ───
+function buildWinning(){
+const input = document.getElementById('winning-input').value.trim();
+if(!input) return;
+const meter = document.getElementById('winning-meter');
+const msg = document.getElementById('winning-msg');
+meter.style.width = '0';
+msg.textContent = 'Recalling the feeling...';
+setTimeout(()=>{ meter.style.width = '30%'; msg.textContent = 'The memory sharpens. You can see the details...'; }, 500);
+setTimeout(()=>{ meter.style.width = '60%'; msg.textContent = 'You feel it now — the confidence, the certainty...'; }, 1500);
+setTimeout(()=>{ meter.style.width = '90%'; msg.textContent = 'The winning feeling is reactivated. Your engrams are firing.'; }, 2500);
+setTimeout(()=>{
+meter.style.width = '100%';
+msg.innerHTML = '⚡ <strong>Locked in.</strong> Your servo-mechanism is now set for success. Carry this feeling into your next challenge. "When the feeling is strong, you can literally do no wrong."';
+}, 3500);
+}
+
+// ─── 8. Dehypnotize ───
+function challengeBelief(){
+const input = document.getElementById('belief-input').value.trim();
+if(!input) return;
+const el = document.getElementById('belief-questions');
+el.innerHTML = `
+<div style="padding:1rem;background:var(--bg3);border-radius:8px;margin-top:.5rem">
+<p style="color:var(--warm);font-weight:600;margin-bottom:.75rem">Challenging: "${input}"</p>
+<div style="display:flex;flex-direction:column;gap:.75rem">
+<div style="padding:.6rem;border-left:2px solid var(--accent);padding-left:1rem">
+<strong style="font-size:.85rem;color:var(--accent)">1. Is there any rational reason for this belief?</strong>
+<p style="font-size:.85rem;color:var(--dim);margin-top:.3rem">Separate facts from opinions. What actual evidence supports this?</p>
+</div>
+<div style="padding:.6rem;border-left:2px solid var(--accent);padding-left:1rem">
+<strong style="font-size:.85rem;color:var(--accent)">2. Could I be mistaken?</strong>
+<p style="font-size:.85rem;color:var(--dim);margin-top:.3rem">Have you ever seen someone with similar circumstances succeed? Then the belief isn't absolute truth.</p>
+</div>
+<div style="padding:.6rem;border-left:2px solid var(--accent);padding-left:1rem">
+<strong style="font-size:.85rem;color:var(--accent)">3. Would I say this about someone else?</strong>
+<p style="font-size:.85rem;color:var(--dim);margin-top:.3rem">If a friend told you this about themselves, would you agree — or would you see they're selling themselves short?</p>
+</div>
+<div style="padding:.6rem;border-left:2px solid var(--accent);padding-left:1rem">
+<strong style="font-size:.85rem;color:var(--accent)">4. Why continue acting as if this is true?</strong>
+<p style="font-size:.85rem;color:var(--dim);margin-top:.3rem">If there's no good reason, you've been hypnotized by a false belief. You can dehypnotize yourself — right now — by refusing to accept it.</p>
+</div>
+</div>
+<p style="margin-top:1rem;text-align:center;color:var(--success);font-size:.9rem">🔓 "The important thing is that it does not matter how you got the idea. If you are firmly convinced that idea is true, it has the same power over you as a hypnotist's words."</p>
+</div>`;
+}
+</script>
+</body>
+</html>

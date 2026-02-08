@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steal Like an Artist v2 — Interactive Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,serif;background:#0d0d1a;color:#e0e0e0;overflow-x:hidden;min-height:100vh}
+a{color:#ffd700}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0d0d1a}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+.header{text-align:center;padding:50px 20px 30px;background:linear-gradient(135deg,#0d0d1a 0%,#1a1a2e 50%,#0f2040 100%)}
+.header h1{font-size:clamp(1.8rem,5vw,3rem);font-family:'Courier New',monospace;color:#ffd700;letter-spacing:3px;margin-bottom:6px}
+.header .sub{color:#888;font-style:italic;font-size:.95rem}
+.header .tag{display:inline-block;margin-top:12px;background:#ffd70015;border:1px solid #ffd70040;padding:4px 14px;border-radius:20px;font-family:'Courier New',monospace;font-size:.75rem;color:#ffd700}
+
+.nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:14px 10px;background:#111125;border-bottom:2px solid #ffd70050;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.nav button{background:#0f1a30;color:#aaa;border:1px solid #333;padding:7px 14px;border-radius:20px;cursor:pointer;font-size:.78rem;transition:all .3s;font-family:'Courier New',monospace;white-space:nowrap}
+.nav button:hover,.nav button.active{background:#ffd700;color:#0d0d1a;border-color:#ffd700}
+
+.section{display:none;padding:30px 16px 60px;max-width:900px;margin:0 auto}
+.section.active{display:block}
+.section h2{font-family:'Courier New',monospace;color:#ffd700;font-size:1.5rem;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.section .intro{color:#999;margin-bottom:20px;line-height:1.6;font-size:.95rem}
+
+.quote{background:#ffffff08;border-left:3px solid #ffd700;padding:14px 18px;margin:20px 0;font-style:italic;border-radius:0 8px 8px 0;font-size:.92rem;line-height:1.5}
+.quote .attr{display:block;text-align:right;color:#666;font-style:normal;margin-top:6px;font-size:.8rem}
+
+.panel{background:#111125;border-radius:10px;padding:22px;margin:20px 0;border:1px solid #1a1a3e}
+.panel-title{font-family:'Courier New',monospace;color:#ffd700;font-size:1.05rem;margin-bottom:12px}
+
+.btn{background:#ffd700;color:#0d0d1a;border:none;padding:10px 22px;border-radius:22px;cursor:pointer;font-family:'Courier New',monospace;font-weight:bold;font-size:.85rem;transition:all .2s}
+.btn:hover{transform:scale(1.04);filter:brightness(1.1)}
+.btn-outline{background:transparent;color:#ffd700;border:1px solid #ffd700}
+.btn-outline:hover{background:#ffd70020}
+.btn-sm{padding:6px 14px;font-size:.78rem}
+.btn-danger{background:#f8717130;color:#f87171;border:1px solid #f8717150}
+
+input[type=text],textarea{background:#0d0d1a;border:1px solid #333;color:#e0e0e0;padding:10px 14px;border-radius:8px;font-family:'Courier New',monospace;font-size:.9rem;width:100%}
+input[type=text]:focus,textarea:focus{outline:none;border-color:#ffd700}
+textarea{resize:vertical;min-height:100px;font-family:Georgia,serif}
+
+.tag-pill{display:inline-block;background:#ffd70015;border:1px solid #ffd70030;color:#ffd700;padding:2px 10px;border-radius:12px;font-size:.72rem;font-family:'Courier New',monospace;cursor:pointer;transition:all .2s}
+.tag-pill:hover,.tag-pill.active{background:#ffd700;color:#0d0d1a}
+
+/* ===== 1. REMIX MACHINE ===== */
+.blender{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px}
+.blend-slots{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.blend-slot{width:160px;min-height:120px;background:#0d0d1a;border:2px dashed #ffd70050;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;text-align:center;cursor:pointer;transition:all .3s}
+.blend-slot:hover{border-color:#ffd700;background:#ffd70008}
+.blend-slot.filled{border-style:solid;border-color:#ffd700}
+.blend-slot .cat{font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.blend-slot .val{font-family:'Courier New',monospace;color:#ffd700;font-size:.85rem;line-height:1.3}
+.blend-output{width:100%;background:#0a0a16;border-radius:10px;padding:20px;text-align:center;min-height:80px;border:1px solid #1a1a3e}
+.blend-output .mashup{font-size:1.05rem;line-height:1.6;color:#e0e0e0}
+.blend-output .mashup strong{color:#ffd700}
+.round-history{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.round-chip{background:#1a1a3e;padding:4px 10px;border-radius:12px;font-size:.72rem;font-family:'Courier New',monospace;color:#888;cursor:pointer;transition:all .2s}
+.round-chip:hover,.round-chip.active{color:#ffd700;border-color:#ffd700}
+
+/* ===== 2. GENEALOGY ===== */
+#tree-canvas{width:100%;height:450px;background:#080814;border-radius:10px;border:1px solid #1a1a3e;position:relative;overflow:hidden;cursor:crosshair;touch-action:none}
+.tree-node{position:absolute;background:#111125;border:2px solid #ffd700;border-radius:50%;width:80px;height:80px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.7rem;padding:6px;cursor:grab;user-select:none;color:#ffd700;font-family:'Courier New',monospace;transition:box-shadow .3s;z-index:2}
+.tree-node:hover{box-shadow:0 0 20px #ffd70040}
+.tree-node.root{background:#ffd700;color:#0d0d1a;font-weight:bold;border-color:#fff;width:90px;height:90px}
+.tree-node .depth-ring{position:absolute;inset:-4px;border-radius:50%;border:1px solid;opacity:.3;pointer-events:none}
+.tree-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tree-controls input{flex:1;min-width:120px}
+.depth-legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.depth-legend span{font-size:.72rem;font-family:'Courier New',monospace;display:flex;align-items:center;gap:4px}
+.depth-legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ===== 3. COPY→TRANSFORM→INVENT ===== */
+.cti-stages{display:flex;gap:2px;margin:20px 0}
+.cti-stage{flex:1;padding:16px;border-radius:8px;cursor:pointer;text-align:center;transition:all .3s;border:2px solid transparent}
+.cti-stage.active{transform:scale(1.03)}
+.cti-stage .num{font-size:2rem;font-weight:bold;font-family:'Courier New',monospace;line-height:1}
+.cti-stage .label{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.cti-canvas{background:#080814;border-radius:10px;padding:20px;min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:1px solid #1a1a3e}
+.pattern-grid{display:grid;gap:3px;margin:10px 0}
+.pattern-cell{width:28px;height:28px;border-radius:4px;transition:all .4s;cursor:pointer}
+.cti-desc{color:#999;font-size:.85rem;text-align:center;margin-top:12px;line-height:1.5;max-width:500px}
+.cti-nav{display:flex;gap:10px;justify-content:center;margin-top:16px}
+
+/* ===== 4. SIDE PROJECT GENERATOR ===== */
+.constraint-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.constraint-slot{background:#0d0d1a;border:1px solid #1a1a3e;border-radius:10px;padding:16px;text-align:center;min-height:100px;display:flex;flex-direction:column;justify-content:center}
+.constraint-slot .slot-label{font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.constraint-slot .slot-value{font-family:'Courier New',monospace;color:#ffd700;font-size:.95rem;line-height:1.4}
+.combo-output{background:#0a0a16;border:1px solid #1a1a3e;border-radius:10px;padding:20px;text-align:center;margin:16px 0;font-size:1rem;line-height:1.5}
+
+/* ===== 5. PRODUCTIVE PROCRASTINATION ===== */
+.project-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+.project-card{background:#111125;border:1px solid #1a1a3e;border-radius:10px;padding:16px;cursor:pointer;transition:all .3s;position:relative}
+.project-card:hover{border-color:#ffd70060;transform:translateY(-2px)}
+.project-card.working{border-color:#4ade80;box-shadow:0 0 15px #4ade8020}
+.project-card .card-title{font-family:'Courier New',monospace;color:#ffd700;font-size:.9rem;margin-bottom:6px}
+.project-card .card-time{font-size:.72rem;color:#666;font-family:'Courier New',monospace}
+.project-card .card-visits{font-size:.72rem;color:#4ade80;font-family:'Courier New',monospace;margin-top:4px}
+.project-card .card-bar{height:3px;background:#1a1a3e;border-radius:2px;margin-top:8px;overflow:hidden}
+.project-card .card-bar-fill{height:100%;background:#ffd700;border-radius:2px;transition:width .5s}
+.procrastination-insight{background:#4ade8010;border:1px solid #4ade8030;border-radius:10px;padding:16px;text-align:center;margin:16px 0}
+.procrastination-insight .big{font-size:1.3rem;font-family:'Courier New',monospace;color:#4ade80;margin-bottom:4px}
+
+/* ===== 6. SWIPE FILE ===== */
+.swipe-input-area{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.swipe-input-area input{flex:1;min-width:180px}
+.swipe-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.swipe-collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.swipe-item{background:#0d0d1a;border:1px solid #1a1a3e;border-radius:8px;padding:14px;transition:all .3s;position:relative}
+.swipe-item:hover{border-color:#ffd70040}
+.swipe-item .swipe-text{font-size:.88rem;line-height:1.4;margin-bottom:8px}
+.swipe-item .swipe-item-tags{display:flex;gap:4px;flex-wrap:wrap}
+.swipe-item .swipe-delete{position:absolute;top:8px;right:10px;color:#f8717160;cursor:pointer;font-size:.8rem;transition:color .2s}
+.swipe-item .swipe-delete:hover{color:#f87171}
+.swipe-remix-area{background:#0a0a16;border:1px solid #1a1a3e;border-radius:10px;padding:16px;margin-top:16px;text-align:center}
+.swipe-stat{font-family:'Courier New',monospace;color:#888;font-size:.78rem;margin-top:8px}
+
+/* ===== 7. WRITE WHAT YOU LIKE ===== */
+.love-picker{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.love-option{padding:8px 16px;background:#0d0d1a;border:1px solid #1a1a3e;border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .3s}
+.love-option:hover{border-color:#ffd70060}
+.love-option.selected{background:#ffd70020;border-color:#ffd700;color:#ffd700}
+.writing-space{margin-top:16px}
+.writing-space textarea{min-height:180px;font-size:.95rem;line-height:1.6}
+.writing-prompt{background:#ffd70010;border:1px solid #ffd70030;border-radius:10px;padding:16px;margin:16px 0;text-align:center;font-style:italic;line-height:1.5}
+.writing-prompt strong{color:#ffd700;font-style:normal}
+
+.footer{text-align:center;padding:40px 20px;color:#444;font-size:.8rem;border-top:1px solid #1a1a3e;margin-top:40px}
+
+@media(max-width:600px){
+  .blend-slot{width:130px;min-height:100px}
+  .constraint-slots{grid-template-columns:1fr}
+  .cti-stages{flex-direction:column;gap:8px}
+  .project-cards{grid-template-columns:1fr}
+  .nav button{padding:5px 10px;font-size:.7rem}
+  .pattern-cell{width:22px;height:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>STEAL LIKE AN ARTIST</h1>
+  <div class="sub">Austin Kleon — 10 Things Nobody Told You About Being Creative</div>
+  <div class="tag">V2 — INTERACTIVE DEMO</div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="active" data-s="remix">🎰 Remix Machine</button>
+  <button data-s="genealogy">🌳 Genealogy</button>
+  <button data-s="cti">🦋 Copy→Invent</button>
+  <button data-s="sidegen">🎲 Side Projects</button>
+  <button data-s="procrast">🔀 Procrastination</button>
+  <button data-s="swipe">📁 Swipe File</button>
+  <button data-s="write">✍️ Write What You Like</button>
+</div>
+
+<!-- 1. REMIX MACHINE -->
+<div class="section active" id="remix">
+  <h2>🎰 Remix Machine</h2>
+  <p class="intro">All creativity is combinatorial. Drag two ideas into the blender. See what emerges. Then remix the remix — each round builds on the last. "1 + 1 = 3."</p>
+  
+  <div class="panel">
+    <div class="blender">
+      <div class="blend-slots" id="blend-slots"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <button class="btn" onclick="blendSpin()">🎰 SPIN ALL</button>
+        <button class="btn btn-outline" onclick="blendMash()">⚡ BLEND</button>
+        <button class="btn btn-outline btn-sm" onclick="blendReset()">↺ Reset Rounds</button>
+      </div>
+      <div class="blend-output" id="blend-output">
+        <div class="mashup">Spin the slots, then hit <strong>BLEND</strong> to create a mashup...</div>
+      </div>
+      <div id="round-info" style="font-family:'Courier New',monospace;font-size:.78rem;color:#666;text-align:center">Round 1</div>
+      <div class="round-history" id="round-history"></div>
+    </div>
+  </div>
+  
+  <div class="quote">"Every new idea is just a mashup or a remix of one or more previous ideas."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 2. CREATIVE GENEALOGY -->
+<div class="section" id="genealogy">
+  <h2>🌳 Creative Genealogy</h2>
+  <p class="intro">You have a family tree of ideas. Add your influences, then <em>their</em> influences. Watch the web expand. Click two nodes to connect them. Realize: nothing is original — it's stolen ideas all the way down.</p>
+  
+  <div class="panel">
+    <div class="tree-controls">
+      <input type="text" id="node-name" placeholder="Add an influence..." maxlength="25">
+      <select id="node-depth" style="background:#0d0d1a;border:1px solid #333;color:#e0e0e0;padding:10px;border-radius:8px;font-family:'Courier New',monospace;font-size:.85rem">
+        <option value="1">My influence</option>
+        <option value="2">Their influence</option>
+        <option value="3">Deeper…</option>
+      </select>
+      <button class="btn btn-sm" onclick="addNode()">+ Add</button>
+      <button class="btn btn-sm btn-danger" onclick="clearTree()">Clear</button>
+    </div>
+    <div id="tree-canvas">
+      <svg id="tree-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></svg>
+    </div>
+    <div class="depth-legend">
+      <span><span class="dot" style="background:#ffd700"></span> You</span>
+      <span><span class="dot" style="background:#ff6b6b"></span> Your influences</span>
+      <span><span class="dot" style="background:#4ecdc4"></span> Their influences</span>
+      <span><span class="dot" style="background:#a78bfa"></span> Deeper</span>
+    </div>
+    <div id="tree-stats" style="text-align:center;margin-top:10px;font-family:'Courier New',monospace;font-size:.78rem;color:#666"></div>
+  </div>
+  
+  <div class="quote">"You are, in fact, a mashup of what you choose to let into your life."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 3. COPY→TRANSFORM→INVENT -->
+<div class="section" id="cti">
+  <h2>🦋 Copy → Transform → Invent</h2>
+  <p class="intro">Stage 1: faithfully copy a pattern. Stage 2: transform one element. Stage 3: the copy has become something new. Step through the evolution. "Our failure to copy our heroes is where we discover where our own thing lives."</p>
+  
+  <div class="panel">
+    <div class="cti-stages" id="cti-stages">
+      <div class="cti-stage active" data-stage="0" style="background:#f8717115;border-color:#f87171">
+        <div class="num" style="color:#f87171">1</div>
+        <div class="label" style="color:#f87171">Copy</div>
+      </div>
+      <div class="cti-stage" data-stage="1" style="background:#facc1515">
+        <div class="num" style="color:#facc15">2</div>
+        <div class="label" style="color:#facc15">Transform</div>
+      </div>
+      <div class="cti-stage" data-stage="2" style="background:#4ade8015">
+        <div class="num" style="color:#4ade80">3</div>
+        <div class="label" style="color:#4ade80">Invent</div>
+      </div>
+    </div>
+    <div class="cti-canvas" id="cti-canvas"></div>
+    <div class="cti-desc" id="cti-desc"></div>
+    <div class="cti-nav">
+      <button class="btn btn-outline btn-sm" onclick="ctiPrev()">← Prev</button>
+      <button class="btn btn-sm" onclick="ctiNext()">Next →</button>
+      <button class="btn btn-outline btn-sm" onclick="ctiNewPattern()">🎲 New Pattern</button>
+    </div>
+  </div>
+  
+  <div class="quote">"Our failure to copy our heroes is where we discover where our own thing lives. That is how we evolve."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 4. SIDE PROJECT GENERATOR -->
+<div class="section" id="sidegen">
+  <h2>🎲 Side Project Generator</h2>
+  <p class="intro">Kleon says side projects are where breakthroughs happen. Here's a random constraint generator: combine a medium + a topic + a limitation. "Limitations mean freedom."</p>
+  
+  <div class="panel">
+    <div class="constraint-slots" id="gen-slots"></div>
+    <div style="text-align:center">
+      <button class="btn" onclick="generateProject()">🎲 GENERATE</button>
+    </div>
+    <div class="combo-output" id="combo-output">Hit generate for a side project idea...</div>
+    <div id="saved-combos" style="margin-top:16px"></div>
+  </div>
+  
+  <div class="quote">"It's the side projects that really take off."<span class="attr">— Austin Kleon</span></div>
+  <div class="quote">"Telling yourself you have all the time in the world, all the money in the world, all the colors in the palette, anything you want — that just kills creativity."<span class="attr">— Jack White</span></div>
+</div>
+
+<!-- 5. PRODUCTIVE PROCRASTINATION -->
+<div class="section" id="procrast">
+  <h2>🔀 Productive Procrastination</h2>
+  <p class="intro">Multiple projects. Shuffle between them. The demo tracks which one you return to most — that's your real interest. Kleon's method: "Let them talk to each other. Something will begin to happen."</p>
+  
+  <div class="panel">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <input type="text" id="new-project" placeholder="Add a project..." style="flex:1;min-width:150px">
+      <button class="btn btn-sm" onclick="addProject()">+ Add</button>
+      <button class="btn btn-outline btn-sm" onclick="addSampleProjects()">Load Examples</button>
+    </div>
+    <div class="project-cards" id="project-cards"></div>
+    <div class="procrastination-insight" id="procrast-insight" style="display:none">
+      <div class="big" id="procrast-winner"></div>
+      <div style="color:#999;font-size:.85rem" id="procrast-msg"></div>
+    </div>
+  </div>
+  
+  <div class="quote">"When I get busy, I get stupid."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<!-- 6. SWIPE FILE -->
+<div class="section" id="swipe">
+  <h2>📁 The Swipe File</h2>
+  <p class="intro">Build a collection of stolen ideas. Add inspirations, tag them, remix later. "Keep track of the stuff you've swiped from others." This is a working creative tool.</p>
+  
+  <div class="panel">
+    <div class="swipe-input-area">
+      <input type="text" id="swipe-input" placeholder="Paste an idea, quote, inspiration...">
+      <input type="text" id="swipe-tag-input" placeholder="Tags (comma-sep)" style="max-width:160px">
+      <button class="btn btn-sm" onclick="addSwipe()">+ Swipe</button>
+    </div>
+    <div class="swipe-tags" id="swipe-filter-tags"></div>
+    <div class="swipe-collection" id="swipe-collection"></div>
+    <div class="swipe-stat" id="swipe-stat"></div>
+    <div class="swipe-remix-area" id="swipe-remix-area" style="display:none">
+      <div style="font-family:'Courier New',monospace;color:#ffd700;font-size:.85rem;margin-bottom:8px">🔀 RANDOM REMIX</div>
+      <div id="swipe-remix-output" style="line-height:1.5"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="swipeRemix()">Remix Again</button>
+    </div>
+  </div>
+  
+  <div class="quote">"It is better to take what does not belong to you than to let it lie around neglected."<span class="attr">— Mark Twain</span></div>
+</div>
+
+<!-- 7. WRITE WHAT YOU LIKE -->
+<div class="section" id="write">
+  <h2>✍️ Write What You Like</h2>
+  <p class="intro">Not "write what you know." Pick a thing you love, then write the version that doesn't exist yet. "All fiction is fan fiction." Brian Eno: "My interest in making music has been to create something that does not exist that I would like to listen to."</p>
+  
+  <div class="panel">
+    <div class="panel-title">What do you love?</div>
+    <div class="love-picker" id="love-picker"></div>
+    <input type="text" id="custom-love" placeholder="Or type your own..." style="margin-top:8px">
+    <button class="btn btn-sm" onclick="pickCustomLove()" style="margin-top:8px">Use This</button>
+    
+    <div class="writing-prompt" id="writing-prompt" style="display:none"></div>
+    
+    <div class="writing-space" id="writing-space" style="display:none">
+      <textarea id="writing-area" placeholder="Write the version that doesn't exist yet..."></textarea>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;color:#666;font-size:.78rem;font-family:'Courier New',monospace">
+        <span id="write-word-count">0 words</span>
+        <span id="write-prompt-btn" style="cursor:pointer;color:#ffd700" onclick="newWritePrompt()">🎲 New prompt</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="quote">"Draw the art you want to see, start the business you want to run, play the music you want to hear, write the books you want to read."<span class="attr">— Austin Kleon</span></div>
+</div>
+
+<div class="footer">
+  <p>An interactive demo of ideas from <em>Steal Like an Artist</em> by Austin Kleon (2012)</p>
+  <p style="margin-top:6px">Built by Web & Circuits · <a href="https://webandcircuits.com">webandcircuits.com</a></p>
+</div>
+
+<script>
+// ========== NAV ==========
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+    document.getElementById(b.dataset.s).classList.add('active');
+    b.classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// ========== 1. REMIX MACHINE ==========
+const blendData={
+  'Art Style':['Impressionism','Cubism','Art Nouveau','Bauhaus','Ukiyo-e','Pop Art','Brutalism','Art Deco','Surrealism','Minimalism','Gothic','Futurism'],
+  'Medium':['A podcast','A zine','A video game','A cookbook','A dance piece','A short film','A mobile app','An album','A mural','A board game','A newsletter','A perfume'],
+  'Subject':['Loneliness in crowds','The smell of rain','Teaching a robot empathy','A friendship between rivals','The last day of summer','Dreams you can\'t remember','Letters never sent','A city that forgot its name','The sound of growing','Maps of imaginary places'],
+  'Constraint':['In under 50 words','Using only questions','Made in one hour','With a $5 budget','That fits on a postcard','Without any color','Using only found objects','That changes when read backwards','Only using circles','In complete silence']
+};
+const blendCats=Object.keys(blendData);
+let blendRound=1,blendHistory=[],lastBlend=null;
+
+function initBlend(){
+  const c=document.getElementById('blend-slots');
+  blendCats.forEach(cat=>{
+    const s=document.createElement('div');
+    s.className='blend-slot';s.dataset.cat=cat;
+    s.innerHTML=`<div class="cat">${cat}</div><div class="val">click to spin</div>`;
+    s.onclick=()=>{
+      const items=blendData[cat];
+      s.querySelector('.val').textContent=items[Math.floor(Math.random()*items.length)];
+      s.classList.add('filled');
+    };
+    c.appendChild(s);
+  });
+}
+function blendSpin(){
+  document.querySelectorAll('.blend-slot').forEach(s=>{
+    const items=blendData[s.dataset.cat];
+    s.querySelector('.val').textContent=items[Math.floor(Math.random()*items.length)];
+    s.classList.add('filled');
+  });
+}
+function blendMash(){
+  const vals={};let allFilled=true;
+  document.querySelectorAll('.blend-slot').forEach(s=>{
+    const v=s.querySelector('.val').textContent;
+    if(v==='click to spin')allFilled=false;
+    vals[s.dataset.cat]=v;
+  });
+  if(!allFilled){blendSpin();blendMash();return}
+  
+  let mashup;
+  if(lastBlend&&blendRound>1){
+    mashup=`<strong>Round ${blendRound}:</strong> Take your previous mashup and remix it with <strong>${vals['Art Style']}</strong> aesthetics. The subject shifts to <strong>${vals['Subject'].toLowerCase()}</strong>. New constraint: <strong>${vals['Constraint'].toLowerCase()}</strong>. Medium: <strong>${vals['Medium'].toLowerCase()}</strong>.`;
+  } else {
+    mashup=`<strong>${vals['Medium']}</strong> about <strong>${vals['Subject'].toLowerCase()}</strong>, in the style of <strong>${vals['Art Style']}</strong>, ${vals['Constraint'].toLowerCase()}.`;
+  }
+  
+  document.getElementById('blend-output').innerHTML=`<div class="mashup">${mashup}</div>`;
+  lastBlend=vals;
+  
+  const chip=document.createElement('span');
+  chip.className='round-chip';chip.textContent=`R${blendRound}`;
+  chip.title=Object.values(vals).join(' + ');
+  document.getElementById('round-history').appendChild(chip);
+  
+  blendRound++;
+  document.getElementById('round-info').textContent=`Round ${blendRound} — each round builds on the last`;
+}
+function blendReset(){
+  blendRound=1;blendHistory=[];lastBlend=null;
+  document.getElementById('round-history').innerHTML='';
+  document.getElementById('round-info').textContent='Round 1';
+  document.getElementById('blend-output').innerHTML='<div class="mashup">Spin the slots, then hit <strong>BLEND</strong>...</div>';
+  document.querySelectorAll('.blend-slot').forEach(s=>{s.querySelector('.val').textContent='click to spin';s.classList.remove('filled')});
+}
+initBlend();
+
+// ========== 2. GENEALOGY ==========
+const depthColors=['#ffd700','#ff6b6b','#4ecdc4','#a78bfa'];
+let nodes=[],edges=[],connectSrc=null,dragN=null,dragOff={x:0,y:0};
+
+function initTree(){
+  const c=document.getElementById('tree-canvas');
+  const r=c.getBoundingClientRect();
+  const n=mkNode('YOU',0,r.width/2-45,r.height/2-45);
+  n.el.classList.add('root');
+  updateTreeStats();
+}
+function mkNode(name,depth,x,y){
+  const c=document.getElementById('tree-canvas');
+  const el=document.createElement('div');
+  el.className='tree-node';
+  el.textContent=name;
+  el.style.left=x+'px';el.style.top=y+'px';
+  el.style.borderColor=depthColors[Math.min(depth,3)];
+  el.style.color=depthColors[Math.min(depth,3)];
+  if(depth===0){el.style.background='#ffd700';el.style.color='#0d0d1a'}
+  const id=nodes.length;
+  el.dataset.id=id;
+  el.addEventListener('mousedown',startDrag);
+  el.addEventListener('touchstart',startDragT,{passive:false});
+  el.addEventListener('click',nodeClick);
+  c.appendChild(el);
+  const obj={el,x,y,name,depth};
+  nodes.push(obj);
+  return obj;
+}
+function addNode(){
+  const inp=document.getElementById('node-name');
+  const name=inp.value.trim();if(!name)return;
+  const depth=parseInt(document.getElementById('node-depth').value);
+  const c=document.getElementById('tree-canvas');
+  const r=c.getBoundingClientRect();
+  const angle=Math.random()*Math.PI*2;
+  const dist=80+depth*60+Math.random()*40;
+  const cx=r.width/2+Math.cos(angle)*dist;
+  const cy=r.height/2+Math.sin(angle)*dist;
+  mkNode(name,depth,Math.max(10,Math.min(cx,r.width-90)),Math.max(10,Math.min(cy,r.height-90)));
+  inp.value='';
+  updateTreeStats();
+}
+function nodeClick(e){
+  if(dragN!==null)return;
+  const id=+e.target.dataset.id;
+  if(connectSrc===null){connectSrc=id;e.target.style.boxShadow='0 0 20px '+depthColors[Math.min(nodes[id].depth,3)]+'80'}
+  else if(connectSrc!==id){drawEdge(connectSrc,id);nodes[connectSrc].el.style.boxShadow='';connectSrc=null}
+  else{e.target.style.boxShadow='';connectSrc=null}
+}
+function drawEdge(a,b){
+  const svg=document.getElementById('tree-svg');
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('stroke',depthColors[Math.min(Math.max(nodes[a].depth,nodes[b].depth),3)]);
+  line.setAttribute('stroke-width','1.5');line.setAttribute('opacity','0.4');
+  updLine(line,nodes[a],nodes[b]);
+  svg.appendChild(line);
+  edges.push({el:line,a,b});
+  updateTreeStats();
+}
+function updLine(l,a,b){
+  const ax=a.x+a.el.offsetWidth/2,ay=a.y+a.el.offsetHeight/2;
+  const bx=b.x+b.el.offsetWidth/2,by=b.y+b.el.offsetHeight/2;
+  l.setAttribute('x1',ax);l.setAttribute('y1',ay);l.setAttribute('x2',bx);l.setAttribute('y2',by);
+}
+function startDrag(e){e.preventDefault();const id=+e.target.dataset.id;dragN=id;dragOff.x=e.clientX-nodes[id].x;dragOff.y=e.clientY-nodes[id].y;document.addEventListener('mousemove',onDrag);document.addEventListener('mouseup',endDrag)}
+function startDragT(e){e.preventDefault();const t=e.touches[0];const id=+e.target.dataset.id;dragN=id;dragOff.x=t.clientX-nodes[id].x;dragOff.y=t.clientY-nodes[id].y;document.addEventListener('touchmove',onDragT,{passive:false});document.addEventListener('touchend',endDrag)}
+function onDrag(e){if(dragN===null)return;moveN(e.clientX,e.clientY)}
+function onDragT(e){e.preventDefault();if(dragN===null)return;moveN(e.touches[0].clientX,e.touches[0].clientY)}
+function moveN(cx,cy){const n=nodes[dragN];n.x=cx-dragOff.x;n.y=cy-dragOff.y;n.el.style.left=n.x+'px';n.el.style.top=n.y+'px';edges.forEach(e=>{if(e.a===dragN||e.b===dragN)updLine(e.el,nodes[e.a],nodes[e.b])})}
+function endDrag(){dragN=null;document.removeEventListener('mousemove',onDrag);document.removeEventListener('mouseup',endDrag);document.removeEventListener('touchmove',onDragT);document.removeEventListener('touchend',endDrag)}
+function clearTree(){document.getElementById('tree-canvas').innerHTML='<svg id="tree-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></svg>';nodes=[];edges=[];connectSrc=null;initTree()}
+function updateTreeStats(){
+  const n=nodes.length;const e=edges.length;
+  document.getElementById('tree-stats').textContent=n>1?`${n} nodes · ${e} connections · Nothing is original`:'Add your influences to build the web';
+}
+document.getElementById('node-name').addEventListener('keypress',e=>{if(e.key==='Enter')addNode()});
+initTree();
+
+// ========== 3. COPY→TRANSFORM→INVENT ==========
+let ctiStage=0;
+const ctiSize=8;
+let originalPattern=[],currentPattern=[];
+
+const ctiDescs=[
+  '<strong style="color:#f87171">COPY</strong> — Faithfully reproduce the pattern. Click cells to match the original above. "Reverse-engineering — like a mechanic taking apart a car to see how it works."',
+  '<strong style="color:#facc15">TRANSFORM</strong> — Now change ONE element. Shift a color, move a shape, break one rule. The pattern is still recognizable but it\'s starting to become yours.',
+  '<strong style="color:#4ade80">INVENT</strong> — Keep going. The original is barely visible now. Through the act of imperfect copying, something new has emerged. "That is how we evolve."'
+];
+
+const palettes=[
+  ['#f87171','#fbbf24','#4ade80','#60a5fa','#a78bfa','#0d0d1a'],
+  ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#9b59b6','#0d0d1a'],
+  ['#e74c3c','#f39c12','#2ecc71','#3498db','#9b59b6','#0d0d1a']
+];
+
+function genPattern(){
+  const p=[];const pal=palettes[Math.floor(Math.random()*palettes.length)];
+  // Generate a visually interesting pattern with some symmetry
+  for(let r=0;r<ctiSize;r++){
+    for(let c=0;c<ctiSize;c++){
+      if(Math.random()<0.35)p.push(pal[Math.floor(Math.random()*(pal.length-1))]);
+      else if(c<ctiSize/2&&Math.random()<0.5)p.push(pal[Math.floor(Math.random()*(pal.length-1))]);
+      else if(c>=ctiSize/2&&p[r*ctiSize+(ctiSize-1-c)])p.push(p[r*ctiSize+(ctiSize-1-c)]);// mirror
+      else p.push(pal[pal.length-1]);
+    }
+  }
+  return p;
+}
+
+function renderCTI(){
+  const canvas=document.getElementById('cti-canvas');
+  canvas.innerHTML='';
+  
+  document.querySelectorAll('.cti-stage').forEach((s,i)=>{
+    s.classList.toggle('active',i===ctiStage);
+    s.style.borderColor=i===ctiStage?['#f87171','#facc15','#4ade80'][i]:'transparent';
+  });
+  
+  if(ctiStage===0){
+    // Show original + empty grid to copy into
+    const label=document.createElement('div');
+    label.style.cssText='font-family:"Courier New",monospace;color:#888;font-size:.78rem;margin-bottom:8px';
+    label.textContent='ORIGINAL PATTERN — study it, then recreate below';
+    canvas.appendChild(label);
+    canvas.appendChild(makeGrid(originalPattern,false));
+    
+    const label2=document.createElement('div');
+    label2.style.cssText='font-family:"Courier New",monospace;color:#f87171;font-size:.78rem;margin:12px 0 8px';
+    label2.textContent='YOUR COPY — click cells to paint';
+    canvas.appendChild(label2);
+    canvas.appendChild(makeGrid(currentPattern,true));
+  } else {
+    const labels=['YOUR COPY — now transform it','YOUR INVENTION — keep evolving'];
+    const colors=['#facc15','#4ade80'];
+    const label=document.createElement('div');
+    label.style.cssText=`font-family:"Courier New",monospace;color:${colors[ctiStage-1]};font-size:.78rem;margin-bottom:8px`;
+    label.textContent=labels[ctiStage-1];
+    canvas.appendChild(label);
+    canvas.appendChild(makeGrid(currentPattern,true));
+    
+    // Show small original for reference
+    const ref=document.createElement('div');
+    ref.style.cssText='margin-top:12px;opacity:.4;transform:scale(.6);transform-origin:center';
+    const refLabel=document.createElement('div');
+    refLabel.style.cssText='font-family:"Courier New",monospace;color:#888;font-size:.72rem;margin-bottom:4px;text-align:center';
+    refLabel.textContent='original (reference)';
+    ref.appendChild(refLabel);
+    ref.appendChild(makeGrid(originalPattern,false));
+    canvas.appendChild(ref);
+  }
+  
+  document.getElementById('cti-desc').innerHTML=ctiDescs[ctiStage];
+}
+
+function makeGrid(data,editable){
+  const g=document.createElement('div');
+  g.className='pattern-grid';
+  g.style.gridTemplateColumns=`repeat(${ctiSize},1fr)`;
+  g.style.width=(ctiSize*31)+'px';
+  data.forEach((color,i)=>{
+    const cell=document.createElement('div');
+    cell.className='pattern-cell';
+    cell.style.background=color;
+    if(editable){
+      cell.onclick=()=>{
+        const pal=palettes[0];
+        const ci=pal.indexOf(color);
+        const next=pal[(ci+1)%pal.length];
+        currentPattern[i]=next;
+        cell.style.background=next;
+      };
+    }
+    g.appendChild(cell);
+  });
+  return g;
+}
+
+function ctiNext(){if(ctiStage<2){ctiStage++;renderCTI()}}
+function ctiPrev(){if(ctiStage>0){ctiStage--;renderCTI()}}
+function ctiNewPattern(){
+  originalPattern=genPattern();
+  currentPattern=new Array(ctiSize*ctiSize).fill('#0d0d1a');
+  ctiStage=0;
+  renderCTI();
+}
+
+document.querySelectorAll('.cti-stage').forEach(s=>{
+  s.onclick=()=>{ctiStage=+s.dataset.stage;renderCTI()};
+});
+
+ctiNewPattern();
+
+// ========== 4. SIDE PROJECT GENERATOR ==========
+const genData={
+  medium:['A zine','A podcast episode','A short film','A series of postcards','A Twitter thread','A chapbook','A collage','A playlist','A recipe','A board game','A mobile app prototype','A photo essay','A newsletter','A chalk mural','A stop-motion animation'],
+  topic:['Your commute','A childhood memory','The future of sleep','An imaginary country','Your worst habit','A conversation with your younger self','The last bookstore on Earth','What your pet thinks about','The sound of your neighborhood','A meal that changed your life','Something you failed at','The space between two buildings'],
+  limitation:['Only using materials from your trash','In exactly 10 minutes','Without any words','Using only your non-dominant hand','On a single sheet of paper','With a budget of $0','Only in black and white','While standing up','Using only things you can see right now','It must fit in your pocket','Only using sounds','Must be finished before lunch']
+};
+
+function initGen(){
+  const c=document.getElementById('gen-slots');
+  ['medium','topic','limitation'].forEach(cat=>{
+    const s=document.createElement('div');
+    s.className='constraint-slot';s.dataset.cat=cat;
+    s.innerHTML=`<div class="slot-label">🎯 ${cat}</div><div class="slot-value" id="gen-${cat}">—</div>`;
+    s.style.cursor='pointer';
+    s.onclick=()=>{
+      const items=genData[cat];
+      document.getElementById(`gen-${cat}`).textContent=items[Math.floor(Math.random()*items.length)];
+    };
+    c.appendChild(s);
+  });
+}
+function generateProject(){
+  ['medium','topic','limitation'].forEach(cat=>{
+    const items=genData[cat];
+    document.getElementById(`gen-${cat}`).textContent=items[Math.floor(Math.random()*items.length)];
+  });
+  const m=document.getElementById('gen-medium').textContent;
+  const t=document.getElementById('gen-topic').textContent;
+  const l=document.getElementById('gen-limitation').textContent;
+  if(m==='—')return;
+  document.getElementById('combo-output').innerHTML=`<strong style="color:#ffd700">${m}</strong> about <strong style="color:#4ecdc4">${t.toLowerCase()}</strong>, <span style="color:#ff6b6b">${l.toLowerCase()}</span>.`;
+}
+initGen();
+
+// ========== 5. PRODUCTIVE PROCRASTINATION ==========
+let projects=[];
+let activeProject=null;
+let projectTimer=null;
+
+function addProject(){
+  const inp=document.getElementById('new-project');
+  const name=inp.value.trim();if(!name)return;
+  projects.push({name,visits:0,seconds:0,lastActive:null});
+  inp.value='';
+  renderProjects();
+}
+function addSampleProjects(){
+  if(projects.length>0)return;
+  ['The Novel','Learn Guitar','Side App','Photography','The Podcast','Pottery'].forEach(n=>{
+    projects.push({name:n,visits:0,seconds:0,lastActive:null});
+  });
+  renderProjects();
+}
+function workOn(idx){
+  if(activeProject===idx){
+    // Stop working
+    clearInterval(projectTimer);
+    projects[idx].lastActive=null;
+    activeProject=null;
+  } else {
+    if(activeProject!==null){
+      clearInterval(projectTimer);
+      projects[activeProject].lastActive=null;
+    }
+    activeProject=idx;
+    projects[idx].visits++;
+    projects[idx].lastActive=Date.now();
+    projectTimer=setInterval(()=>{
+      if(activeProject!==null)projects[activeProject].seconds++;
+      renderProjects();
+    },1000);
+  }
+  renderProjects();
+  updateInsight();
+}
+function renderProjects(){
+  const c=document.getElementById('project-cards');
+  c.innerHTML='';
+  const maxSec=Math.max(...projects.map(p=>p.seconds),1);
+  projects.forEach((p,i)=>{
+    const card=document.createElement('div');
+    card.className='project-card'+(activeProject===i?' working':'');
+    card.innerHTML=`
+      <div class="card-title">${activeProject===i?'⚡ ':''}${p.name}</div>
+      <div class="card-time">${formatTime(p.seconds)}</div>
+      <div class="card-visits">${p.visits} visit${p.visits!==1?'s':''}</div>
+      <div class="card-bar"><div class="card-bar-fill" style="width:${(p.seconds/maxSec*100)}%"></div></div>
+    `;
+    card.onclick=()=>workOn(i);
+    c.appendChild(card);
+  });
+}
+function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return m>0?`${m}m ${sec}s`:`${sec}s`}
+function updateInsight(){
+  const panel=document.getElementById('procrast-insight');
+  if(projects.length<2){panel.style.display='none';return}
+  panel.style.display='block';
+  const sorted=[...projects].sort((a,b)=>b.visits-a.visits);
+  if(sorted[0].visits>0){
+    document.getElementById('procrast-winner').textContent=sorted[0].name;
+    document.getElementById('procrast-msg').textContent=sorted[0].visits>sorted[1]?.visits
+      ?`You keep coming back to this one (${sorted[0].visits} visits). That's your real interest.`
+      :`Tied with ${sorted[1].name} — keep shuffling, the pattern will emerge.`;
+  } else {
+    document.getElementById('procrast-winner').textContent='?';
+    document.getElementById('procrast-msg').textContent='Start working on projects to discover your pattern.';
+  }
+}
+document.getElementById('new-project').addEventListener('keypress',e=>{if(e.key==='Enter')addProject()});
+
+// ========== 6. SWIPE FILE ==========
+let swipes=[];
+let swipeFilter=null;
+const defaultSwipes=[
+  {text:'"Steal from anywhere that resonates with inspiration." — Jim Jarmusch',tags:['quote','permission']},
+  {text:'David Hockney had jacket pockets tailored to fit sketchbooks.',tags:['method','habit']},
+  {text:'Two parallel lines create a third line of negative space. 1+1=3.',tags:['principle','visual']},
+  {text:'"Nothing is more important than an unread library." — John Waters',tags:['quote','reading']},
+  {text:'Keep a praise file for dark days — save every nice thing anyone says about your work.',tags:['method','resilience']},
+  {text:'Dr. Seuss wrote Green Eggs and Ham on a bet: only 50 unique words.',tags:['constraint','story']},
+  {text:'Bradford Cox recorded fake albums before real ones came out. Many became real songs.',tags:['method','music']},
+  {text:'"If you\'re the most talented person in the room, find another room."',tags:['quote','growth']}
+];
+
+function initSwipe(){
+  swipes=[...defaultSwipes];
+  renderSwipes();
+}
+function addSwipe(){
+  const text=document.getElementById('swipe-input').value.trim();
+  if(!text)return;
+  const tags=(document.getElementById('swipe-tag-input').value||'').split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
+  swipes.push({text,tags:tags.length?tags:['untagged']});
+  document.getElementById('swipe-input').value='';
+  document.getElementById('swipe-tag-input').value='';
+  renderSwipes();
+}
+function renderSwipes(){
+  const allTags=[...new Set(swipes.flatMap(s=>s.tags))].sort();
+  const tf=document.getElementById('swipe-filter-tags');
+  tf.innerHTML='<span class="tag-pill'+(swipeFilter===null?' active':'')+'" onclick="swipeFilter=null;renderSwipes()">All</span>';
+  allTags.forEach(t=>{
+    tf.innerHTML+=`<span class="tag-pill${swipeFilter===t?' active':''}" onclick="swipeFilter='${t}';renderSwipes()">${t}</span>`;
+  });
+  
+  const filtered=swipeFilter?swipes.filter(s=>s.tags.includes(swipeFilter)):swipes;
+  const c=document.getElementById('swipe-collection');
+  c.innerHTML='';
+  filtered.forEach((s,i)=>{
+    const realIdx=swipes.indexOf(s);
+    const item=document.createElement('div');
+    item.className='swipe-item';
+    item.innerHTML=`
+      <span class="swipe-delete" onclick="event.stopPropagation();swipes.splice(${realIdx},1);renderSwipes()">✕</span>
+      <div class="swipe-text">${s.text}</div>
+      <div class="swipe-item-tags">${s.tags.map(t=>`<span class="tag-pill" style="font-size:.65rem">${t}</span>`).join('')}</div>
+    `;
+    c.appendChild(item);
+  });
+  
+  document.getElementById('swipe-stat').textContent=`${swipes.length} items in your swipe file`;
+  
+  const remix=document.getElementById('swipe-remix-area');
+  remix.style.display=swipes.length>=2?'block':'none';
+}
+function swipeRemix(){
+  if(swipes.length<2)return;
+  const a=swipes[Math.floor(Math.random()*swipes.length)];
+  let b;do{b=swipes[Math.floor(Math.random()*swipes.length)]}while(b===a);
+  document.getElementById('swipe-remix-output').innerHTML=`
+    <div style="color:#888;font-size:.85rem">What if you combined:</div>
+    <div style="margin:8px 0;color:#ffd700;font-style:italic">"${a.text}"</div>
+    <div style="color:#888">with</div>
+    <div style="margin:8px 0;color:#4ecdc4;font-style:italic">"${b.text}"</div>
+  `;
+}
+document.getElementById('swipe-input').addEventListener('keypress',e=>{if(e.key==='Enter')addSwipe()});
+initSwipe();
+swipeRemix();
+
+// ========== 7. WRITE WHAT YOU LIKE ==========
+const loveOptions=['Sci-fi novels','90s hip-hop','Studio Ghibli','Greek mythology','Jazz','True crime','Video games','Street art','Cooking shows','Architecture','Nature docs','Comics','Musical theater','Horror films','Photography','Poetry'];
+const promptTemplates=[
+  'What if <THING> existed in a world where no one had ever heard of it? You\'re introducing it for the first time. Write the opening.',
+  'Write the <THING> that scared you as a kid — but make it beautiful.',
+  'The greatest <THING> ever made doesn\'t exist yet. What does it look like? Describe it.',
+  'Write a love letter to <THING> from someone who just discovered it today.',
+  'If <THING> had a secret it was keeping from everyone, what would it be? Write the confession.',
+  'Imagine <THING> but set 200 years in the future. What survived? What changed?',
+  'Write the version of <THING> your parents would never understand — but your best friend would.',
+  'The last <THING> on Earth. Who has it? What do they do with it?',
+  'Write a 3-paragraph review of a <THING> that doesn\'t exist yet — but should.'
+];
+let currentLove=null;
+
+function initWrite(){
+  const c=document.getElementById('love-picker');
+  loveOptions.forEach(opt=>{
+    const el=document.createElement('div');
+    el.className='love-option';
+    el.textContent=opt;
+    el.onclick=()=>selectLove(opt,el);
+    c.appendChild(el);
+  });
+  document.getElementById('writing-area').addEventListener('input',function(){
+    const words=(this.value.trim().match(/\S+/g)||[]).length;
+    document.getElementById('write-word-count').textContent=words+' words';
+  });
+}
+function selectLove(thing,el){
+  document.querySelectorAll('.love-option').forEach(o=>o.classList.remove('selected'));
+  if(el)el.classList.add('selected');
+  currentLove=thing;
+  newWritePrompt();
+  document.getElementById('writing-space').style.display='block';
+}
+function pickCustomLove(){
+  const v=document.getElementById('custom-love').value.trim();
+  if(!v)return;
+  document.querySelectorAll('.love-option').forEach(o=>o.classList.remove('selected'));
+  currentLove=v;
+  newWritePrompt();
+  document.getElementById('writing-space').style.display='block';
+}
+function newWritePrompt(){
+  if(!currentLove)return;
+  const tmpl=promptTemplates[Math.floor(Math.random()*promptTemplates.length)];
+  const prompt=tmpl.replace(/<THING>/g,currentLove.toLowerCase());
+  document.getElementById('writing-prompt').style.display='block';
+  document.getElementById('writing-prompt').innerHTML=`<strong>Your prompt:</strong><br>${prompt}`;
+}
+initWrite();
+</script>
+</body>
+</html>

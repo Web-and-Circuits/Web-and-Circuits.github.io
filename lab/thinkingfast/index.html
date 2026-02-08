@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bias Lab — Thinking, Fast and Slow</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#13131f;--accent:#6c63ff;--accent2:#ff6b6b;--text:#e8e6e3;--dim:#7a7a8c;--green:#4ecdc4;--orange:#ff9f43;--border:#1e1e2e;--glow:rgba(108,99,255,.15)}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:720px;margin:0 auto;padding:0 20px}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;padding:40px 20px}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 30%,rgba(108,99,255,.08) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2rem,6vw,3.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:12px;background:linear-gradient(135deg,#fff 0%,#6c63ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{font-size:clamp(1rem,2.5vw,1.3rem);color:var(--dim);max-width:520px;margin-bottom:40px}
+.hero .warning{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 28px;max-width:480px;font-size:.95rem;color:var(--orange);margin-bottom:32px}
+.cta{display:inline-block;padding:16px 40px;background:var(--accent);color:#fff;border-radius:50px;font-size:1.1rem;font-weight:600;cursor:pointer;border:none;min-height:48px;min-width:48px;transition:all .3s;text-decoration:none}
+.cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,99,255,.4)}
+
+/* Sections */
+section{min-height:100vh;padding:80px 20px;opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s}
+section.visible{opacity:1;transform:none}
+.section-num{font-size:.85rem;color:var(--accent);font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.section-title{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin-bottom:8px}
+.section-quote{font-style:italic;color:var(--dim);margin-bottom:32px;font-size:.95rem;border-left:3px solid var(--accent);padding-left:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin:20px 0;transition:border-color .3s}
+.card:hover{border-color:var(--accent)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;border:none;min-height:48px;min-width:48px;transition:all .2s;margin:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5a52e0}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-secondary:hover{background:#2a2a3e}
+.btn-danger{background:var(--accent2);color:#fff}
+.btn-danger:hover{background:#e55a5a}
+.btn-success{background:var(--green);color:#0a0a0f}
+
+/* Reveal */
+.reveal-box{background:linear-gradient(135deg,rgba(108,99,255,.1),rgba(255,107,107,.1));border:1px solid var(--accent);border-radius:16px;padding:24px;margin:20px 0;display:none;animation:fadeIn .5s}
+.reveal-box.show{display:block}
+.reveal-box h3{color:var(--accent);margin-bottom:8px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Choices grid */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.choice-btn{padding:16px;border-radius:12px;background:var(--card);border:2px solid var(--border);color:var(--text);font-size:1rem;cursor:pointer;min-height:48px;transition:all .2s;text-align:center}
+.choice-btn:hover{border-color:var(--accent);background:rgba(108,99,255,.08)}
+.choice-btn.selected{border-color:var(--accent);background:rgba(108,99,255,.15)}
+.choice-btn.correct{border-color:var(--green);background:rgba(78,205,196,.15)}
+.choice-btn.wrong{border-color:var(--accent2);background:rgba(255,107,107,.15)}
+
+/* Slider */
+.slider-wrap{margin:20px 0}
+.slider-wrap input[type=range]{width:100%;height:8px;-webkit-appearance:none;background:var(--border);border-radius:4px;outline:none}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--accent);cursor:pointer}
+.slider-val{text-align:center;font-size:2rem;font-weight:700;color:var(--accent);margin:8px 0}
+
+/* Illusion */
+.illusion-wrap{display:flex;justify-content:center;align-items:center;margin:24px 0;gap:40px}
+.ml-line{position:relative;display:flex;align-items:center;justify-content:center}
+.ml-line .bar{width:150px;height:4px;background:var(--text);position:relative}
+.ml-line .fin{position:absolute;width:30px;height:4px;background:var(--text)}
+.ml-line .fin-tl{top:-12px;transform:rotate(30deg);left:-8px}
+.ml-line .fin-bl{top:12px;transform:rotate(-30deg);left:-8px}
+.ml-line .fin-tr{top:-12px;transform:rotate(-30deg);right:-8px}
+.ml-line .fin-br{top:12px;transform:rotate(30deg);right:-8px}
+
+/* Progress bar */
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:100;transition:width .3s}
+
+/* Input */
+input[type=number],input[type=text]{background:var(--card);border:2px solid var(--border);color:var(--text);padding:14px 18px;border-radius:12px;font-size:1.1rem;width:100%;max-width:200px;outline:none;min-height:48px}
+input:focus{border-color:var(--accent)}
+
+/* Percentage bar */
+.pct-bar{height:32px;border-radius:8px;background:var(--border);margin:8px 0;overflow:hidden;position:relative}
+.pct-fill{height:100%;border-radius:8px;transition:width 1s ease;display:flex;align-items:center;padding:0 12px;font-size:.85rem;font-weight:600;color:#fff}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.stat{background:var(--card);border-radius:12px;padding:16px;text-align:center;border:1px solid var(--border)}
+.stat .num{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.stat .label{font-size:.8rem;color:var(--dim);margin-top:4px}
+
+/* Footer */
+footer{text-align:center;padding:60px 20px;color:var(--dim);font-size:.85rem}
+
+/* Responsive */
+@media(max-width:480px){
+.choices{grid-template-columns:1fr}
+.illusion-wrap{gap:20px}
+.ml-line .bar{width:100px}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- HERO -->
+<div class="hero" id="hero">
+<h1>The Bias Lab</h1>
+<p class="sub">An interactive exploration of <em>Thinking, Fast and Slow</em> by Daniel Kahneman. You are the test subject.</p>
+<div class="warning">⚠️ Warning: This exhibit will trick you. Your own brain will betray you. That's the point.</div>
+<button class="cta" onclick="scrollToSection('s1')">Enter the Lab →</button>
+</div>
+
+<!-- SECTION 1: Müller-Lyer / System 1 vs 2 -->
+<section id="s1">
+<div class="container">
+<div class="section-num">Exhibit 01</div>
+<div class="section-title">Your Eyes Are Liars</div>
+<div class="section-quote">"Not all illusions are visual. There are illusions of thought, which we call cognitive illusions."</div>
+
+<div class="card">
+<p style="margin-bottom:16px">Look at these two horizontal lines. <strong>Which one is longer?</strong></p>
+<div class="illusion-wrap">
+<div class="ml-line">
+<div style="position:relative">
+<div class="bar"></div>
+<div class="fin fin-tl"></div>
+<div class="fin fin-bl"></div>
+<div class="fin fin-tr" style="transform:rotate(30deg)"></div>
+<div class="fin fin-br" style="transform:rotate(-30deg)"></div>
+</div>
+<div style="margin-top:28px;text-align:center;font-size:.85rem;color:var(--dim)">Line A</div>
+</div>
+<div class="ml-line">
+<div style="position:relative">
+<div class="bar"></div>
+<div class="fin fin-tl" style="transform:rotate(-30deg)"></div>
+<div class="fin fin-bl" style="transform:rotate(30deg)"></div>
+<div class="fin fin-tr" style="transform:rotate(-30deg);right:-8px"></div>
+<div class="fin fin-br" style="transform:rotate(30deg);right:-8px"></div>
+</div>
+<div style="margin-top:28px;text-align:center;font-size:.85rem;color:var(--dim)">Line B</div>
+</div>
+</div>
+<div class="choices">
+<button class="choice-btn" onclick="mlAnswer(this,'a')">Line A is longer</button>
+<button class="choice-btn" onclick="mlAnswer(this,'b')">Line B is longer</button>
+<button class="choice-btn" onclick="mlAnswer(this,'same')" style="grid-column:1/-1">They're the same</button>
+</div>
+<div class="reveal-box" id="ml-reveal">
+<h3>🧠 They're identical.</h3>
+<p>This is the <strong>Müller-Lyer illusion</strong>. Both lines are exactly 150px. Even now that you know, Line B <em>still looks longer</em>. This is the key insight: <strong>you cannot unsee it.</strong></p>
+<p style="margin-top:12px">Kahneman writes: <em>"You have chosen to believe the measurement, but you cannot prevent System 1 from doing its thing."</em></p>
+<p style="margin-top:12px">This is the difference between <strong>System 1</strong> (fast, automatic — what you see) and <strong>System 2</strong> (slow, deliberate — what you know). Your brain has two operating modes, and they often disagree.</p>
+<button class="btn btn-primary" onclick="scrollToSection('s2')" style="margin-top:16px">Next Exhibit →</button>
+</div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 2: Bat and Ball -->
+<section id="s2">
+<div class="container">
+<div class="section-num">Exhibit 02</div>
+<div class="section-title">The Lazy Controller</div>
+<div class="section-quote">"The bat-and-ball problem is the simplest puzzle in the world. Most people get it wrong."</div>
+
+<div class="card">
+<p style="font-size:1.15rem;margin-bottom:16px">A bat and a ball together cost <strong>$1.10</strong>.<br>The bat costs <strong>$1.00 more</strong> than the ball.<br>How much does the ball cost?</p>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<span>$</span>
+<input type="number" id="bat-input" step="0.01" min="0" max="1.10" placeholder="?" style="max-width:120px">
+<button class="btn btn-primary" onclick="checkBat()">Submit</button>
+</div>
+<div class="reveal-box" id="bat-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 3: Anchoring -->
+<section id="s3">
+<div class="container">
+<div class="section-num">Exhibit 03</div>
+<div class="section-title">The Anchor Trap</div>
+<div class="section-quote">"People who are exposed to a random number will be influenced by it when they estimate an uncertain quantity."</div>
+
+<div class="card" id="anchor-card">
+<p style="margin-bottom:16px">First, a quick warm-up. Here's a random number:</p>
+<div id="anchor-number" style="font-size:4rem;font-weight:800;text-align:center;color:var(--accent);margin:20px 0"></div>
+<p style="margin-bottom:16px"><strong>Now answer this:</strong> What percentage of countries in the United Nations are in Africa?</p>
+<div class="slider-wrap">
+<input type="range" id="anchor-slider" min="0" max="100" value="50">
+<div class="slider-val"><span id="anchor-val">50</span>%</div>
+</div>
+<button class="btn btn-primary" onclick="checkAnchor()">Lock In Answer</button>
+<div class="reveal-box" id="anchor-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 4: Linda -->
+<section id="s4">
+<div class="container">
+<div class="section-num">Exhibit 04</div>
+<div class="section-title">Linda the Bank Teller</div>
+<div class="section-quote">"The most coherent stories are not necessarily the most probable, but they are plausible."</div>
+
+<div class="card">
+<p style="margin-bottom:16px">Linda is 31 years old, single, outspoken, and very bright. She majored in philosophy. As a student, she was deeply concerned with issues of discrimination and social justice, and participated in anti-nuclear demonstrations.</p>
+<p style="margin-bottom:16px"><strong>Which is more probable?</strong></p>
+<div class="choices" style="grid-template-columns:1fr">
+<button class="choice-btn" onclick="lindaAnswer(this,'teller')">Linda is a bank teller.</button>
+<button class="choice-btn" onclick="lindaAnswer(this,'feminist')">Linda is a bank teller and is active in the feminist movement.</button>
+</div>
+<div class="reveal-box" id="linda-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 5: Framing -->
+<section id="s5">
+<div class="container">
+<div class="section-num">Exhibit 05</div>
+<div class="section-title">The Frame Game</div>
+<div class="section-quote">"Our preferences are about framed problems, and our moral intuitions are about descriptions, not about substance."</div>
+
+<div class="card" id="frame-card">
+<p style="margin-bottom:16px">An unusual disease is expected to kill <strong>600 people</strong>. Two programs have been proposed:</p>
+<div id="frame-q"></div>
+<div class="choices" id="frame-choices"></div>
+<div class="reveal-box" id="frame-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 6: Loss Aversion -->
+<section id="s6">
+<div class="container">
+<div class="section-num">Exhibit 06</div>
+<div class="section-title">Losses Loom Larger</div>
+<div class="section-quote">"The response to losses is stronger than the response to corresponding gains. This is loss aversion."</div>
+
+<div class="card">
+<p style="margin-bottom:16px">You're offered a coin flip. <strong>Tails, you lose $100.</strong> How much would you need to <em>win</em> on heads to accept this bet?</p>
+<div class="slider-wrap">
+<input type="range" id="loss-slider" min="100" max="400" value="150">
+<div class="slider-val">Win $<span id="loss-val">150</span></div>
+</div>
+<button class="btn btn-primary" onclick="checkLoss()">Lock In</button>
+<div class="reveal-box" id="loss-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 7: Planning Fallacy -->
+<section id="s7">
+<div class="container">
+<div class="section-num">Exhibit 07</div>
+<div class="section-title">The Planning Fallacy</div>
+<div class="section-quote">"The prevalent tendency to underweight or ignore distributional information is perhaps the major source of error in forecasting."</div>
+
+<div class="card">
+<p style="margin-bottom:16px">Quick estimation challenge. <strong>Without calculating</strong>, estimate this in 5 seconds:</p>
+<div style="text-align:center;font-size:1.8rem;font-weight:700;margin:20px 0;color:var(--accent)" id="multiply-q"></div>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<input type="number" id="mult-input" placeholder="Your estimate" style="max-width:180px">
+<button class="btn btn-primary" onclick="checkMultiply()">Submit</button>
+</div>
+<div class="reveal-box" id="mult-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- SECTION 8: Scorecard -->
+<section id="s8">
+<div class="container">
+<div class="section-num">Your Results</div>
+<div class="section-title">The Bias Scorecard</div>
+<div class="section-quote">"We can be blind to the obvious, and we are also blind to our blindness."</div>
+
+<div class="card">
+<p style="margin-bottom:16px">Here's how your System 1 performed across the exhibits:</p>
+<div class="stat-grid" id="scorecard"></div>
+<div style="margin-top:24px">
+<p id="score-summary" style="font-size:1.1rem"></p>
+</div>
+<div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+<p style="color:var(--dim);font-size:.9rem">Kahneman's core lesson: <em>"The best we can do is a compromise: learn to recognize situations in which mistakes are likely and try harder to avoid significant mistakes when the stakes are high."</em></p>
+<p style="margin-top:16px;color:var(--dim);font-size:.9rem">You can't turn off System 1. But now you know it's there.</p>
+</div>
+</div>
+</div>
+</section>
+
+<footer>
+<p>Based on <em>Thinking, Fast and Slow</em> by Daniel Kahneman (2011)</p>
+<p style="margin-top:4px">Built as a psychology lab. You were the test subject. 🧪</p>
+</footer>
+
+<script>
+// State
+const scores = {};
+let anchorNum;
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progress').style.width = (window.scrollY / h * 100) + '%';
+});
+
+// Intersection Observer for fade-in
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('section').forEach(s => obs.observe(s));
+
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+// S1: Müller-Lyer
+function mlAnswer(el, ans) {
+  document.querySelectorAll('#s1 .choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const r = document.getElementById('ml-reveal');
+  if (ans === 'same') {
+    el.classList.add('correct');
+    scores.ml = true;
+  } else {
+    el.classList.add('wrong');
+    document.querySelector('#s1 .choice-btn:last-child').classList.add('correct');
+    scores.ml = false;
+  }
+  r.classList.add('show');
+}
+
+// S2: Bat and Ball
+function checkBat() {
+  const v = parseFloat(document.getElementById('bat-input').value);
+  const r = document.getElementById('bat-reveal');
+  if (isNaN(v)) return;
+  scores.bat = Math.abs(v - 0.05) < 0.001;
+  const gave10 = Math.abs(v - 0.10) < 0.001;
+  r.innerHTML = scores.bat
+    ? `<h3>✅ Correct! The ball costs 5¢.</h3><p>You engaged System 2 and did the algebra. If the ball is 5¢, the bat is $1.05, total $1.10. ✓</p><p style="margin-top:12px">But you're in the minority. <strong>Over 50% of students at Harvard, MIT, and Princeton</strong> answer 10¢. The intuitive (wrong) answer feels right because System 1 generates it instantly, and lazy System 2 doesn't bother to check.</p>`
+    : `<h3>${gave10 ? '🎯 You said 10¢ — the classic System 1 answer!' : '❌ Not quite.'}</h3><p>The correct answer is <strong>5¢</strong>. If the ball costs 5¢, the bat costs $1.05 (which is $1.00 more), and together they cost $1.10.</p><p style="margin-top:12px">${gave10 ? 'You fell for the same trap as <strong>over 50% of students at Harvard and MIT</strong>.' : ''} System 1 instantly suggests 10¢ because $1.10 splits into $1.00 and $0.10 "naturally." System 2 was too lazy to check the arithmetic.</p><p style="margin-top:12px">Kahneman: <em>"Many people are overconfident, prone to place too much faith in their intuitions."</em></p>`;
+  r.classList.add('show');
+  r.innerHTML += `<button class="btn btn-primary" onclick="scrollToSection('s3')" style="margin-top:16px">Next Exhibit →</button>`;
+}
+
+// S3: Anchoring
+(function initAnchor() {
+  anchorNum = Math.random() < 0.5 ? 10 : 65;
+  document.getElementById('anchor-number').textContent = anchorNum;
+})();
+document.getElementById('anchor-slider').addEventListener('input', function() {
+  document.getElementById('anchor-val').textContent = this.value;
+});
+function checkAnchor() {
+  const v = parseInt(document.getElementById('anchor-slider').value);
+  const r = document.getElementById('anchor-reveal');
+  const correct = 28; // ~54 African countries / ~193 total
+  const anchored = anchorNum === 65 ? v > 35 : v < 20;
+  scores.anchor = { value: v, anchorNum, anchored };
+  r.innerHTML = `<h3>🎯 You said ${v}%. The actual answer is about 28%.</h3>
+    <p>Your random number was <strong>${anchorNum}</strong>. ${anchored
+      ? `And it likely pulled your estimate ${anchorNum === 65 ? 'upward' : 'downward'}! This is the <strong>anchoring effect</strong>.`
+      : `You may have resisted the pull — but in Kahneman & Tversky's original experiment, people shown 65 averaged <strong>45%</strong>, while those shown 10 averaged <strong>25%</strong>.`}</p>
+    <p style="margin-top:12px">A <em>random number on a wheel</em> influenced expert estimates by 20+ percentage points. System 1 uses the anchor as a starting point; System 2 adjusts — but never enough.</p>
+    <div class="stat-grid" style="margin-top:16px">
+      <div class="stat"><div class="num">25%</div><div class="label">Avg answer<br>(anchor: 10)</div></div>
+      <div class="stat"><div class="num">45%</div><div class="label">Avg answer<br>(anchor: 65)</div></div>
+      <div class="stat"><div class="num">28%</div><div class="label">Actual<br>answer</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="scrollToSection('s4')" style="margin-top:16px">Next Exhibit →</button>`;
+  r.classList.add('show');
+}
+
+// S4: Linda
+function lindaAnswer(el, ans) {
+  document.querySelectorAll('#s4 .choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  scores.linda = ans === 'teller';
+  const r = document.getElementById('linda-reveal');
+  r.innerHTML = ans === 'feminist'
+    ? `<h3>🎯 You fell for the conjunction fallacy!</h3>
+       <p>"Feminist bank teller" <em>feels</em> more probable because it fits the story. But it's logically impossible — the set of feminist bank tellers is a <strong>subset</strong> of all bank tellers. Every feminist bank teller IS a bank teller, so "bank teller" must be at least as probable.</p>
+       <p style="margin-top:12px"><strong>85-90% of people make this error</strong>, including PhD students in statistics at Stanford. System 1 substitutes <em>representativeness</em> (how well the description fits) for <em>probability</em>.</p>
+       <p style="margin-top:12px">Stephen Jay Gould: <em>"A little homunculus in my head continues to jump up and down, shouting at me — 'but she can't just be a bank teller; read the description.'"</em></p>`
+    : `<h3>✅ You resisted the trap!</h3>
+       <p>You correctly recognized that "bank teller" must be at least as probable as "bank teller AND feminist" — because the latter is a subset of the former.</p>
+       <p style="margin-top:12px">But <strong>85-90% of people get this wrong</strong>, including PhD students in statistics. The description of Linda is designed to activate a "feminist" stereotype, and System 1 substitutes <em>representativeness</em> for probability.</p>`;
+  r.innerHTML += `<button class="btn btn-primary" onclick="scrollToSection('s5')" style="margin-top:16px">Next Exhibit →</button>`;
+  r.classList.add('show');
+}
+
+// S5: Framing
+(function initFrame() {
+  const positive = Math.random() < 0.5;
+  scores.frameType = positive ? 'lives saved' : 'lives lost';
+  const q = document.getElementById('frame-q');
+  const c = document.getElementById('frame-choices');
+  if (positive) {
+    q.innerHTML = `<p style="margin:16px 0"><strong>Program A:</strong> 200 people will be saved.<br><strong>Program B:</strong> 1/3 probability that 600 will be saved, 2/3 probability nobody saved.</p>`;
+    c.innerHTML = `<button class="choice-btn" onclick="frameAnswer(this,'A')">Program A — save 200 for sure</button>
+                   <button class="choice-btn" onclick="frameAnswer(this,'B')">Program B — gamble</button>`;
+  } else {
+    q.innerHTML = `<p style="margin:16px 0"><strong>Program A:</strong> 400 people will die.<br><strong>Program B:</strong> 1/3 probability nobody dies, 2/3 probability 600 die.</p>`;
+    c.innerHTML = `<button class="choice-btn" onclick="frameAnswer(this,'A')">Program A — 400 die for sure</button>
+                   <button class="choice-btn" onclick="frameAnswer(this,'B')">Program B — gamble</button>`;
+  }
+})();
+function frameAnswer(el, ans) {
+  document.querySelectorAll('#s5 .choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  scores.frame = ans;
+  const r = document.getElementById('frame-reveal');
+  const positive = scores.frameType === 'lives saved';
+  const typical = (positive && ans === 'A') || (!positive && ans === 'B');
+  r.innerHTML = `<h3>${typical ? '🎯 You picked the most popular choice for your frame!' : '🤔 Interesting — you went against the majority.'}</h3>
+    <p>You saw the <strong>"${scores.frameType}"</strong> version. The two frames describe <em>identical outcomes</em>:</p>
+    <ul style="margin:12px 0 12px 20px">
+      <li>"200 saved" = "400 die" (same thing)</li>
+      <li>Both gambles: 1/3 chance all saved, 2/3 chance none saved</li>
+    </ul>
+    <p>But framing reverses preferences:</p>
+    <div class="stat-grid" style="margin-top:12px">
+      <div class="stat"><div class="num">72%</div><div class="label">Choose "sure thing"<br>in SAVE frame</div></div>
+      <div class="stat"><div class="num">78%</div><div class="label">Choose "gamble"<br>in DEATH frame</div></div>
+    </div>
+    <p style="margin-top:12px"><em>"Risk-averse and risk-seeking preferences are not reality-bound. Preferences between the same objective outcomes reverse with different formulations."</em></p>
+    <button class="btn btn-primary" onclick="scrollToSection('s6')" style="margin-top:16px">Next Exhibit →</button>`;
+  r.classList.add('show');
+}
+
+// S6: Loss Aversion
+document.getElementById('loss-slider').addEventListener('input', function() {
+  document.getElementById('loss-val').textContent = this.value;
+});
+function checkLoss() {
+  const v = parseInt(document.getElementById('loss-slider').value);
+  scores.loss = v;
+  const ratio = (v / 100).toFixed(1);
+  const r = document.getElementById('loss-reveal');
+  r.innerHTML = `<h3>Your loss aversion ratio: ${ratio}x</h3>
+    <p>You need to win <strong>$${v}</strong> to risk losing $100. That's a ${ratio}:1 ratio.</p>
+    <div class="pct-bar"><div class="pct-fill" style="width:${Math.min(v/4, 100)}%;background:${v >= 180 ? 'var(--accent2)' : v >= 150 ? 'var(--orange)' : 'var(--green)'}">${ratio}x</div></div>
+    <p style="margin-top:12px">${v >= 200 ? 'You are significantly loss averse — typical! ' : v >= 150 ? 'You show moderate loss aversion. ' : 'You are unusually tolerant of losses! '}The average person requires about <strong>$200 to offset a $100 loss</strong> — a 2:1 ratio.</p>
+    <p style="margin-top:12px">Kahneman: <em>"Losses loom larger than gains."</em> This asymmetry is the foundation of <strong>prospect theory</strong>, and it explains everything from the endowment effect (why you overvalue what you own) to why people hold losing stocks too long.</p>
+    <button class="btn btn-primary" onclick="scrollToSection('s7')" style="margin-top:16px">Next Exhibit →</button>`;
+  r.classList.add('show');
+}
+
+// S7: Anchoring via multiplication
+(function initMult() {
+  // Kahneman's actual experiment: 8×7×6×5×4×3×2×1 vs 1×2×3×4×5×6×7×8
+  const ascending = Math.random() < 0.5;
+  scores.multOrder = ascending ? 'ascending' : 'descending';
+  const q = document.getElementById('multiply-q');
+  q.textContent = ascending ? '1 × 2 × 3 × 4 × 5 × 6 × 7 × 8' : '8 × 7 × 6 × 5 × 4 × 3 × 2 × 1';
+})();
+function checkMultiply() {
+  const v = parseInt(document.getElementById('mult-input').value);
+  if (isNaN(v)) return;
+  scores.mult = v;
+  const correct = 40320;
+  const r = document.getElementById('mult-reveal');
+  const ratio = (v / correct * 100).toFixed(0);
+  r.innerHTML = `<h3>You estimated: ${v.toLocaleString()}. Actual answer: ${correct.toLocaleString()}</h3>
+    <p>Your estimate was <strong>${ratio}%</strong> of the correct answer.${v < correct ? ' Most people drastically underestimate.' : ''}</p>
+    <p style="margin-top:12px">You saw the <strong>${scores.multOrder}</strong> sequence. In Kahneman's experiment:</p>
+    <div class="stat-grid" style="margin-top:12px">
+      <div class="stat"><div class="num">512</div><div class="label">Median estimate<br>1×2×3×...×8</div></div>
+      <div class="stat"><div class="num">2,250</div><div class="label">Median estimate<br>8×7×6×...×1</div></div>
+      <div class="stat"><div class="num">40,320</div><div class="label">Actual<br>answer</div></div>
+    </div>
+    <p style="margin-top:12px">Two biases at work: <strong>anchoring</strong> (the first numbers set an anchor) and <strong>insufficient adjustment</strong>. The descending sequence starts with bigger numbers → bigger anchor → higher estimate. Both are wildly low because we can't intuitively grasp exponential growth.</p>
+    <p style="margin-top:12px">This is the <strong>planning fallacy</strong> in miniature: we systematically underestimate scale, time, and cost because System 1 anchors on early, incomplete information.</p>
+    <button class="btn btn-primary" onclick="showScorecard()" style="margin-top:16px">See Your Results →</button>`;
+  r.classList.add('show');
+}
+
+// Scorecard
+function showScorecard() {
+  scrollToSection('s8');
+  const sc = document.getElementById('scorecard');
+  let biasCount = 0;
+  let total = 0;
+
+  const items = [
+    { label: 'Müller-Lyer', result: scores.ml === false ? 'Tricked' : 'Resisted', tricked: scores.ml === false },
+    { label: 'Bat & Ball', result: scores.bat ? 'Correct (5¢)' : 'System 1 won', tricked: !scores.bat },
+    { label: 'Anchoring', result: scores.anchor ? `${scores.anchor.value}% (anchor: ${scores.anchor.anchorNum})` : '—', tricked: scores.anchor?.anchored },
+    { label: 'Linda', result: scores.linda ? 'Resisted' : 'Conjunction fallacy', tricked: !scores.linda },
+    { label: 'Framing', result: scores.frame ? `Chose ${scores.frame} (${scores.frameType})` : '—', tricked: (scores.frameType === 'lives saved' && scores.frame === 'A') || (scores.frameType === 'lives lost' && scores.frame === 'B') },
+    { label: 'Loss Aversion', result: scores.loss ? `${(scores.loss/100).toFixed(1)}x ratio` : '—', tricked: scores.loss >= 150 },
+    { label: 'Estimation', result: scores.mult ? `${scores.mult.toLocaleString()} (actual: 40,320)` : '—', tricked: scores.mult < 40320 * 0.5 },
+  ];
+
+  sc.innerHTML = items.map(i => {
+    if (i.result === '—') return '';
+    total++;
+    if (i.tricked) biasCount++;
+    return `<div class="stat" style="border-color:${i.tricked ? 'var(--accent2)' : 'var(--green)'}">
+      <div class="num" style="font-size:1.2rem;color:${i.tricked ? 'var(--accent2)' : 'var(--green)'}">${i.tricked ? '🧠' : '✅'}</div>
+      <div class="label" style="margin-top:8px"><strong>${i.label}</strong><br>${i.result}</div>
+    </div>`;
+  }).join('');
+
+  const pct = total > 0 ? Math.round(biasCount / total * 100) : 0;
+  document.getElementById('score-summary').innerHTML = `
+    <strong>System 1 tricked you on ${biasCount} of ${total} exhibits (${pct}%).</strong><br><br>
+    ${biasCount >= 5 ? "Don't worry — you're in excellent company. These biases affect Nobel laureates, surgeons, and statisticians. The point isn't to feel bad; it's to recognize that <strong>your brain has systematic blind spots</strong>." :
+      biasCount >= 3 ? "A typical result. Most of these biases catch most people. Kahneman himself admits to being susceptible. The goal isn't perfection — it's <strong>knowing when to slow down and let System 2 take over</strong>." :
+      "Impressive resistance! But remember: even if you answered correctly, you likely <em>felt</em> the pull of the wrong answer. System 1 still fired — you just let System 2 override it. That takes effort, and effort is a limited resource."}
+    <br><br>
+    <span style="color:var(--dim)">As Kahneman writes: <em>"Constantly questioning our own thinking would be impossibly tedious. The best we can do is learn to recognize situations in which mistakes are likely."</em></span>
+  `;
+}
+</script>
+</body>
+</html>

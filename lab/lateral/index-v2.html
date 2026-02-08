@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lateral Thinking v2 — Think Sideways</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#14141f;--surface2:#1e1e2e;--accent:#6c63ff;--accent2:#ff6b6b;--accent3:#4ecdc4;--text:#e0e0e0;--dim:#888;--gold:#ffd93d;--radius:12px}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(108,99,255,.15);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+nav .logo{font-size:1.1rem;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+nav .logo span{color:var(--accent2)}
+.nav-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.nav-links a{font-size:.7rem;color:var(--dim);text-decoration:none;padding:4px 8px;border-radius:8px;transition:.2s;white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);background:rgba(108,99,255,.1)}
+
+section{min-height:100vh;padding:80px 20px 60px;max-width:800px;margin:0 auto;display:flex;flex-direction:column;justify-content:center}
+section h2{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:var(--dim);font-size:.95rem;margin-bottom:24px;font-style:italic}
+.quote{border-left:3px solid var(--accent);padding:12px 20px;margin:20px 0;background:rgba(108,99,255,.06);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:var(--dim);font-size:.95rem}
+.quote cite{display:block;margin-top:8px;font-size:.8rem;color:var(--accent);font-style:normal}
+.section-num{font-size:.75rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim);margin-bottom:8px}
+
+.card{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;margin:16px 0;transition:.3s}
+button,.btn{font-family:inherit;background:var(--accent);color:#fff;border:none;padding:12px 24px;border-radius:var(--radius);font-size:.95rem;cursor:pointer;transition:.2s;min-height:44px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,99,255,.3)}
+button:active{transform:translateY(0)}
+button.secondary{background:var(--surface2);border:1px solid rgba(255,255,255,.1)}
+button.secondary:hover{border-color:var(--accent)}
+button.success{background:#2d9a4e}
+button.danger{background:var(--accent2)}
+button:disabled{opacity:.4;pointer-events:none}
+input[type="text"],textarea{font-family:inherit;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:14px;font-size:1rem;color:var(--text);width:100%;transition:.2s;min-height:44px}
+input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.flex-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.fade-in.visible{opacity:1;transform:none}
+.result{margin-top:16px;padding:16px;border-radius:var(--radius);background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.15);display:none}
+.result.show{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.4)}70%{box-shadow:0 0 0 12px rgba(108,99,255,0)}}
+.hidden{display:none!important}
+.timer{font-size:2.5rem;font-weight:800;color:var(--accent);text-align:center;font-variant-numeric:tabular-nums}
+
+/* Hero */
+#hero{text-align:center;min-height:100vh}
+#hero h1{font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#fff,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+#hero .tagline{font-size:clamp(1rem,3vw,1.3rem);color:var(--dim);max-width:520px;margin:0 auto 40px}
+.scroll-hint{animation:bounce 2s infinite;color:var(--dim);font-size:.85rem;margin-top:48px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* Pattern Lock specific */
+.seq-display{font-size:2.2rem;text-align:center;margin:20px 0;font-weight:800;letter-spacing:3px;color:var(--gold)}
+.commit-lock{text-align:center;padding:20px;border:2px solid rgba(108,99,255,.3);border-radius:var(--radius);background:rgba(108,99,255,.05);margin:16px 0}
+.commit-lock.locked{border-color:var(--accent2);background:rgba(255,107,107,.08)}
+
+/* Brick wall */
+.brick-wall{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:16px 0;min-height:60px}
+.brick{padding:10px 16px;background:var(--accent2);color:#fff;border-radius:4px;font-size:.85rem;font-weight:600;cursor:pointer;transition:.3s;border:none;min-height:auto}
+.brick:hover{opacity:.8;transform:scale(.95)}
+.brick.removed{opacity:.15;text-decoration:line-through;pointer-events:none;transform:scale(.9)}
+
+/* Random entry */
+.random-word-display{font-size:3rem;font-weight:900;text-align:center;padding:32px;color:var(--gold);background:var(--surface);border-radius:var(--radius);margin:16px 0;min-height:100px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,217,61,.2)}
+
+/* Reversal */
+.process-step{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface2);border-radius:8px;margin:6px 0;font-size:.95rem;transition:.3s}
+.process-step .step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+.process-step.reversed{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2)}
+.process-step.reversed .step-num{background:var(--accent2)}
+.reversal-verdict{display:inline-block;padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:700;margin-left:auto;flex-shrink:0}
+.reversal-verdict.absurd{background:rgba(255,107,107,.2);color:var(--accent2)}
+.reversal-verdict.revolutionary{background:rgba(78,205,196,.2);color:var(--accent3)}
+.reversal-verdict.interesting{background:rgba(108,99,255,.2);color:var(--accent)}
+
+/* Hats */
+.hat-bar{display:flex;gap:4px;flex-wrap:wrap;margin:16px 0}
+.hat-btn{padding:10px 14px;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;border:2px solid transparent;transition:.2s;min-height:auto;color:#fff}
+.hat-btn.active{transform:scale(1.05);box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.hat-btn:hover{transform:scale(1.03)}
+.hat-white{background:#f0f0f0;color:#333}
+.hat-red{background:#e74c3c}
+.hat-black{background:#2c3e50}
+.hat-yellow{background:#f39c12}
+.hat-green{background:#27ae60}
+.hat-blue{background:#2980b9}
+.hat-entry{padding:12px;border-radius:8px;margin:8px 0;font-size:.9rem;border-left:4px solid var(--dim)}
+.hat-entry.white{border-color:#f0f0f0;background:rgba(240,240,240,.05)}
+.hat-entry.red{border-color:#e74c3c;background:rgba(231,76,60,.05)}
+.hat-entry.black{border-color:#2c3e50;background:rgba(44,62,80,.1)}
+.hat-entry.yellow{border-color:#f39c12;background:rgba(243,156,18,.05)}
+.hat-entry.green{border-color:#27ae60;background:rgba(39,174,96,.05)}
+.hat-entry.blue{border-color:#2980b9;background:rgba(41,128,185,.05)}
+
+/* PO steps */
+.po-step{padding:16px;border-radius:var(--radius);background:var(--surface2);margin:12px 0;border-left:4px solid var(--accent)}
+.po-step.active{border-left-color:var(--gold);background:rgba(255,217,61,.05)}
+.po-step.done{opacity:.6;border-left-color:#2d9a4e}
+.po-step h4{font-size:.9rem;margin-bottom:8px}
+
+/* Dominant idea */
+.scenario-box{padding:20px;background:var(--surface);border-radius:var(--radius);margin:16px 0;border:1px solid rgba(255,255,255,.06);font-size:1.05rem;line-height:1.7}
+.frame-option{padding:12px 18px;border-radius:8px;background:var(--surface2);border:2px solid rgba(255,255,255,.08);cursor:pointer;transition:.3s;font-size:.9rem;text-align:left;width:100%;display:block;min-height:auto;font-weight:400;color:var(--text)}
+.frame-option:hover{border-color:var(--accent)}
+.frame-option.correct{border-color:#2d9a4e;background:rgba(45,154,78,.15)}
+.frame-option.wrong{border-color:var(--accent2);background:rgba(255,107,107,.1);opacity:.5}
+.difficulty{display:inline-block;padding:3px 10px;border-radius:10px;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.difficulty.easy{background:rgba(39,174,96,.2);color:#27ae60}
+.difficulty.medium{background:rgba(243,156,18,.2);color:#f39c12}
+.difficulty.hard{background:rgba(231,76,60,.2);color:#e74c3c}
+.difficulty.expert{background:rgba(108,99,255,.2);color:var(--accent)}
+
+@media(max-width:600px){
+  .nav-links{display:none}
+  .hat-bar{gap:2px}
+  .hat-btn{padding:8px 10px;font-size:.75rem}
+}
+
+footer{text-align:center;padding:40px 20px;color:var(--dim);font-size:.8rem}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Lateral<span>v2</span></div>
+  <div class="nav-links" id="navLinks"></div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div>
+    <p class="section-num">Edward de Bono</p>
+    <h1>Think Sideways</h1>
+    <p class="tagline">Seven tools to break your thinking open. Not theory — practice. Each one will make you feel something shift.</p>
+    <button onclick="document.getElementById('s1').scrollIntoView({behavior:'smooth'})">Begin ↓</button>
+    <p class="scroll-hint">7 interactive exercises</p>
+  </div>
+</section>
+
+<!-- 1. PATTERN LOCK -->
+<section id="s1" class="fade-in">
+  <p class="section-num">01 — Pattern Lock</p>
+  <h2>Your Mind Is Lying to You</h2>
+  <p class="subtitle">Experience pattern fixation — viscerally</p>
+  <div class="quote">"The mind is a cliché making and cliché using system."<cite>— Edward de Bono</cite></div>
+  <p>A sequence. Spot the pattern. Commit to your answer. Then discover what's really going on.</p>
+  <div class="card" id="plCard">
+    <div id="plContent"></div>
+  </div>
+</section>
+
+<!-- 2. ASSUMPTION EXCAVATOR -->
+<section id="s2" class="fade-in">
+  <p class="section-num">02 — Assumption Excavator</p>
+  <h2>Dissolve the Problem</h2>
+  <p class="subtitle">Every problem is held together by invisible assumptions. Remove them.</p>
+  <div class="quote">"Whenever there is a cry of 'cheating' it reveals the use of certain assumed boundaries."<cite>— Edward de Bono</cite></div>
+  <div class="card">
+    <p style="font-size:1.1rem;font-weight:600;margin-bottom:8px" id="aePrompt"></p>
+    <p style="color:var(--dim);margin-bottom:16px">Below are the assumptions holding this problem together. Each is a brick in a wall. Click to remove. Watch what happens.</p>
+    <div class="brick-wall" id="aeWall"></div>
+    <div id="aeNarration" style="margin-top:16px;padding:16px;border-radius:var(--radius);background:rgba(78,205,196,.06);border:1px solid rgba(78,205,196,.15);min-height:60px">
+      <p style="color:var(--dim);font-size:.9rem" id="aeNarText">Click a brick to challenge that assumption...</p>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="aeNext()" class="secondary">New Problem →</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. RANDOM ENTRY GENERATOR -->
+<section id="s3" class="fade-in">
+  <p class="section-num">03 — Random Entry Generator</p>
+  <h2>Collide & Create</h2>
+  <p class="subtitle">A usable creative tool. Use it on real problems.</p>
+  <div class="quote">"In this type of system nothing can be truly irrelevant."<cite>— Edward de Bono</cite></div>
+  <p>Type a real problem you're stuck on. Hit the button. Force a connection between the random stimulus and your problem. 2 minutes. Go.</p>
+  <div class="card">
+    <textarea id="regProblem" rows="2" placeholder="My problem: How to..." style="margin-bottom:12px"></textarea>
+    <div style="text-align:center"><button onclick="regGenerate()" style="animation:pulse 2s infinite;font-size:1.1rem" id="regBtn">🎲 Random Entry</button></div>
+    <div class="random-word-display hidden" id="regDisplay"></div>
+    <div id="regTimer" class="hidden">
+      <div class="timer" id="regTimerText">2:00</div>
+      <textarea id="regIdeas" rows="4" placeholder="Connections, ideas, sparks — write everything, filter nothing..." style="margin-top:12px"></textarea>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="regNewWord()" class="secondary">🔄 New Word</button>
+        <button onclick="regNewType()" class="secondary" style="margin-left:8px">📷 Try Image</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. REVERSAL WORKSHOP -->
+<section id="s4" class="fade-in">
+  <p class="section-num">04 — Reversal Workshop</p>
+  <h2>Turn It Upside Down</h2>
+  <p class="subtitle">Reverse every step. Some are absurd. Some are revolutionary. Discover which.</p>
+  <div class="quote">"In the reversal method one kicks hard against what is there and fixed in order to move away in the opposite direction."<cite>— Edward de Bono</cite></div>
+  <div class="card">
+    <div style="text-align:center;margin-bottom:16px">
+      <p style="font-weight:700;font-size:1.1rem" id="revTitle"></p>
+      <p style="color:var(--dim);font-size:.85rem">Standard process → every step reversed</p>
+    </div>
+    <div id="revSteps"></div>
+    <div style="text-align:center;margin-top:16px">
+      <button onclick="revToggle()" id="revBtn">Reverse All Steps ↻</button>
+      <button onclick="revNext()" class="secondary" style="margin-left:8px">New Process →</button>
+    </div>
+    <div id="revVerdicts" class="hidden" style="margin-top:16px">
+      <p style="color:var(--dim);font-size:.9rem;margin-bottom:8px">Click each reversed step — absurd, or actually revolutionary?</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. PROVOCATIVE OPERATION (PO) -->
+<section id="s5" class="fade-in">
+  <p class="section-num">05 — Provocative Operation (PO)</p>
+  <h2>PO: The Anti-Logic</h2>
+  <p class="subtitle">PO is to lateral thinking what NO is to logical thinking</p>
+  <div class="quote">"PO water flows uphill if coloured green — this led to discovering polymers that enable siphoning."<cite>— Edward de Bono</cite></div>
+  <p>Take a normal statement. Apply PO to make it deliberately wrong. Then extract genuine value from the provocation. Step by step.</p>
+  <div class="card" id="poCard">
+    <div id="poContent"></div>
+  </div>
+</section>
+
+<!-- 6. DOMINANT IDEA DETECTOR -->
+<section id="s6" class="fade-in">
+  <p class="section-num">06 — Dominant Idea Detector</p>
+  <h2>What's Controlling You?</h2>
+  <p class="subtitle">Unless you can name the cage, you can't escape it</p>
+  <div class="quote">"Unless one can pick out the dominant idea one is going to be dominated by it."<cite>— Edward de Bono</cite></div>
+  <p>Read the scenario. Everything seems to point one way. But there's a hidden frame controlling everyone's thinking. Find it. Scenarios increase in subtlety.</p>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span id="domLevel"></span>
+      <span style="color:var(--dim);font-size:.85rem" id="domProgress"></span>
+    </div>
+    <div class="scenario-box" id="domScenario"></div>
+    <p style="color:var(--dim);font-size:.9rem;margin:12px 0"><strong>What hidden frame is controlling the thinking here?</strong></p>
+    <div id="domChoices" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="result" id="domResult"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="domNext()" class="secondary" id="domNextBtn" style="display:none">Next Scenario →</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. SIX THINKING HATS -->
+<section id="s7" class="fade-in">
+  <p class="section-num">07 — Six Thinking Hats</p>
+  <h2>Think in Colour</h2>
+  <p class="subtitle">Constrain your thinking mode. See how it produces richer output.</p>
+  <div class="quote">"The main difficulty of thinking is confusion. We try to do too much at once."<cite>— Edward de Bono</cite></div>
+  <p>Pick a real decision. Work through each hat. Only think in that mode — nothing else.</p>
+  <div class="card">
+    <textarea id="hatDecision" rows="2" placeholder="Your decision: Should I...?" style="margin-bottom:12px"></textarea>
+    <button onclick="hatStart()" id="hatStartBtn">Start the Hats</button>
+    <div id="hatArea" class="hidden">
+      <div class="hat-bar" id="hatBar"></div>
+      <div id="hatPrompt" style="padding:16px;border-radius:var(--radius);margin:12px 0;min-height:80px"></div>
+      <textarea id="hatInput" rows="3" placeholder="Think ONLY in this mode..." style="margin-bottom:8px"></textarea>
+      <div style="text-align:center">
+        <button onclick="hatSave()" id="hatSaveBtn">Save & Next Hat →</button>
+      </div>
+      <div id="hatEntries" style="margin-top:16px"></div>
+    </div>
+    <div id="hatSummary" class="hidden" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<footer>
+  <p>Based on <em>Lateral Thinking</em> and <em>Six Thinking Hats</em> by Edward de Bono</p>
+  <p style="margin-top:4px">Educational demo. Not affiliated with the de Bono estate.</p>
+</footer>
+
+<script>
+// NAV
+const sectionIds=['hero','s1','s2','s3','s4','s5','s6','s7'];
+const sectionNames=['','Pattern Lock','Assumptions','Random Entry','Reversal','PO','Dominant Idea','Six Hats'];
+const nl=document.getElementById('navLinks');
+sectionIds.forEach((id,i)=>{if(i===0)return;const a=document.createElement('a');a.href='#'+id;a.textContent=sectionNames[i];nl.appendChild(a)});
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const i=sectionIds.indexOf(e.target.id);nl.querySelectorAll('a').forEach((a,j)=>a.classList.toggle('active',j===i-1))}})},{threshold:.3});
+sectionIds.forEach(id=>obs.observe(document.getElementById(id)));
+const fadeObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>fadeObs.observe(el));
+
+// ============ 1. PATTERN LOCK ============
+const patternPuzzles=[
+  {
+    seq:['1','2','4','7','11','___'],
+    obvious:'16',
+    obviousRule:'doubling or powers of 2',
+    actual:'16',
+    actualRule:'differences increase by 1 each time (+1, +2, +3, +4, +5)',
+    trick:'The answer IS 16 — but not because of doubling. The differences are 1, 2, 3, 4 → next is +5 = 16. Same destination, completely different path. Your mind locked onto the wrong pattern and got lucky.',
+    display:'1, 2, 4, 7, 11, ___'
+  },
+  {
+    seq:['O','T','T','F','F','S','S','___'],
+    obvious:'E',
+    obviousRule:'some letter pattern or alphabet skip',
+    actual:'E',
+    actualRule:'One, Two, Three, Four, Five, Six, Seven, Eight — first letters',
+    trick:'If you got E, did you know WHY? Most people guess it feels right or try letter-skipping patterns. The actual rule: these are the first letters of One, Two, Three, Four, Five, Six, Seven → Eight. The right answer for the wrong reason is still pattern fixation.',
+    display:'O, T, T, F, F, S, S, ___'
+  },
+  {
+    seq:['3','3','5','4','4','3','5','5','4','___'],
+    obvious:'3',
+    obviousRule:'a repeating cycle',
+    actual:'3',
+    actualRule:'Number of letters in: One(3), Two(3), Three(5), Four(4), Five(4), Six(3), Seven(5), Eight(5), Nine(4), Ten(3)',
+    trick:'You probably looked for a numeric pattern — cycles, differences, ratios. The actual rule has nothing to do with math. These are the letter counts of One, Two, Three, Four... The numbers describe WORDS, not quantities. Your mind assumed it was a math problem because it saw numbers.',
+    display:'3, 3, 5, 4, 4, 3, 5, 5, 4, ___'
+  }
+];
+let plIdx=0,plLocked=false;
+function plRender(){
+  const p=patternPuzzles[plIdx];
+  plLocked=false;
+  document.getElementById('plContent').innerHTML=`
+    <p style="font-size:.85rem;color:var(--dim);text-align:center;margin-bottom:8px">Puzzle ${plIdx+1}/${patternPuzzles.length}</p>
+    <div class="seq-display">${p.display}</div>
+    <div class="commit-lock" id="plCommit">
+      <p style="margin-bottom:12px;font-weight:600">What comes next? Commit to your answer.</p>
+      <div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">
+        <input type="text" id="plInput" placeholder="Your answer" style="max-width:160px;text-align:center" onkeydown="if(event.key==='Enter')plLock()">
+        <button onclick="plLock()" id="plLockBtn">🔒 Lock In</button>
+      </div>
+      <p style="font-size:.8rem;color:var(--dim);margin-top:8px">No changing your mind after you lock.</p>
+    </div>
+    <div id="plReveal" class="hidden"></div>
+    <div style="text-align:center;margin-top:12px"><button onclick="plNext()" class="secondary hidden" id="plNextBtn">${plIdx<patternPuzzles.length-1?'Next Puzzle →':'✓ Complete'}</button></div>
+  `;
+}
+function plLock(){
+  if(plLocked)return;
+  const v=document.getElementById('plInput').value.trim();
+  if(!v)return;
+  plLocked=true;
+  const c=document.getElementById('plCommit');
+  c.classList.add('locked');
+  c.innerHTML=`<p style="font-weight:700;font-size:1.2rem">🔒 Locked: <span style="color:var(--gold)">${v.toUpperCase()}</span></p>`;
+  const p=patternPuzzles[plIdx];
+  const gotRight=v.toUpperCase()===p.actual.toUpperCase();
+  let html=`<div style="padding:20px;border-radius:var(--radius);background:rgba(255,217,61,.06);border:1px solid rgba(255,217,61,.2);margin-top:16px">`;
+  html+=`<p style="font-size:1.1rem;font-weight:700;margin-bottom:12px">${gotRight?'You got the right answer.':'Not quite — the answer is '+p.actual+'.'}</p>`;
+  html+=`<p style="margin-bottom:12px">${p.trick}</p>`;
+  html+=`<p style="color:var(--accent);font-weight:600">The pattern you SEE isn't always the pattern that's THERE.</p>`;
+  html+=`</div>`;
+  document.getElementById('plReveal').innerHTML=html;
+  document.getElementById('plReveal').classList.remove('hidden');
+  document.getElementById('plNextBtn').classList.remove('hidden');
+}
+function plNext(){plIdx=(plIdx+1)%patternPuzzles.length;plRender()}
+plRender();
+
+// ============ 2. ASSUMPTION EXCAVATOR ============
+const aeProblems=[
+  {
+    problem:"A man lives on the 15th floor. Every morning he takes the elevator down. Every evening he takes the elevator to the 10th floor and walks up the rest. On rainy days, he goes straight to 15. Why?",
+    assumptions:[
+      {text:"He is average height",remove:"What if he's a small person? He can't reach the 15th button — only the 10th. On rainy days, his umbrella extends his reach. The 'puzzle' dissolves."},
+      {text:"The elevator works normally",remove:"If we drop this: maybe the elevator is broken above 10? Interesting, but doesn't explain rainy days."},
+      {text:"He walks by choice",remove:"What if he HAS to walk? Not laziness but physical constraint? Now we're getting warmer..."},
+      {text:"Rain is irrelevant to elevators",remove:"On rainy days he brings an umbrella. An umbrella is a long stick. A long stick presses high buttons. The rain isn't about the elevator — it's about the TOOL."},
+      {text:"This is about elevator mechanics",remove:"It's not about the elevator at all. It's about a person's body and what they carry. The elevator is just the stage — the drama is elsewhere."}
+    ],
+    final:"Each assumption you removed reshaped the problem. The real solution — he's short, uses an umbrella to reach button 15 — only becomes visible when the invisible assumptions fall away."
+  },
+  {
+    problem:"A company is losing customers despite having the best product, lowest price, and fastest delivery. They keep improving all three. Nothing changes. What's wrong?",
+    assumptions:[
+      {text:"Best/cheapest/fastest matters most",remove:"What if customers don't decide on product specs? What if the DECISION itself is the problem — too many choices, too confusing?"},
+      {text:"Customers are leaving for competitors",remove:"What if they're not going to competitors but STOPPING BUYING entirely? The category itself might be dying."},
+      {text:"Customer loss = product problem",remove:"What if the product is fine but the EXPERIENCE is hostile? Returns policy, customer service, website friction — none of these are 'the product.'"},
+      {text:"'Improving' means 'more of the same'",remove:"More features, lower price, faster shipping — all on the SAME axis. What if the axis itself is wrong? What if customers want LESS — simplicity, curation, trust?"},
+      {text:"The company understands why customers buy",remove:"The most dangerous assumption. They THINK they know. But what if the real reason people bought was social proof, habit, or a salesperson who left? The stated reason is rarely the real reason."}
+    ],
+    final:"The 'problem' was never about product, price, or speed. By removing assumptions about WHAT MATTERS, the problem transforms from 'how to improve' to 'what are we actually solving?'"
+  },
+  {
+    problem:"Traffic in a city keeps getting worse. They've widened roads, added lanes, built new highways. Congestion returns within two years every time.",
+    assumptions:[
+      {text:"More road = less traffic",remove:"Induced demand: wider roads attract more drivers. The 'solution' feeds the problem. This is the #1 finding in transportation research — and the #1 ignored finding."},
+      {text:"The goal is to move more cars",remove:"What if the goal is to move more PEOPLE? One bus replaces 40 cars. One bike lane moves 7x more people per meter than a car lane. The unit of measurement was wrong."},
+      {text:"People must commute",remove:"Remote work, local co-working, mixed-use zoning. What if you ELIMINATE the trip instead of speeding it up?"},
+      {text:"Roads are the right infrastructure",remove:"Trains, trams, bike networks, waterways. Every city that solved congestion did it by REPLACING roads, not adding them."},
+      {text:"Traffic is a transportation problem",remove:"It's a LAND USE problem. Spread-out suburbs force driving. Dense, mixed neighborhoods make walking possible. The road is a symptom, not the disease."}
+    ],
+    final:"Every removed assumption revealed: traffic isn't a problem you SOLVE — it's a problem you dissolve by questioning what creates it. Widening roads is digging the same hole deeper."
+  }
+];
+let aeIdx=0,aeRemoved=0;
+function aeRender(){
+  const p=aeProblems[aeIdx];
+  aeRemoved=0;
+  document.getElementById('aePrompt').textContent=p.problem;
+  const wall=document.getElementById('aeWall');
+  wall.innerHTML='';
+  p.assumptions.forEach((a,i)=>{
+    const b=document.createElement('button');
+    b.className='brick';b.textContent=a.text;b.dataset.idx=i;
+    b.onclick=()=>aeRemoveBrick(i,b);
+    wall.appendChild(b);
+  });
+  document.getElementById('aeNarText').textContent='Click a brick to challenge that assumption...';
+}
+function aeRemoveBrick(i,el){
+  if(el.classList.contains('removed'))return;
+  el.classList.add('removed');
+  aeRemoved++;
+  const p=aeProblems[aeIdx];
+  let html=`<p style="color:var(--accent3);font-weight:600;margin-bottom:4px">Assumption removed: "${p.assumptions[i].text}"</p>`;
+  html+=`<p style="font-size:.9rem">${p.assumptions[i].remove}</p>`;
+  if(aeRemoved>=p.assumptions.length){
+    html+=`<div style="margin-top:16px;padding:12px;background:rgba(108,99,255,.1);border-radius:8px"><p style="color:var(--accent);font-weight:700">🧱 Wall dissolved.</p><p style="font-size:.9rem;margin-top:4px">${p.final}</p></div>`;
+  }else{
+    html+=`<p style="margin-top:8px;color:var(--dim);font-size:.85rem">${p.assumptions.length-aeRemoved} bricks remaining. Keep going...</p>`;
+  }
+  document.getElementById('aeNarText').innerHTML=html;
+}
+function aeNext(){aeIdx=(aeIdx+1)%aeProblems.length;aeRender()}
+aeRender();
+
+// ============ 3. RANDOM ENTRY GENERATOR ============
+const regWords=['butterfly','volcano','sandwich','telescope','anchor','carousel','thunder','pocket','glacier','lighthouse','cinnamon','skeleton','trampoline','origami','whistle','compass','hammock','fireworks','labyrinth','pearl','mirror','octopus','cathedral','avalanche','honeycomb','pendulum','mosaic','tornado','quicksand','constellation','parachute','kaleidoscope','fossil','domino','shipwreck'];
+const regImages=['🌋','🦋','🔭','⚓','🎪','⛰️','🏗️','🎭','🧬','🌊','🔥','🕸️','🎯','🗝️','⏳','🧩','🪞','🦑','🏛️','🪂','🐝','🎲','🧲','🌀','💎','🪺','🏴‍☠️','🧊','🎻','🦠'];
+let regTimerInterval,regTimerVal=120,regMode='word';
+function regGenerate(){
+  regMode='word';
+  const w=regWords[Math.floor(Math.random()*regWords.length)];
+  document.getElementById('regDisplay').textContent=w.toUpperCase();
+  document.getElementById('regDisplay').classList.remove('hidden');
+  document.getElementById('regTimer').classList.remove('hidden');
+  regStartTimer();
+}
+function regNewWord(){
+  const w=regWords[Math.floor(Math.random()*regWords.length)];
+  document.getElementById('regDisplay').textContent=w.toUpperCase();
+  document.getElementById('regDisplay').style.fontSize='3rem';
+}
+function regNewType(){
+  if(regMode==='word'){
+    regMode='image';
+    const img=regImages[Math.floor(Math.random()*regImages.length)];
+    document.getElementById('regDisplay').textContent=img;
+    document.getElementById('regDisplay').style.fontSize='5rem';
+  }else{
+    regMode='word';
+    regNewWord();
+  }
+}
+function regStartTimer(){
+  clearInterval(regTimerInterval);
+  regTimerVal=120;
+  document.getElementById('regTimerText').style.color='var(--accent)';
+  regTimerInterval=setInterval(()=>{
+    regTimerVal--;
+    const m=Math.floor(regTimerVal/60),s=regTimerVal%60;
+    document.getElementById('regTimerText').textContent=m+':'+(s<10?'0':'')+s;
+    if(regTimerVal<=30)document.getElementById('regTimerText').style.color='var(--accent2)';
+    if(regTimerVal<=0){clearInterval(regTimerInterval);document.getElementById('regTimerText').textContent='⏰ Time! Review your ideas.'}
+  },1000);
+}
+
+// ============ 4. REVERSAL WORKSHOP ============
+const revProcesses=[
+  {
+    name:'Restaurant',
+    steps:[
+      {normal:'Customer goes to the restaurant',reversed:'Restaurant goes to the customer',verdict:'revolutionary',note:'Food trucks. Delivery apps. Pop-up dining. All billion-dollar industries.'},
+      {normal:'Waiter takes your order',reversed:'You tell yourself what you want before arriving',verdict:'revolutionary',note:'Pre-ordering apps. Prix fixe menus. Omakase — the chef decides.'},
+      {normal:'Kitchen prepares your food',reversed:'You prepare your own food',verdict:'revolutionary',note:'Hibachi grills. DIY hot pot. Meal kits like HelloFresh. Interactive dining.'},
+      {normal:'You eat, then pay',reversed:'You pay, then eat',verdict:'revolutionary',note:'Fast food. Prepaid tasting menus. Subscription dining. The norm in most of the world.'},
+      {normal:'You tip based on quality',reversed:'Quality is based on what you paid',verdict:'interesting',note:'Tiered dining experiences. Omakase price points. "You get what you pay for" is literally this reversal.'},
+      {normal:'Restaurant is open at set hours',reversed:'Restaurant is open whenever customers want',verdict:'revolutionary',note:'24/7 diners. Vending machine restaurants in Japan. Ghost kitchens.'},
+    ]
+  },
+  {
+    name:'School',
+    steps:[
+      {normal:'Teacher lectures, students listen',reversed:'Students lecture, teacher listens',verdict:'revolutionary',note:'Flipped classrooms. Peer teaching. Student presentations. Research shows teaching is the best way to learn.'},
+      {normal:'Everyone learns at the same pace',reversed:'Everyone learns at their own pace',verdict:'revolutionary',note:'Khan Academy. Montessori. Self-paced online courses. Mastery-based progression.'},
+      {normal:'Tests measure what you learned',reversed:'What you learn is shaped by tests',verdict:'interesting',note:'Teaching to the test. This reversal reveals an ugly truth about most education systems.'},
+      {normal:'Students go to school',reversed:'School goes to students',verdict:'revolutionary',note:'Remote learning. Homeschooling. Mobile schools in developing countries.'},
+      {normal:'Grades rank students against each other',reversed:'Students rank themselves',verdict:'interesting',note:'Self-assessment. Portfolio-based evaluation. Competency badges instead of grades.'},
+      {normal:'You graduate, then work',reversed:'You work, then study what you need',verdict:'revolutionary',note:'Apprenticeships. Professional development. Just-in-time learning. The medieval guild system.'},
+    ]
+  },
+  {
+    name:'Hospital',
+    steps:[
+      {normal:'You get sick, then go to the hospital',reversed:'You go to the hospital to NOT get sick',verdict:'revolutionary',note:'Preventive medicine. Annual checkups. Wellness programs. The entire public health field.'},
+      {normal:'Doctor diagnoses you',reversed:'You diagnose yourself',verdict:'revolutionary',note:'Symptom checkers. Home test kits. Blood glucose monitors. WebMD (for better or worse).'},
+      {normal:'Hospital is a building you visit',reversed:'Hospital comes to you',verdict:'revolutionary',note:'Telemedicine. House calls (they\'re back). Remote monitoring. Hospital-at-home programs.'},
+      {normal:'Specialists treat each body part',reversed:'One person treats the whole person',verdict:'interesting',note:'Holistic medicine. General practitioners. The backlash against over-specialization.'},
+      {normal:'You follow the doctor\'s orders',reversed:'Doctor follows your preferences',verdict:'revolutionary',note:'Patient-centered care. Shared decision making. Living wills. The entire bioethics movement.'},
+      {normal:'Treatment happens in the hospital',reversed:'Treatment happens in daily life',verdict:'revolutionary',note:'Wearable health devices. Medication reminders. Physical therapy apps. Health-integrated workplaces.'},
+    ]
+  }
+];
+let revIdx=0,revShowing=false;
+function revRender(){
+  revShowing=false;
+  const p=revProcesses[revIdx];
+  document.getElementById('revTitle').textContent='The '+p.name+' Process';
+  document.getElementById('revBtn').textContent='Reverse All Steps ↻';
+  document.getElementById('revVerdicts').classList.add('hidden');
+  const cont=document.getElementById('revSteps');
+  cont.innerHTML='';
+  p.steps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='process-step';d.id='revStep'+i;
+    d.innerHTML=`<span class="step-num">${i+1}</span><span>${s.normal}</span>`;
+    cont.appendChild(d);
+  });
+}
+function revToggle(){
+  const p=revProcesses[revIdx];
+  if(!revShowing){
+    revShowing=true;
+    document.getElementById('revBtn').textContent='Show Original';
+    document.getElementById('revVerdicts').classList.remove('hidden');
+    p.steps.forEach((s,i)=>{
+      const d=document.getElementById('revStep'+i);
+      d.className='process-step reversed';
+      d.innerHTML=`<span class="step-num">${i+1}</span><span>${s.reversed}</span><span class="reversal-verdict ${s.verdict}" style="cursor:pointer" onclick="revDetail(${i})">${s.verdict==='revolutionary'?'💡':s.verdict==='interesting'?'🤔':'😂'} ${s.verdict}</span>`;
+    });
+  }else{
+    revShowing=false;
+    document.getElementById('revBtn').textContent='Reverse All Steps ↻';
+    document.getElementById('revVerdicts').classList.add('hidden');
+    p.steps.forEach((s,i)=>{
+      const d=document.getElementById('revStep'+i);
+      d.className='process-step';
+      d.innerHTML=`<span class="step-num">${i+1}</span><span>${s.normal}</span>`;
+    });
+  }
+}
+function revDetail(i){
+  const s=revProcesses[revIdx].steps[i];
+  const d=document.getElementById('revStep'+i);
+  if(d.querySelector('.rev-note'))return;
+  const note=document.createElement('div');
+  note.className='rev-note';
+  note.style.cssText='font-size:.85rem;color:var(--dim);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);width:100%';
+  note.textContent=s.note;
+  d.style.flexWrap='wrap';
+  d.appendChild(note);
+}
+function revNext(){revIdx=(revIdx+1)%revProcesses.length;revRender()}
+revRender();
+
+// ============ 5. PROVOCATIVE OPERATION (PO) ============
+const poStatements=[
+  {statement:'Cars have wheels',po:'PO: Cars have square wheels',extract:['Square wheels would need roads that accommodate them — what about roads that actively propel vehicles?','Square wheels = stability when parked → self-parking, auto-braking','The jolt from square wheels → speed bumps, rumble strips (deliberate jolts ARE useful)','Square = stackable → modular vehicles, cars that fold/stack for parking']},
+  {statement:'Students take exams',po:'PO: Exams take students',extract:['What if the exam ADAPTED to the student — adjusting difficulty in real-time?','Exams that "take" = absorb → portfolio assessment that collects work over time','The exam goes to the student → take-home tests, real-world assessments, on-the-job evaluation','Exams taking students away → the test IS the learning experience, not separate from it']},
+  {statement:'Factories produce pollution',po:'PO: Pollution produces factories',extract:['What if waste BECAME the input? → circular economy, upcycling','Pollution as building material → carbon capture for concrete, plastic roads','Where pollution exists, industry follows → pollution remediation industry','Pollution producing = creative output → turning waste into art, products, energy']},
+  {statement:'Employees work for companies',po:'PO: Companies work for employees',extract:['Company as service provider TO workers → co-working spaces, freelancer platforms','Company exists to develop its people → training-first cultures, internal mobility','Company competes for workers, not vice versa → talent marketplaces, worker cooperatives','The company serves → B-corps, mission-driven organizations, employee-owned companies']},
+];
+let poIdx=0,poStep=0;
+function poRender(){
+  poStep=0;
+  const p=poStatements[poIdx];
+  document.getElementById('poContent').innerHTML=`
+    <div class="po-step active" id="poS0">
+      <h4>Step 1: The Normal Statement</h4>
+      <p style="font-size:1.2rem;text-align:center;font-weight:600;margin:12px 0">"${p.statement}"</p>
+      <p style="color:var(--dim);font-size:.85rem">Perfectly logical. Perfectly limiting. Now apply PO.</p>
+      <div style="text-align:center;margin-top:12px"><button onclick="poAdvance(1)">Apply PO →</button></div>
+    </div>
+    <div class="po-step" id="poS1" style="display:none">
+      <h4>Step 2: The Provocation</h4>
+      <p style="font-size:1.4rem;text-align:center;font-weight:800;color:var(--gold);margin:12px 0">${p.po}</p>
+      <p style="color:var(--dim);font-size:.85rem">This is deliberately wrong. Don't judge it. Ask: what does it suggest? What new angle does it open?</p>
+      <textarea id="poUserIdea" rows="2" placeholder="What ideas does this provocation trigger?" style="margin-top:8px"></textarea>
+      <div style="text-align:center;margin-top:12px"><button onclick="poAdvance(2)">Extract Value →</button></div>
+    </div>
+    <div class="po-step" id="poS2" style="display:none">
+      <h4>Step 3: Extracted Ideas</h4>
+      <p style="color:var(--dim);font-size:.85rem;margin-bottom:12px">From the absurd provocation, here's what lateral thinkers extracted:</p>
+      <ul style="list-style:none;padding:0">
+        ${p.extract.map(e=>`<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.9rem">💡 ${e}</li>`).join('')}
+      </ul>
+      <p style="margin-top:16px;color:var(--accent);font-weight:600">The provocation was wrong. The ideas it generated are real and valuable. That's PO.</p>
+      <div style="text-align:center;margin-top:12px"><button onclick="poNext()" class="secondary">Try Another →</button></div>
+    </div>
+  `;
+}
+function poAdvance(step){
+  document.getElementById('poS'+(step-1)).classList.remove('active');
+  document.getElementById('poS'+(step-1)).classList.add('done');
+  document.getElementById('poS'+step).style.display='block';
+  setTimeout(()=>document.getElementById('poS'+step).classList.add('active'),50);
+}
+function poNext(){poIdx=(poIdx+1)%poStatements.length;poRender()}
+poRender();
+
+// ============ 6. DOMINANT IDEA DETECTOR ============
+const domScenarios=[
+  {
+    difficulty:'easy',
+    text:'A city is redesigning its downtown. Every proposal focuses on wider roads, bigger parking garages, better traffic signals, and highway expansions. Pedestrians, cyclists, and public transit get leftover budget. A public hearing draws 200 angry drivers demanding fewer potholes.',
+    dominant:'Cities exist to serve cars',
+    alts:['Roads need to be wider','Public transit is too expensive','Drivers pay more taxes so they deserve priority'],
+    insight:'The invisible frame: a city exists for cars. Once you see it, every proposal looks absurd — like redesigning a living room around the furniture delivery truck. Cities that escaped this frame (Amsterdam, Copenhagen, Barcelona) became the most liveable on Earth.',
+  },
+  {
+    difficulty:'medium',
+    text:'A hospital is overwhelmed. Wait times are 6 hours. They hire more ER doctors, add beds, streamline triage, and build a new wing. Two years later, the ER is just as packed — now with more staff burning out. They consider building a second hospital.',
+    dominant:'Sick people belong in hospitals',
+    alts:['The hospital needs more funding','Triage protocols are inefficient','There aren\'t enough doctors in the country'],
+    insight:'The dominant idea: when sick, go to hospital. But 70% of ER visits are non-emergency. Urgent care clinics, nurse hotlines, pharmacist consultations, telemedicine — all REMOVE people from the ER. The hospital kept trying to be a bigger funnel when they needed to redirect the flow.',
+  },
+  {
+    difficulty:'hard',
+    text:'A tech company runs annual employee surveys. Satisfaction is 72% — decent but not great. They improve perks: better food, gym, flexible hours, higher bonuses. Next survey: 73%. More perks: meditation rooms, pet-friendly office, 4-day weeks. Survey: 74%. Leadership is frustrated — they\'ve spent millions for 2 percentage points.',
+    dominant:'Satisfaction is something the company gives employees',
+    alts:['The survey questions are flawed','Employees are inherently hard to satisfy','Perks need to be more innovative'],
+    insight:'The hidden frame: satisfaction is a THING delivered by management to employees, like a product. But research shows satisfaction comes from autonomy, mastery, purpose, and relationships — things you CAN\'T provide as perks. The company was treating humans like vending machines: insert perk, extract satisfaction.',
+  },
+  {
+    difficulty:'expert',
+    text:'Two countries negotiate a peace deal. Country A wants the disputed territory for its oil. Country B wants it for ancestral homeland reasons. Mediators try splitting the territory — 50/50, 60/40, creative borders. Both sides reject every map. Talks collapse for the fifth time.',
+    dominant:'The territory is a single thing that must be divided',
+    alts:['One side is being unreasonable','The mediators aren\'t skilled enough','Historical claims should determine ownership'],
+    insight:'The deepest frame: that "the territory" is one indivisible thing to split. But A wants what\'s UNDER the ground (oil). B wants what\'s ON the ground (homeland). These aren\'t the same thing. Solution: B gets sovereignty and surface rights, A gets mineral extraction rights. Both get 100% of what they actually wanted. The "territory" was never one thing — the frame made it look like one.',
+  },
+  {
+    difficulty:'expert',
+    text:'A school board debates education reform. Progressive members push for smaller classes, more teachers, updated textbooks, and technology in classrooms. Conservative members push for discipline, standardized testing, back-to-basics curriculum, and parental choice. The debate has raged for 20 years. Neither side\'s reforms produce dramatic improvement when implemented.',
+    dominant:'Learning is something done TO students in a scheduled place',
+    alts:['Teachers are the most important factor','Technology will transform education','Class size is the key variable'],
+    insight:'Both "sides" share the same invisible assumption: learning is an industrial process (input students, apply treatment, output graduates). They only disagree on which treatment. The frame nobody questions: same age, same room, same schedule, same pace. Montessori, unschooling, apprenticeships, self-directed learning — all escape the dominant idea that both sides unknowingly share.',
+  }
+];
+let domIdx2=0;
+function domRender(){
+  const s=domScenarios[domIdx2];
+  document.getElementById('domLevel').innerHTML=`<span class="difficulty ${s.difficulty}">${s.difficulty}</span>`;
+  document.getElementById('domProgress').textContent=`${domIdx2+1}/${domScenarios.length}`;
+  document.getElementById('domScenario').textContent=s.text;
+  document.getElementById('domResult').classList.remove('show');
+  document.getElementById('domNextBtn').style.display='none';
+  const c=document.getElementById('domChoices');c.innerHTML='';
+  const all=[s.dominant,...s.alts].sort(()=>Math.random()-.5);
+  all.forEach(a=>{
+    const b=document.createElement('button');
+    b.className='frame-option';b.textContent=a;
+    b.onclick=()=>domCheck(a,b);
+    c.appendChild(b);
+  });
+}
+function domCheck(answer,btn){
+  const s=domScenarios[domIdx2];
+  const correct=answer===s.dominant;
+  document.querySelectorAll('.frame-option').forEach(b=>{
+    b.style.pointerEvents='none';
+    if(b.textContent===s.dominant)b.classList.add('correct');
+    else b.classList.add('wrong');
+  });
+  const r=document.getElementById('domResult');
+  r.innerHTML=correct?
+    `<p style="color:#2d9a4e;font-weight:700">✅ You found it.</p><p style="margin-top:8px">"${s.dominant}" — ${s.insight}</p>`:
+    `<p style="color:var(--accent2);font-weight:700">Not quite.</p><p style="margin-top:8px">You picked a detail within the frame. The dominant idea is: <strong>"${s.dominant}"</strong></p><p style="margin-top:8px">${s.insight}</p>`;
+  r.classList.add('show');
+  document.getElementById('domNextBtn').style.display=domIdx2<domScenarios.length-1?'inline-flex':'none';
+}
+function domNext(){domIdx2++;if(domIdx2>=domScenarios.length)domIdx2=0;domRender()}
+domRender();
+
+// ============ 7. SIX THINKING HATS ============
+const hats=[
+  {color:'white',bg:'hat-white',label:'⬜ White',title:'White Hat — Facts Only',prompt:'What are the FACTS? Data, numbers, information you have and information you need. No opinions, no interpretations. Just: what do we know? What don\'t we know?'},
+  {color:'red',bg:'hat-red',label:'🟥 Red',title:'Red Hat — Feelings',prompt:'How do you FEEL about this? Gut reaction. Intuition. Emotions. No justification needed — red hat gives you permission to say "I don\'t like it" without explaining why.'},
+  {color:'black',bg:'hat-black',label:'⬛ Black',title:'Black Hat — Caution',prompt:'What could go WRONG? Risks, dangers, weaknesses, problems. This is critical thinking — not negativity. What are the real obstacles? Where does this fail?'},
+  {color:'yellow',bg:'hat-yellow',label:'🟨 Yellow',title:'Yellow Hat — Optimism',prompt:'What\'s the BEST case? Benefits, value, opportunities. Why might this work brilliantly? What\'s the most optimistic realistic outcome? Where\'s the hidden upside?'},
+  {color:'green',bg:'hat-green',label:'🟩 Green',title:'Green Hat — Creativity',prompt:'What are ALTERNATIVES? New ideas, lateral thinking, provocations. This is the PO hat. What if we did the opposite? What wild idea might work? No judgement.'},
+  {color:'blue',bg:'hat-blue',label:'🟦 Blue',title:'Blue Hat — Process',prompt:'OVERVIEW: Looking at all the hats together, what\'s the conclusion? What\'s the next step? Blue hat manages the thinking process itself. Summarize and decide.'},
+];
+let hatIdx=0,hatEntries=[];
+function hatStart(){
+  const d=document.getElementById('hatDecision').value.trim();
+  if(!d){document.getElementById('hatDecision').style.borderColor='var(--accent2)';return}
+  document.getElementById('hatStartBtn').classList.add('hidden');
+  document.getElementById('hatDecision').disabled=true;
+  document.getElementById('hatArea').classList.remove('hidden');
+  hatIdx=0;hatEntries=[];
+  hatRenderBar();
+  hatRenderPrompt();
+}
+function hatRenderBar(){
+  const bar=document.getElementById('hatBar');bar.innerHTML='';
+  hats.forEach((h,i)=>{
+    const b=document.createElement('button');
+    b.className='hat-btn '+h.bg+(i===hatIdx?' active':'');
+    b.textContent=h.label;
+    b.disabled=true;
+    b.style.opacity=i<hatIdx?'.4':i===hatIdx?'1':'.6';
+    bar.appendChild(b);
+  });
+}
+function hatRenderPrompt(){
+  const h=hats[hatIdx];
+  document.getElementById('hatPrompt').innerHTML=`<p style="font-weight:700;margin-bottom:8px">${h.title}</p><p style="color:var(--dim);font-size:.9rem">${h.prompt}</p>`;
+  document.getElementById('hatPrompt').style.borderLeft='4px solid '+getHatColor(h.color);
+  document.getElementById('hatInput').value='';
+  document.getElementById('hatInput').placeholder=h.color==='white'?'Facts and data only...':h.color==='red'?'I feel...':h.color==='black'?'The risks are...':h.color==='yellow'?'The upside is...':h.color==='green'?'What if we...':'My conclusion is...';
+  document.getElementById('hatSaveBtn').textContent=hatIdx<hats.length-1?'Save & Next Hat →':'Complete ✓';
+}
+function getHatColor(c){return{white:'#f0f0f0',red:'#e74c3c',black:'#2c3e50',yellow:'#f39c12',green:'#27ae60',blue:'#2980b9'}[c]}
+function hatSave(){
+  const v=document.getElementById('hatInput').value.trim();
+  if(!v)return;
+  hatEntries.push({hat:hats[hatIdx],text:v});
+  const e=document.createElement('div');
+  e.className='hat-entry '+hats[hatIdx].color;
+  e.innerHTML=`<strong>${hats[hatIdx].label}</strong> ${v}`;
+  document.getElementById('hatEntries').appendChild(e);
+  hatIdx++;
+  if(hatIdx>=hats.length){
+    document.getElementById('hatPrompt').innerHTML='';
+    document.getElementById('hatInput').classList.add('hidden');
+    document.getElementById('hatSaveBtn').classList.add('hidden');
+    const sum=document.getElementById('hatSummary');
+    sum.classList.remove('hidden');
+    sum.innerHTML=`
+      <div style="padding:20px;background:linear-gradient(135deg,rgba(108,99,255,.1),rgba(78,205,196,.1));border-radius:var(--radius)">
+        <h3 style="margin-bottom:12px">🎩 Your Six-Hat Analysis</h3>
+        <p style="color:var(--dim);margin-bottom:16px;font-size:.9rem">Decision: "${document.getElementById('hatDecision').value}"</p>
+        ${hatEntries.map(e=>`<div class="hat-entry ${e.hat.color}"><strong>${e.hat.label}</strong> ${e.text}</div>`).join('')}
+        <p style="margin-top:16px;color:var(--accent);font-weight:600">Notice how each hat produced a DIFFERENT kind of thought. Without the constraint, you'd have jumbled them all together — and missed half of them.</p>
+        <div style="text-align:center;margin-top:16px"><button onclick="hatReset()" class="secondary">Start Over</button></div>
+      </div>`;
+    return;
+  }
+  hatRenderBar();
+  hatRenderPrompt();
+}
+function hatReset(){
+  document.getElementById('hatDecision').disabled=false;document.getElementById('hatDecision').value='';
+  document.getElementById('hatStartBtn').classList.remove('hidden');
+  document.getElementById('hatArea').classList.add('hidden');
+  document.getElementById('hatSummary').classList.add('hidden');
+  document.getElementById('hatEntries').innerHTML='';
+  document.getElementById('hatInput').classList.remove('hidden');
+  document.getElementById('hatSaveBtn').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

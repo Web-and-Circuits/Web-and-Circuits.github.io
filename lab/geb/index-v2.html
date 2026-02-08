@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gödel, Escher, Bach — Interactive Exploration v2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0a0a;--s1:#131313;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;
+--t:#e8e4df;--t2:#a09a92;--t3:#6b6560;
+--gold:#d4a853;--gold2:#b8912e;--amber:#e8934a;
+--blue:#5b8fd4;--purple:#9b7ed4;--green:#5bad7a;--red:#d45b5b;--cyan:#4ac8c8;
+--r:12px;--rs:8px;
+}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--gold);text-decoration:none}
+.container{max-width:940px;margin:0 auto;padding:0 20px}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px 20px;background:radial-gradient(ellipse at 50% 30%,rgba(212,168,83,.06) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2.2rem,6vw,4.2rem);font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,var(--gold),var(--amber),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+.hero .sub{font-size:clamp(.95rem,2.2vw,1.2rem);color:var(--t2);font-weight:300;max-width:640px;margin-bottom:24px}
+.hero .meta{font-size:.88rem;color:var(--t3);margin-bottom:32px}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:500;background:rgba(212,168,83,.1);color:var(--gold);margin:2px 3px}
+.scroll-hint{position:absolute;bottom:36px;color:var(--t3);font-size:.82rem;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(212,168,83,.12);overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav .inner{max-width:940px;margin:0 auto;display:flex;gap:2px;padding:6px 20px;min-width:max-content}
+nav a{padding:8px 12px;border-radius:var(--rs);font-size:.78rem;font-weight:500;color:var(--t2);white-space:nowrap;min-height:40px;display:flex;align-items:center;transition:all .2s}
+nav a:hover{background:var(--s2);color:var(--t)}
+
+/* Section */
+section{padding:72px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+section h2{font-size:clamp(1.5rem,3.5vw,2rem);font-weight:800;margin-bottom:10px;letter-spacing:-.02em}
+section h3{font-size:1.05rem;font-weight:600;margin:24px 0 10px;color:var(--gold)}
+section p{color:var(--t2);margin-bottom:12px;font-size:.92rem}
+
+/* Demo box */
+.demo{background:var(--s1);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:24px;margin:24px 0;position:relative;overflow:hidden}
+.demo::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--amber),var(--purple))}
+
+/* Buttons */
+button,.btn{min-height:40px;padding:8px 16px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.1);background:var(--s2);color:var(--t);font-family:inherit;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+button:hover{background:var(--s3);border-color:var(--gold)}
+button:active{transform:scale(.97)}
+button.primary{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#0a0a0a;border-color:var(--gold);font-weight:600}
+button:disabled{opacity:.35;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+
+/* Inputs */
+input,textarea,select{min-height:40px;padding:8px 12px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.1);background:var(--bg);color:var(--t);font-family:inherit;font-size:.88rem;width:100%}
+input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:20px;margin:16px 0}
+.card-accent{border-left:3px solid var(--gold);background:rgba(212,168,83,.03)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:7px 14px;border-radius:var(--rs);cursor:pointer;font-size:.82rem;font-weight:500;color:var(--t3);background:transparent;border:1px solid transparent;min-height:36px;transition:all .2s}
+.tab.active{color:var(--gold);border-color:var(--gold);background:rgba(212,168,83,.06)}
+.tab:hover{color:var(--t)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* Mono */
+code,.mono{font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.88em}
+
+/* MIU */
+.miu-string{font-size:1.5rem;font-weight:700;color:var(--gold);letter-spacing:3px;padding:14px;text-align:center;background:rgba(212,168,83,.05);border-radius:var(--rs);margin:12px 0;word-break:break-all;min-height:56px;display:flex;align-items:center;justify-content:center}
+.miu-rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:12px 0}
+.miu-rule{padding:10px 14px;border-radius:var(--rs);cursor:pointer;border:1px solid rgba(255,255,255,.07);background:var(--s2);font-size:.84rem;transition:all .2s}
+.miu-rule:hover{border-color:var(--gold);background:rgba(212,168,83,.07)}
+.miu-rule.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+.miu-history{font-size:.78rem;color:var(--t3);max-height:160px;overflow-y:auto;margin-top:10px}
+.miu-history div{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.hint-box{margin-top:14px;padding:14px;background:rgba(212,168,83,.04);border:1px solid rgba(212,168,83,.15);border-radius:var(--rs);font-size:.88rem;color:var(--t2)}
+.hint-box strong{color:var(--gold)}
+
+/* TNT */
+.tnt-palette{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.tnt-sym{padding:6px 12px;background:var(--s2);border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:grab;font-size:1rem;font-weight:600;color:var(--gold);user-select:none;transition:all .15s}
+.tnt-sym:hover{border-color:var(--gold);background:rgba(212,168,83,.1)}
+.tnt-workspace{min-height:56px;padding:12px;background:var(--bg);border:2px dashed rgba(255,255,255,.1);border-radius:var(--rs);margin:10px 0;font-size:1.2rem;font-weight:600;letter-spacing:2px;color:var(--gold);display:flex;flex-wrap:wrap;align-items:center;gap:2px;cursor:text}
+.tnt-workspace .sym-placed{display:inline-block;padding:2px 4px;border-radius:4px;transition:background .15s}
+.tnt-workspace .sym-placed:hover{background:rgba(212,91,91,.2);cursor:pointer}
+.tnt-meaning{padding:14px;background:rgba(91,141,212,.06);border:1px solid rgba(91,141,212,.15);border-radius:var(--rs);margin:10px 0;font-size:.9rem;color:var(--blue)}
+
+/* Gödel */
+.godel-table{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:5px;margin:10px 0}
+.godel-cell{text-align:center;padding:6px 3px;border-radius:6px;background:var(--s2);font-size:.75rem}
+.godel-cell .sym{font-size:1rem;font-weight:700;color:var(--gold)}
+.godel-cell .num{color:var(--t3);margin-top:2px}
+.godel-output{font-family:monospace;font-size:.85rem;color:var(--amber);background:rgba(232,147,74,.05);padding:14px;border-radius:var(--rs);margin:10px 0;word-break:break-all;min-height:44px}
+
+/* Canon */
+.piano-roll{position:relative;background:var(--bg);border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);overflow:hidden;margin:12px 0}
+.piano-row{display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.03)}
+.piano-label{width:36px;font-size:.7rem;color:var(--t3);text-align:right;padding-right:6px;flex-shrink:0}
+.piano-cells{display:flex;flex:1}
+.piano-cell{width:24px;height:20px;border-right:1px solid rgba(255,255,255,.02);transition:background .15s}
+.piano-cell.on{background:var(--gold);border-radius:2px}
+.piano-cell.on2{background:var(--purple);border-radius:2px}
+.piano-cell.playhead{box-shadow:inset 0 0 0 1px var(--amber)}
+
+/* Strange Loop */
+.staircase{position:relative;width:100%;max-width:500px;margin:0 auto}
+.stair-level{padding:16px;margin:6px 0;border-radius:var(--rs);border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:all .25s;position:relative}
+.stair-level:hover{border-color:var(--gold)}
+.stair-level.active{border-color:var(--gold);background:rgba(212,168,83,.06)}
+.stair-level .level-num{font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.stair-level .level-name{font-weight:600;font-size:.95rem}
+.stair-level .level-desc{font-size:.82rem;color:var(--t2);margin-top:4px}
+.loop-arrow{text-align:center;font-size:1.4rem;color:var(--gold);margin:2px 0;opacity:.5}
+.loop-back{text-align:center;padding:12px;color:var(--gold);font-weight:600;font-size:.9rem;background:rgba(212,168,83,.06);border-radius:var(--rs);margin-top:8px;animation:glow 2s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(212,168,83,0)}50%{box-shadow:0 0 20px rgba(212,168,83,.15)}}
+
+/* Formal System */
+.fs-theorem{display:inline-block;padding:5px 10px;margin:3px;border-radius:6px;background:rgba(91,141,212,.08);border:1px solid rgba(91,141,212,.15);font-family:monospace;font-size:.84rem;color:var(--blue)}
+.fs-axiom{background:rgba(212,168,83,.08);border-color:rgba(212,168,83,.15);color:var(--gold)}
+.fs-unprovable{background:rgba(212,91,91,.08);border-color:rgba(212,91,91,.2);color:var(--red)}
+
+/* Isomorphism */
+.iso-col{flex:1;min-width:200px}
+.iso-item{padding:8px 12px;margin:4px 0;border-radius:6px;font-size:.85rem;border:1px solid rgba(255,255,255,.08);background:var(--s2);transition:all .2s}
+.iso-item.highlight{border-color:var(--gold);background:rgba(212,168,83,.08)}
+.iso-line{stroke:var(--gold);stroke-width:1.5;opacity:.4;transition:opacity .2s}
+.iso-line.highlight{opacity:1;stroke-width:2}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+
+/* Blockquote */
+blockquote{border-left:3px solid var(--gold);padding:14px 18px;margin:16px 0;background:rgba(212,168,83,.02);border-radius:0 var(--rs) var(--rs) 0;font-style:italic;font-size:.92rem}
+blockquote cite{display:block;margin-top:6px;font-style:normal;font-size:.8rem;color:var(--t3)}
+
+@media(max-width:600px){
+  .miu-rules{grid-template-columns:1fr}
+  .demo{padding:16px}
+  section{padding:48px 0}
+  .tnt-palette{gap:4px}
+  .tnt-sym{padding:5px 8px;font-size:.9rem}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero" style="position:relative">
+  <div style="font-size:1.6rem;letter-spacing:4px;margin-bottom:8px">★★★★★</div>
+  <h1>Gödel, Escher, Bach</h1>
+  <div class="sub">An interactive exploration of self-reference, strange loops, and the tangled hierarchies of mind</div>
+  <div class="meta">Douglas Hofstadter · 1979 · 777 pages</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+    <span class="tag">Self-Reference</span><span class="tag">Formal Systems</span>
+    <span class="tag">Consciousness</span><span class="tag">AI</span><span class="tag">Music</span>
+  </div>
+  <div class="scroll-hint">↓ 7 interactive microworlds below</div>
+</div>
+
+<!-- NAV -->
+<nav><div class="inner">
+  <a href="#mu">🧩 MU Puzzle</a>
+  <a href="#tnt">🔤 TNT Builder</a>
+  <a href="#godel">🔢 Gödel Numbers</a>
+  <a href="#canon">🎵 Canon Generator</a>
+  <a href="#loop">♾️ Strange Loop</a>
+  <a href="#formal">⚙️ Formal Systems</a>
+  <a href="#iso">🔗 Isomorphisms</a>
+</div></nav>
+
+<!-- ════════════════ 1. MU PUZZLE ════════════════ -->
+<section id="mu">
+<div class="container">
+  <h2>🧩 MU Puzzle — Playable</h2>
+  <p>Start with <strong>MI</strong>. Apply the four rules. Try to reach <strong>MU</strong>. (Spoiler: you can't — but proving <em>why</em> requires stepping outside the system.)</p>
+
+  <div class="demo">
+    <div class="miu-string" id="mu-str">MI</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--t3);margin-bottom:10px">
+      <span>I-count: <strong id="mu-ic" style="color:var(--amber)">1</strong></span>
+      <span>mod 3: <strong id="mu-mod" style="color:var(--amber)">1</strong></span>
+      <span>Length: <strong id="mu-len" style="color:var(--t2)">2</strong></span>
+      <span>Steps: <strong id="mu-steps" style="color:var(--t2)">0</strong></span>
+    </div>
+
+    <div class="miu-rules" id="mu-rules">
+      <div class="miu-rule" onclick="muApply(1)"><strong>Rule I:</strong> x<span style="color:var(--gold)">I</span> → x<span style="color:var(--gold)">IU</span><br><small style="color:var(--t3)">If ends in I, add U</small></div>
+      <div class="miu-rule" onclick="muApply(2)"><strong>Rule II:</strong> <span style="color:var(--gold)">M</span>x → <span style="color:var(--gold)">M</span>xx<br><small style="color:var(--t3)">Double after M</small></div>
+      <div class="miu-rule" onclick="muApply(3)"><strong>Rule III:</strong> x<span style="color:var(--gold)">III</span>y → x<span style="color:var(--gold)">U</span>y<br><small style="color:var(--t3)">Replace III with U (click to pick which III)</small></div>
+      <div class="miu-rule" onclick="muApply(4)"><strong>Rule IV:</strong> x<span style="color:var(--gold)">UU</span>y → xy<br><small style="color:var(--t3)">Drop UU (click to pick which UU)</small></div>
+    </div>
+
+    <div class="btn-row">
+      <button onclick="muReset()">↺ Reset</button>
+      <button onclick="muUndo()">← Undo</button>
+      <button onclick="muHint()">💡 Hint (<span id="mu-hint-n">0</span>/3)</button>
+    </div>
+
+    <div id="mu-hints"></div>
+    <div class="miu-history" id="mu-hist"></div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 2. TNT BUILDER ════════════════ -->
+<section id="tnt">
+<div class="container">
+  <h2>🔤 Typographical Number Theory — Builder</h2>
+  <p>Construct TNT formulas by clicking symbols. See what each formula <em>means</em> in arithmetic — the isomorphism that gives meaningless squiggles their power.</p>
+
+  <div class="demo">
+    <h3>Symbol Palette</h3>
+    <p style="font-size:.82rem;color:var(--t3)">Click a symbol to add it. Click a placed symbol to remove it.</p>
+    <div class="tnt-palette" id="tnt-palette"></div>
+
+    <h3>Your Formula</h3>
+    <div class="tnt-workspace" id="tnt-ws" onclick="tntFocus()"></div>
+
+    <div class="btn-row">
+      <button onclick="tntClear()">Clear</button>
+      <button onclick="tntExample(0)">Ex: 1+1=2</button>
+      <button onclick="tntExample(1)">Ex: ∀a:∃b:a=Sb</button>
+      <button onclick="tntExample(2)">Ex: ∃a:(SSa=SSSSS0)</button>
+      <button onclick="tntExample(3)">Ex: ¬∃a:∃b:(Sa×Sb)=SSSSSS0</button>
+    </div>
+
+    <div class="tnt-meaning" id="tnt-meaning">Click symbols above to build a formula…</div>
+
+    <div class="card card-accent">
+      <strong>Why This Matters</strong>
+      <p style="margin-top:6px;font-size:.88rem">TNT can express any statement about natural numbers. Since Gödel numbering encodes TNT's own formulas as numbers, TNT can make statements about <em>itself</em>. That's the crack through which incompleteness enters.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 3. GÖDEL NUMBERING ════════════════ -->
+<section id="godel">
+<div class="container">
+  <h2>🔢 Gödel Numbering — Live Encoder/Decoder</h2>
+  <p>Every formula becomes a number. Every number decodes to a formula. This is how a system talks about itself.</p>
+
+  <div class="demo">
+    <h3>Symbol Map</h3>
+    <div class="godel-table" id="g-table"></div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="gTab(this,'g-encode')">Encode →</div>
+      <div class="tab" onclick="gTab(this,'g-decode')">← Decode</div>
+      <div class="tab" onclick="gTab(this,'g-self')">Self-Reference ∞</div>
+    </div>
+
+    <div class="tab-content active" id="g-encode">
+      <h3>String → Gödel Number</h3>
+      <input type="text" id="g-in" placeholder="Type TNT: S0=S0, ∀a:¬∃b:Sa=Sb, etc." value="S0=S0" oninput="gEncode()" style="font-family:monospace;letter-spacing:1px">
+      <div style="margin-top:10px"><small style="color:var(--t3)">Symbol codes:</small></div>
+      <div class="godel-output" id="g-codes"></div>
+      <div><small style="color:var(--t3)">Gödel number (prime factorization):</small></div>
+      <div class="godel-output" id="g-num"></div>
+    </div>
+
+    <div class="tab-content" id="g-decode">
+      <h3>Gödel Number → String</h3>
+      <p style="font-size:.85rem">Enter a sequence of symbol codes (comma-separated). We'll decode them back to a TNT string.</p>
+      <input type="text" id="g-dec-in" placeholder="e.g. 2,1,3,2,1" value="2,1,3,2,1" oninput="gDecode()" style="font-family:monospace">
+      <div class="godel-output" id="g-dec-out"></div>
+    </div>
+
+    <div class="tab-content" id="g-self">
+      <h3>The Self-Reference Trick</h3>
+      <p>Gödel's masterstroke: <strong>arithmoquinification</strong>. Take a formula with a free variable, substitute its own Gödel number for that variable.</p>
+      <div class="card" style="margin:14px 0">
+        <p style="font-size:.88rem"><strong style="color:var(--gold)">Step 1:</strong> Write a formula F(a) meaning "a is not provable in TNT"</p>
+        <p style="font-size:.88rem"><strong style="color:var(--gold)">Step 2:</strong> Compute the Gödel number of F(a) — call it <em>n</em></p>
+        <p style="font-size:.88rem"><strong style="color:var(--gold)">Step 3:</strong> Substitute <em>n</em> for <em>a</em> → F(<em>n</em>)</p>
+        <p style="font-size:.88rem"><strong style="color:var(--gold)">Step 4:</strong> F(<em>n</em>) now says: "<em>n</em> is not provable" — but <em>n</em> IS F(<em>n</em>)!</p>
+        <p style="font-size:.88rem;color:var(--amber);margin-top:8px">∴ The formula says: <strong>"I am not provable."</strong></p>
+      </div>
+      <div id="g-self-demo" style="margin:14px 0">
+        <button class="primary" onclick="gSelfDemo()">▶ Watch It Happen</button>
+        <div id="g-self-out" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 4. CANON GENERATOR ════════════════ -->
+<section id="canon">
+<div class="container">
+  <h2>🎵 Canon Generator</h2>
+  <p>Bach's canons are themes played against transformed copies of themselves. Build and hear them with Web Audio.</p>
+
+  <div class="demo">
+    <div class="tabs">
+      <div class="tab active" onclick="cTab(this,'c-crab')">🦀 Crab Canon</div>
+      <div class="tab" onclick="cTab(this,'c-aug')">📐 Augmentation</div>
+      <div class="tab" onclick="cTab(this,'c-inv')">🔄 Inversion</div>
+      <div class="tab" onclick="cTab(this,'c-custom')">✏️ Custom</div>
+    </div>
+
+    <div class="tab-content active" id="c-crab">
+      <h3>Crab Canon (Palindrome)</h3>
+      <p>The melody plays forward and backward simultaneously. Named for crabs' supposed backward walk. Bach wrote one in the Musical Offering.</p>
+      <div class="piano-roll" id="cr-roll"></div>
+      <div class="btn-row">
+        <button class="primary" onclick="canonPlay('crab')">▶ Play</button>
+        <button onclick="canonStop()">⏹ Stop</button>
+        <button onclick="canonRandomize('crab')">🎲 New Melody</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--t3);margin-top:8px"><span style="color:var(--gold)">■</span> Forward &nbsp; <span style="color:var(--purple)">■</span> Backward (reversed)</p>
+    </div>
+
+    <div class="tab-content" id="c-aug">
+      <h3>Canon by Augmentation</h3>
+      <p>The follower plays the same melody at half speed (each note lasts twice as long). Like Chapter V's "Canon by Intervallic Augmentation" dialogue.</p>
+      <div class="piano-roll" id="aug-roll"></div>
+      <div class="btn-row">
+        <button class="primary" onclick="canonPlay('aug')">▶ Play</button>
+        <button onclick="canonStop()">⏹ Stop</button>
+        <button onclick="canonRandomize('aug')">🎲 New Melody</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--t3);margin-top:8px"><span style="color:var(--gold)">■</span> Leader &nbsp; <span style="color:var(--purple)">■</span> Follower (half speed)</p>
+    </div>
+
+    <div class="tab-content" id="c-inv">
+      <h3>Canon by Inversion</h3>
+      <p>The follower mirrors the melody — when the leader goes up, the follower goes down by the same interval. Musical mirror image.</p>
+      <div class="piano-roll" id="inv-roll"></div>
+      <div class="btn-row">
+        <button class="primary" onclick="canonPlay('inv')">▶ Play</button>
+        <button onclick="canonStop()">⏹ Stop</button>
+        <button onclick="canonRandomize('inv')">🎲 New Melody</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--t3);margin-top:8px"><span style="color:var(--gold)">■</span> Leader &nbsp; <span style="color:var(--purple)">■</span> Inverted</p>
+    </div>
+
+    <div class="tab-content" id="c-custom">
+      <h3>Build Your Own</h3>
+      <p>Click cells in the grid to place notes, then apply a transformation.</p>
+      <div class="piano-roll" id="cust-roll"></div>
+      <div class="btn-row">
+        <select id="cust-transform" style="width:auto;min-width:140px">
+          <option value="crab">Crab (reverse)</option>
+          <option value="aug">Augmentation (half speed)</option>
+          <option value="inv">Inversion (mirror)</option>
+        </select>
+        <button class="primary" onclick="canonPlay('custom')">▶ Play</button>
+        <button onclick="canonStop()">⏹ Stop</button>
+        <button onclick="canonClearCustom()">Clear</button>
+      </div>
+    </div>
+
+    <div class="card card-accent" style="margin-top:16px">
+      <strong>The GEB Connection</strong>
+      <p style="font-size:.88rem;margin-top:6px">Each canon transformation has a mathematical analogue. Crab = palindrome (read forward/backward). Augmentation = scaling. Inversion = negation. These are <em>isomorphisms</em> — structure-preserving transformations that change the surface while keeping the deep pattern intact.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 5. STRANGE LOOP EXPLORER ════════════════ -->
+<section id="loop">
+<div class="container">
+  <h2>♾️ Strange Loop Explorer</h2>
+  <p>Navigate an impossible staircase. Each level is a formal system that talks about the level below. Reach the "top" — and find yourself back at the bottom.</p>
+
+  <div class="demo">
+    <div class="staircase" id="staircase"></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="primary" onclick="stairUp()">⬆ Ascend</button>
+      <button onclick="stairDown()">⬇ Descend</button>
+      <button onclick="stairReset()">↺ Reset</button>
+    </div>
+    <div id="stair-info" class="card" style="margin-top:14px;min-height:60px"></div>
+    <div id="stair-counter" style="text-align:center;font-size:.82rem;color:var(--t3);margin-top:8px"></div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 6. FORMAL SYSTEM PLAYGROUND ════════════════ -->
+<section id="formal">
+<div class="container">
+  <h2>⚙️ Formal System Playground</h2>
+  <p>Define axioms and rules. Generate theorems. Then discover a statement the system can't prove about itself.</p>
+
+  <div class="demo">
+    <div class="tabs">
+      <div class="tab active" onclick="fsTab(this,'fs-presets')">Presets</div>
+      <div class="tab" onclick="fsTab(this,'fs-custom')">Custom System</div>
+    </div>
+
+    <div class="tab-content active" id="fs-presets">
+      <div class="btn-row">
+        <button class="primary" onclick="fsSel('miu')">MIU System</button>
+        <button onclick="fsSel('pq')">pq-System</button>
+        <button onclick="fsSel('even')">Even Numbers</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="fs-custom">
+      <p style="font-size:.85rem">Define your own system. Alphabet: any characters. Axiom: starting string. Rule: pattern → replacement.</p>
+      <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;margin:10px 0">
+        <div><label style="font-size:.8rem;color:var(--t3)">Axiom</label><input id="fs-cust-ax" value="A" placeholder="Starting string"></div>
+        <div><label style="font-size:.8rem;color:var(--t3)">Rule (x→y)</label><input id="fs-cust-rule" value="A→AB,B→A" placeholder="A→AB,B→A"></div>
+      </div>
+      <button onclick="fsCustomLoad()">Load Custom System</button>
+    </div>
+
+    <h3>Axioms</h3>
+    <div id="fs-ax" style="min-height:36px"></div>
+
+    <h3>Rules</h3>
+    <div id="fs-rl" style="font-size:.85rem;color:var(--t2)"></div>
+
+    <h3>Generated Theorems</h3>
+    <div class="btn-row">
+      <button onclick="fsDeriv()">⚡ Derive Next</button>
+      <button onclick="for(let i=0;i<10;i++)fsDeriv()">⚡×10</button>
+      <button onclick="fsReset()">↺ Reset</button>
+    </div>
+    <div id="fs-th" style="min-height:48px;margin:8px 0"></div>
+
+    <div id="fs-godel" style="display:none" class="card" style="margin-top:12px">
+    </div>
+
+    <div class="card card-accent" style="margin-top:14px">
+      <strong>The Incompleteness Moment</strong>
+      <p style="font-size:.88rem;margin-top:6px" id="fs-incomp">Generate enough theorems and look for a pattern. Can the system prove everything true about its own structure? The MIU system can't prove "MU is not a theorem" — that requires stepping <em>outside</em>. Every sufficiently powerful formal system has this blind spot.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════ 7. ISOMORPHISM MACHINE ════════════════ -->
+<section id="iso">
+<div class="container">
+  <h2>🔗 Isomorphism Machine</h2>
+  <p>"It is such perceptions of isomorphism which create meanings in the minds of people." — Feed in two structures, watch the mapping emerge.</p>
+
+  <div class="demo">
+    <div class="tabs">
+      <div class="tab active" onclick="isoTab(this,'iso-music-math')">Music ↔ Math</div>
+      <div class="tab" onclick="isoTab(this,'iso-lang-logic')">Language ↔ Logic</div>
+      <div class="tab" onclick="isoTab(this,'iso-bio-code')">DNA ↔ Code</div>
+    </div>
+
+    <div class="tab-content active" id="iso-music-math">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:start">
+        <div class="iso-col">
+          <h3 style="color:var(--gold);margin-top:0">🎵 Music</h3>
+          <div class="iso-item" data-pair="mm0" onmouseenter="isoHL('mm0')" onmouseleave="isoUHL()">Theme → Variation</div>
+          <div class="iso-item" data-pair="mm1" onmouseenter="isoHL('mm1')" onmouseleave="isoUHL()">Octave (frequency ×2)</div>
+          <div class="iso-item" data-pair="mm2" onmouseenter="isoHL('mm2')" onmouseleave="isoUHL()">Canon (delayed copy)</div>
+          <div class="iso-item" data-pair="mm3" onmouseenter="isoHL('mm3')" onmouseleave="isoUHL()">Crab canon (reverse)</div>
+          <div class="iso-item" data-pair="mm4" onmouseenter="isoHL('mm4')" onmouseleave="isoUHL()">Dissonance → Resolution</div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);padding:20px 0">⟷</div>
+        <div class="iso-col">
+          <h3 style="color:var(--purple);margin-top:0">🔢 Math</h3>
+          <div class="iso-item" data-pair="mm0" onmouseenter="isoHL('mm0')" onmouseleave="isoUHL()">Function → Transform</div>
+          <div class="iso-item" data-pair="mm1" onmouseenter="isoHL('mm1')" onmouseleave="isoUHL()">Doubling (n × 2)</div>
+          <div class="iso-item" data-pair="mm2" onmouseenter="isoHL('mm2')" onmouseleave="isoUHL()">Recursion (self-call)</div>
+          <div class="iso-item" data-pair="mm3" onmouseenter="isoHL('mm3')" onmouseleave="isoUHL()">Palindrome (reverse)</div>
+          <div class="iso-item" data-pair="mm4" onmouseenter="isoHL('mm4')" onmouseleave="isoUHL()">Contradiction → Proof</div>
+        </div>
+      </div>
+      <div id="iso-mm-info" class="hint-box" style="margin-top:12px;display:none"></div>
+    </div>
+
+    <div class="tab-content" id="iso-lang-logic">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:start">
+        <div class="iso-col">
+          <h3 style="color:var(--gold);margin-top:0">💬 Language</h3>
+          <div class="iso-item" data-pair="ll0" onmouseenter="isoHL('ll0')" onmouseleave="isoUHL()">Noun</div>
+          <div class="iso-item" data-pair="ll1" onmouseenter="isoHL('ll1')" onmouseleave="isoUHL()">Verb</div>
+          <div class="iso-item" data-pair="ll2" onmouseenter="isoHL('ll2')" onmouseleave="isoUHL()">Sentence</div>
+          <div class="iso-item" data-pair="ll3" onmouseenter="isoHL('ll3')" onmouseleave="isoUHL()">Negation ("not")</div>
+          <div class="iso-item" data-pair="ll4" onmouseenter="isoHL('ll4')" onmouseleave="isoUHL()">Self-referential sentence</div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);padding:20px 0">⟷</div>
+        <div class="iso-col">
+          <h3 style="color:var(--cyan);margin-top:0">⚡ Logic</h3>
+          <div class="iso-item" data-pair="ll0" onmouseenter="isoHL('ll0')" onmouseleave="isoUHL()">Variable</div>
+          <div class="iso-item" data-pair="ll1" onmouseenter="isoHL('ll1')" onmouseleave="isoUHL()">Predicate</div>
+          <div class="iso-item" data-pair="ll2" onmouseenter="isoHL('ll2')" onmouseleave="isoUHL()">Well-formed formula</div>
+          <div class="iso-item" data-pair="ll3" onmouseenter="isoHL('ll3')" onmouseleave="isoUHL()">¬ (logical NOT)</div>
+          <div class="iso-item" data-pair="ll4" onmouseenter="isoHL('ll4')" onmouseleave="isoUHL()">Gödel sentence G</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="iso-bio-code">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:start">
+        <div class="iso-col">
+          <h3 style="color:var(--green);margin-top:0">🧬 DNA</h3>
+          <div class="iso-item" data-pair="bc0" onmouseenter="isoHL('bc0')" onmouseleave="isoUHL()">Nucleotide (A,T,G,C)</div>
+          <div class="iso-item" data-pair="bc1" onmouseenter="isoHL('bc1')" onmouseleave="isoUHL()">Codon (3 nucleotides)</div>
+          <div class="iso-item" data-pair="bc2" onmouseenter="isoHL('bc2')" onmouseleave="isoUHL()">Gene</div>
+          <div class="iso-item" data-pair="bc3" onmouseenter="isoHL('bc3')" onmouseleave="isoUHL()">DNA → RNA → Protein</div>
+          <div class="iso-item" data-pair="bc4" onmouseenter="isoHL('bc4')" onmouseleave="isoUHL()">Self-replication</div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);padding:20px 0">⟷</div>
+        <div class="iso-col">
+          <h3 style="color:var(--blue);margin-top:0">💻 Code</h3>
+          <div class="iso-item" data-pair="bc0" onmouseenter="isoHL('bc0')" onmouseleave="isoUHL()">Bit (0 or 1)</div>
+          <div class="iso-item" data-pair="bc1" onmouseenter="isoHL('bc1')" onmouseleave="isoUHL()">Byte (8 bits)</div>
+          <div class="iso-item" data-pair="bc2" onmouseenter="isoHL('bc2')" onmouseleave="isoUHL()">Function</div>
+          <div class="iso-item" data-pair="bc3" onmouseenter="isoHL('bc3')" onmouseleave="isoUHL()">Source → Compile → Execute</div>
+          <div class="iso-item" data-pair="bc4" onmouseenter="isoHL('bc4')" onmouseleave="isoUHL()">Quine (self-printing program)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-accent" style="margin-top:16px">
+      <strong>Isomorphism = Meaning</strong>
+      <p style="font-size:.88rem;margin-top:6px">Hofstadter's central claim: meaning IS the perception of isomorphism. When you see that a canon and a recursive function share the same structure, that structural mapping <em>is</em> understanding. The three strands of GEB — Gödel, Escher, Bach — are "shadows cast in different directions by some central solid essence."</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CLOSING -->
+<section style="text-align:center;padding:72px 20px">
+<div class="container">
+  <h2>The Deepest Takeaway</h2>
+  <blockquote style="border:none;text-align:center;font-size:1.05rem;max-width:660px;margin:20px auto">
+    "In the end, we are self-perceiving, self-inventing, locked-in mirages that are little miracles of self-reference."
+    <cite>— Chapter XX</cite>
+  </blockquote>
+  <p style="font-size:.95rem;max-width:640px;margin:0 auto;color:var(--t)">You are a Strange Loop. Your sense of "I" is a self-referential symbol in a brain made of neurons that know nothing of "I." The gap between the meaningless substrate and the meaningful whole is the same gap Gödel found between provability and truth — and that gap is where consciousness lives.</p>
+  <div style="margin-top:28px;font-size:2rem;letter-spacing:8px;color:var(--gold)">∞</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SCRIPTS -->
+<!-- ═══════════════════════════════════════════ -->
+<script>
+// ====== UTILITIES ======
+function $(id){return document.getElementById(id)}
+function ce(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e}
+
+// ====== 1. MU PUZZLE ======
+let mu={s:'MI',hist:['MI'],steps:0,hints:0};
+const muHints=[
+  '<strong>Hint 1:</strong> Count the I\'s in your string. MI has 1. What happens to the I-count after each rule?',
+  '<strong>Hint 2:</strong> Rule I and IV don\'t change the I-count. Rule II doubles it. Rule III subtracts 3. Starting from 1, what values can you reach?',
+  '<strong>Hint 3:</strong> The I-count mod 3 is <em>invariant</em>. Starting from 1, it can be 1 or 2 (mod 3), but <strong>never 0</strong>. MU needs 0 I\'s → 0 mod 3. It\'s impossible! Proving this required stepping <em>outside</em> the system — the first taste of Gödel.'
+];
+
+function muUpd(){
+  const s=mu.s,ic=(s.match(/I/g)||[]).length;
+  $('mu-str').textContent=s;
+  $('mu-ic').textContent=ic;
+  $('mu-mod').textContent=ic%3;
+  $('mu-len').textContent=s.length;
+  $('mu-steps').textContent=mu.steps;
+  const rules=$('mu-rules').children;
+  rules[0].classList.toggle('disabled',!s.endsWith('I'));
+  rules[2].classList.toggle('disabled',!s.includes('III'));
+  rules[3].classList.toggle('disabled',!s.includes('UU'));
+  $('mu-hist').innerHTML=mu.hist.map((h,i)=>`<div><span style="color:var(--t3)">${i}.</span> ${h}</div>`).join('');
+}
+function muApply(r){
+  let s=mu.s,res=null;
+  if(r===1&&s.endsWith('I'))res=s+'U';
+  else if(r===2)res='M'+s.slice(1)+s.slice(1);
+  else if(r===3&&s.includes('III')){const i=s.indexOf('III');res=s.slice(0,i)+'U'+s.slice(i+3)}
+  else if(r===4&&s.includes('UU')){const i=s.indexOf('UU');res=s.slice(0,i)+s.slice(i+2)}
+  if(res&&res.length<400){mu.s=res;mu.hist.push(res);mu.steps++;muUpd()}
+}
+function muReset(){mu={s:'MI',hist:['MI'],steps:0,hints:mu.hints};$('mu-hints').innerHTML='';muUpd()}
+function muUndo(){if(mu.hist.length>1){mu.hist.pop();mu.s=mu.hist[mu.hist.length-1];mu.steps=Math.max(0,mu.steps-1);muUpd()}}
+function muHint(){
+  if(mu.hints<3){
+    const h=ce('div','hint-box',muHints[mu.hints]);
+    $('mu-hints').appendChild(h);
+    mu.hints++;$('mu-hint-n').textContent=mu.hints;
+  }
+}
+muUpd();
+
+// ====== 2. TNT BUILDER ======
+const TNT_SYMS=[
+  {s:'0',d:'zero'},{s:'S',d:'successor'},{s:'=',d:'equals'},
+  {s:'+',d:'plus'},{s:'×',d:'times'},{s:'(',d:'open'},{s:')',d:'close'},
+  {s:'∀',d:'for all'},{s:'∃',d:'there exists'},{s:'¬',d:'not'},
+  {s:'⊃',d:'implies'},{s:'∧',d:'and'},{s:'∨',d:'or'},
+  {s:'a',d:'var a'},{s:'b',d:'var b'},{s:'c',d:'var c'},
+  {s:':',d:'colon'},{s:"'",d:'prime (var)'}
+];
+let tntFormula=[];
+
+function tntInit(){
+  const p=$('tnt-palette');
+  TNT_SYMS.forEach(({s,d})=>{
+    const el=ce('div','tnt-sym',s);
+    el.title=d;
+    el.onclick=()=>{tntFormula.push(s);tntRender()};
+    p.appendChild(el);
+  });
+}
+
+function tntRender(){
+  const ws=$('tnt-ws');
+  ws.innerHTML=tntFormula.map((s,i)=>`<span class="sym-placed" onclick="tntRemove(${i})" title="Click to remove">${s}</span>`).join('');
+  tntInterpret();
+}
+
+function tntRemove(i){tntFormula.splice(i,1);tntRender()}
+function tntClear(){tntFormula=[];tntRender()}
+function tntFocus(){}
+
+const tntExamples=[
+  ['S','0','+','S','0','=','S','S','0'],
+  ['∀','a',':','∃','b',':','a','=','S','b'],
+  ['∃','a',':','(','S','S','a','=','S','S','S','S','S','0',')'],
+  ['¬','∃','a',':','∃','b',':','(','S','a','×','S','b',')','=','S','S','S','S','S','S','0']
+];
+function tntExample(n){tntFormula=[...tntExamples[n]];tntRender()}
+
+function tntInterpret(){
+  const f=tntFormula.join('');
+  if(!f){$('tnt-meaning').innerHTML='Click symbols above to build a formula…';return}
+
+  // Simple interpretation engine
+  let meaning='';
+  try{meaning=parseTNT(f)}catch(e){meaning='<span style="color:var(--t3)">Building… (not yet a complete formula)</span>'}
+  $('tnt-meaning').innerHTML=`<strong>Formula:</strong> <code>${f}</code><br><strong>Meaning:</strong> ${meaning}`;
+}
+
+function parseTNT(f){
+  // Convert TNT to readable arithmetic
+  let r=f;
+  // Count S's before 0 to get numbers
+  r=r.replace(/S+0/g,m=>''+m.split('S').length-1+''); // wrong, fix:
+  // Actually let's do it properly
+  function numeral(s,pos){
+    let n=0,i=pos;
+    while(i<s.length&&s[i]==='S'){n++;i++}
+    if(i<s.length&&s[i]==='0')return{val:n,end:i+1};
+    return null;
+  }
+  // Simple regex approach
+  let out=f;
+  // Replace numerals
+  out=out.replace(/(S*)0/g,(m,ss)=>''+(ss?ss.length:0));
+  out=out.replace(/∀([a-e]'*)/g,'for all $1');
+  out=out.replace(/∃([a-e]'*)/g,'there exists $1');
+  out=out.replace(/¬/g,'NOT ');
+  out=out.replace(/⊃/g,' IMPLIES ');
+  out=out.replace(/∧/g,' AND ');
+  out=out.replace(/∨/g,' OR ');
+  out=out.replace(/×/g,'·');
+  out=out.replace(/:/g,', ');
+
+  // Some known patterns
+  if(f==='S0+S0=SS0')return '"1 + 1 = 2" — true!';
+  if(f==='∀a:∃b:a=Sb')return '"For every number a, there exists b such that a = b+1" — false! (0 has no predecessor)';
+  if(f==='∃a:(SSa=SSSSS0)')return '"There exists a such that a+2 = 5" — true! (a=3)';
+  if(f==='¬∃a:∃b:(Sa×Sb)=SSSSSS0')return '"There are no a,b where (a+1)×(b+1) = 6" — false! (2×3=6). This claims 6 is prime, but it isn\'t.';
+
+  return out;
+}
+tntInit();
+
+// ====== 3. GÖDEL NUMBERING ======
+const GMAP={'0':1,'S':2,'=':3,'+':4,'×':5,'(':6,')':7,'∀':8,'∃':9,'¬':10,'⊃':11,'∧':12,'∨':13,'a':14,'b':15,'c':16,'d':17,'e':18,"'":19,':':20};
+const RMAP=Object.fromEntries(Object.entries(GMAP).map(([k,v])=>[v,k]));
+const PRIMES=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97];
+
+function gInit(){
+  $('g-table').innerHTML=Object.entries(GMAP).map(([k,v])=>`<div class="godel-cell"><div class="sym">${k==="'"?'′':k}</div><div class="num">${v}</div></div>`).join('');
+  gEncode();
+}
+function gTab(btn,id){
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.demo').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function gEncode(){
+  const inp=$('g-in').value;
+  const chars=[...inp].filter(c=>c in GMAP);
+  const codes=chars.map(c=>GMAP[c]);
+  $('g-codes').innerHTML=chars.map((c,i)=>`<span style="color:var(--gold)">${c}</span><span style="color:var(--t3)">→${codes[i]}</span>`).join('  ');
+  if(!codes.length){$('g-num').textContent='(type a formula)';return}
+  const factors=codes.map((c,i)=>i<PRIMES.length?`${PRIMES[i]}<sup>${c}</sup>`:`p<sub>${i+1}</sub><sup>${c}</sup>`);
+  $('g-num').innerHTML=factors.join(' × ')+'<br><span style="color:var(--t3);font-size:.8rem">= a unique number encoding this exact formula</span>';
+}
+function gDecode(){
+  const inp=$('g-dec-in').value;
+  const codes=inp.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+  const chars=codes.map(c=>RMAP[c]||'?');
+  $('g-dec-out').innerHTML=codes.length?`<span style="font-size:1.1rem;color:var(--gold);letter-spacing:2px">${chars.join('')}</span><br><span style="color:var(--t3);font-size:.82rem">Codes: [${codes.join(', ')}]</span>`:'(enter comma-separated codes)';
+}
+function gSelfDemo(){
+  const out=$('g-self-out');
+  const steps=[
+    {html:'<div style="padding:8px;border-left:2px solid var(--gold);margin:6px 0"><strong style="color:var(--gold)">F(a)</strong> = "a is not the Gödel number of a provable formula"<br><span style="color:var(--t3)">This is a legitimate TNT formula with free variable a.</span></div>',delay:0},
+    {html:'<div style="padding:8px;border-left:2px solid var(--amber);margin:6px 0"><strong style="color:var(--amber)">Gödel number of F(a)</strong> = n = 2<sup>10</sup> × 3<sup>9</sup> × 5<sup>14</sup> × …<br><span style="color:var(--t3)">Encode F(a) itself as a number via the prime product.</span></div>',delay:800},
+    {html:'<div style="padding:8px;border-left:2px solid var(--purple);margin:6px 0"><strong style="color:var(--purple)">Arithmoquinify:</strong> substitute n for a → <strong>F(n)</strong><br><span style="color:var(--t3)">Replace every free \'a\' with the numeral SSSS…0 (n times).</span></div>',delay:1600},
+    {html:'<div style="padding:8px;border-left:2px solid var(--red);margin:6px 0"><strong style="color:var(--red)">F(n)</strong> says: "n is not provable" — but n IS F(n)\'s own Gödel number!<br><span style="color:var(--amber);font-weight:600;font-size:1rem">∴ F(n) says: "I am not provable."</span><br><span style="color:var(--t3)">If TNT is consistent, F(n) is true but unprovable. TNT is incomplete. ∎</span></div>',delay:2400}
+  ];
+  out.innerHTML='';
+  steps.forEach(({html,delay})=>{
+    setTimeout(()=>{out.innerHTML+=html},delay);
+  });
+}
+gInit();
+
+// ====== 4. CANON GENERATOR ======
+const NOTES=['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5'];
+const NOTE_FREQ={C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,C5:523.25,D5:587.33,E5:659.25};
+let audioCtx=null;
+let canonState={playing:false,timer:null,melodies:{}};
+
+function getAudio(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playNote(freq,time,dur,pan=0){
+  const ctx=getAudio();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  const panner=ctx.createStereoPanner();
+  osc.type='triangle';
+  osc.frequency.value=freq;
+  gain.gain.setValueAtTime(0,time);
+  gain.gain.linearRampToValueAtTime(.15,time+.02);
+  gain.gain.linearRampToValueAtTime(0,time+dur-.02);
+  panner.pan.value=pan;
+  osc.connect(gain);gain.connect(panner);panner.connect(ctx.destination);
+  osc.start(time);osc.stop(time+dur);
+}
+
+function genMelody(len=8){
+  const m=[];
+  let note=Math.floor(Math.random()*6)+1;
+  for(let i=0;i<len;i++){
+    m.push(note);
+    note=Math.max(0,Math.min(NOTES.length-1,note+Math.floor(Math.random()*5)-2));
+  }
+  return m;
+}
+
+function cTab(btn,id){
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.demo').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function renderPianoRoll(containerId,melody1,melody2,len){
+  const el=$(containerId);
+  if(!el)return;
+  let html='';
+  for(let row=NOTES.length-1;row>=0;row--){
+    html+=`<div class="piano-row"><div class="piano-label">${NOTES[row]}</div><div class="piano-cells">`;
+    for(let col=0;col<len;col++){
+      const on1=melody1[col]===row;
+      const on2=melody2&&melody2[col]===row;
+      const cls=on1&&on2?'on':on1?'on':on2?'on2':'';
+      html+=`<div class="piano-cell ${cls}" data-col="${col}"></div>`;
+    }
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+
+function canonInit(){
+  canonState.melodies.crab=genMelody(8);
+  canonState.melodies.aug=genMelody(8);
+  canonState.melodies.inv=genMelody(8);
+  canonState.melodies.custom=new Array(16).fill(-1);
+  renderCanon('crab');renderCanon('aug');renderCanon('inv');renderCustom();
+}
+
+function renderCanon(type){
+  const m=canonState.melodies[type];
+  let m1,m2,len;
+  if(type==='crab'){
+    m1=m;m2=[...m].reverse();len=m.length;
+    renderPianoRoll('cr-roll',m1,m2,len);
+  }else if(type==='aug'){
+    m1=m;m2=[];
+    m.forEach(n=>{m2.push(n);m2.push(n)});
+    len=m2.length;
+    // pad m1
+    const p1=[...m1];while(p1.length<len)p1.push(-1);
+    renderPianoRoll('aug-roll',p1,m2,len);
+  }else if(type==='inv'){
+    m1=m;
+    const pivot=m[0];
+    m2=m.map(n=>pivot-(n-pivot));
+    m2=m2.map(n=>Math.max(0,Math.min(NOTES.length-1,n)));
+    len=m.length;
+    renderPianoRoll('inv-roll',m1,m2,len);
+  }
+}
+
+function renderCustom(){
+  const el=$('cust-roll');
+  const m=canonState.melodies.custom;
+  let html='';
+  for(let row=NOTES.length-1;row>=0;row--){
+    html+=`<div class="piano-row"><div class="piano-label">${NOTES[row]}</div><div class="piano-cells">`;
+    for(let col=0;col<16;col++){
+      const on=m[col]===row;
+      html+=`<div class="piano-cell ${on?'on':''}" data-col="${col}" data-row="${row}" onclick="custToggle(${col},${row})" style="cursor:pointer"></div>`;
+    }
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+
+function custToggle(col,row){
+  const m=canonState.melodies.custom;
+  m[col]=m[col]===row?-1:row;
+  renderCustom();
+}
+function canonClearCustom(){canonState.melodies.custom=new Array(16).fill(-1);renderCustom()}
+
+function canonRandomize(type){
+  canonState.melodies[type]=genMelody(type==='custom'?16:8);
+  if(type==='custom')renderCustom();else renderCanon(type);
+}
+
+function canonPlay(type){
+  canonStop();
+  const ctx=getAudio();
+  const now=ctx.currentTime+.1;
+  const dur=.3;
+  let m=canonState.melodies[type==='custom'?'custom':type];
+  if(type==='custom'){
+    const tr=$('cust-transform').value;
+    const notes=m.filter(n=>n>=0);
+    if(!notes.length)return;
+    // play original
+    m.forEach((n,i)=>{if(n>=0)playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,-.3)});
+    // play transformed
+    let m2;
+    if(tr==='crab')m2=[...m].reverse();
+    else if(tr==='aug'){m2=[];m.forEach(n=>{m2.push(n);m2.push(n)})}
+    else{const piv=notes[0];m2=m.map(n=>n<0?-1:Math.max(0,Math.min(9,piv-(n-piv))))}
+    m2.forEach((n,i)=>{if(n>=0)playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,.3)});
+    return;
+  }
+
+  if(type==='crab'){
+    const rev=[...m].reverse();
+    m.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,-.3));
+    rev.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,.3));
+  }else if(type==='aug'){
+    m.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,-.3));
+    m.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur*2,dur*2,.3));
+  }else if(type==='inv'){
+    const piv=m[0];
+    const inv=m.map(n=>Math.max(0,Math.min(9,piv-(n-piv))));
+    m.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,-.3));
+    inv.forEach((n,i)=>playNote(NOTE_FREQ[NOTES[n]],now+i*dur,dur,.3));
+  }
+}
+function canonStop(){if(audioCtx){audioCtx.close();audioCtx=null}}
+
+canonInit();
+
+// ====== 5. STRANGE LOOP EXPLORER ======
+const LEVELS=[
+  {name:'Arithmetic',desc:'Plain old numbers. Addition, multiplication, primes.',color:'var(--green)',system:'Numbers: 0, 1, 2, 3, …'},
+  {name:'TNT (Formal System)',desc:'Axioms + rules that generate theorems about arithmetic. TNT tries to capture all truths about Level 0.',color:'var(--blue)',system:'Symbols: 0 S = + × ∀ ∃ ¬ ⊃'},
+  {name:'Gödel Numbering',desc:'Encodes every TNT formula as a number — making Level 1 visible inside Level 0. TNT can now talk about itself.',color:'var(--amber)',system:'Every string ↔ a unique number'},
+  {name:'Meta-TNT',desc:'Statements ABOUT what TNT can prove. "Is this formula a theorem?" becomes a number-theory question.',color:'var(--purple)',system:'Proof-pairs, representability'},
+  {name:'Gödel Sentence G',desc:'"I am not provable in TNT." A statement at this level that refers to its own provability at Level 1.',color:'var(--red)',system:'G: ¬∃a: PROOF(a, g)'},
+  {name:'↻ Back to Arithmetic',desc:'G is a statement about numbers. We\'re back at Level 0 — but we know something Level 1 can\'t prove. The staircase loops.',color:'var(--gold)',system:'The loop closes. Strange Loop. ∎'}
+];
+let stairPos=0,stairLoops=0;
+
+function stairRender(){
+  const el=$('staircase');
+  let html='';
+  LEVELS.forEach((lv,i)=>{
+    if(i>0&&i<LEVELS.length)html+=`<div class="loop-arrow">${i===LEVELS.length-1?'↻':'↓'}</div>`;
+    html+=`<div class="stair-level ${i===stairPos?'active':''}" style="${i===stairPos?'border-color:'+lv.color:''}" onclick="stairGo(${i})">
+      <div class="level-num" style="color:${lv.color}">Level ${i}</div>
+      <div class="level-name">${lv.name}</div>
+      <div class="level-desc">${lv.desc}</div>
+    </div>`;
+  });
+  if(stairPos===LEVELS.length-1){
+    html+=`<div class="loop-back">♾️ You've reached the "top" — and you're back at the bottom. A Strange Loop.</div>`;
+  }
+  el.innerHTML=html;
+  $('stair-info').innerHTML=`<strong style="color:${LEVELS[stairPos].color}">${LEVELS[stairPos].name}</strong><br><code style="font-size:.82rem">${LEVELS[stairPos].system}</code>`;
+  $('stair-counter').textContent=stairLoops?`Loops completed: ${stairLoops}`:'';
+}
+function stairUp(){
+  stairPos++;
+  if(stairPos>=LEVELS.length){stairPos=0;stairLoops++}
+  stairRender();
+}
+function stairDown(){stairPos=Math.max(0,stairPos-1);stairRender()}
+function stairGo(i){stairPos=i;stairRender()}
+function stairReset(){stairPos=0;stairLoops=0;stairRender()}
+stairRender();
+
+// ====== 6. FORMAL SYSTEM PLAYGROUND ======
+let fs={axioms:[],theorems:[],rules:[],name:'',step:0,ruleDescs:[]};
+function fsTab(btn,id){
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.demo').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+const FS={
+  miu:{
+    name:'MIU System',axioms:['MI'],
+    ruleDescs:['xI → xIU (add U if ends in I)','Mx → Mxx (double after M)','xIIIy → xUy (replace III→U)','xUUy → xy (drop UU)'],
+    derive(th){
+      const r=[];
+      for(const s of th){
+        if(s.endsWith('I'))r.push(s+'U');
+        r.push('M'+s.slice(1)+s.slice(1));
+        let i=s.indexOf('III');if(i>=0)r.push(s.slice(0,i)+'U'+s.slice(i+3));
+        i=s.indexOf('UU');if(i>=0)r.push(s.slice(0,i)+s.slice(i+2));
+      }
+      return r.filter(x=>x.length>0&&x.length<50);
+    },
+    incomp:'The MIU system cannot prove "MU is not a theorem." That statement is <em>true</em> (I-count mod 3 is never 0), but it\'s a statement <em>about</em> the system, not expressible <em>within</em> it. This is the simplest example of Gödelian incompleteness.'
+  },
+  pq:{
+    name:'pq-System (Addition)',axioms:['—p—q——','——p—q———','———p—q————','————p—q—————'],
+    ruleDescs:['If xpyqz is a theorem, then xpy—qz— is also a theorem'],
+    derive(th){
+      const r=[];
+      for(const s of th){
+        const m=s.match(/^(-+)p(-+)q(-+)$/);
+        if(m)r.push(m[1]+'p'+m[2]+'-'+'q'+m[3]+'-');  // using — not -
+      }
+      return r.filter(x=>x.length<50);
+    },
+    incomp:'The pq-system perfectly captures addition: —p——q——— means 1+2=3. But it can\'t express "the pq-system is consistent" — that requires a meta-level. It\'s complete for addition, but can\'t talk about itself.'
+  },
+  even:{
+    name:'Even Numbers',axioms:['0'],
+    ruleDescs:['If n is a theorem, then n+2 is a theorem'],
+    derive(th){
+      const r=[];
+      for(const s of th){
+        const n=parseInt(s);
+        if(!isNaN(n))r.push(''+(n+2));
+      }
+      return r;
+    },
+    incomp:'"1 is not a theorem" is true but cannot be derived from within. The system generates 0, 2, 4, 6… but has no way to express <em>what it cannot generate</em>. The non-theorems (odd numbers) are the invisible "ground" to the system\'s "figure."'
+  }
+};
+
+// Fix pq axioms with actual hyphens
+FS.pq.axioms=['-p-q--','--p-q---','---p-q----','----p-q-----'];
+
+function fsSel(k){
+  const S=FS[k];
+  fs={axioms:[...S.axioms],theorems:[...S.axioms],rules:S.derive,name:S.name,step:0,ruleDescs:S.ruleDescs,incomp:S.incomp};
+  $('fs-ax').innerHTML=fs.axioms.map(a=>`<span class="fs-theorem fs-axiom">${a}</span>`).join('');
+  $('fs-rl').innerHTML=fs.ruleDescs.map(r=>`<div style="padding:3px 0">• ${r}</div>`).join('');
+  $('fs-incomp').innerHTML=fs.incomp;
+  fsRender();
+}
+function fsCustomLoad(){
+  const ax=$('fs-cust-ax').value.trim();
+  const rulesStr=$('fs-cust-rule').value.trim();
+  const rules=rulesStr.split(',').map(r=>{const[l,ri]=r.split('→');return{from:l.trim(),to:ri?ri.trim():l.trim()}});
+  fs={axioms:[ax],theorems:[ax],name:'Custom',step:0,
+    ruleDescs:rules.map(r=>`${r.from} → ${r.to}`),
+    incomp:'Every sufficiently complex system has statements it cannot prove about itself.',
+    rules(th){
+      const res=[];
+      for(const s of th){
+        for(const r of rules){
+          const out=s.replaceAll(r.from,r.to);
+          if(out!==s)res.push(out);
+        }
+      }
+      return res.filter(x=>x.length<80);
+    }};
+  // rebind
+  const r2=rules;
+  fs.rules=function(th){
+    const res=[];
+    for(const s of th){
+      for(const r of r2){
+        const out=s.replaceAll(r.from,r.to);
+        if(out!==s)res.push(out);
+      }
+    }
+    return res.filter(x=>x.length<80);
+  };
+  $('fs-ax').innerHTML=`<span class="fs-theorem fs-axiom">${ax}</span>`;
+  $('fs-rl').innerHTML=fs.ruleDescs.map(r=>`<div style="padding:3px 0">• ${r}</div>`).join('');
+  fsRender();
+}
+function fsDeriv(){
+  const newTh=fs.rules(fs.theorems);
+  const unique=newTh.filter(t=>!fs.theorems.includes(t));
+  if(unique.length>0){fs.theorems.push(unique[0]);fs.step++}
+  fsRender();
+}
+function fsReset(){fs.theorems=[...fs.axioms];fs.step=0;fsRender()}
+function fsRender(){
+  const derived=fs.theorems.filter(t=>!fs.axioms.includes(t));
+  $('fs-th').innerHTML=derived.length?derived.map(t=>`<span class="fs-theorem">${t}</span>`).join(''):'<span style="font-size:.85rem;color:var(--t3)">Click "Derive Next" to generate theorems.</span>';
+}
+fsSel('miu');
+
+// ====== 7. ISOMORPHISM MACHINE ======
+function isoTab(btn,id){
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.demo').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+const ISO_INFO={
+  mm0:'Theme → Variation is to music what Function → Transform is to math. A core structure, reshaped but preserved.',
+  mm1:'An octave doubles the frequency. Doubling a number doubles its value. Same operation, different domain.',
+  mm2:'A canon delays a copy of the theme, then both play together. Recursion calls a copy of the function, then both resolve together.',
+  mm3:'A crab canon reverses the melody. A palindrome reverses the string. Same symmetry.',
+  mm4:'Dissonance creates tension that demands resolution. Contradiction in a proof creates tension that demands resolution (proof by contradiction).',
+};
+
+function isoHL(pair){
+  document.querySelectorAll(`.iso-item[data-pair="${pair}"]`).forEach(el=>el.classList.add('highlight'));
+  const info=ISO_INFO[pair];
+  if(info){
+    const box=$('iso-mm-info');
+    if(box){box.style.display='block';box.innerHTML=info}
+  }
+}
+function isoUHL(){
+  document.querySelectorAll('.iso-item.highlight').forEach(el=>el.classList.remove('highlight'));
+  const box=$('iso-mm-info');
+  if(box)box.style.display='none';
+}
+</script>
+</body>
+</html>

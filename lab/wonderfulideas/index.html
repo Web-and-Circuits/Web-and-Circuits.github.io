@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Having of Wonderful Ideas — An Interactive Exploration</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#13131f;--accent:#6c63ff;--accent2:#ff6b9d;--accent3:#00d4aa;--text:#e8e6f0;--dim:#7a7890;--glow:rgba(108,99,255,.15)}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Georgia',serif;line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+.section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;position:relative}
+.container{max-width:720px;width:100%;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+h2{font-size:clamp(1.5rem,3.5vw,2.2rem);line-height:1.3;margin-bottom:1rem}
+h3{font-size:1.1rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:.5rem;font-family:system-ui,sans-serif}
+p{margin-bottom:1rem}
+.quote{border-left:3px solid var(--accent);padding:.75rem 1.25rem;margin:1.5rem 0;font-style:italic;color:var(--dim);background:var(--glow);border-radius:0 8px 8px 0}
+.quote em{color:var(--text);font-style:normal}
+.btn{display:inline-block;padding:14px 28px;border-radius:8px;border:none;font-size:1rem;font-family:system-ui,sans-serif;cursor:pointer;transition:all .3s;min-height:44px;min-width:44px;font-weight:600}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5a52e0;transform:translateY(-2px);box-shadow:0 8px 25px rgba(108,99,255,.3)}
+.btn-secondary{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn-secondary:hover{background:var(--accent);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid rgba(255,255,255,.1)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.interactive-area{background:var(--card);border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid rgba(255,255,255,.05)}
+.fade-in{opacity:0;transform:translateY(30px);transition:all .8s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.nav{position:fixed;top:0;right:0;z-index:100;padding:1rem}
+.nav-dots{display:flex;flex-direction:column;gap:8px}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:all .3s;border:none;min-height:44px;min-width:44px;display:flex;align-items:center;justify-content:center}
+.nav-dot::after{content:'';width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+.nav-dot.active::after{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.nav-dot:hover::after{background:rgba(255,255,255,.4)}
+
+/* Section-specific */
+#hero{background:radial-gradient(ellipse at 50% 50%,rgba(108,99,255,.08) 0%,transparent 70%)}
+.hero-subtitle{color:var(--dim);font-size:1.2rem;margin-bottom:2rem}
+.straw{height:6px;border-radius:3px;cursor:grab;position:relative;transition:all .3s;margin:6px 0;touch-action:none}
+.straw:active{cursor:grabbing}
+.straw-container{padding:1rem;user-select:none}
+.straw.correct{box-shadow:0 0 12px rgba(0,212,170,.3)}
+.straw.placed{opacity:.9}
+
+.mystery-box{width:200px;height:200px;background:#1a1a2e;border:3px solid var(--accent);border-radius:16px;margin:1rem auto;display:flex;align-items:center;justify-content:center;font-size:4rem;cursor:pointer;transition:all .5s;position:relative;overflow:hidden}
+.mystery-box:hover{border-color:var(--accent2);box-shadow:0 0 30px rgba(255,107,157,.2)}
+.mystery-box.revealed{background:var(--accent);border-color:var(--accent)}
+
+.belief-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:500px){.belief-cards{grid-template-columns:1fr}}
+.belief-card{background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:1.25rem;cursor:pointer;transition:all .4s;min-height:44px}
+.belief-card:hover{border-color:var(--accent);background:rgba(108,99,255,.05)}
+.belief-card.selected{border-color:var(--accent);background:rgba(108,99,255,.1)}
+.belief-card.wrong{border-color:var(--accent2);background:rgba(255,107,157,.08)}
+
+.pendulum-canvas{width:100%;height:300px;border-radius:12px;background:#0d0d18}
+
+.moon-phase{width:120px;height:120px;border-radius:50%;margin:1rem auto;position:relative;overflow:hidden;background:#1a1a2e;border:2px solid rgba(255,255,255,.1)}
+.moon-light{position:absolute;background:#e8e6f0;border-radius:50%;transition:all .5s}
+
+.poem-line{padding:8px 12px;margin:3px 0;border-radius:6px;cursor:pointer;transition:all .3s;min-height:44px;display:flex;align-items:center}
+.poem-line:hover{background:rgba(108,99,255,.1)}
+.poem-line.highlighted{background:rgba(108,99,255,.15);border-left:3px solid var(--accent)}
+.annotation{display:none;padding:8px 16px;margin:4px 0 4px 20px;color:var(--accent3);font-size:.9rem;font-family:system-ui,sans-serif;border-left:2px solid var(--accent3);animation:slideDown .3s ease}
+.annotation.show{display:block}
+
+.confusion-meter{height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;margin:1rem 0}
+.confusion-fill{height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent),var(--accent2));border-radius:4px;transition:width 1s ease;width:0}
+
+.explore-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1rem 0}
+.explore-cell{aspect-ratio:1;background:rgba(255,255,255,.03);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:all .4s;border:2px solid transparent;min-height:44px}
+.explore-cell:hover{background:rgba(108,99,255,.1);border-color:var(--accent)}
+.explore-cell.active{background:rgba(108,99,255,.15);border-color:var(--accent);transform:scale(1.05)}
+
+.counter{font-size:3rem;font-weight:700;color:var(--accent);font-family:system-ui,sans-serif}
+.label{font-size:.85rem;color:var(--dim);font-family:system-ui,sans-serif;text-transform:uppercase;letter-spacing:.1em}
+
+.progress-ring{display:inline-block;margin:0 .5rem}
+.typing-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);animation:blink 1s infinite;vertical-align:text-bottom}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);color:var(--dim);font-family:system-ui,sans-serif;font-size:.85rem;animation:float 3s infinite}
+.scroll-hint::after{content:'↓';display:block;text-align:center;font-size:1.5rem;margin-top:.25rem}
+
+.reveal-text{max-height:0;overflow:hidden;transition:max-height .8s ease,opacity .5s;opacity:0}
+.reveal-text.open{max-height:500px;opacity:1}
+
+.tab-group{display:flex;gap:4px;margin:1rem 0;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:6px;cursor:pointer;font-family:system-ui,sans-serif;font-size:.85rem;transition:all .3s;background:rgba(255,255,255,.03);color:var(--dim);border:none;min-height:44px}
+.tab.active{background:var(--accent);color:#fff}
+.tab:hover{background:rgba(255,255,255,.08)}
+
+footer{text-align:center;padding:3rem 1rem;color:var(--dim);font-size:.85rem}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Section navigation">
+<div class="nav-dots" id="navDots"></div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="section" id="hero">
+<div class="container" style="text-align:center">
+<h3>An Interactive Exploration</h3>
+<h1>The Having of<br>Wonderful Ideas</h1>
+<p class="hero-subtitle">Eleanor Duckworth's vision of learning—<br>experienced, not explained.</p>
+<p style="color:var(--dim);max-width:480px;margin:0 auto 2rem;font-size:.95rem">What follows is not a summary. It's a set of small experiments. Each one embodies an idea from the book. <strong style="color:var(--text)">Don't rush.</strong> The understanding sneaks in while you play.</p>
+<a href="#s1" class="btn btn-primary">Begin exploring</a>
+<div class="scroll-hint">scroll to discover</div>
+</div>
+</section>
+
+<!-- ============ 1. WONDERFUL IDEAS (Kevin's Straws) ============ -->
+<section class="section" id="s1">
+<div class="container fade-in">
+<h3>I. Wonderful Ideas</h3>
+<h2>Before anyone asked him to, Kevin picked up the straws.</h2>
+<div class="quote">"The having of wonderful ideas is what I consider the essence of intellectual development. And I consider it the essence of pedagogy to give Kevin the occasion to have his wonderful ideas."</div>
+<p>Here are some straws. Nobody's asking you to do anything with them. But you might notice something.</p>
+<div class="interactive-area" id="strawArea">
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim);margin-bottom:1rem">Tap straws to place them in order. Tap again to remove.</p>
+<div id="strawSource" class="straw-container"></div>
+<div style="border-top:2px dashed rgba(255,255,255,.1);margin:1rem 0;padding-top:1rem">
+<p style="font-family:system-ui,sans-serif;font-size:.8rem;color:var(--dim)">Your arrangement:</p>
+<div id="strawTarget" class="straw-container" style="min-height:80px"></div>
+</div>
+<div id="strawFeedback" style="min-height:2rem;font-family:system-ui,sans-serif;font-size:.9rem;margin-top:.5rem"></div>
+</div>
+<div class="reveal-text" id="strawReveal">
+<p>Kevin wasn't asked to order the straws. He <em>wanted</em> to. The idea was his. That's what made it wonderful—not that it was original to the world, but that it was original to <em>him</em>.</p>
+<p style="color:var(--dim);font-size:.9rem">Wonderful ideas build on other ideas. Without previous experience, Kevin couldn't have had this one. The more you know, the more you can think of to do.</p>
+</div>
+</div>
+</section>
+
+<!-- ============ 2. THE VIRTUE OF NOT KNOWING ============ -->
+<section class="section" id="s2">
+<div class="container fade-in">
+<h3>II. The Virtue of Not Knowing</h3>
+<h2>The right answer is overrated.</h2>
+<div class="quote">"What you do about what you don't know is, in the final analysis, what determines what you will know."</div>
+<p>Inside this box is a hidden circuit. You can test it—but not open it. What's inside?</p>
+<div class="interactive-area">
+<div class="mystery-box" id="mysteryBox">?</div>
+<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:1rem 0">
+<button class="btn btn-ghost" onclick="testBox('battery')">🔋 Connect battery</button>
+<button class="btn btn-ghost" onclick="testBox('bulb')">💡 Connect bulb</button>
+<button class="btn btn-ghost" onclick="testBox('wire')">〰️ Connect wire</button>
+</div>
+<div id="boxLog" style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim);min-height:3rem;margin-top:.5rem"></div>
+<div style="margin-top:1rem">
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">What do you think is inside?</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem">
+<button class="btn btn-secondary" style="font-size:.85rem" onclick="guessBox('bulb')">A bulb</button>
+<button class="btn btn-secondary" style="font-size:.85rem" onclick="guessBox('wire')">Resistance wire</button>
+<button class="btn btn-secondary" style="font-size:.85rem" onclick="guessBox('nothing')">Nothing</button>
+<button class="btn btn-secondary" style="font-size:.85rem" onclick="guessBox('battery')">A battery</button>
+</div>
+</div>
+<div id="boxResult" style="margin-top:1rem;min-height:2rem"></div>
+</div>
+<p style="color:var(--dim);font-size:.9rem">Hank, a fifth grader, figured out what was in his mystery box by <em>burning out</em> the component inside—an act of creative destruction his teacher had to accept. The courage to try, even destructively, matters more than knowing in advance.</p>
+</div>
+</section>
+
+<!-- ============ 3. TIME FOR CONFUSION ============ -->
+<section class="section" id="s3">
+<div class="container fade-in">
+<h3>III. Time for Confusion</h3>
+<h2>I needed time for my confusion.</h2>
+<div class="quote">"All of us need time for our confusion if we are to build the breadth and depth that give significance to our knowledge."</div>
+<p>A ball rolls down a ramp, leaving ink dots as it goes. What do you think the dots look like?</p>
+<div class="interactive-area">
+<div style="text-align:center;margin-bottom:1rem">
+<svg width="100%" viewBox="0 0 500 160" style="max-width:500px">
+<line x1="50" y1="20" x2="450" y2="130" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+<circle id="rampBall" cx="70" cy="28" r="12" fill="var(--accent)"/>
+<text x="30" y="155" fill="#555" font-size="11" font-family="system-ui,sans-serif">high end</text>
+<text x="410" y="155" fill="#555" font-size="11" font-family="system-ui,sans-serif">low end</text>
+</svg>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:.9rem">The ball picks up speed. As it goes faster, the dots it leaves will be:</p>
+<div class="belief-cards" style="margin:1rem 0">
+<div class="belief-card" onclick="rampGuess(this,'closer')">
+<strong>Closer together</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">It's going faster, so more dots per inch</p>
+</div>
+<div class="belief-card" onclick="rampGuess(this,'farther')">
+<strong>Farther apart</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">It's going faster, so more distance between dots</p>
+</div>
+<div class="belief-card" onclick="rampGuess(this,'same')">
+<strong>Evenly spaced</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">The rotation stays consistent</p>
+</div>
+<div class="belief-card" onclick="rampGuess(this,'unsure')">
+<strong>I'm not sure</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">I'd need to see it to know</p>
+</div>
+</div>
+<div id="rampResult" class="reveal-text">
+<div style="text-align:center;margin:1rem 0">
+<svg width="100%" viewBox="0 0 500 60" style="max-width:500px">
+<line x1="20" y1="30" x2="480" y2="30" stroke="#333" stroke-width="2"/>
+<circle cx="40" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="68" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="102" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="145" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="200" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="268" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="352" cy="30" r="5" fill="var(--accent)"/>
+<circle cx="455" cy="30" r="5" fill="var(--accent)"/>
+</svg>
+</div>
+<p>The dots get <strong>farther apart</strong>. The ball rotates at the same rate, but covers more ground between each rotation as it speeds up.</p>
+<p style="color:var(--dim);font-size:.9rem">About half of adults predict the dots get <em>closer</em> together. One teacher, seeing the result, took a string to measure the gaps, saying: "They don't get closer together as noticeably as I thought they would!" She was still seeing what she expected, even after the evidence was right in front of her.</p>
+<p style="color:var(--dim);font-size:.9rem"><strong>That confusion is the point.</strong> When your prediction is wrong, something interesting is happening in your mind. Don't rush past it.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============ 4. KEEPING IT COMPLEX ============ -->
+<section class="section" id="s4">
+<div class="container fade-in">
+<h3>IV. Keeping It Complex</h3>
+<h2>Twenty-four, forty-two, and I love you.</h2>
+<div class="quote">"If Frost had been able to put what he had to say into a sentence, he would have. So don't worry that you can't."</div>
+<p>Four children. Four seats at the movies. How many ways can they sit? Some students say "twenty-four" immediately—they know a formula. But <em>what are</em> the arrangements?</p>
+<div class="interactive-area">
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">Drag the letters to arrange them. Find as many unique arrangements as you can.</p>
+<div style="display:flex;gap:12px;justify-content:center;margin:1rem 0;flex-wrap:wrap" id="permSlots">
+<div class="perm-slot" data-idx="0" onclick="cyclePerm(0)" style="width:56px;height:56px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;color:#fff;transition:all .2s;min-height:44px">P</div>
+<div class="perm-slot" data-idx="1" onclick="cyclePerm(1)" style="width:56px;height:56px;border-radius:12px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;cursor:pointer;font-family:system,sans-serif;color:#fff;transition:all .2s;min-height:44px">L</div>
+<div class="perm-slot" data-idx="2" onclick="cyclePerm(2)" style="width:56px;height:56px;border-radius:12px;background:var(--accent3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;color:#000;transition:all .2s;min-height:44px">M</div>
+<div class="perm-slot" data-idx="3" onclick="cyclePerm(3)" style="width:56px;height:56px;border-radius:12px;background:#ff9f43;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;color:#000;transition:all .2s;min-height:44px">B</div>
+</div>
+<button class="btn btn-primary" style="display:block;margin:1rem auto;font-size:.9rem" onclick="savePerm()">Save this arrangement</button>
+<div style="display:flex;align-items:baseline;gap:1rem;margin:1rem 0">
+<span class="counter" id="permCount">0</span>
+<span class="label">unique arrangements found</span>
+</div>
+<div id="permList" style="font-family:monospace;font-size:.8rem;color:var(--dim);max-height:120px;overflow-y:auto;line-height:1.8"></div>
+<div id="permMsg" style="margin-top:.5rem;min-height:1.5rem;font-family:system-ui,sans-serif;font-size:.9rem"></div>
+</div>
+<div class="reveal-text" id="permReveal">
+<p>"Twenty-four" is to these arrangements as "forty-two" is to the meaning of life. The formula gives you a number. <strong>The exploration gives you understanding.</strong></p>
+<p style="color:var(--dim);font-size:.9rem">Every person who does this exercise finds a different system. Some make diagonals. Some fix one letter and rotate the rest. A nine-year-old invented a system of "reversing pairs" that was entirely new to Duckworth. The variety of paths is the point.</p>
+</div>
+</div>
+</section>
+
+<!-- ============ 5. MULTIPLE WAYS OF UNDERSTANDING ============ -->
+<section class="section" id="s5">
+<div class="container fade-in">
+<h3>V. Many Adequate Ways</h3>
+<h2>Twenty-four divided by eight.</h2>
+<div class="quote">"Imagine a teacher who believes it could mean only one of them. Imagine that teacher explaining a division problem to a child who was thinking about it the other way."</div>
+<p>What does 24 ÷ 8 <em>really</em> mean? Pick the one that feels right to you:</p>
+<div class="interactive-area">
+<div class="belief-cards">
+<div class="belief-card" onclick="divisionPick(this,'distribute')" style="text-align:center">
+<div style="font-size:2rem;margin-bottom:.5rem">📦📦📦📦<br>📦📦📦📦</div>
+<strong>Distribute 24 things into 8 piles</strong>
+<p style="font-size:.85rem;color:var(--dim);margin:.5rem 0 0">Count how many in each pile</p>
+</div>
+<div class="belief-card" onclick="divisionPick(this,'measure')" style="text-align:center">
+<div style="font-size:2rem;margin-bottom:.5rem">🔵🔵🔵🔵🔵🔵🔵🔵<br>🔵🔵🔵🔵🔵🔵🔵🔵<br>🔵🔵🔵🔵🔵🔵🔵🔵</div>
+<strong>Make groups of 8 from 24 things</strong>
+<p style="font-size:.85rem;color:var(--dim);margin:.5rem 0 0">Count how many groups</p>
+</div>
+</div>
+<div id="divisionResult" class="reveal-text" style="margin-top:1rem">
+<p><strong>Both are completely correct.</strong> They're two different mental operations that arrive at the same answer.</p>
+<p>In a group discussion Duckworth observed, people were <em>astonished</em> that the other interpretation existed. Each was convinced their way was the only way division could work.</p>
+<p style="color:var(--accent2);font-family:system-ui,sans-serif;font-size:.9rem">Now imagine a teacher who holds one view, trying to explain division to a child who thinks the other way. The teacher wouldn't even <em>notice</em> the difference. Both would walk away thinking the child can't do math.</p>
+<p style="color:var(--dim);font-size:.9rem">"We must find ways to present subject matter that will enable learners to get at <em>their own</em> thoughts about it."</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============ 6. PRODUCTIVE CONFUSION / BELIEFS ============ -->
+<section class="section" id="s6">
+<div class="container fade-in">
+<h3>VI. What We Really Learn</h3>
+<h2>Four kinds of belief.</h2>
+<div class="quote">"If we state that our goals include the awakening of interest and the development of confidence, then we must think about teaching these beliefs just as carefully as we think about teaching the-way-things-are beliefs."</div>
+<p>Schools focus almost entirely on facts. But Duckworth identified four equally important kinds of learning. Which matters most to you?</p>
+<div class="interactive-area">
+<div id="beliefExplorer">
+<div class="tab-group">
+<button class="tab active" onclick="showBelief(0,this)">The way things are</button>
+<button class="tab" onclick="showBelief(1,this)">It's fun</button>
+<button class="tab" onclick="showBelief(2,this)">I can</button>
+<button class="tab" onclick="showBelief(3,this)">People can help</button>
+</div>
+<div id="beliefContent" style="margin-top:1rem;min-height:180px">
+</div>
+</div>
+</div>
+<p style="color:var(--dim);font-size:.9rem">In one science study, children who took their magnifiers home every night and ran back if they forgot them—but couldn't state the physics of magnification—scored 95/100 in Duckworth's view. Children who knew the formula but never looked unless told: 5/100.</p>
+<p style="color:var(--dim);font-size:.9rem"><strong>Teaching "I can figure this out" is not less rigorous than teaching facts. It is more.</strong></p>
+</div>
+</section>
+
+<!-- ============ 7. CRITICAL EXPLORATION ============ -->
+<section class="section" id="s7">
+<div class="container fade-in">
+<h3>VII. Critical Exploration</h3>
+<h2>What do you notice?</h2>
+<div class="quote">"Instead of explaining things to students, try to understand their sense."</div>
+<p>This is Duckworth's core teaching method. Read this short poem. Don't look for "the meaning." Just notice things.</p>
+<div class="interactive-area">
+<div style="font-style:italic;margin-bottom:.5rem;color:var(--dim);font-size:.9rem">— Robert Frost</div>
+<div id="poemArea">
+<div class="poem-line" onclick="toggleAnnotation(0)">I found a dimpled spider, fat and white,</div>
+<div class="annotation" id="ann0">Notice: <em>white</em> spider. Spiders aren't usually white. Why white?</div>
+<div class="poem-line" onclick="toggleAnnotation(1)">On a white heal-all, holding up a moth</div>
+<div class="annotation" id="ann1">A heal-all is usually <em>blue</em>. This one is white. The moth is white. Everything is white.</div>
+<div class="poem-line" onclick="toggleAnnotation(2)">Like a white piece of rigid satin cloth—</div>
+<div class="annotation" id="ann2">Satin cloth at a funeral? A wedding? "Rigid" = dead.</div>
+<div class="poem-line" onclick="toggleAnnotation(3)">Assorted characters of death and blight</div>
+<div class="annotation" id="ann3">"Characters" as in a play? "Assorted" = brought together on purpose?</div>
+<div class="poem-line" onclick="toggleAnnotation(4)">Mixed ready to begin the morning right,</div>
+<div class="annotation" id="ann4">"Morning right" or "morning rite"? Or "mourning"?</div>
+<div class="poem-line" onclick="toggleAnnotation(5)">Like the ingredients of a witches' broth—</div>
+<div class="annotation" id="ann5">Ingredients = chosen deliberately. Someone (something?) mixed this.</div>
+<div class="poem-line" onclick="toggleAnnotation(6)">A snow-drop spider, a flower like froth,</div>
+<div class="annotation" id="ann6">"Froth" = temporary, insubstantial. Beauty and death in one image.</div>
+<div class="poem-line" onclick="toggleAnnotation(7)">And dead wings carried like a paper kite.</div>
+<div class="annotation" id="ann7">"Paper kite" = child's toy. Or a bird (kite)? Play and death.</div>
+<div class="poem-line" style="margin-top:1rem" onclick="toggleAnnotation(8)">What had that flower to do with being white,</div>
+<div class="annotation" id="ann8">Now Frost asks: <em>why</em> is everything white? This shouldn't be.</div>
+<div class="poem-line" onclick="toggleAnnotation(9)">The wayside blue and innocent heal-all?</div>
+<div class="annotation" id="ann9">It <em>should</em> be blue. "Innocent" — was it corrupted?</div>
+<div class="poem-line" onclick="toggleAnnotation(10)">What brought the kindred spider to that height,</div>
+<div class="annotation" id="ann10">"Kindred" = kin + dread? Related to the flower and moth in whiteness.</div>
+<div class="poem-line" onclick="toggleAnnotation(11)">Then steered the white moth thither in the night?</div>
+<div class="annotation" id="ann11">"Steered" = someone directing this. Design.</div>
+<div class="poem-line" onclick="toggleAnnotation(12)">What but design of darkness to appall?—</div>
+<div class="annotation" id="ann12">"Appall" = to make pale (white!). Darkness that creates whiteness. Also: a funeral pall.</div>
+<div class="poem-line" onclick="toggleAnnotation(13)">If design govern in a thing so small.</div>
+<div class="annotation" id="ann13">The most devastating line. <em>If.</em> Maybe there is no design. Maybe it's all accident. Which is more terrifying?</div>
+</div>
+<div style="margin-top:1rem">
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">Tap each line to see what others have noticed. In Duckworth's classes, a group can discuss this poem for over an hour with <em>increasing</em> interest.</p>
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">"I have always been frightened by being asked: 'What is the meaning of this poem?'" Duckworth writes. "But it is easy for me to point out something I <em>notice</em>."</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============ 8. CONCLUSION ============ -->
+<section class="section" id="s8">
+<div class="container fade-in" style="text-align:center">
+<h3>VIII. What You Know Is Yours</h3>
+<h2>What did you discover?</h2>
+<div class="interactive-area" style="text-align:left">
+<p>Look back at what just happened. You ordered straws without being told to. You tested a mystery box. You sat with a wrong prediction. You found arrangements. You noticed things in a poem nobody pointed out to you.</p>
+<p><strong>None of these insights came from being told.</strong></p>
+<p>That is Duckworth's thesis. And you just experienced it.</p>
+<div class="confusion-meter" style="margin:2rem 0">
+<div class="confusion-fill" id="finalMeter" style="width:0"></div>
+</div>
+<p id="meterLabel" style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim);text-align:center"></p>
+</div>
+<div class="quote" style="text-align:left;margin:2rem 0">"The wonderful ideas that I refer to need not necessarily look wonderful to the outside world. I see no difference in kind between wonderful ideas that many other people have already had, and wonderful ideas that nobody has yet happened upon."</div>
+<p style="margin:2rem 0;font-size:1.1rem">The more ideas you have at your disposal,<br>the more new ideas occur.</p>
+<p style="color:var(--dim);font-size:.9rem;margin:2rem auto;max-width:500px">Eleanor Duckworth, <em>The Having of Wonderful Ideas and Other Essays on Teaching and Learning</em>, 3rd edition, Teachers College Press, 2006.</p>
+</div>
+</section>
+
+<footer>
+<p>An interactive exploration of Eleanor Duckworth's ideas. Not affiliated with the author or publisher.</p>
+<p style="margin-top:.5rem">Built with nothing but HTML, CSS, and JS — and a wonderful idea.</p>
+</footer>
+
+<script>
+// ===== NAV DOTS =====
+const sections=['hero','s1','s2','s3','s4','s5','s6','s7','s8'];
+const navDots=document.getElementById('navDots');
+sections.forEach((s,i)=>{
+const d=document.createElement('button');
+d.className='nav-dot';d.setAttribute('aria-label','Section '+(i+1));
+d.onclick=()=>document.getElementById(s).scrollIntoView({behavior:'smooth'});
+navDots.appendChild(d);
+});
+function updateNav(){
+const dots=navDots.querySelectorAll('.nav-dot');
+let active=0;
+sections.forEach((s,i)=>{
+const el=document.getElementById(s);
+if(el&&el.getBoundingClientRect().top<window.innerHeight/2)active=i;
+});
+dots.forEach((d,i)=>d.classList.toggle('active',i===active));
+}
+window.addEventListener('scroll',updateNav);
+updateNav();
+
+// ===== FADE IN =====
+const observer=new IntersectionObserver(entries=>{
+entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+
+// ===== 1. STRAWS =====
+const strawColors=['#ff6b9d','#6c63ff','#00d4aa','#ff9f43','#a855f7','#38bdf8','#f43f5e','#22d3ee'];
+const strawLengths=[45,70,95,120,150,180,210,250];
+let shuffledStraws=[...strawLengths].sort(()=>Math.random()-.5);
+let placedStraws=[];
+const strawSource=document.getElementById('strawSource');
+const strawTarget=document.getElementById('strawTarget');
+function renderStraws(){
+strawSource.innerHTML='';
+shuffledStraws.forEach((len,i)=>{
+if(placedStraws.includes(len))return;
+const s=document.createElement('div');
+s.className='straw';
+s.style.width=len+'px';
+s.style.background=strawColors[strawLengths.indexOf(len)];
+s.onclick=()=>{placedStraws.push(len);renderStraws();checkStraws()};
+strawSource.appendChild(s);
+});
+strawTarget.innerHTML='';
+placedStraws.forEach((len,i)=>{
+const s=document.createElement('div');
+s.className='straw placed';
+s.style.width=len+'px';
+s.style.background=strawColors[strawLengths.indexOf(len)];
+s.onclick=()=>{placedStraws.splice(i,1);renderStraws();checkStraws()};
+strawTarget.appendChild(s);
+});
+}
+function checkStraws(){
+const fb=document.getElementById('strawFeedback');
+if(placedStraws.length===strawLengths.length){
+const sorted=[...strawLengths].sort((a,b)=>a-b);
+const isOrdered=placedStraws.every((v,i)=>v===sorted[i])||placedStraws.every((v,i)=>v===sorted[sorted.length-1-i]);
+if(isOrdered){
+fb.innerHTML='<span style="color:var(--accent3)">✦ You had a wonderful idea.</span>';
+document.getElementById('strawReveal').classList.add('open');
+strawTarget.querySelectorAll('.straw').forEach(s=>s.classList.add('correct'));
+}else{
+fb.innerHTML='<span style="color:var(--dim)">Interesting arrangement. Is there a system?</span>';
+}
+}else{
+fb.innerHTML='';
+}
+}
+renderStraws();
+
+// ===== 2. MYSTERY BOX =====
+const boxContents='bulb';
+let boxTests=[];
+const boxLog=document.getElementById('boxLog');
+function testBox(tool){
+let msg='';
+boxTests.push(tool);
+if(tool==='battery'){msg='You connect a battery and bulb outside the box. The bulb lights—<strong style="color:var(--accent3)">dimly</strong>.';}
+if(tool==='bulb'){msg='You connect another bulb in the circuit. Both bulbs are <strong style="color:var(--dim)">very dim</strong> now.';}
+if(tool==='wire'){msg='You connect plain wire outside the box. Your test bulb glows—<strong style="color:var(--accent3)">dimly</strong>.';}
+boxLog.innerHTML=msg+'<br><span style="font-size:.8rem;color:var(--dim)">Tests run: '+boxTests.length+'</span>';
+document.getElementById('mysteryBox').style.animation='pulse .5s';
+setTimeout(()=>document.getElementById('mysteryBox').style.animation='',500);
+}
+function guessBox(guess){
+const r=document.getElementById('boxResult');
+const box=document.getElementById('mysteryBox');
+if(guess===boxContents){
+r.innerHTML='<p style="color:var(--accent3);font-family:system-ui,sans-serif"><strong>Yes—a bulb.</strong> The dim glow meant resistance inside. It could have been resistance wire, but the pattern suggested a filament.</p><p style="color:var(--dim);font-size:.85rem">The point isn\'t whether you got it right. The point is what you did with not knowing. Did you test? Did you reason? <em>That</em> is the virtue.</p>';
+box.classList.add('revealed');box.textContent='💡';
+}else if(guess==='wire'){
+r.innerHTML='<p style="color:var(--accent2);font-family:system-ui,sans-serif">Close! Resistance wire would also cause dimness. Can you think of a test to distinguish between wire and a bulb?</p><p style="font-size:.85rem;color:var(--dim)">Hank\'s brilliant idea: connect 6 batteries in series. If it\'s a bulb, it burns out. Then reconnect—if the circuit is broken, it <em>was</em> a bulb.</p>';
+}else{
+r.innerHTML='<p style="color:var(--dim);font-family:system-ui,sans-serif">Not quite—but the wrong answer is productive. What evidence did you use? What would you test next?</p>';
+}
+}
+
+// ===== 3. RAMP =====
+function rampGuess(el,choice){
+document.querySelectorAll('#s3 .belief-card').forEach(c=>{c.classList.remove('selected','wrong')});
+el.classList.add(choice==='farther'?'selected':'wrong');
+document.getElementById('rampResult').classList.add('open');
+}
+
+// ===== 4. PERMUTATIONS =====
+const letters=['P','L','M','B'];
+const permColors=['var(--accent)','var(--accent2)','var(--accent3)','#ff9f43'];
+let currentPerm=[0,1,2,3];
+let foundPerms=new Set();
+function cyclePerm(idx){
+currentPerm[idx]=(currentPerm[idx]+1)%4;
+// Ensure no duplicates
+while(currentPerm.filter(v=>v===currentPerm[idx]).length>1){
+currentPerm[idx]=(currentPerm[idx]+1)%4;
+}
+renderPerm();
+}
+function renderPerm(){
+const slots=document.querySelectorAll('.perm-slot');
+slots.forEach((s,i)=>{
+s.textContent=letters[currentPerm[i]];
+s.style.background=permColors[currentPerm[i]];
+s.style.color=currentPerm[i]>=2?'#000':'#fff';
+});
+}
+function savePerm(){
+const key=currentPerm.map(i=>letters[i]).join('');
+const msg=document.getElementById('permMsg');
+if(foundPerms.has(key)){
+msg.innerHTML='<span style="color:var(--accent2)">You already found '+key+'! Try a different arrangement.</span>';
+}else{
+foundPerms.add(key);
+document.getElementById('permCount').textContent=foundPerms.size;
+document.getElementById('permList').innerHTML=[...foundPerms].map(p=>'<span style="margin-right:12px">'+p+'</span>').join('');
+if(foundPerms.size===1)msg.innerHTML='<span style="color:var(--accent3)">First one! 23 more possibilities exist.</span>';
+else if(foundPerms.size<12)msg.innerHTML='<span style="color:var(--accent3)">'+foundPerms.size+' found. Do you see a system emerging?</span>';
+else if(foundPerms.size<24)msg.innerHTML='<span style="color:var(--accent3)">'+foundPerms.size+' found! You\'re more than halfway. Getting harder to find new ones?</span>';
+else{
+msg.innerHTML='<span style="color:var(--accent3)">✦ All 24! You found your own system.</span>';
+document.getElementById('permReveal').classList.add('open');
+}
+}
+}
+renderPerm();
+
+// ===== 5. DIVISION =====
+function divisionPick(el,type){
+document.querySelectorAll('#s5 .belief-card').forEach(c=>c.classList.remove('selected'));
+el.classList.add('selected');
+document.getElementById('divisionResult').classList.add('open');
+}
+
+// ===== 6. BELIEFS =====
+const beliefs=[
+{title:'The Way Things Are',emoji:'🔬',example:'"A lens that is more curved magnifies more."',desc:'Factual knowledge. The kind schools test for. Important—but only one of four kinds of knowing.', color:'var(--accent)'},
+{title:"It's Fun",emoji:'✨',example:'"It\'s fun to look through a microscope at ordinary things."',desc:'Interest. Delight. The belief that an activity is worth your time. A child who takes the magnifier home at night has learned this. A child who only looks when told has not.',color:'var(--accent2)'},
+{title:'I Can',emoji:'💪',example:'"I can figure out how ant lions catch their prey."',desc:'Self-confidence in a specific domain. If the teacher says "Oh, they use their pincers," this belief can never form. Not telling is not a teaching gimmick. It is essential.',color:'var(--accent3)'},
+{title:'People Can Help',emoji:'🤝',example:'"My grandfather knows more about 1910 Montreal than any book."',desc:'Knowing when and how to use resources—including other people. Knowing whose knowledge to trust, and when to verify. A social, discriminating form of knowledge.',color:'#ff9f43'}
+];
+function showBelief(idx,tab){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+if(tab)tab.classList.add('active');
+const b=beliefs[idx];
+document.getElementById('beliefContent').innerHTML=`
+<div style="font-size:3rem;margin-bottom:.5rem">${b.emoji}</div>
+<h2 style="color:${b.color};font-size:1.3rem">${b.title}</h2>
+<p style="font-style:italic;color:var(--dim)">${b.example}</p>
+<p>${b.desc}</p>
+`;
+}
+showBelief(0);
+
+// ===== 7. POEM =====
+function toggleAnnotation(idx){
+const ann=document.getElementById('ann'+idx);
+const line=ann.previousElementSibling;
+const isOpen=ann.classList.contains('show');
+// Close all
+document.querySelectorAll('.annotation').forEach(a=>a.classList.remove('show'));
+document.querySelectorAll('.poem-line').forEach(l=>l.classList.remove('highlighted'));
+if(!isOpen){
+ann.classList.add('show');
+line.classList.add('highlighted');
+}
+}
+
+// ===== 8. FINAL METER =====
+const finalObserver=new IntersectionObserver(entries=>{
+entries.forEach(e=>{
+if(e.isIntersecting){
+const meter=document.getElementById('finalMeter');
+const label=document.getElementById('meterLabel');
+// Count interactions
+let score=0;
+if(placedStraws.length>0)score++;
+if(boxTests.length>0)score++;
+if(document.querySelector('#s3 .belief-card.selected,#s3 .belief-card.wrong'))score++;
+if(foundPerms.size>0)score++;
+if(document.querySelector('#s5 .belief-card.selected'))score++;
+score++; // reading the poem counts
+const pct=Math.min(100,Math.round(score/6*100));
+setTimeout(()=>{
+meter.style.width=pct+'%';
+if(pct>=80)label.textContent='You explored deeply. What you discovered is yours.';
+else if(pct>=50)label.textContent='You engaged with most of the ideas. Go back and try the ones you skipped.';
+else label.textContent='There\'s more to explore above. Each section holds a different idea.';
+},300);
+}
+});
+},{threshold:.3});
+const s8=document.getElementById('s8');
+if(s8)finalObserver.observe(s8);
+</script>
+</body>
+</html>

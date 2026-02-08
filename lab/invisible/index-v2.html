@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invisible Cities — v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#d4a853;--pale:#f5e6c4;--bg:#0a0a1a;--surface:#12122a;--surface2:#1a1a3e;--text:#c8c0b0;--dim:#666;--accent:#c49b3c;--glow:rgba(212,168,83,0.12)}
+body{font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+h1,h2,h3{font-weight:normal;letter-spacing:0.03em;color:var(--pale)}
+a{color:var(--gold)}
+::selection{background:var(--gold);color:var(--bg)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid rgba(212,168,83,0.2);overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;backdrop-filter:blur(12px)}
+nav a{display:inline-block;color:var(--pale);text-decoration:none;padding:12px 14px;font-size:0.8rem;opacity:0.5;transition:opacity 0.3s}
+nav a:hover,nav a.active{opacity:1}
+
+/* HERO */
+.hero{text-align:center;padding:100px 20px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(212,168,83,0.06) 0%,transparent 60%)}
+.hero h1{font-size:clamp(2.5rem,6vw,4rem);letter-spacing:0.08em;margin-bottom:0.3em}
+.hero .sub{font-size:clamp(0.85rem,2vw,1.05rem);opacity:0.5;font-style:italic;max-width:550px;margin:0 auto}
+.hero .version{display:inline-block;margin-top:16px;font-size:0.7rem;padding:3px 10px;border:1px solid rgba(212,168,83,0.3);color:var(--gold);letter-spacing:0.1em}
+
+/* SECTIONS */
+section{padding:70px 20px;max-width:960px;margin:0 auto}
+section h2{font-size:clamp(1.4rem,3vw,1.9rem);margin-bottom:0.3em;display:flex;align-items:center;gap:12px}
+section h2 .num{font-size:0.7em;opacity:0.4;font-style:italic}
+.intro{color:var(--dim);font-style:italic;margin-bottom:2em;font-size:0.9rem;line-height:1.8}
+.alt-bg{background:var(--surface);max-width:none;padding:70px 20px}
+.alt-bg .inner{max-width:960px;margin:0 auto}
+
+/* BUTTONS */
+.btn{padding:10px 24px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:inherit;font-size:0.9rem;transition:all 0.2s;letter-spacing:0.03em}
+.btn:hover{background:var(--gold);color:var(--bg)}
+.btn-sm{padding:6px 14px;font-size:0.8rem}
+.btn-group{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid rgba(212,168,83,0.15);padding:24px;margin:16px 0;line-height:1.9;animation:fadeUp 0.4s}
+.card h3{margin-bottom:8px;color:var(--gold)}
+.card .meta{font-size:0.8rem;color:var(--dim);margin-bottom:12px}
+
+/* ===== 1. CITY GENERATOR ===== */
+#generator .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+@media(max-width:600px){#generator .controls{grid-template-columns:1fr}}
+.ctrl-group label{display:block;font-size:0.75rem;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em}
+.ctrl-group select,.ctrl-group input{width:100%;padding:10px;background:var(--surface);border:1px solid rgba(212,168,83,0.2);color:var(--text);font-family:inherit;font-size:0.9rem}
+.ctrl-group select:focus,.ctrl-group input:focus{outline:none;border-color:var(--gold)}
+#cityOutput{min-height:200px}
+#cityOutput .city-name{font-size:1.6rem;color:var(--gold);margin-bottom:4px}
+#cityOutput .city-paradox{color:var(--accent);font-style:italic;margin:12px 0;padding:12px;border-left:2px solid var(--gold);background:rgba(212,168,83,0.04)}
+#cityVisual{width:100%;height:280px;margin-top:16px;border:1px solid rgba(212,168,83,0.1)}
+.gen-history{margin-top:24px}
+.gen-history h3{font-size:0.85rem;color:var(--dim);margin-bottom:8px}
+.gen-history .pill{display:inline-block;padding:4px 12px;margin:3px;font-size:0.75rem;border:1px solid rgba(212,168,83,0.2);color:var(--pale);cursor:pointer;transition:all 0.2s}
+.gen-history .pill:hover{border-color:var(--gold);background:rgba(212,168,83,0.1)}
+
+/* ===== 2. TAXONOMY ===== */
+.taxonomy-city{background:var(--surface);border:1px solid rgba(212,168,83,0.15);padding:28px;margin-bottom:20px;font-style:italic;line-height:2;font-size:1.05rem;min-height:120px;position:relative}
+.taxonomy-city .reveal{position:absolute;bottom:8px;right:12px;font-size:0.7rem;color:var(--dim)}
+.cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.cat-chip{padding:8px 16px;border:1px solid rgba(212,168,83,0.25);background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.82rem;transition:all 0.25s;border-radius:2px}
+.cat-chip:hover{border-color:var(--gold);color:var(--gold)}
+.cat-chip.selected{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.cat-chip.correct{background:rgba(80,180,80,0.2);border-color:rgba(80,180,80,0.5);color:#8f8}
+.cat-chip.wrong{background:rgba(180,60,60,0.15);border-color:rgba(180,60,60,0.3);color:#f88;opacity:0.6}
+.cat-chip.missed{border-color:rgba(80,180,80,0.5);color:#8f8;border-style:dashed}
+.taxonomy-score{display:flex;gap:24px;margin:20px 0;font-size:0.85rem;color:var(--dim)}
+.taxonomy-score span{color:var(--gold)}
+.taxonomy-feedback{margin:16px 0;padding:16px;background:rgba(212,168,83,0.04);border-left:2px solid var(--gold);font-size:0.9rem;line-height:1.8;display:none}
+
+/* ===== 3. MAP → TERRITORY ===== */
+#mapCanvas{width:100%;height:450px;background:var(--surface);border:1px solid rgba(212,168,83,0.15);cursor:crosshair;touch-action:none}
+.map-controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.map-controls label{font-size:0.8rem;color:var(--dim)}
+.map-detail-meter{width:100%;height:6px;background:var(--surface);margin:12px 0;position:relative;border:1px solid rgba(212,168,83,0.15)}
+.map-detail-fill{height:100%;background:var(--gold);transition:width 0.5s}
+.map-status{font-size:0.85rem;color:var(--dim);font-style:italic;margin:8px 0;min-height:40px;line-height:1.7}
+.territory-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--gold);opacity:0;transition:opacity 1s;text-align:center;padding:20px;background:rgba(10,10,26,0.85)}
+
+/* ===== 4. DESIRE VS MEMORY ===== */
+.dvm-container{position:relative;min-height:500px}
+.dvm-toggle{display:flex;justify-content:center;gap:0;margin-bottom:24px}
+.dvm-toggle button{padding:12px 32px;border:1px solid var(--gold);background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.9rem;transition:all 0.3s}
+.dvm-toggle button:first-child{border-right:none}
+.dvm-toggle button.active{background:var(--gold);color:var(--bg)}
+.dvm-scene{position:relative;min-height:400px}
+.dvm-canvas{width:100%;height:400px;background:var(--surface);border:1px solid rgba(212,168,83,0.15)}
+.dvm-text{margin-top:16px;font-style:italic;line-height:2;font-size:0.95rem;min-height:80px}
+.dvm-street{padding:12px 16px;margin:8px 0;border-left:2px solid;font-size:0.88rem;line-height:1.7;transition:all 0.5s}
+
+/* ===== 5. KUBLAI KHAN ===== */
+.khan-dialogue{max-width:700px;margin:0 auto}
+.khan-msg{margin:16px 0;padding:16px 20px;max-width:80%;line-height:1.8;animation:fadeUp 0.4s;font-size:0.92rem}
+.khan-msg.khan{background:var(--surface2);border:1px solid rgba(100,100,160,0.2);margin-right:auto;border-radius:2px 12px 12px 2px}
+.khan-msg.polo{background:rgba(212,168,83,0.08);border:1px solid rgba(212,168,83,0.15);margin-left:auto;border-radius:12px 2px 2px 12px;text-align:right}
+.khan-msg .speaker{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin-bottom:6px}
+.khan-choices{display:flex;flex-direction:column;gap:8px;margin:20px 0;max-width:80%;margin-left:auto}
+.khan-choice{padding:12px 16px;border:1px solid rgba(212,168,83,0.25);background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;text-align:left;transition:all 0.2s;line-height:1.6}
+.khan-choice:hover{border-color:var(--gold);background:rgba(212,168,83,0.05)}
+.empire-meter{display:flex;align-items:center;gap:12px;margin:20px 0;font-size:0.8rem;color:var(--dim)}
+.empire-bar{flex:1;height:4px;background:var(--surface2);position:relative}
+.empire-fill{height:100%;transition:width 0.8s;background:linear-gradient(90deg,rgba(180,60,60,0.6),rgba(212,168,83,0.6))}
+
+/* ===== 6. CITY OF THE DEAD ===== */
+.mirror-container{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
+@media(max-width:700px){.mirror-container{grid-template-columns:1fr}}
+.mirror-side{padding:20px;border:1px solid rgba(212,168,83,0.15);min-height:350px}
+.mirror-side h3{font-size:0.9rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.mirror-side.living{background:rgba(212,168,83,0.03)}
+.mirror-side.dead{background:rgba(80,60,120,0.08);border-color:rgba(100,80,160,0.2)}
+.mirror-side.dead h3{color:#a090c0}
+.mirror-input{width:100%;padding:10px;background:var(--surface);border:1px solid rgba(212,168,83,0.2);color:var(--text);font-family:inherit;font-size:0.85rem;margin:6px 0}
+.mirror-input:focus{outline:none;border-color:var(--gold)}
+.mirror-elem{padding:8px 12px;margin:6px 0;border-left:2px solid var(--gold);font-size:0.85rem;display:flex;justify-content:space-between;align-items:center;line-height:1.5}
+.mirror-elem.dead-elem{border-left-color:#8070b0}
+.mirror-question{text-align:center;margin:20px 0;font-style:italic;color:var(--dim);font-size:0.95rem}
+
+/* ===== 7. THIN/HIDDEN LAYERS ===== */
+.layers-container{position:relative}
+.layers-canvas{width:100%;height:450px;background:var(--surface);border:1px solid rgba(212,168,83,0.15)}
+.layers-controls{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;align-items:center}
+.layer-slider{-webkit-appearance:none;width:200px;height:4px;background:var(--surface2);outline:none}
+.layer-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer}
+.layer-label{font-size:0.8rem;color:var(--dim)}
+.layer-legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0}
+.layer-legend-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--dim)}
+.layer-legend-item .swatch{width:12px;height:12px;border:1px solid rgba(255,255,255,0.2)}
+
+/* FOOTER */
+footer{text-align:center;padding:60px 20px;color:var(--dim);font-size:0.85rem;font-style:italic;border-top:1px solid rgba(212,168,83,0.1)}
+footer p+p{margin-top:8px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){
+  section{padding:50px 16px}
+  .khan-msg{max-width:92%}
+  .khan-choices{max-width:92%}
+  .mirror-container{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#generator">I. Generator</a>
+  <a href="#taxonomy">II. Taxonomy</a>
+  <a href="#map">III. Map</a>
+  <a href="#desire">IV. Desire/Memory</a>
+  <a href="#khan">V. Khan</a>
+  <a href="#dead">VI. Dead</a>
+  <a href="#layers">VII. Layers</a>
+</nav>
+
+<div class="hero">
+  <h1>Invisible Cities</h1>
+  <p class="sub">The catalogue of forms is endless: until every shape has found its city, new cities will continue to be born.</p>
+  <div class="version">V2 — GENERATIVE</div>
+</div>
+
+<!-- 1. CITY GENERATOR -->
+<section id="generator">
+  <h2>City Generator <span class="num">I</span></h2>
+  <p class="intro">Calvino's method: one structural rule, one human behavior, one paradox — pushed to its logical extreme. Generate infinite invisible cities.</p>
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Category</label>
+      <select id="genCat"><option value="random">Random</option></select>
+    </div>
+    <div class="ctrl-group">
+      <label>Mood</label>
+      <select id="genMood">
+        <option value="melancholy">Melancholy</option>
+        <option value="wonder">Wonder</option>
+        <option value="unease">Unease</option>
+        <option value="longing">Longing</option>
+        <option value="vertigo">Vertigo</option>
+      </select>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn" onclick="generateCity()">Generate City</button>
+    <button class="btn btn-sm" onclick="generateCity();generateCity();generateCity()" style="opacity:0.6">×3</button>
+  </div>
+  <div id="cityOutput" class="card" style="display:none"></div>
+  <canvas id="cityVisual" style="display:none"></canvas>
+  <div class="gen-history" id="genHistory" style="display:none">
+    <h3>Cities discovered:</h3>
+    <div id="historyPills"></div>
+  </div>
+</section>
+
+<!-- 2. MARCO POLO'S TAXONOMY -->
+<section class="alt-bg" id="taxonomy">
+  <div class="inner">
+    <h2>Marco Polo's Taxonomy <span class="num">II</span></h2>
+    <p class="intro">Read a city description. Sort it into categories. But some cities belong to multiple — feel the boundaries blur.</p>
+    <div class="taxonomy-city" id="taxCity"></div>
+    <div class="cat-chips" id="taxChips"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0">
+      <button class="btn btn-sm" onclick="submitTaxonomy()">Submit</button>
+      <button class="btn btn-sm" onclick="nextTaxonomy()" style="opacity:0.6">Skip →</button>
+    </div>
+    <div class="taxonomy-feedback" id="taxFeedback"></div>
+    <div class="taxonomy-score">Round: <span id="taxRound">1</span>/∞ &nbsp;|&nbsp; Score: <span id="taxScore">0</span> &nbsp;|&nbsp; Blurred: <span id="taxBlurred">0</span></div>
+  </div>
+</section>
+
+<!-- 3. MAP THAT BECOMES TERRITORY -->
+<section id="map">
+  <h2>The Map That Becomes the Territory <span class="num">III</span></h2>
+  <p class="intro">Draw a city map. As you add detail, the map starts replacing the city itself. Calvino's philosophical point made visual.</p>
+  <div style="position:relative">
+    <canvas id="mapCanvas"></canvas>
+    <div class="territory-overlay" id="mapOverlay"></div>
+  </div>
+  <div class="map-detail-meter"><div class="map-detail-fill" id="mapFill" style="width:0%"></div></div>
+  <div class="map-status" id="mapStatus">Begin drawing. The city awaits its cartographer.</div>
+  <div class="map-controls">
+    <button class="btn btn-sm" onclick="clearMap()">Clear Map</button>
+    <button class="btn btn-sm" onclick="addMapLabel()">+ Label</button>
+    <button class="btn btn-sm" onclick="addMapBuilding()">+ Building</button>
+    <button class="btn btn-sm" onclick="addMapRoad()">+ Road</button>
+    <label style="margin-left:auto"><input type="color" id="mapColor" value="#d4a853" style="vertical-align:middle"> ink</label>
+  </div>
+</section>
+
+<!-- 4. DESIRE VS MEMORY -->
+<section class="alt-bg" id="desire">
+  <div class="inner">
+    <h2>Desire vs Memory <span class="num">IV</span></h2>
+    <p class="intro">Two cities, same geography, different lens. Toggle between how a city appears through desire and through memory. Same streets, completely different experience.</p>
+    <div class="dvm-toggle">
+      <button class="active" onclick="setDVM('desire')">☀️ Desire</button>
+      <button onclick="setDVM('memory')">🌙 Memory</button>
+    </div>
+    <canvas class="dvm-canvas" id="dvmCanvas"></canvas>
+    <div id="dvmStreets"></div>
+    <div class="dvm-text" id="dvmText"></div>
+    <button class="btn btn-sm" onclick="newDVMCity()" style="margin-top:12px">Generate New Geography →</button>
+  </div>
+</section>
+
+<!-- 5. KUBLAI KHAN'S EMPIRE -->
+<section id="khan">
+  <h2>Kublai Khan's Empire <span class="num">V</span></h2>
+  <p class="intro">Khan sees his empire crumbling in the atlas. Each city Marco describes either confirms or denies the empire's decay. Build the conversation.</p>
+  <div class="empire-meter">
+    <span>Decay</span>
+    <div class="empire-bar"><div class="empire-fill" id="empireFill" style="width:50%"></div></div>
+    <span>Endurance</span>
+  </div>
+  <div class="khan-dialogue" id="khanDialogue"></div>
+  <div class="khan-choices" id="khanChoices"></div>
+</section>
+
+<!-- 6. CITY OF THE DEAD -->
+<section class="alt-bg" id="dead">
+  <div class="inner">
+    <h2>The City of the Dead <span class="num">VI</span></h2>
+    <p class="intro">Build Eusapia above; its mirror generates below. The living copy the dead who copy the living. Which is "real"?</p>
+    <div class="mirror-container">
+      <div class="mirror-side living" id="livingCity">
+        <h3>☀️ Eusapia Above</h3>
+        <p style="font-size:0.8rem;color:var(--dim);margin-bottom:12px">Add elements to the living city:</p>
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <input class="mirror-input" id="livingInput" placeholder="A clockmaker's shop..." style="flex:1">
+          <button class="btn btn-sm" onclick="addLivingElement()">Add</button>
+        </div>
+        <div id="livingElements"></div>
+      </div>
+      <div class="mirror-side dead" id="deadCity">
+        <h3>🌑 Eusapia Below</h3>
+        <p style="font-size:0.8rem;color:#8070b0;margin-bottom:12px">The mirror generates automatically:</p>
+        <div id="deadElements"></div>
+      </div>
+    </div>
+    <div class="mirror-question" id="mirrorQuestion"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-sm" onclick="invertMirror()">⇅ Invert — Which is real?</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. THIN/HIDDEN LAYERS -->
+<section id="layers">
+  <h2>Thin Cities / Hidden Cities <span class="num">VII</span></h2>
+  <p class="intro">Peel away layers of a city to find other cities hiding inside. Each layer is a different way of seeing.</p>
+  <canvas class="layers-canvas" id="layersCanvas"></canvas>
+  <div class="layers-controls">
+    <span class="layer-label">Peel:</span>
+    <input type="range" class="layer-slider" id="layerSlider" min="0" max="100" value="0" oninput="updateLayers()">
+    <span class="layer-label" id="layerName">Surface — The city as it appears</span>
+  </div>
+  <div class="layer-legend" id="layerLegend"></div>
+  <button class="btn btn-sm" onclick="newLayeredCity()" style="margin-top:8px">New City</button>
+</section>
+
+<footer>
+  <p>"Seek and learn to recognize who and what, in the midst of the inferno, are not inferno, then make them endure, give them space."</p>
+  <p>Italo Calvino, <em>Invisible Cities</em> (1972) — Interactive exploration v2</p>
+</footer>
+
+<script>
+// ========== SHARED DATA ==========
+const CATEGORIES = [
+  "Cities & Memory","Cities & Desire","Cities & Signs","Thin Cities","Trading Cities",
+  "Cities & Eyes","Cities & Names","Cities & the Dead","Cities & the Sky","Continuous Cities","Hidden Cities"
+];
+const CAT_SHORT = ["Memory","Desire","Signs","Thin","Trading","Eyes","Names","Dead","Sky","Continuous","Hidden"];
+
+// Name generation
+const PREFIXES = ["A","An","Ar","Ba","Be","Ca","Ce","Cl","Da","De","Di","Do","El","Er","Es","Eu","Fe","Fl","Ga","Ge","Gi","Ha","He","Hy","Il","Ir","Is","Ka","La","Le","Li","Lu","Ma","Me","Mi","Mo","Na","Ne","No","Ol","Op","Or","Pa","Pe","Ph","Py","Ra","Re","Ri","Ro","Sa","Se","Si","So","Ta","Te","Th","Tr","Un","Va","Ve","Vi","Xa","Ze","Zo"];
+const MIDDLES = ["","l","n","r","s","m","d","ph","ll","nd","rs","dr","st","gr","br","cr","th"];
+const SUFFIXES = ["ia","ina","ora","ura","ana","ila","anda","ella","issa","ola","una","ida","ira","osa","ata","eia","alia","onia","eria","inia"];
+
+function genCityName(){
+  return PREFIXES[~~(Math.random()*PREFIXES.length)] + MIDDLES[~~(Math.random()*MIDDLES.length)] + SUFFIXES[~~(Math.random()*SUFFIXES.length)];
+}
+
+// Structural rules
+const STRUCTURES = [
+  {rule:"vertical stratification",desc:"built in layers where each stratum follows different laws of physics"},
+  {rule:"mirroring",desc:"where every structure casts not a shadow but an inverted twin"},
+  {rule:"centripetal growth",desc:"that grows inward — each new district materializes inside the previous one"},
+  {rule:"networks without nodes",desc:"made only of passages — bridges with no banks, corridors with no rooms"},
+  {rule:"temporal architecture",desc:"whose buildings exist only during the hour they were constructed"},
+  {rule:"suspension",desc:"held between opposing forces, touching neither earth nor sky"},
+  {rule:"accumulation",desc:"that has never demolished anything — every version persists in different transparencies"},
+  {rule:"inversion",desc:"where all rooms face outward and all streets are enclosed"},
+  {rule:"spiral descent",desc:"wound around a single staircase that descends into the earth, each revolution wider than the last"},
+  {rule:"tidal form",desc:"that assembles at low tide and disperses when the water returns"},
+  {rule:"acoustic architecture",desc:"whose walls are tuned to frequencies — some buildings can only be found by humming the right note"},
+  {rule:"cartographic recursion",desc:"that contains, in its central square, a perfect map of itself at one-tenth scale, which also contains a map"},
+  {rule:"membrane boundaries",desc:"enclosed not by walls but by gradients — the air thickens imperceptibly until movement is impossible"}
+];
+
+const BEHAVIORS = [
+  {trait:"nostalgia for the unlived",desc:"whose citizens keep detailed journals of lives they did not live, considering these more real than their actual days"},
+  {trait:"compulsive exchange",desc:"where every seven years inhabitants swap names, houses, and memories until no one can find their original self"},
+  {trait:"anticipatory grief",desc:"where funerals are held for the living and celebrations for the dead"},
+  {trait:"radical hospitality",desc:"that belongs only to those passing through — permanent residents are guests of travelers"},
+  {trait:"obsessive cartography",desc:"whose inhabitants map everything, but each map must include all other maps"},
+  {trait:"silence as currency",desc:"where speech is taxed by the syllable and the wealthiest citizens have not spoken in decades"},
+  {trait:"collective dreaming",desc:"whose residents share a single dream each night, and the city is rebuilt each morning to match it"},
+  {trait:"inverse aging",desc:"where the elderly grow playful and the children carry the weight of governance"},
+  {trait:"memory commerce",desc:"where the market trades not goods but recollections — a first kiss for a grandmother's recipe"},
+  {trait:"architectural confession",desc:"where buildings change shape to reflect the moral state of their inhabitants"},
+  {trait:"appointment with absence",desc:"where citizens schedule regular meetings with people who have left and keep the conversations going"},
+  {trait:"prophetic construction",desc:"where builders construct only ruins — aging and collapse are the intended forms"}
+];
+
+const PARADOXES = [
+  {core:"To preserve it you must let it change",text:"Every act of preservation freezes what it touches, and every frozen thing begins to die."},
+  {core:"The map devours the territory",text:"Visitors discover the guidebook city has more substance than the city they walk through."},
+  {core:"The copy outlasts the original",text:"What they thought was the original was itself a copy of something that never quite existed."},
+  {core:"Freedom and prison share architecture",text:"Those who celebrate their freedom do not see the walls; those who lament their prison do not see the doors."},
+  {core:"Understanding destroys its object",text:"The scholars who decode the city's secret find the decoded city is no longer a city."},
+  {core:"The invisible sustains the visible",text:"Removing the city's rumors, ghosts, and unanswered letters causes the visible buildings to collapse."},
+  {core:"Arrival is departure",text:"The moment of entering the city is the beginning of having already left it."},
+  {core:"Completion is erasure",text:"As the last stone is placed, the first wall becomes transparent — the finished city is invisible."},
+  {core:"Naming consumes",text:"Each name the city acquires devours a street, until the city that everyone knows by name has no streets left."},
+  {core:"The ruin remembers more than the building",text:"What stands intact forgets its purpose; what has fallen apart recalls every hand that touched it."}
+];
+
+const OPENINGS = [
+  "Proceeding for days through regions where the horizon retreats with each step, you arrive at",
+  "After crossing mountains that cast shadows in colors no painter has named, you reach",
+  "Following the river that flows against the current of time, the traveler comes to",
+  "Where three trade routes converge and immediately forget why, there stands",
+  "On the morning when the wind changes direction for no reason, you find yourself in",
+  "Beyond the desert that is not sand but accumulated silence, there is",
+  "The caravan driver will tell you that after the third impossible sunset, you reach",
+  "Where the map admits its own ignorance with a graceful blank space, there you find",
+  "Past the border that exists only when you try to cross it, there waits"
+];
+
+const CLOSINGS = [
+  "The traveler departs at dawn, uncertain whether the city will exist by nightfall, or whether it ever did.",
+  "You carry the city with you afterward, not in memory but in the slight change in how you hold your hands.",
+  "This much is certain: the city you leave is not the city you entered. But then, neither are you.",
+  "The merchants say: every city gets the travelers it deserves. The travelers say nothing, which is the only honest cartography.",
+  "In the atlas, the city occupies a single point. But the point, examined closely, contains the atlas."
+];
+
+// ========== 1. CITY GENERATOR ==========
+let generatedCities = [];
+
+(function initGenerator(){
+  const sel = document.getElementById('genCat');
+  CATEGORIES.forEach((c,i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = c;
+    sel.appendChild(o);
+  });
+})();
+
+function generateCity(){
+  const catVal = document.getElementById('genCat').value;
+  const mood = document.getElementById('genMood').value;
+  const cat = catVal === 'random' ? ~~(Math.random()*11) : +catVal;
+  const struct = STRUCTURES[~~(Math.random()*STRUCTURES.length)];
+  const behav = BEHAVIORS[~~(Math.random()*BEHAVIORS.length)];
+  const paradox = PARADOXES[~~(Math.random()*PARADOXES.length)];
+  const name = genCityName();
+  const opening = OPENINGS[~~(Math.random()*OPENINGS.length)];
+  const closing = CLOSINGS[~~(Math.random()*CLOSINGS.length)];
+
+  const moodColors = {melancholy:'#6a7a9a',wonder:'#d4a853',unease:'#8a5a5a',longing:'#7a6a9a',vertigo:'#5a8a7a'};
+
+  const city = {name, cat, struct, behav, paradox, mood};
+  generatedCities.push(city);
+
+  const out = document.getElementById('cityOutput');
+  out.style.display = 'block';
+  out.innerHTML = `
+    <div class="city-name">${name}</div>
+    <div class="meta">${CATEGORIES[cat]} · ${mood} · rule of ${struct.rule}</div>
+    <p>${opening} <strong>${name}</strong>, a city ${struct.desc}, ${behav.desc}.</p>
+    <div class="city-paradox">${paradox.text}</div>
+    <p style="margin-top:12px">${closing}</p>
+    <div class="meta" style="margin-top:16px">Structure: ${struct.rule} · Behavior: ${behav.trait} · Paradox: ${paradox.core}</div>
+  `;
+
+  // Draw visual
+  const canvas = document.getElementById('cityVisual');
+  canvas.style.display = 'block';
+  drawCityVisual(canvas, city, moodColors[mood]);
+
+  // History
+  const hist = document.getElementById('genHistory');
+  hist.style.display = 'block';
+  const pills = document.getElementById('historyPills');
+  const pill = document.createElement('span');
+  pill.className = 'pill';
+  pill.textContent = name;
+  pill.onclick = () => {
+    out.innerHTML = `<div class="city-name">${name}</div><div class="meta">${CATEGORIES[cat]}</div><p>${opening} <strong>${name}</strong>, a city ${struct.desc}, ${behav.desc}.</p><div class="city-paradox">${paradox.text}</div><p style="margin-top:12px">${closing}</p>`;
+  };
+  pills.appendChild(pill);
+}
+
+function drawCityVisual(canvas, city, color){
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * (window.devicePixelRatio||1);
+  const H = canvas.height = canvas.offsetHeight * (window.devicePixelRatio||1);
+  canvas.style.width = canvas.offsetWidth + 'px';
+  canvas.style.height = canvas.offsetHeight + 'px';
+  ctx.clearRect(0,0,W,H);
+
+  const seed = city.name.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rng = (function(s){return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646}})(seed);
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.6;
+
+  // Skyline
+  const baseline = H * 0.65;
+  ctx.beginPath();
+  ctx.moveTo(0, baseline);
+  for(let x=0;x<W;x+=3){
+    const h = rng()*H*0.4 + rng()*rng()*H*0.2;
+    if(rng()>0.85){
+      // Tower
+      const tw = 8+rng()*20;
+      ctx.lineTo(x, baseline - h);
+      ctx.lineTo(x+tw, baseline - h);
+      // Spire
+      if(rng()>0.5) {
+        ctx.lineTo(x+tw/2, baseline - h - rng()*40);
+        ctx.moveTo(x+tw, baseline - h);
+      }
+      ctx.lineTo(x+tw, baseline);
+      x += tw;
+    } else {
+      ctx.lineTo(x, baseline - h*0.3 - Math.sin(x/50+seed)*15);
+    }
+  }
+  ctx.stroke();
+
+  // Structures based on category
+  ctx.globalAlpha = 0.3;
+  const catIdx = city.cat;
+  for(let i=0;i<30;i++){
+    const x = rng()*W;
+    const y = baseline - rng()*H*0.5;
+    if(catIdx <= 2){ // Memory, Desire, Signs — circles
+      ctx.beginPath();
+      ctx.arc(x,y,2+rng()*8,0,Math.PI*2);
+      ctx.stroke();
+    } else if(catIdx <= 5){ // Thin, Trading, Eyes — lines
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x+rng()*60-30, y+rng()*60-30);
+      ctx.stroke();
+    } else { // Names, Dead, Sky, Continuous, Hidden — rectangles
+      ctx.strokeRect(x,y,rng()*20,rng()*30);
+    }
+  }
+
+  // Stars/dots above
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = color;
+  for(let i=0;i<60;i++){
+    ctx.beginPath();
+    ctx.arc(rng()*W, rng()*baseline*0.6, 1+rng()*2, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Ground reflection
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, baseline, W, H-baseline);
+
+  ctx.globalAlpha = 1;
+}
+
+// ========== 2. TAXONOMY ==========
+const TAX_CITIES = [
+  {desc:"A city of sixty silver domes where the arriving traveler feels envy toward those who believe they once lived an identical evening and think they were happy, that time.", cats:[0,1], name:"Diomira", why:"Memory (nostalgia for a feeling) but also Desire (envy for happiness)"},
+  {desc:"Spiral staircases, perfect telescopes, cockfights. The city of his dreams — with one difference. He arrives in old age. Desires are already memories.", cats:[0,1], name:"Isidora", why:"Memory and Desire are the same thing when you arrive too late."},
+  {desc:"Streets thick with signboards: pincers for the tooth-drawer, tankard for the tavern. You believe you visit this city but only record her self-descriptions.", cats:[2], name:"Tamara", why:"Pure Signs — you never reach the thing itself, only its labels."},
+  {desc:"A city on high pilings with bamboo houses, platforms, ladders. Ask any inhabitant to describe happiness — always a city like this one.", cats:[3,1], name:"Zenobia", why:"Thin Cities (minimal structure) but also Desire (the city shapes your concept of happiness)."},
+  {desc:"Every face resembles someone dead. The sailor looks like your father. Each new face is a mask for someone gone.", cats:[7,0], name:"Adelma", why:"Cities & the Dead (the dead colonize the living) but also Memory (the past overwrites the present)."},
+  {desc:"The unjust city crowns its meat-grinders with triglyphs. Hidden inside: the just city. Inside the just, a malignant seed. Wrapped one within the other, inextricable.", cats:[10,5], name:"Berenice", why:"Hidden Cities (nested justice/injustice) but also Eyes (what you see depends on where you look)."},
+  {desc:"A winding city and a symmetrical carpet. Each place in the carpet corresponds to a place in the city. The oracle says one reflects the starry sky — but doesn't say which.", cats:[8,2], name:"Eudoxia", why:"Cities & the Sky (cosmic correspondence) but also Signs (which is the sign, which the thing?)."},
+  {desc:"Not one city but many on a plateau. When weariness strikes, all citizens move to the next empty city, take new jobs, new wives. Yet life repeats, identical.", cats:[4,9], name:"Eutropia", why:"Trading Cities (exchange) but also Continuous Cities (repetition despite apparent change)."},
+  {desc:"The city refashions itself every day. Yesterday's version in spotless plastic bags. The more it expels, the more accumulates. Mountains of indestructible refuse surround it.", cats:[9], name:"Leonia", why:"Pure Continuous Cities — renewal through disposal, buried by its own waste."},
+  {desc:"Perpetually under construction. 'So that its destruction cannot begin.' The blueprint? Workers point to the stars.", cats:[8,3], name:"Thekla", why:"Cities & the Sky (stellar blueprint) but also Thin Cities (incomplete = alive)."},
+  {desc:"In the square, the same dialogues continue across generations — braggart soldier, parasite, young wastrel. People die but roles persist.", cats:[7,4], name:"Melania", why:"Cities & the Dead (immortal scripts) but also Trading Cities (roles as currency)."},
+  {desc:"All strangers. Eyes lock for a second, then dart away. The most chaste of cities vibrates with voluptuous potential. If fantasies were acted on, the carousel would stop.", cats:[4,1], name:"Chloe", why:"Trading Cities (exchange of glances) but also Desire (potential over realization)."},
+  {desc:"An identical copy underground for the dead. The dead innovate; the living copy them. Perhaps the dead built the upper city. No way to know who is alive.", cats:[7,10], name:"Eusapia", why:"Cities & the Dead (mirrored above/below) but also Hidden Cities (which is the hidden one?)."},
+  {desc:"Built to mirror the stars perfectly. The result: cripples, dwarfs, children with three heads. Either the calculations were wrong, or the gods' order IS the city of monsters.", cats:[8], name:"Perinthia", why:"Pure Cities & the Sky — perfect celestial alignment produces horror."},
+  {desc:"Species by species exterminated. The aseptic city. Then from the library's basements: sphinxes, griffons, chimeras, dragons resuming possession.", cats:[10,6], name:"Theodora", why:"Hidden Cities (the imaginary replaces the real) but also Names (the named and unnamed creatures)."},
+  {desc:"A city that can be remembered point by point, like a musical score. Scholars memorize it. But forced to remain the same, it has languished, disintegrated, disappeared.", cats:[0,2], name:"Zora", why:"Memory (mnemonic perfection) but also Signs (the memorized city is a system of signs, not a living place)."},
+];
+
+let taxIdx = -1, taxRound = 0, taxScore = 0, taxBlurred = 0, taxSelected = new Set();
+
+function nextTaxonomy(){
+  taxIdx = (taxIdx + 1) % TAX_CITIES.length;
+  if(taxIdx === 0 && taxRound > 0) shuffleArray(TAX_CITIES);
+  taxRound++;
+  taxSelected.clear();
+  const c = TAX_CITIES[taxIdx];
+  document.getElementById('taxCity').innerHTML = `<p>${c.desc}</p><span class="reveal">Which categories?</span>`;
+  const chips = document.getElementById('taxChips');
+  chips.innerHTML = '';
+  CAT_SHORT.forEach((cat, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip';
+    btn.textContent = cat;
+    btn.onclick = () => { btn.classList.toggle('selected'); taxSelected.has(i) ? taxSelected.delete(i) : taxSelected.add(i); };
+    chips.appendChild(btn);
+  });
+  document.getElementById('taxFeedback').style.display = 'none';
+  document.getElementById('taxRound').textContent = taxRound;
+}
+
+function submitTaxonomy(){
+  if(taxIdx < 0) return nextTaxonomy();
+  const c = TAX_CITIES[taxIdx];
+  const correct = new Set(c.cats);
+  const chips = document.querySelectorAll('.cat-chip');
+  let gotRight = 0, gotWrong = 0, missed = 0;
+  chips.forEach((chip, i) => {
+    chip.onclick = null;
+    if(taxSelected.has(i) && correct.has(i)){ chip.classList.add('correct'); gotRight++; }
+    else if(taxSelected.has(i)){ chip.classList.add('wrong'); gotWrong++; }
+    else if(correct.has(i)){ chip.classList.add('missed'); missed++; }
+  });
+  if(correct.size > 1) taxBlurred++;
+  const perfect = gotRight === correct.size && gotWrong === 0;
+  taxScore += perfect ? 2 : gotRight;
+  document.getElementById('taxScore').textContent = taxScore;
+  document.getElementById('taxBlurred').textContent = taxBlurred;
+
+  const fb = document.getElementById('taxFeedback');
+  fb.style.display = 'block';
+  fb.innerHTML = `<strong>${c.name}</strong> — ${perfect ? '✦ Perfect.' : gotRight > 0 ? 'Partially.' : 'Not quite.'}<br>${c.why}<br><br><em style="color:var(--dim)">${correct.size > 1 ? 'This city blurs boundaries — it belongs to multiple categories. Calvino\'s taxonomy resists taxonomy.' : 'This one fits cleanly. Enjoy the clarity — it won\'t last.'}</em>`;
+
+  setTimeout(nextTaxonomy, 4000);
+}
+
+function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+
+nextTaxonomy();
+
+// ========== 3. MAP → TERRITORY ==========
+let mapStrokes = 0, mapLabels = 0, mapElements = 0, mapTaken = false;
+const mapCanvas = document.getElementById('mapCanvas');
+const mapCtx = mapCanvas.getContext('2d');
+let drawing = false, lastX, lastY;
+
+function initMap(){
+  mapCanvas.width = mapCanvas.offsetWidth * (window.devicePixelRatio||1);
+  mapCanvas.height = mapCanvas.offsetHeight * (window.devicePixelRatio||1);
+  mapCanvas.style.width = mapCanvas.offsetWidth + 'px';
+  mapCanvas.style.height = mapCanvas.offsetHeight + 'px';
+  mapCtx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  mapCtx.strokeStyle = '#d4a853';
+  mapCtx.lineWidth = 2;
+  mapCtx.lineCap = 'round';
+}
+
+function getMapPos(e){
+  const r = mapCanvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return [t.clientX - r.left, t.clientY - r.top];
+}
+
+mapCanvas.addEventListener('mousedown', e => { drawing=true; [lastX,lastY]=getMapPos(e); });
+mapCanvas.addEventListener('mousemove', e => { if(!drawing)return; const[x,y]=getMapPos(e); mapCtx.strokeStyle=document.getElementById('mapColor').value; mapCtx.beginPath(); mapCtx.moveTo(lastX,lastY); mapCtx.lineTo(x,y); mapCtx.stroke(); lastX=x;lastY=y; mapStrokes++; updateMapDetail(); });
+mapCanvas.addEventListener('mouseup', () => drawing=false);
+mapCanvas.addEventListener('mouseleave', () => drawing=false);
+mapCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; [lastX,lastY]=getMapPos(e); }, {passive:false});
+mapCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing)return; const[x,y]=getMapPos(e); mapCtx.strokeStyle=document.getElementById('mapColor').value; mapCtx.beginPath(); mapCtx.moveTo(lastX,lastY); mapCtx.lineTo(x,y); mapCtx.stroke(); lastX=x;lastY=y; mapStrokes++; updateMapDetail(); }, {passive:false});
+mapCanvas.addEventListener('touchend', () => drawing=false);
+
+const MAP_STAGES = [
+  {at:0, text:"Begin drawing. The city awaits its cartographer."},
+  {at:5, text:"First marks appear. The city is still more real than the map."},
+  {at:15, text:"Streets take shape. The map begins to have opinions about the city."},
+  {at:30, text:"The map grows confident. It starts to disagree with the city it represents."},
+  {at:50, text:"Travelers are consulting your map instead of looking at the city. The city notices."},
+  {at:65, text:"The map is now more detailed than the city itself. Citizens walk through the map's streets, not the city's."},
+  {at:80, text:"The city has begun to rearrange itself to match your map. Your errors become its architecture."},
+  {at:90, text:"There is no city anymore. There is only the map. The territory has been consumed by its representation."},
+  {at:100, text:"\"The map has become the territory.\" — You have drawn the city out of existence and into paper. Calvino warned you."}
+];
+
+function updateMapDetail(){
+  const total = mapStrokes + mapLabels*50 + mapElements*30;
+  const pct = Math.min(100, total / 8);
+  document.getElementById('mapFill').style.width = pct + '%';
+  const stage = [...MAP_STAGES].reverse().find(s => pct >= s.at);
+  document.getElementById('mapStatus').textContent = stage.text;
+
+  // At high detail, start overlaying the map with "territory consumed" effect
+  const overlay = document.getElementById('mapOverlay');
+  if(pct > 75 && !mapTaken){
+    overlay.style.opacity = Math.min(1, (pct-75)/25);
+    overlay.textContent = pct >= 95 ? '"The description of the world to which you lend a benevolent ear is one thing..."' : 'The map consumes the territory...';
+    if(pct >= 95) mapTaken = true;
+  }
+}
+
+function clearMap(){
+  mapCtx.clearRect(0,0,mapCanvas.width,mapCanvas.height);
+  mapStrokes=0;mapLabels=0;mapElements=0;mapTaken=false;
+  document.getElementById('mapFill').style.width='0%';
+  document.getElementById('mapStatus').textContent=MAP_STAGES[0].text;
+  document.getElementById('mapOverlay').style.opacity=0;
+}
+
+function addMapLabel(){
+  const label = prompt('Name this place:');
+  if(!label) return;
+  const x = 40+Math.random()*(mapCanvas.offsetWidth-80);
+  const y = 40+Math.random()*(mapCanvas.offsetHeight-80);
+  mapCtx.font = '13px Georgia';
+  mapCtx.fillStyle = document.getElementById('mapColor').value;
+  mapCtx.globalAlpha = 0.8;
+  mapCtx.fillText(label, x, y);
+  mapCtx.globalAlpha = 1;
+  mapLabels++;
+  updateMapDetail();
+}
+
+function addMapBuilding(){
+  const x = 30+Math.random()*(mapCanvas.offsetWidth-60);
+  const y = 30+Math.random()*(mapCanvas.offsetHeight-60);
+  const w = 15+Math.random()*30, h = 15+Math.random()*30;
+  mapCtx.strokeStyle = document.getElementById('mapColor').value;
+  mapCtx.strokeRect(x,y,w,h);
+  // Small cross inside
+  mapCtx.beginPath();
+  mapCtx.moveTo(x+w/2-3,y+h/2);mapCtx.lineTo(x+w/2+3,y+h/2);
+  mapCtx.moveTo(x+w/2,y+h/2-3);mapCtx.lineTo(x+w/2,y+h/2+3);
+  mapCtx.stroke();
+  mapElements++;
+  updateMapDetail();
+}
+
+function addMapRoad(){
+  const x1 = Math.random()*mapCanvas.offsetWidth;
+  const y1 = Math.random()*mapCanvas.offsetHeight;
+  const x2 = Math.random()*mapCanvas.offsetWidth;
+  const y2 = Math.random()*mapCanvas.offsetHeight;
+  mapCtx.strokeStyle = document.getElementById('mapColor').value;
+  mapCtx.globalAlpha = 0.4;
+  mapCtx.lineWidth = 3;
+  mapCtx.beginPath();mapCtx.moveTo(x1,y1);
+  const cx = (x1+x2)/2 + (Math.random()-0.5)*100;
+  const cy = (y1+y2)/2 + (Math.random()-0.5)*100;
+  mapCtx.quadraticCurveTo(cx,cy,x2,y2);
+  mapCtx.stroke();
+  mapCtx.lineWidth = 2;
+  mapCtx.globalAlpha = 1;
+  mapElements++;
+  updateMapDetail();
+}
+
+// ========== 4. DESIRE VS MEMORY ==========
+let dvmMode = 'desire';
+let dvmCity = null;
+
+const STREET_NAMES = ["Via delle Colombe","Ponte dei Sospiri","Calle del Vento","Piazza dell'Ombra","Vicolo della Luna","Fondamenta dei Sogni","Campo dei Fiori","Salizada del Tempo","Ruga dei Specchi","Sottoportego del Silenzio"];
+const LANDMARKS = ["the fountain","the bell tower","the covered market","the stone bridge","the courtyard","the canal bend","the iron gate","the old wall"];
+
+function newDVMCity(){
+  const streets = [];
+  const count = 4 + ~~(Math.random()*3);
+  for(let i=0;i<count;i++){
+    const name = STREET_NAMES[~~(Math.random()*STREET_NAMES.length)];
+    const landmark = LANDMARKS[~~(Math.random()*LANDMARKS.length)];
+    streets.push({
+      name,
+      landmark,
+      desire: genDesireView(name, landmark),
+      memory: genMemoryView(name, landmark)
+    });
+  }
+  dvmCity = {streets, seed: Math.random()};
+  renderDVM();
+}
+
+function genDesireView(street, landmark){
+  const desires = [
+    `${street} opens before you like a promise. ${landmark} catches the light at the angle that says: everything you've wanted is around the next corner.`,
+    `On ${street}, near ${landmark}, the air tastes of possibility. A door stands ajar. You have not entered yet, and this is the source of all its beauty.`,
+    `${landmark} on ${street} — you imagine living here. The apartment above the archway, mornings with coffee, the life you would build.`,
+    `The crowds on ${street} part around ${landmark} and you see, for one instant, the city you came here to find. It exists. It is real. It is already receding.`,
+    `${street}: every window near ${landmark} frames a scene from a life more vivid than your own. You press your face to the glass.`
+  ];
+  return desires[~~(Math.random()*desires.length)];
+}
+
+function genMemoryView(street, landmark){
+  const memories = [
+    `${street} is quieter than you remember. ${landmark} has aged — or you have. The same stones, but the light is different. Was it always this narrow?`,
+    `You recognize ${landmark} on ${street} the way you recognize a face in a dream: the proportions are wrong but the feeling is exact.`,
+    `On ${street}, ${landmark} triggers something — not a memory exactly, but the memory of having once remembered. The original experience is gone.`,
+    `${landmark}. You stood here before, with someone whose name you almost recall. ${street} was louder then. Or maybe you were louder.`,
+    `${street}: the café near ${landmark} has a different name now. The same tables. You sit in someone else's regular seat and pretend it's yours again.`
+  ];
+  return memories[~~(Math.random()*memories.length)];
+}
+
+function setDVM(mode){
+  dvmMode = mode;
+  document.querySelectorAll('.dvm-toggle button').forEach(b => b.classList.toggle('active', b.textContent.includes(mode === 'desire' ? 'Desire' : 'Memory')));
+  renderDVM();
+}
+
+function renderDVM(){
+  if(!dvmCity) return newDVMCity();
+  const streetsDiv = document.getElementById('dvmStreets');
+  const textDiv = document.getElementById('dvmText');
+  const isDesire = dvmMode === 'desire';
+  const color = isDesire ? '#d4a853' : '#7a8aaa';
+
+  streetsDiv.innerHTML = dvmCity.streets.map(s => `
+    <div class="dvm-street" style="border-color:${color}">
+      <strong>${s.name}</strong> (${s.landmark})<br>
+      ${isDesire ? s.desire : s.memory}
+    </div>
+  `).join('');
+
+  textDiv.innerHTML = isDesire
+    ? '<em>"Each city receives its form from the desert it opposes."</em> — Through desire, every street is an invitation, every landmark a threshold.'
+    : '<em>"Memory\'s images, once they are fixed in words, are erased."</em> — Through memory, every street is a palimpsest, every landmark a headstone for experience.';
+
+  // Draw the canvas
+  drawDVMCanvas(isDesire, color);
+}
+
+function drawDVMCanvas(isDesire, color){
+  const canvas = document.getElementById('dvmCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * (window.devicePixelRatio||1);
+  const H = canvas.height = canvas.offsetHeight * (window.devicePixelRatio||1);
+  canvas.style.width = canvas.offsetWidth+'px';
+  canvas.style.height = canvas.offsetHeight+'px';
+  ctx.clearRect(0,0,W,H);
+
+  const seed = dvmCity.seed * 1000;
+  const rng = (function(s){return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646}})(~~seed);
+
+  // Same geography — different rendering
+  // Roads (same positions)
+  const roads = [];
+  for(let i=0;i<8;i++){
+    roads.push({x1:rng()*W, y1:rng()*H, x2:rng()*W, y2:rng()*H, cx:rng()*W, cy:rng()*H});
+  }
+
+  // Buildings (same positions)
+  const buildings = [];
+  for(let i=0;i<20;i++){
+    buildings.push({x:rng()*W*0.9, y:rng()*H*0.9, w:10+rng()*40, h:10+rng()*50});
+  }
+
+  if(isDesire){
+    // Warm, glowing, open
+    ctx.globalAlpha = 0.15;
+    const grad = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);
+    grad.addColorStop(0, '#d4a853');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = '#d4a853';
+    ctx.lineWidth = 3;
+    roads.forEach(r => { ctx.beginPath();ctx.moveTo(r.x1,r.y1);ctx.quadraticCurveTo(r.cx,r.cy,r.x2,r.y2);ctx.stroke(); });
+
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#d4a853';
+    buildings.forEach(b => {
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      // Windows glowing
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = 0.4;
+      for(let wx=b.x+4;wx<b.x+b.w-4;wx+=8){
+        for(let wy=b.y+4;wy<b.y+b.h-4;wy+=10){
+          ctx.fillRect(wx,wy,3,4);
+        }
+      }
+      ctx.fillStyle = '#d4a853';
+      ctx.globalAlpha = 0.3;
+    });
+  } else {
+    // Cool, faded, layered
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = '#4a5a7a';
+    ctx.fillRect(0,0,W,H);
+
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = '#5a6a8a';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6,4]);
+    roads.forEach(r => { ctx.beginPath();ctx.moveTo(r.x1,r.y1);ctx.quadraticCurveTo(r.cx,r.cy,r.x2,r.y2);ctx.stroke(); });
+    ctx.setLineDash([]);
+
+    ctx.globalAlpha = 0.2;
+    ctx.strokeStyle = '#6a7a9a';
+    buildings.forEach(b => {
+      ctx.strokeRect(b.x,b.y,b.w,b.h);
+      // Ghosted interior
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = '#8a9aba';
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.globalAlpha = 0.2;
+    });
+
+    // Memory fog
+    ctx.globalAlpha = 0.1;
+    for(let i=0;i<5;i++){
+      const gx = rng()*W, gy = rng()*H;
+      const g = ctx.createRadialGradient(gx,gy,0,gx,gy,100+rng()*100);
+      g.addColorStop(0,'rgba(150,160,200,0.3)');
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+newDVMCity();
+
+// ========== 5. KUBLAI KHAN ==========
+let empireState = 50; // 0=total decay, 100=endurance
+let khanStep = 0;
+
+const KHAN_SCRIPT = [
+  {
+    khan: "I do not know when you have had time to visit all the countries you describe to me. It seems to me you have never moved from this garden.",
+    choices: [
+      {text: "\"Every time I describe a city I am saying something about Venice.\"", effect: -5, response: "Marco's words hang in the air. The Khan understands: all reports are autobiography. His empire is made of one city, reflected infinitely."},
+      {text: "\"Sire, I have described to you the cities I have seen. But the empire is vaster than any journey.\"", effect: 5, response: "The Khan nods. Vastness comforts — what cannot be seen might still be intact."},
+      {text: "\"Travels are unnecessary. Each city contains all cities, as each grain of sand contains the desert.\"", effect: -10, response: "The Khan's face darkens. If all cities are one, then his empire of a thousand cities is an empire of one — and that one may be crumbling."}
+    ]
+  },
+  {
+    khan: "I think you recognize cities better on the atlas than when you visit them in person.",
+    choices: [
+      {text: "Describe a city where citizens dismantle their homes each evening and rebuild by morning, never using the same arrangement twice.", effect: -8, response: "\"Then nothing endures,\" the Khan whispers. The city is evidence: form is temporary, only the habit of rebuilding persists."},
+      {text: "Describe a city built on bridges over nothing — the abyss below gives the bridges their meaning.", effect: 5, response: "The Khan considers. A city that requires the void. Perhaps his empire, too, is the bridge, not the ground."},
+      {text: "Describe a city whose walls are made of the promises its founders made to each other.", effect: 10, response: "\"And do the walls hold?\" the Khan asks. \"They hold,\" Marco says, \"as long as the promises are remembered. Some walls are thicker than others.\""}
+    ]
+  },
+  {
+    khan: "There is still one of which you never speak. The city you carry in your mind, the one that cannot be described.",
+    choices: [
+      {text: "\"Sire, what else do you believe I have been speaking to you about?\"", effect: -5, response: "Venice. Always Venice. The city that devours all other cities. The Khan realizes: his empire has been Venice all along, and Venice is not his."},
+      {text: "\"That city exists only in the future. We are building it now, with each word of this conversation.\"", effect: 15, response: "The Khan almost smiles. If the city is being built in the telling, then the empire is still under construction — and construction is the opposite of decay."},
+      {text: "\"The city I carry has no name, sire. Once named, it would become one of the others.\"", effect: 0, response: "The Khan understands naming. His empire exists as a name. Remove the name and what remains? The question terrifies and comforts in equal measure."}
+    ]
+  },
+  {
+    khan: "It is all useless, if the last landing place can only be the infernal city, and it is there that, in ever-narrowing circles, the current is drawing us.",
+    choices: [
+      {text: "\"The inferno of the living is not something that will be; it is what is already here.\"", effect: -5, response: "\"There are two ways to escape suffering it,\" Marco continues. \"The first is easy: accept the inferno and become part of it until you can no longer see it.\""},
+      {text: "\"Sire, the last landing place is not fixed. Every city we describe together pushes it further away.\"", effect: 10, response: "The Khan raises an eyebrow. \"You suggest that storytelling is a form of navigation?\" \"I suggest, sire, that it is the only form of navigation.\""},
+      {text: "\"The second way is risky: seek and learn to recognize who and what, in the midst of the inferno, are not inferno, then make them endure, give them space.\"", effect: 20, response: "Silence in the garden. The Khan looks at his hands. The empire may be crumbling, but the conversation is not. This, perhaps, is the space Marco means."}
+    ]
+  }
+];
+
+function renderKhan(){
+  const dialogue = document.getElementById('khanDialogue');
+  const choices = document.getElementById('khanChoices');
+
+  if(khanStep >= KHAN_SCRIPT.length){
+    choices.innerHTML = '';
+    const endMsg = empireState > 60 ? "The empire endures — not in its stones, but in the conversation between the emperor and the traveler."
+      : empireState > 40 ? "The empire exists in a state of uncertainty — neither crumbling nor standing, like a city that has not decided whether to be built or abandoned."
+      : "The empire has crumbled into the atlas. Only the descriptions remain, and descriptions, Marco would say, are all that ever existed.";
+    dialogue.innerHTML += `<div class="khan-msg polo"><div class="speaker">— The story ends —</div>${endMsg}</div>`;
+    choices.innerHTML = `<button class="btn btn-sm" onclick="resetKhan()">Begin again</button>`;
+    return;
+  }
+
+  const step = KHAN_SCRIPT[khanStep];
+  dialogue.innerHTML += `<div class="khan-msg khan"><div class="speaker">Kublai Khan</div>${step.khan}</div>`;
+
+  choices.innerHTML = '';
+  step.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'khan-choice';
+    btn.textContent = c.text;
+    btn.onclick = () => chooseKhan(c);
+    choices.appendChild(btn);
+  });
+
+  dialogue.lastElementChild.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function chooseKhan(choice){
+  const dialogue = document.getElementById('khanDialogue');
+  dialogue.innerHTML += `<div class="khan-msg polo"><div class="speaker">Marco Polo</div>${choice.text.replace(/^"|"$/g,'')}</div>`;
+  dialogue.innerHTML += `<div class="khan-msg khan" style="opacity:0.8;font-style:italic"><div class="speaker">—</div>${choice.response}</div>`;
+
+  empireState = Math.max(0, Math.min(100, empireState + choice.effect));
+  document.getElementById('empireFill').style.width = empireState + '%';
+
+  khanStep++;
+  setTimeout(renderKhan, 1500);
+}
+
+function resetKhan(){
+  empireState = 50;
+  khanStep = 0;
+  document.getElementById('khanDialogue').innerHTML = '';
+  document.getElementById('empireFill').style.width = '50%';
+  renderKhan();
+}
+
+renderKhan();
+
+// ========== 6. CITY OF THE DEAD ==========
+let livingElements = [];
+let mirrorInverted = false;
+
+const MIRROR_TRANSFORMS = [
+  (s) => s.replace(/shop/gi,'shrine').replace(/market/gi,'mausoleum').replace(/house/gi,'crypt').replace(/garden/gi,'ossuary'),
+  (s) => { const words = s.split(' '); return words.map(w => Math.random()>0.7 ? w.split('').reverse().join('') : w).join(' '); },
+  (s) => s + ', but the hands that made it are still.',
+  (s) => 'The echo of ' + s.toLowerCase() + ' — identical, but heard from underground.',
+  (s) => s.replace(/bright|new|fresh|living|open/gi, m => ({bright:'dim',new:'ancient',fresh:'preserved',living:'still',open:'sealed'})[m.toLowerCase()]||m),
+  (s) => 'A ' + s.toLowerCase() + ', arranged as if in use, though no one comes.',
+];
+
+function mirrorTransform(text){
+  // Apply 1-2 transforms
+  let result = text;
+  const t1 = MIRROR_TRANSFORMS[~~(Math.random()*MIRROR_TRANSFORMS.length)];
+  result = t1(result);
+  if(Math.random() > 0.5){
+    const t2 = MIRROR_TRANSFORMS[~~(Math.random()*MIRROR_TRANSFORMS.length)];
+    result = t2(result);
+  }
+  return result;
+}
+
+function addLivingElement(){
+  const input = document.getElementById('livingInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+
+  const mirrored = mirrorTransform(text);
+  livingElements.push({living: text, dead: mirrored});
+  renderMirrorCity();
+}
+
+function renderMirrorCity(){
+  const lDiv = document.getElementById('livingElements');
+  const dDiv = document.getElementById('deadElements');
+  const q = document.getElementById('mirrorQuestion');
+
+  const displayOrder = mirrorInverted ? [...livingElements].reverse() : livingElements;
+
+  lDiv.innerHTML = displayOrder.map((e,i) => `<div class="mirror-elem">${mirrorInverted ? e.dead : e.living}<span style="font-size:0.7rem;color:var(--dim)">#${i+1}</span></div>`).join('');
+  dDiv.innerHTML = displayOrder.map((e,i) => `<div class="mirror-elem dead-elem">${mirrorInverted ? e.living : e.dead}<span style="font-size:0.7rem;color:var(--dim)">#${i+1}</span></div>`).join('');
+
+  const questions = [
+    '', '',
+    'The hooded members of the brotherhood carry the dead to the lower Eusapia...',
+    'Sometimes the living copy innovations first seen in the city of the dead.',
+    'The dead, freed from concerns, rearrange their city with more flair.',
+    'Who is imitating whom? Which city was built first?',
+    'Perhaps it was always the dead who built the upper Eusapia.',
+    'In the twin cities there is no longer any way of knowing who is alive and who is dead.'
+  ];
+  q.textContent = questions[Math.min(livingElements.length, questions.length - 1)];
+}
+
+function invertMirror(){
+  mirrorInverted = !mirrorInverted;
+  const lTitle = document.querySelector('.mirror-side.living h3');
+  const dTitle = document.querySelector('.mirror-side.dead h3');
+  if(mirrorInverted){
+    lTitle.innerHTML = '🌑 Eusapia Above?';
+    dTitle.innerHTML = '☀️ Eusapia Below?';
+  } else {
+    lTitle.innerHTML = '☀️ Eusapia Above';
+    dTitle.innerHTML = '🌑 Eusapia Below';
+  }
+  renderMirrorCity();
+  document.getElementById('mirrorQuestion').textContent = 'Which is the city of the living? Which is the city of the dead? Perhaps the question has no answer.';
+}
+
+// Pre-populate with a few elements
+['A clockmaker\'s shop on the main square', 'A garden where children play', 'The market where they sell bright cloth'].forEach(t => {
+  document.getElementById('livingInput').value = t;
+  addLivingElement();
+});
+
+// ========== 7. THIN/HIDDEN LAYERS ==========
+const LAYER_DEFS = [
+  {name:'Surface — The city as it appears', color:'#d4a853', alpha:1},
+  {name:'Commerce — The city as it trades', color:'#8aaa6a', alpha:0.8},
+  {name:'Memory — The city as it remembers', color:'#6a7aaa', alpha:0.7},
+  {name:'Desire — The city as it yearns', color:'#aa6a7a', alpha:0.6},
+  {name:'Signs — The city as it signifies', color:'#9a8a6a', alpha:0.5},
+  {name:'Bones — The city as it was built', color:'#aaa', alpha:0.3},
+  {name:'Hidden — The city inside the city', color:'#c0a0e0', alpha:0.2},
+];
+
+let layerSeed = Math.random()*10000;
+
+function newLayeredCity(){
+  layerSeed = Math.random()*10000;
+  updateLayers();
+}
+
+function updateLayers(){
+  const val = +document.getElementById('layerSlider').value;
+  const layerIdx = Math.min(LAYER_DEFS.length-1, ~~(val / (100/LAYER_DEFS.length)));
+  const layerProgress = (val % (100/LAYER_DEFS.length)) / (100/LAYER_DEFS.length);
+
+  document.getElementById('layerName').textContent = LAYER_DEFS[layerIdx].name;
+
+  const canvas = document.getElementById('layersCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * (window.devicePixelRatio||1);
+  const H = canvas.height = canvas.offsetHeight * (window.devicePixelRatio||1);
+  canvas.style.width = canvas.offsetWidth+'px';
+  canvas.style.height = canvas.offsetHeight+'px';
+  ctx.clearRect(0,0,W,H);
+
+  const rng = (function(s){return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646}})(~~layerSeed);
+
+  // Generate consistent geography
+  const pts = [];
+  for(let i=0;i<40;i++) pts.push({x:rng()*W, y:rng()*H});
+  const roads = [];
+  for(let i=0;i<12;i++) roads.push({x1:rng()*W,y1:rng()*H,x2:rng()*W,y2:rng()*H,cx:rng()*W,cy:rng()*H});
+
+  // Draw layers from current down to 0 (peeled away = more transparent/gone)
+  for(let l = layerIdx; l >= 0; l--){
+    const def = LAYER_DEFS[l];
+    const fadeOut = (l === layerIdx) ? 1 - layerProgress*0.8 : (l === layerIdx-1) ? 0.3 + layerProgress*0.5 : 0.15;
+    ctx.globalAlpha = Math.max(0.05, fadeOut * def.alpha);
+    ctx.strokeStyle = def.color;
+    ctx.fillStyle = def.color;
+
+    // Each layer draws differently over the same geography
+    const rng2 = (function(s){return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646}})(~~(layerSeed + l*7919));
+
+    if(l === 0){ // Surface: solid buildings
+      ctx.lineWidth = 2;
+      pts.forEach(p => { ctx.strokeRect(p.x-10-rng2()*15, p.y-10-rng2()*20, 20+rng2()*30, 20+rng2()*40); });
+      roads.forEach(r => { ctx.beginPath();ctx.moveTo(r.x1,r.y1);ctx.quadraticCurveTo(r.cx,r.cy,r.x2,r.y2);ctx.lineWidth=3;ctx.stroke(); });
+    } else if(l === 1){ // Commerce: circles (markets) and connecting lines
+      pts.forEach(p => { if(rng2()>0.5){ctx.beginPath();ctx.arc(p.x,p.y,5+rng2()*12,0,Math.PI*2);ctx.stroke();} });
+      for(let i=0;i<pts.length-1;i+=2){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[i+1].x,pts[i+1].y);ctx.lineWidth=1;ctx.stroke();}
+    } else if(l === 2){ // Memory: dotted outlines of buildings that no longer exist
+      ctx.setLineDash([3,5]);
+      ctx.lineWidth = 1;
+      pts.forEach(p => { const ox=rng2()*30-15,oy=rng2()*30-15; ctx.strokeRect(p.x+ox,p.y+oy,15+rng2()*20,15+rng2()*25); });
+      ctx.setLineDash([]);
+    } else if(l === 3){ // Desire: radiating lines from centers of longing
+      for(let i=0;i<8;i++){
+        const cx=rng2()*W,cy=rng2()*H;
+        for(let r=0;r<12;r++){
+          const a=rng2()*Math.PI*2, len=20+rng2()*80;
+          ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    } else if(l === 4){ // Signs: text fragments
+      ctx.font = `${10+rng2()*6}px Georgia`;
+      const signs = ['↑','→','?','!','≡','∞','◊','△','○','☽'];
+      pts.forEach(p => { if(rng2()>0.6) ctx.fillText(signs[~~(rng2()*signs.length)], p.x, p.y); });
+    } else if(l === 5){ // Bones: structural grid
+      ctx.lineWidth = 0.5;
+      for(let x=0;x<W;x+=40+rng2()*30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+      for(let y=0;y<H;y+=40+rng2()*30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    } else if(l === 6){ // Hidden: glowing points where another city peers through
+      for(let i=0;i<15;i++){
+        const cx=rng2()*W,cy=rng2()*H,r=5+rng2()*15;
+        const g = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+        g.addColorStop(0, def.color);
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.fillRect(cx-r,cy-r,r*2,r*2);
+      }
+      ctx.fillStyle = def.color;
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Update legend
+  const legend = document.getElementById('layerLegend');
+  legend.innerHTML = LAYER_DEFS.map((d,i) => `<div class="layer-legend-item" style="opacity:${i<=layerIdx?1:0.3}"><div class="swatch" style="background:${d.color}"></div>${d.name.split('—')[0]}</div>`).join('');
+}
+
+updateLayers();
+
+// ========== NAV ==========
+const sections = ['generator','taxonomy','map','desire','khan','dead','layers'];
+window.addEventListener('scroll', () => {
+  const y = window.scrollY + 120;
+  let cur = '';
+  sections.forEach(id => { const el = document.getElementById(id); if(el && el.offsetTop <= y) cur = id; });
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+cur));
+});
+
+// ========== INIT ==========
+window.addEventListener('resize', () => { initMap(); updateLayers(); if(dvmCity) renderDVM(); });
+setTimeout(initMap, 100);
+</script>
+</body>
+</html>

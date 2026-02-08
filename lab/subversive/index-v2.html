@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching As a Subversive Activity — Interactive Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#111;--surface:#1a1a1a;--surface2:#222;--surface3:#2a2a2a;--amber:#e8a849;--orange:#d4713b;--warm:#f5d6a0;--text:#ddd;--muted:#888;--accent:#ff6b35;--green:#6bbf59;--red:#d44;--dim:#444;--blue:#5b9bd5;--purple:#b07cd8}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+h1,h2,h3{font-weight:700}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+
+.hero{text-align:center;padding:60px 20px 40px}
+.hero h1{font-size:clamp(1.8rem,5vw,2.8rem);color:var(--amber);line-height:1.15;margin-bottom:8px}
+.hero .sub{color:var(--muted);font-style:italic;margin-bottom:6px}
+.hero .tag{color:var(--warm);font-size:.95rem;max-width:550px;margin:16px auto 0;padding:14px;border-top:1px solid var(--dim);border-bottom:1px solid var(--dim);font-style:italic}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(17,17,17,.95);border-bottom:1px solid var(--dim);padding:8px 0;backdrop-filter:blur(12px)}
+nav .container{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+nav .container::-webkit-scrollbar{display:none}
+nav button{background:var(--surface);border:1px solid var(--dim);color:var(--muted);padding:6px 12px;border-radius:20px;font-size:.78rem;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
+nav button:hover,nav button.active{background:var(--orange);color:#000;border-color:var(--orange)}
+
+section{padding:50px 0;display:none}
+section.active{display:block}
+section h2{font-size:clamp(1.4rem,4vw,2rem);color:var(--amber);margin-bottom:6px}
+.intro{color:var(--muted);font-style:italic;margin-bottom:24px;font-size:.9rem;max-width:640px}
+blockquote{border-left:3px solid var(--orange);padding:10px 16px;margin:20px 0;background:var(--surface);border-radius:0 6px 6px 0;font-style:italic;color:var(--warm);font-size:.9rem}
+blockquote cite{display:block;margin-top:6px;font-size:.8rem;color:var(--muted);font-style:normal}
+
+textarea,input[type=text],select{width:100%;background:var(--surface2);border:1px solid var(--dim);color:var(--text);padding:12px;border-radius:6px;font-family:inherit;font-size:.9rem;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--orange)}
+button.primary{background:var(--orange);color:#000;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:600;transition:all .2s}
+button.primary:hover{background:var(--amber)}
+button.secondary{background:transparent;color:var(--orange);border:1px solid var(--orange);padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.85rem;transition:all .2s}
+button.secondary:hover{background:var(--orange);color:#000}
+
+.highlight-loaded{background:rgba(212,68,68,.25);border-bottom:2px solid var(--red);padding:0 2px;cursor:help}
+.highlight-claim{background:rgba(232,168,73,.25);border-bottom:2px solid var(--amber);padding:0 2px;cursor:help}
+.highlight-authority{background:rgba(91,155,213,.25);border-bottom:2px solid var(--blue);padding:0 2px;cursor:help}
+.highlight-dichotomy{background:rgba(176,124,216,.25);border-bottom:2px solid var(--purple);padding:0 2px;cursor:help}
+.highlight-weasel{background:rgba(107,191,89,.25);border-bottom:2px solid var(--green);padding:0 2px;cursor:help}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;font-size:.8rem}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend .dot{width:12px;height:12px;border-radius:2px;display:inline-block}
+
+.result-box{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px;margin:16px 0;line-height:1.8;font-size:.95rem}
+.analysis-item{background:var(--surface2);border-left:3px solid var(--dim);padding:8px 12px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.85rem}
+.analysis-item.t-loaded{border-color:var(--red)}
+.analysis-item.t-claim{border-color:var(--amber)}
+.analysis-item.t-authority{border-color:var(--blue)}
+.analysis-item.t-dichotomy{border-color:var(--purple)}
+.analysis-item.t-weasel{border-color:var(--green)}
+
+/* Classroom Simulator */
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:640px){.sim-grid{grid-template-columns:1fr}}
+.sim-panel{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px}
+.sim-panel h3{color:var(--amber);font-size:.95rem;margin-bottom:10px}
+.sim-panel label{display:block;color:var(--muted);font-size:.8rem;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+.sim-panel select{font-size:.85rem;padding:8px}
+.message-card{background:var(--surface2);border:1px solid var(--dim);border-radius:6px;padding:12px;margin:8px 0;transition:all .3s}
+.message-card .hidden-msg{color:var(--warm);font-size:.9rem;font-weight:600;margin-bottom:4px}
+.message-card .explain{color:var(--muted);font-size:.82rem}
+.message-card .strength{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;margin-bottom:6px}
+.str-high{background:rgba(212,68,68,.2);color:var(--red)}
+.str-med{background:rgba(232,168,73,.2);color:var(--amber)}
+.str-low{background:rgba(107,191,89,.2);color:var(--green)}
+
+/* E-Prime */
+.eprime-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:640px){.eprime-split{grid-template-columns:1fr}}
+.eprime-col{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px}
+.eprime-col h3{font-size:.9rem;margin-bottom:8px}
+.eprime-col.before h3{color:var(--red)}
+.eprime-col.after h3{color:var(--green)}
+.eprime-word{background:rgba(212,68,68,.25);border-bottom:2px solid var(--red);padding:0 2px}
+.eprime-output{line-height:1.8;min-height:60px}
+
+/* Question cards */
+.q-topic-bar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.q-topic-bar button{font-size:.82rem}
+.q-pair{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:16px;margin:10px 0}
+.q-pair .q-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.q-pair .q-recall{color:var(--red)}
+.q-pair .q-inquiry{color:var(--green)}
+.q-pair .q-text{font-size:.95rem;margin-bottom:6px}
+.q-pair .q-why{font-size:.82rem;color:var(--muted);font-style:italic}
+
+/* Medium Lab */
+.medium-tabs{display:flex;gap:8px;margin:16px 0}
+.medium-tabs button{flex:1;padding:10px;border:2px solid var(--dim);background:var(--surface);color:var(--muted);border-radius:6px;cursor:pointer;font-family:inherit;font-size:.85rem;transition:all .2s}
+.medium-tabs button.active{border-color:var(--orange);color:var(--orange);background:var(--surface2)}
+.medium-panel{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:20px;margin:8px 0;min-height:200px;display:none}
+.medium-panel.active{display:block}
+.medium-panel h4{color:var(--amber);margin-bottom:10px}
+.meta-note{margin-top:16px;padding:12px;background:var(--bg);border-radius:6px;font-size:.82rem;color:var(--amber);font-style:italic;border:1px solid var(--dim)}
+.socratic-exchange{margin:8px 0}
+.socratic-exchange .teacher{color:var(--orange);font-weight:600;margin:8px 0 2px}
+.socratic-exchange .students{color:var(--muted);font-size:.88rem;font-style:italic;margin-left:16px}
+.quiz-q{background:var(--surface2);border:1px solid var(--dim);border-radius:6px;padding:14px;margin:10px 0}
+.quiz-q .q-text{color:var(--warm);margin-bottom:8px}
+.quiz-q button{margin:3px;padding:6px 14px;background:var(--surface3);border:1px solid var(--dim);color:var(--text);border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85rem;transition:all .2s}
+.quiz-q button:hover{border-color:var(--orange)}
+.quiz-q button.correct{background:rgba(107,191,89,.2);border-color:var(--green);color:var(--green)}
+.quiz-q button.wrong{background:rgba(212,68,68,.2);border-color:var(--red);color:var(--red)}
+.quiz-result{font-size:.82rem;margin-top:6px;padding:6px;border-radius:4px;display:none}
+
+/* Thermometer */
+.therm-item{margin:16px 0}
+.therm-item label{display:block;color:var(--warm);font-size:.9rem;margin-bottom:6px}
+.therm-item .poles{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.therm-item input[type=range]{width:100%;accent-color:var(--orange);margin:4px 0}
+.therm-result{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:20px;margin:20px 0;text-align:center}
+.therm-score{font-size:3rem;font-weight:700;margin:8px 0}
+.therm-label{font-size:1.1rem;margin-bottom:8px}
+.therm-bar{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));margin:12px auto;max-width:400px;position:relative}
+.therm-marker{position:absolute;top:-4px;width:4px;height:20px;background:#fff;border-radius:2px;transition:left .3s}
+.therm-detail{text-align:left;margin-top:16px;font-size:.85rem;color:var(--muted)}
+
+/* Inquiry Method */
+.phenomenon-card{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:20px;margin:16px 0;text-align:center}
+.phenomenon-card .phenom-title{color:var(--amber);font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.phenomenon-card .phenom-desc{color:var(--warm);font-size:.95rem;margin-bottom:12px}
+.phenomenon-card .phenom-data{color:var(--muted);font-size:.85rem;font-style:italic}
+.q-input-row{display:flex;gap:8px;margin:12px 0}
+.q-input-row input{flex:1}
+.q-list{margin:12px 0}
+.q-entry{background:var(--surface);border:1px solid var(--dim);border-radius:6px;padding:10px 14px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.q-entry .q-text{flex:1;color:var(--warm);font-size:.9rem}
+.q-entry .q-badge{padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;margin-left:8px;white-space:nowrap}
+.badge-excellent{background:rgba(107,191,89,.2);color:var(--green)}
+.badge-good{background:rgba(232,168,73,.2);color:var(--amber)}
+.badge-recall{background:rgba(212,68,68,.2);color:var(--red)}
+.q-stats{background:var(--surface);border:1px solid var(--dim);border-radius:8px;padding:14px;margin:12px 0;display:flex;justify-content:space-around;text-align:center}
+.q-stats .stat-num{font-size:1.4rem;font-weight:700;color:var(--amber)}
+.q-stats .stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase}
+
+footer{padding:30px 20px;text-align:center;color:var(--dim);font-size:.8rem;border-top:1px solid var(--dim);margin-top:40px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<h1>Teaching As a Subversive Activity</h1>
+<p class="sub">Postman & Weingartner, 1969 — Interactive Lab</p>
+<div class="tag">"In order to be a great writer a person must have a built-in, shockproof crap detector." — Hemingway</div>
+</div>
+
+<nav>
+<div class="container">
+<button class="active" onclick="go('crap')">💩 Crap Detector</button>
+<button onclick="go('classroom')">🏫 Hidden Curriculum</button>
+<button onclick="go('eprime')">🗣️ E-Prime</button>
+<button onclick="go('questions')">❓ Questions</button>
+<button onclick="go('medium')">🔄 Medium Lab</button>
+<button onclick="go('therm')">🌡️ Thermometer</button>
+<button onclick="go('inquiry')">🔍 Inquiry</button>
+</div>
+</nav>
+
+<!-- 1. CRAP DETECTOR TOOL -->
+<section id="crap" class="active">
+<div class="container">
+<h2>💩 The Crap Detector</h2>
+<p class="intro">Paste any text — an ad, news article, political speech, social media post — and see the manipulation patterns highlighted. Learn to see what the author doesn't want you to notice.</p>
+
+<textarea id="crap-input" rows="6" placeholder="Paste text here to analyze... (or try a sample below)"></textarea>
+<div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap">
+<button class="primary" onclick="analyzeCrap()">Analyze</button>
+<button class="secondary" onclick="loadSample(0)">Sample: Ad</button>
+<button class="secondary" onclick="loadSample(1)">Sample: News</button>
+<button class="secondary" onclick="loadSample(2)">Sample: Speech</button>
+<button class="secondary" onclick="loadSample(3)">Sample: Social</button>
+</div>
+
+<div class="legend">
+<span><span class="dot" style="background:var(--red)"></span> Loaded Language</span>
+<span><span class="dot" style="background:var(--amber)"></span> Unsupported Claims</span>
+<span><span class="dot" style="background:var(--blue)"></span> Appeals to Authority</span>
+<span><span class="dot" style="background:var(--purple)"></span> False Dichotomies</span>
+<span><span class="dot" style="background:var(--green)"></span> Weasel Words</span>
+</div>
+
+<div id="crap-output" class="result-box" style="display:none"></div>
+<div id="crap-analysis" style="display:none"></div>
+
+<blockquote style="margin-top:24px">None of us is free of prejudice, but it is the sign of a competent 'crap detector' that he is not completely captivated by the arbitrary abstractions of the community in which he happened to grow up.<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- 2. HIDDEN CURRICULUM SIMULATOR -->
+<section id="classroom">
+<div class="container">
+<h2>🏫 Hidden Curriculum Simulator</h2>
+<p class="intro">Build a classroom. Choose the structure. See the hidden messages students absorb — not from what you teach, but from HOW the room works. "We learn what we do." — Dewey</p>
+
+<div class="sim-grid">
+<div class="sim-panel">
+<h3>Build Your Classroom</h3>
+<label>Desk Arrangement</label>
+<select id="sim-desks" onchange="updateSim()">
+<option value="rows">Rows facing front</option>
+<option value="clusters">Small clusters (4-5)</option>
+<option value="circle">Circle / seminar</option>
+<option value="flexible">No fixed arrangement</option>
+</select>
+
+<label>Who Talks Most?</label>
+<select id="sim-talk" onchange="updateSim()">
+<option value="teacher90">Teacher (90%+ of time)</option>
+<option value="teacher60">Teacher (60%), students respond</option>
+<option value="mixed">Roughly equal</option>
+<option value="students">Students (teacher mostly listens)</option>
+</select>
+
+<label>Grading System</label>
+<select id="sim-grade" onchange="updateSim()">
+<option value="tests">Tests & grades (A-F)</option>
+<option value="rubric">Rubrics with detailed feedback</option>
+<option value="portfolio">Portfolios & self-assessment</option>
+<option value="none">No grades — narrative feedback only</option>
+</select>
+
+<label>What Questions Are Allowed?</label>
+<select id="sim-questions" onchange="updateSim()">
+<option value="admin">Only procedural ("Is this on the test?")</option>
+<option value="content">Content questions with right answers</option>
+<option value="open">Open questions encouraged</option>
+<option value="student-driven">Students set the questions</option>
+</select>
+
+<label>Who Decides What to Study?</label>
+<select id="sim-curriculum" onchange="updateSim()">
+<option value="fixed">Fixed syllabus, no deviation</option>
+<option value="teacher-flex">Teacher chooses, some flexibility</option>
+<option value="negotiated">Negotiated with students</option>
+<option value="student">Student-driven inquiry</option>
+</select>
+
+<label>How Are Mistakes Treated?</label>
+<select id="sim-mistakes" onchange="updateSim()">
+<option value="penalized">Penalized (lose points)</option>
+<option value="corrected">Corrected by teacher</option>
+<option value="explored">Explored ("interesting — why?")</option>
+<option value="celebrated">Celebrated as learning moments</option>
+</select>
+</div>
+<div class="sim-panel">
+<h3>Hidden Messages Students Absorb</h3>
+<div id="sim-messages"></div>
+</div>
+</div>
+
+<blockquote>There can be no significant innovation in education that does not have at its center the attitudes of teachers, and it is an illusion to think otherwise.<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- 3. E-PRIME CONVERTER -->
+<section id="eprime">
+<div class="container">
+<h2>🗣️ E-Prime Converter</h2>
+<p class="intro">Type any sentence using "is," "are," "was," or "were." See how removing "to be" forces the hidden perceiver to reappear. "Whatever we say something is, it is not." — Korzybski</p>
+
+<textarea id="eprime-input" rows="3" placeholder='Try: "He is lazy" or "That movie is terrible" or "America is the greatest country"' oninput="convertEprime()"></textarea>
+
+<div class="eprime-split">
+<div class="eprime-col before">
+<h3>❌ Standard English</h3>
+<div id="eprime-before" class="eprime-output" style="color:var(--muted);font-style:italic">Type above to see "to be" verbs highlighted…</div>
+</div>
+<div class="eprime-col after">
+<h3>✅ E-Prime Rewrite</h3>
+<div id="eprime-after" class="eprime-output" style="color:var(--muted);font-style:italic">…and the E-Prime alternative here.</div>
+</div>
+</div>
+<div id="eprime-insight" style="display:none;margin-top:12px;padding:12px;background:var(--surface);border:1px solid var(--dim);border-radius:6px;font-size:.85rem;color:var(--warm)"></div>
+
+<h3 style="color:var(--amber);margin:24px 0 10px">Try These</h3>
+<div style="display:flex;flex-wrap:wrap;gap:6px" id="eprime-examples"></div>
+
+<blockquote style="margin-top:24px">We dissect nature along lines laid down by our native language.… We cut nature up, organize it into concepts, and ascribe significance as we do largely because we are parties to an agreement to organize it in this way.<cite>— Benjamin Lee Whorf</cite></blockquote>
+</div>
+</section>
+
+<!-- 4. QUESTION GENERATOR -->
+<section id="questions">
+<div class="container">
+<h2>❓ The Question Generator</h2>
+<p class="intro">The book's thesis: good teaching = good questions. Pick a topic. See recall questions vs. Postman-style inquiry questions. Which ones make you actually think?</p>
+
+<div class="q-topic-bar">
+<button class="primary" onclick="showTopic(0)">Climate Change</button>
+<button class="secondary" onclick="showTopic(1)">AI & Technology</button>
+<button class="secondary" onclick="showTopic(2)">Democracy</button>
+<button class="secondary" onclick="showTopic(3)">History</button>
+<button class="secondary" onclick="showTopic(4)">Health</button>
+<button class="secondary" onclick="showTopic(5)">Economics</button>
+</div>
+
+<div id="q-display"></div>
+
+<blockquote style="margin-top:24px">Once you have learned how to ask questions — relevant and appropriate and substantial questions — you have learned how to learn and no one can keep you from learning whatever you want or need to know.<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- 5. MEDIUM IS THE MESSAGE LAB -->
+<section id="medium">
+<div class="container">
+<h2>🔄 The Medium Is the Message Lab</h2>
+<p class="intro">Same content — "What causes poverty?" — delivered three ways. Experience how the medium shapes what you actually learn, feel, and remember.</p>
+
+<div class="medium-tabs">
+<button class="active" onclick="showMedium(0)">📖 Lecture</button>
+<button onclick="showMedium(1)">🧩 Interactive</button>
+<button onclick="showMedium(2)">💬 Socratic</button>
+</div>
+
+<div class="medium-panel active" id="mp0">
+<h4>Lecture: Causes of Poverty</h4>
+<p style="color:var(--muted);line-height:1.8;font-size:.9rem">Poverty is defined as the state of having insufficient resources to meet basic needs. The World Bank defines extreme poverty as living on less than $2.15 per day. Primary causes include: (1) lack of education, (2) unemployment, (3) systemic inequality, (4) geographic disadvantage, (5) health crises. According to the textbook, structural factors account for approximately 70% of poverty outcomes, while individual factors account for 30%.</p>
+<p style="color:var(--muted);font-size:.9rem;margin-top:10px">Please memorize these five causes. They will appear on the midterm. The correct answer format is: "The five primary causes of poverty are…"</p>
+<div class="meta-note"><strong>What the medium taught you:</strong> Poverty is a set of facts. Someone already figured it out. Your job: memorize and reproduce. The percentages sound precise, so they must be true. Your own experience of scarcity is irrelevant. <em>The medium taught you to be passive.</em></div>
+</div>
+
+<div class="medium-panel" id="mp1">
+<h4>Interactive Exercise: The Poverty Simulator</h4>
+<p style="color:var(--warm);margin-bottom:12px">You have $1,200/month. Allocate it:</p>
+<div id="poverty-sim">
+<div class="sim-slider-item" style="margin:8px 0">
+<div style="display:flex;justify-content:space-between;font-size:.85rem"><span>🏠 Rent</span><span id="pv-rent-val">$600</span></div>
+<input type="range" min="0" max="1200" value="600" step="50" oninput="updatePovSim(this,'rent')">
+</div>
+<div class="sim-slider-item" style="margin:8px 0">
+<div style="display:flex;justify-content:space-between;font-size:.85rem"><span>🍎 Food</span><span id="pv-food-val">$300</span></div>
+<input type="range" min="0" max="1200" value="300" step="50" oninput="updatePovSim(this,'food')">
+</div>
+<div class="sim-slider-item" style="margin:8px 0">
+<div style="display:flex;justify-content:space-between;font-size:.85rem"><span>🚌 Transport</span><span id="pv-transport-val">$150</span></div>
+<input type="range" min="0" max="1200" value="150" step="50" oninput="updatePovSim(this,'transport')">
+</div>
+<div class="sim-slider-item" style="margin:8px 0">
+<div style="display:flex;justify-content:space-between;font-size:.85rem"><span>💊 Health</span><span id="pv-health-val">$100</span></div>
+<input type="range" min="0" max="1200" value="100" step="50" oninput="updatePovSim(this,'health')">
+</div>
+<div class="sim-slider-item" style="margin:8px 0">
+<div style="display:flex;justify-content:space-between;font-size:.85rem"><span>📚 Education</span><span id="pv-edu-val">$50</span></div>
+<input type="range" min="0" max="1200" value="50" step="50" oninput="updatePovSim(this,'edu')">
+</div>
+</div>
+<div id="pov-remaining" style="text-align:center;font-size:1.1rem;margin:12px 0;color:var(--amber)">Remaining: $0</div>
+<div id="pov-feedback" style="display:none"></div>
+<div class="meta-note"><strong>What the medium taught you:</strong> Poverty involves impossible tradeoffs — not ignorance. You felt the constraint. You made choices with consequences. No one told you the "right" answer because there isn't one. <em>The medium taught you to think through experience.</em></div>
+</div>
+
+<div class="medium-panel" id="mp2">
+<h4>Socratic Dialogue: What Causes Poverty?</h4>
+<div class="socratic-exchange">
+<div class="teacher">Teacher: Why are some people poor?</div>
+<div class="students">"Because they don't work hard enough?" "Because the system is unfair?" "Because they didn't get educated?"</div>
+<div class="teacher">Teacher: Interesting — three different theories from three people. Can all three be true at the same time?</div>
+<div class="students">"Maybe…?" "It depends on the person?"</div>
+<div class="teacher">Teacher: On what does it depend? And who gets to decide which explanation applies to whom?</div>
+<div class="students">[Silence.] "Usually… rich people decide?" "Politicians?" "We all just kind of assume?"</div>
+<div class="teacher">Teacher: So the explanation we choose for poverty might tell us more about the EXPLAINER than about poor people. Whose interests does each explanation serve?</div>
+<div class="students">"If you say it's laziness… that means you don't have to change anything." "If you say it's the system… then the system has to change." "Oh."</div>
+<div class="teacher">Teacher: What would you need to investigate to figure out which explanation has more evidence? And what would count as evidence?</div>
+<div class="students">[Now everyone is writing questions.]</div>
+</div>
+<div class="meta-note"><strong>What the medium taught you:</strong> Every explanation serves someone's interest. Your own assumptions are worth examining. Questions are more powerful than answers. Other people's perspectives change your understanding. <em>The medium taught you to inquire.</em></div>
+</div>
+
+<div id="medium-quiz" style="margin-top:20px">
+<h4 style="color:var(--amber);margin-bottom:10px">Quick Check: What Do You Remember?</h4>
+<p style="font-size:.85rem;color:var(--muted);margin-bottom:10px">After experiencing all three formats, test yourself:</p>
+<div class="quiz-q">
+<div class="q-text">Which format made you feel something?</div>
+<div class="quiz-result" style="display:block;color:var(--warm);font-style:italic">Notice: this question has no "right answer." That's the point. The lecture gave you facts. The simulation gave you experience. The dialogue gave you perspective. Each medium taught different things — and the MEDIUM was the lesson, not the content about poverty.</div>
+</div>
+</div>
+
+<blockquote style="margin-top:20px">"The critical content of any learning experience is the method or process through which the learning occurs."<cite>— Postman & Weingartner, extending McLuhan</cite></blockquote>
+</div>
+</section>
+
+<!-- 6. THERMOMETER OF SUBVERSION -->
+<section id="therm">
+<div class="container">
+<h2>🌡️ Thermometer of Subversion</h2>
+<p class="intro">Rate your own classroom, workplace, or learning environment on Postman & Weingartner's scale. How subversive — or how traditional — is your world?</p>
+
+<div id="therm-questions">
+<div class="therm-item">
+<label>Who does most of the talking?</label>
+<div class="poles"><span>Teacher/Boss: 100%</span><span>Learners: 100%</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>How are questions treated?</label>
+<div class="poles"><span>Suppressed / only procedural</span><span>Encouraged / drive the agenda</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>Is there a single "right answer"?</label>
+<div class="poles"><span>Always — predetermined</span><span>Rarely — multiple valid perspectives</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>How are mistakes handled?</label>
+<div class="poles"><span>Penalized / shamed</span><span>Explored / celebrated</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>Who decides what's studied or worked on?</label>
+<div class="poles"><span>Authority alone</span><span>Negotiated / learner-driven</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>How much does the environment change based on who's in it?</label>
+<div class="poles"><span>Never — fixed structure</span><span>Constantly — responsive</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>Are feelings and personal experiences relevant?</label>
+<div class="poles"><span>Completely irrelevant</span><span>Central to the work</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+<div class="therm-item">
+<label>Do people learn from each other, or only from the authority?</label>
+<div class="poles"><span>Only from authority</span><span>Peer-to-peer is primary</span></div>
+<input type="range" min="0" max="100" value="30" oninput="updateTherm()">
+</div>
+</div>
+
+<div class="therm-result" id="therm-result">
+<div class="therm-bar"><div class="therm-marker" id="therm-marker"></div></div>
+<div class="therm-score" id="therm-score">30%</div>
+<div class="therm-label" id="therm-label" style="color:var(--red)">Traditional / Authoritarian</div>
+<div class="therm-detail" id="therm-detail"></div>
+</div>
+
+<blockquote style="margin-top:20px">Goodwin Watson: open, nonauthoritarian atmosphere → self-confidence, originality, self-reliance, enterprise, and independence. Closed authoritarian environments produce apathetic conformity, defiance, scapegoating, and dependence on authority.<cite>— via Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<!-- 7. THE INQUIRY METHOD -->
+<section id="inquiry">
+<div class="container">
+<h2>🔍 The Inquiry Method</h2>
+<p class="intro">A phenomenon appears. Your job: ask questions, NOT give answers. The quality of your questions reveals the quality of your thinking. "Children enter school as question marks and leave as periods."</p>
+
+<div class="phenomenon-card" id="phenom-card"></div>
+
+<button class="secondary" onclick="newPhenomenon()" style="margin-bottom:12px">↻ New Phenomenon</button>
+
+<div class="q-input-row">
+<input type="text" id="inquiry-input" placeholder="Type a question about this phenomenon…" onkeydown="if(event.key==='Enter')submitQuestion()">
+<button class="primary" onclick="submitQuestion()">Ask</button>
+</div>
+
+<div class="q-stats" id="q-stats" style="display:none">
+<div><div class="stat-num" id="stat-total">0</div><div class="stat-label">Questions</div></div>
+<div><div class="stat-num" id="stat-inquiry">0</div><div class="stat-label">Inquiry</div></div>
+<div><div class="stat-num" id="stat-recall">0</div><div class="stat-label">Recall</div></div>
+<div><div class="stat-num" id="stat-pct">0%</div><div class="stat-label">Inquiry Rate</div></div>
+</div>
+
+<div class="q-list" id="inquiry-list"></div>
+
+<blockquote style="margin-top:24px">"Where the older school environment has asked, 'Who discovered America?' the inquiry method asks, 'How do you discover who discovered America?'"<cite>— Postman & Weingartner</cite></blockquote>
+</div>
+</section>
+
+<footer>
+<p style="color:var(--muted);font-style:italic;max-width:500px;margin:0 auto 12px">"Thank God there are no free schools or printing; for learning has brought disobedience and heresy into the world." — Sir William Berkeley, 1677</p>
+<p>Built with no external dependencies, no frameworks, no permission. v2</p>
+</footer>
+
+<script>
+// NAV
+function go(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav button').forEach((b,i)=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  window.scrollTo({top:document.querySelector('nav').offsetTop-10,behavior:'smooth'});
+}
+
+// ========== 1. CRAP DETECTOR ==========
+const samples=[
+  `Our revolutionary formula, backed by leading scientists, is clinically proven to reduce wrinkles by up to 89%. Millions of women have already discovered the secret. Don't be left behind — you deserve to look your best. Studies show that people who look younger earn more and are happier. Act now before this limited-time offer expires!`,
+  `BREAKING: Sources confirm that the controversial policy has sparked outrage across the nation. Critics slam the decision as "dangerous and reckless" while supporters insist it's "long overdue." Experts warn this could be the most divisive issue of our time. Some say it threatens our very way of life. The question everyone is asking: has the government gone too far?`,
+  `My fellow citizens, we stand at a crossroads. We can either embrace our traditional values and protect our children's future, or we can surrender to the radical forces that seek to destroy everything we've built. Our opponents want you to believe that change is always progress. But real Americans know that some things are worth fighting for. History will judge us by what we do in this moment. The choice is simple.`,
+  `I'm not saying vaccines cause autism, I'm just asking questions. Why won't they release ALL the data? Many parents have reported changes in their children. Exposed exposed exposed! The mainstream media won't cover this. Do your own research. Wake up people!!!`
+];
+
+const crapPatterns={
+  loaded:{
+    label:'Loaded Language',type:'t-loaded',cls:'highlight-loaded',
+    patterns:[
+      {r:/\b(revolutionary|groundbreaking|shocking|devastating|radical|dangerous|reckless|threatens?|destroy|slam|sparks? outrage|divisive|surrender|wake up|exposed)\b/gi,why:'Emotionally charged word designed to trigger reaction, not thought'},
+      {r:/\b(real americans|fellow citizens|our children|our values|our way of life|everything we.ve built)\b/gi,why:'In-group signaling — creates "us vs. them" without argument'},
+      {r:/\b(unprecedented|crisis|emergency|catastroph|nightmare|horrif|terrif)\b/gi,why:'Escalation language — inflates significance beyond evidence'},
+    ]
+  },
+  claim:{
+    label:'Unsupported Claims',type:'t-claim',cls:'highlight-claim',
+    patterns:[
+      {r:/\b(clinically proven|studies show|research shows?|science says?|data shows?|statistics show|evidence suggests?)\b/gi,why:'Cites unnamed evidence — which study? What sample size? Who funded it?'},
+      {r:/\b(up to \d+%|millions of|everyone|nobody|always|never|all|every single)\b/gi,why:'Extreme quantifier without source — "up to" means "possibly zero"'},
+      {r:/\b(it.s (a )?fact|the truth is|clearly|obviously|undeniably|without question|of course)\b/gi,why:'Asserts certainty where evidence should be — the louder the certainty, the weaker the argument'},
+    ]
+  },
+  authority:{
+    label:'Appeals to Authority',type:'t-authority',cls:'highlight-authority',
+    patterns:[
+      {r:/\b(leading scientists|experts? (say|warn|agree|confirm)|sources? (say|confirm|reveal)|according to authorities|top doctors|renowned|prestigious)\b/gi,why:'Unnamed experts — which ones? Do they have relevant expertise? Do they agree?'},
+      {r:/\b(the mainstream media|they don.t want you to know|the establishment|the government|big pharma|big tech)\b/gi,why:'Vague authority (or anti-authority) — replaces specific claims with tribal suspicion'},
+      {r:/\b(history will judge|future generations|our (fore)?fathers|the founders)\b/gi,why:'Appeal to abstract authority — historical figures can\'t disagree with you'},
+    ]
+  },
+  dichotomy:{
+    label:'False Dichotomies',type:'t-dichotomy',cls:'highlight-dichotomy',
+    patterns:[
+      {r:/\b(either\b.{3,60}\bor\b)|(\bthe choice is (simple|clear|obvious))|(\byou.re either\b.{3,40}\bor\b)/gi,why:'Forced binary — complex issues reduced to two options. What about the other possibilities?'},
+      {r:/\b(if we don.t.{5,60}(will|could|might))|(\bwe (must|have to) (choose|decide|act))\b/gi,why:'False urgency + false binary — implies only one acceptable action'},
+      {r:/\b(you can either|there are (only )?two (options|choices|paths|sides))\b/gi,why:'Explicitly limiting options — reality rarely has only two'},
+    ]
+  },
+  weasel:{
+    label:'Weasel Words',type:'t-weasel',cls:'highlight-weasel',
+    patterns:[
+      {r:/\b(some say|many (people|believe|think|say|report)|it.s been (said|reported|suggested)|questions? (are being|everyone is) ask(ed|ing))\b/gi,why:'Phantom attribution — "some say" means the author says but won\'t own it'},
+      {r:/\b(just asking questions|i.m not saying.{3,30}but|do your own research|make up your own mind|you decide)\b/gi,why:'"Just asking questions" is making claims without accountability — the coward\'s rhetoric'},
+      {r:/\b(could|might|may) (be|have|cause|lead|result)/gi,why:'Hedge words that let the author imply without asserting — unfalsifiable'},
+    ]
+  }
+};
+
+function loadSample(n){document.getElementById('crap-input').value=samples[n];analyzeCrap()}
+
+function analyzeCrap(){
+  const text=document.getElementById('crap-input').value.trim();
+  if(!text)return;
+  const out=document.getElementById('crap-output');
+  const analysis=document.getElementById('crap-analysis');
+  let marked=text;
+  let findings=[];
+  // collect all matches
+  for(const[catKey,cat] of Object.entries(crapPatterns)){
+    for(const pat of cat.patterns){
+      let m;const re=new RegExp(pat.r.source,pat.r.flags);
+      while((m=re.exec(text))!==null){
+        findings.push({start:m.index,end:m.index+m[0].length,text:m[0],cls:cat.cls,cat:cat.label,why:pat.why,type:cat.type});
+      }
+    }
+  }
+  // deduplicate overlapping, keep longest
+  findings.sort((a,b)=>a.start-b.start||(b.end-a.end));
+  const filtered=[];
+  let lastEnd=-1;
+  for(const f of findings){
+    if(f.start>=lastEnd){filtered.push(f);lastEnd=f.end}
+  }
+  // build highlighted text
+  let html='';let pos=0;
+  for(const f of filtered){
+    html+=esc(text.slice(pos,f.start));
+    html+=`<span class="${f.cls}" title="${esc(f.why)}">${esc(f.text)}</span>`;
+    pos=f.end;
+  }
+  html+=esc(text.slice(pos));
+  out.innerHTML=html;out.style.display='block';
+
+  // analysis
+  const groups={};
+  for(const f of filtered){
+    if(!groups[f.cat])groups[f.cat]={items:[],type:f.type};
+    groups[f.cat].items.push(f);
+  }
+  let ahtml='<div style="margin-top:16px">';
+  if(filtered.length===0){
+    ahtml+='<div class="analysis-item">No obvious manipulation patterns detected. This text may be straightforward — or the manipulation may be more subtle than keyword-level analysis can catch. A good crap detector also considers: What is NOT being said? Whose perspective is missing? What assumptions does the text take for granted?</div>';
+  }else{
+    ahtml+=`<p style="color:var(--amber);font-size:.9rem;margin-bottom:10px"><strong>${filtered.length} pattern${filtered.length>1?'s':''} detected.</strong> Hover over highlights for details.</p>`;
+    for(const[cat,data] of Object.entries(groups)){
+      ahtml+=`<div class="analysis-item ${data.type}"><strong>${cat}</strong> (${data.items.length}×): `;
+      const unique=[...new Set(data.items.map(i=>'"'+i.text+'"'))];
+      ahtml+=unique.join(', ');
+      ahtml+=`<br><span style="color:var(--muted);font-size:.8rem">${data.items[0].why}</span></div>`;
+    }
+    ahtml+='<div class="analysis-item" style="border-color:var(--amber)"><strong>Remember:</strong> Pattern detection is just the beginning. The real crap detector asks: What is the author\'s PURPOSE? Who benefits if I believe this? What would I need to verify independently? What perspective is absent?</div>';
+  }
+  ahtml+='</div>';
+  analysis.innerHTML=ahtml;analysis.style.display='block';
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ========== 2. HIDDEN CURRICULUM SIMULATOR ==========
+const simMessages={
+  desks:{
+    rows:[
+      {msg:'The authority figure is the center of attention.',str:'high',explain:'All eyes face one direction. Students learn: knowledge flows one way, from front to back.'},
+      {msg:'Peers are obstacles, not collaborators.',str:'high',explain:'You see the back of heads. Interaction = disruption. The room itself says: learning is individual and passive.'},
+      {msg:'Your position is assigned and fixed.',str:'med',explain:'Like assigned seating on an airplane. The message: you don\'t choose your place in the system.'},
+    ],
+    clusters:[
+      {msg:'Collaboration is expected — but within assigned groups.',str:'med',explain:'Small groups signal teamwork, but who chose the groups? Students learn: cooperation within boundaries set by authority.'},
+      {msg:'Some voices matter more in your cluster.',str:'low',explain:'Group dynamics emerge. Some students dominate. Without explicit attention, clusters reproduce social hierarchies.'},
+    ],
+    circle:[
+      {msg:'Everyone\'s face is visible. Hiding is harder.',str:'med',explain:'Circles signal equality and accountability. Students learn: your presence matters, your contribution is expected.'},
+      {msg:'The authority sits among the group.',str:'low',explain:'Physical equality suggests intellectual equality. The message: the teacher is a participant, not a transmitter.'},
+    ],
+    flexible:[
+      {msg:'The environment serves the activity, not the reverse.',str:'low',explain:'Moving furniture = agency. Students learn: structures are tools, not givens. You can rearrange the world.'},
+      {msg:'There is no default "front of the room."',str:'low',explain:'Without a fixed front, there\'s no fixed authority position. Knowledge can come from anywhere.'},
+    ],
+  },
+  talk:{
+    teacher90:[
+      {msg:'Your ideas are less important than the authority\'s.',str:'high',explain:'If one person talks 90% of the time, everyone else learns their job is to listen and absorb. "Passive acceptance is more desirable than active criticism."'},
+      {msg:'Silence = good behavior.',str:'high',explain:'Students learn that the ideal learner is quiet, compliant, and receptive. Question-asking is disruption.'},
+    ],
+    teacher60:[
+      {msg:'You may speak — when called upon.',str:'med',explain:'Controlled turn-taking. Students learn: speech is a privilege granted by authority, not a right.'},
+      {msg:'The "right" response is what the teacher expects.',str:'med',explain:'IRE pattern (Initiate-Respond-Evaluate). Students learn to guess what the teacher is thinking.'},
+    ],
+    mixed:[
+      {msg:'Your voice has roughly equal weight.',str:'low',explain:'Balanced talk time signals that student ideas matter as much as teacher ideas.'},
+      {msg:'Dialogue is the mode of learning.',str:'low',explain:'When talk is distributed, learning becomes transactional — meaning is constructed together.'},
+    ],
+    students:[
+      {msg:'You are the primary meaning-maker.',str:'low',explain:'Student-centered talk signals: you are capable of generating knowledge, not just receiving it. The teacher\'s silence is respect.'},
+    ],
+  },
+  grade:{
+    tests:[
+      {msg:'There is always a right answer, and someone else knows it.',str:'high',explain:'Tests with predetermined answers teach: your job is to reproduce, not produce. The most creative intellectual activity available: cheating.'},
+      {msg:'Learning is a performance for judgment.',str:'high',explain:'Grades teach: the purpose of learning is external validation. What you actually understand matters less than what you can demonstrate under pressure.'},
+      {msg:'You are your score.',str:'high',explain:'A-F reduces a human to a letter. Students internalize: I AM a "B student." The label becomes identity.'},
+    ],
+    rubric:[
+      {msg:'Quality has defined dimensions — but they\'re still externally set.',str:'med',explain:'Rubrics make criteria visible (good) but still locate judgment in authority (limiting).'},
+    ],
+    portfolio:[
+      {msg:'Growth over time matters more than performance on a day.',str:'low',explain:'Portfolios teach: learning is a process. You are allowed to improve. Your journey is the evidence.'},
+      {msg:'You participate in evaluating your own work.',str:'low',explain:'Self-assessment teaches metacognition — the ability to judge your own thinking. The most transferable skill there is.'},
+    ],
+    none:[
+      {msg:'Learning is its own purpose.',str:'low',explain:'Without grades, the extrinsic motivation structure disappears. Students must find intrinsic reasons to engage. Terrifying for those trained otherwise.'},
+    ],
+  },
+  questions:{
+    admin:[
+      {msg:'The only safe questions are procedural.',str:'high',explain:'"Is this on the test?" "How long should it be?" Students learn: intellectual curiosity is irrelevant. Compliance is everything.'},
+      {msg:'Asking "why?" is dangerous.',str:'high',explain:'When substantive questions aren\'t welcome, students learn that questioning the system is a form of misbehavior.'},
+    ],
+    content:[
+      {msg:'Questions have answers. Find them.',str:'med',explain:'Content questions with right answers teach: inquiry is a means to a predetermined end, not an open exploration.'},
+    ],
+    open:[
+      {msg:'Genuine curiosity is valued.',str:'low',explain:'Open questions signal: we don\'t know where this will go, and that\'s good. Uncertainty is not failure.'},
+    ],
+    'student-driven':[
+      {msg:'You decide what\'s worth knowing.',str:'low',explain:'P&W\'s dream curriculum: "What if the entire curriculum consisted of questions — from the students\' point of view?"'},
+      {msg:'Your curiosity IS the curriculum.',str:'low',explain:'Students learn: you are capable of identifying what matters. Authority doesn\'t have a monopoly on relevance.'},
+    ],
+  },
+  curriculum:{
+    fixed:[
+      {msg:'Knowledge is a fixed body of content, determined by others.',str:'high',explain:'Fixed syllabi teach: the world has already been figured out. Your job: absorb the predetermined sequence.'},
+      {msg:'Relevance to your life is accidental, not designed.',str:'high',explain:'If content never connects to student reality, students learn: education and life are separate domains.'},
+    ],
+    'teacher-flex':[
+      {msg:'The teacher curates, with some responsiveness.',str:'med',explain:'Better than fixed, but authority still decides. Students learn: adaptability exists but is granted from above.'},
+    ],
+    negotiated:[
+      {msg:'Your interests matter and can shape the agenda.',str:'low',explain:'Negotiation teaches democratic process — the very thing P&W say schools should model but rarely do.'},
+    ],
+    student:[
+      {msg:'You are an active agent in your own education.',str:'low',explain:'Student-driven inquiry teaches: you can learn anything you decide is worth learning. No one can keep you from it.'},
+    ],
+  },
+  mistakes:{
+    penalized:[
+      {msg:'Being wrong is costly. Avoid risk.',str:'high',explain:'Point deductions teach: mistakes are failures, not data. Students learn to avoid challenge and stick to what they know.'},
+      {msg:'Safety lies in silence and conformity.',str:'high',explain:'If wrong answers are punished, the rational strategy is: never venture an answer. Never take intellectual risks.'},
+    ],
+    corrected:[
+      {msg:'The teacher holds the right answer.',str:'med',explain:'Immediate correction teaches: don\'t bother figuring it out yourself. Wait for the authority to fix your thinking.'},
+    ],
+    explored:[
+      {msg:'Wrong answers contain information.',str:'low',explain:'"Interesting — why did you think that?" treats errors as windows into student reasoning. Mistakes become the best lessons.'},
+    ],
+    celebrated:[
+      {msg:'Intellectual risk is the point.',str:'low',explain:'When mistakes are celebrated, students learn: the goal is adventurous thinking, not correct answers. This is how actual scientists work.'},
+    ],
+  },
+};
+
+function updateSim(){
+  const vals={
+    desks:document.getElementById('sim-desks').value,
+    talk:document.getElementById('sim-talk').value,
+    grade:document.getElementById('sim-grade').value,
+    questions:document.getElementById('sim-questions').value,
+    curriculum:document.getElementById('sim-curriculum').value,
+    mistakes:document.getElementById('sim-mistakes').value,
+  };
+  const container=document.getElementById('sim-messages');
+  let msgs=[];
+  for(const[key,val] of Object.entries(vals)){
+    const catMsgs=simMessages[key][val]||[];
+    msgs.push(...catMsgs);
+  }
+  container.innerHTML=msgs.map(m=>`<div class="message-card"><span class="strength ${m.str==='high'?'str-high':m.str==='med'?'str-med':'str-low'}">${m.str==='high'?'⚠️ STRONG':m.str==='med'?'⚡ MODERATE':'✓ HEALTHY'}</span><div class="hidden-msg">${m.msg}</div><div class="explain">${m.explain}</div></div>`).join('');
+}
+updateSim();
+
+// ========== 3. E-PRIME CONVERTER ==========
+const toBePatterns=[
+  {r:/\b(he|she|it|that|this)\s+is\s+(\w+)\b/gi,rewrite:(m,subj,adj)=>{
+    const rewrites={
+      'lazy':'performs in ways I interpret as lacking effort',
+      'stupid':'scored poorly on the metrics I chose',
+      'smart':'demonstrates abilities I value',
+      'ugly':'looks displeasing to me',
+      'beautiful':'looks pleasing to me based on my aesthetic standards',
+      'evil':'behaves in ways I find morally repugnant',
+      'good':'behaves in ways I approve of',
+      'wrong':'holds a view that differs from mine',
+      'right':'holds a view that matches mine',
+      'boring':'fails to interest me',
+      'interesting':'captures my attention',
+      'crazy':'behaves in ways I don\'t understand',
+      'perfect':'meets all the criteria I\'ve set',
+      'terrible':'falls far below my expectations',
+      'great':'exceeds my expectations',
+      'important':'matters to me',
+    };
+    const low=adj.toLowerCase();
+    if(rewrites[low])return subj+' '+rewrites[low];
+    return subj+' appears '+adj+' from my perspective';
+  }},
+  {r:/\b(I|you|we|they|people)\s+are\s+(\w+)\b/gi,rewrite:(m,subj,adj)=>{
+    return subj+' behave in ways that seem '+adj+' to me';
+  }},
+  {r:/\b(\w+)\s+is\s+a\s+(\w+)\b/gi,rewrite:(m,subj,noun)=>{
+    return 'I categorize '+subj+' as a '+noun;
+  }},
+  {r:/\b(\w+)\s+is\s+the\s+(\w+)\b/gi,rewrite:(m,subj,rest)=>{
+    return subj+' functions as the '+rest+' in my understanding';
+  }},
+  {r:/\b(\w+)\s+was\s+(\w+)\b/gi,rewrite:(m,subj,rest)=>{
+    return subj+' appeared '+rest+' at that time';
+  }},
+  {r:/\b(\w+)\s+were\s+(\w+)\b/gi,rewrite:(m,subj,rest)=>{
+    return subj+' seemed '+rest+' at that time';
+  }},
+  {r:/\b(\w+)\s+are\s+(\w+)\b/gi,rewrite:(m,subj,rest)=>{
+    return subj+' appear '+rest+' to me';
+  }},
+  {r:/\b(\w+)\s+is\s+(\w+)\b/gi,rewrite:(m,subj,rest)=>{
+    return subj+' seems '+rest+' from my perspective';
+  }},
+];
+
+const toBeWords=/\b(is|are|was|were|isn't|aren't|wasn't|weren't)\b/gi;
+
+function convertEprime(){
+  const text=document.getElementById('eprime-input').value;
+  const beforeEl=document.getElementById('eprime-before');
+  const afterEl=document.getElementById('eprime-after');
+  const insightEl=document.getElementById('eprime-insight');
+
+  if(!text.trim()){
+    beforeEl.innerHTML='<span style="color:var(--muted);font-style:italic">Type above to see "to be" verbs highlighted…</span>';
+    afterEl.innerHTML='<span style="color:var(--muted);font-style:italic">…and the E-Prime alternative here.</span>';
+    insightEl.style.display='none';
+    return;
+  }
+
+  // Highlight to-be words in before
+  const highlighted=text.replace(toBeWords,'<span class="eprime-word">$1</span>');
+  beforeEl.innerHTML=highlighted;
+
+  // Check if any to-be verbs exist
+  if(!toBeWords.test(text)){
+    afterEl.innerHTML='<span style="color:var(--green)">✓ Already in E-Prime! No "to be" verbs found.</span>';
+    insightEl.innerHTML='This sentence already avoids the "to be" trap. The perceiver and their perspective remain visible.';
+    insightEl.style.display='block';
+    return;
+  }
+
+  // Try rewrites
+  let rewritten=text;
+  for(const pat of toBePatterns){
+    const re=new RegExp(pat.r.source,pat.r.flags);
+    rewritten=rewritten.replace(re,pat.rewrite);
+  }
+
+  if(rewritten===text){
+    // Fallback: generic rewrite suggestion
+    rewritten=text.replace(toBeWords,'<strong>[remove "to be"]</strong>');
+    afterEl.innerHTML='<span style="color:var(--amber)">'+rewritten+'</span><br><span style="font-size:.82rem;color:var(--muted)">Try rewriting to show WHO perceives and HOW they perceive it.</span>';
+  }else{
+    afterEl.innerHTML='<span style="color:var(--green)">'+esc(rewritten)+'</span>';
+  }
+
+  insightEl.innerHTML='<strong>What changed:</strong> The "to be" verb projects your perception onto reality as if it were a fact. The E-Prime version reveals the hidden perceiver — <em>you</em>. As Korzybski said: "The map is not the territory." The verb "is" pretends your map IS the territory.';
+  insightEl.style.display='block';
+}
+
+const eprimeExamples=[
+  'He is lazy','That movie is terrible','America is the greatest country',
+  'She is a genius','This is boring','They are wrong',
+  'Math is hard','War is inevitable','He was a criminal',
+  'The economy is failing','Love is blind','That is art',
+];
+const exEl=document.getElementById('eprime-examples');
+eprimeExamples.forEach(ex=>{
+  const b=document.createElement('button');
+  b.className='secondary';b.textContent=ex;
+  b.onclick=()=>{document.getElementById('eprime-input').value=ex;convertEprime()};
+  exEl.appendChild(b);
+});
+
+// ========== 4. QUESTION GENERATOR ==========
+const topics=[
+  {name:'Climate Change',pairs:[
+    {recall:'What percentage of scientists agree that climate change is real?',inquiry:'How do you decide what counts as evidence when experts disagree about the severity of a problem?',why:'The recall question has a number to memorize. The inquiry question teaches epistemology — how we evaluate evidence itself.'},
+    {recall:'What is the greenhouse effect?',inquiry:'If everyone agrees the planet is warming, why can\'t we agree on what to do about it? What does the disagreement reveal about us?',why:'The recall question defines a mechanism. The inquiry question examines why knowledge alone doesn\'t produce action — revealing values, economics, and power.'},
+    {recall:'List three renewable energy sources.',inquiry:'Who benefits from the current energy system? Who would benefit from a different one? How does that shape the conversation?',why:'The recall question catalogs facts. The inquiry question reveals that "energy policy" is really about power — in both senses of the word.'},
+    {recall:'What year was the Paris Climate Agreement signed?',inquiry:'Why do we keep making agreements about the future when we struggle to change behavior in the present? What does that tell us about how humans relate to time?',why:'A date vs. a question about human psychology. Which one helps you understand the problem?'},
+  ]},
+  {name:'AI & Technology',pairs:[
+    {recall:'What does AI stand for?',inquiry:'If a machine can write essays, what exactly were we testing when we graded student essays? Were we testing writing — or compliance?',why:'The recall question defines an acronym. The inquiry question forces us to re-examine what we thought education was for.'},
+    {recall:'Name three applications of machine learning.',inquiry:'When an algorithm makes a decision about your life (loan, job, parole), who is responsible? Can responsibility exist without a person?',why:'The recall question catalogs uses. The inquiry question examines accountability in systems where no individual decided.'},
+    {recall:'When was the first computer invented?',inquiry:'Every new communication technology — printing press, telegraph, radio, TV, internet — was initially feared. What pattern do you notice? Are the fears ever justified?',why:'A date vs. a pattern across centuries. Postman would love this question — it\'s media ecology in one sentence.'},
+    {recall:'What is a neural network?',inquiry:'If AI can generate text that sounds human, how do you know THIS text wasn\'t written by AI? What does that uncertainty do to trust?',why:'Technical definition vs. existential epistemology. The inquiry question IS the crap detector applied to AI.'},
+  ]},
+  {name:'Democracy',pairs:[
+    {recall:'Define democracy.',inquiry:'You spend 6+ hours a day in an institution where you have no vote, no voice in the rules, and no ability to leave. What would we call that if it were a country?',why:'A textbook definition vs. P&W\'s exact method: make students examine the system they\'re inside of.'},
+    {recall:'What are the three branches of government?',inquiry:'If democracy means "rule by the people," but most people can\'t explain how their government works, does democracy actually exist? What would it take for it to?',why:'Structural facts vs. a question about whether the concept matches reality. This is crap detection applied to civics.'},
+    {recall:'When did women get the right to vote in the US?',inquiry:'Rights that seem obvious now were once considered radical. What current "radical" ideas might seem obvious in 50 years? How can you tell the difference between genuine progress and fashion?',why:'A date vs. a question about historical perspective and epistemology.'},
+    {recall:'Name the current Supreme Court justices.',inquiry:'If nine people can overturn a law that millions voted for, how is that democratic? What assumption makes it feel acceptable?',why:'Name recall vs. examining foundational assumptions about authority.'},
+  ]},
+  {name:'History',pairs:[
+    {recall:'In what year did Columbus reach the Americas?',inquiry:'How do you "discover" a place where millions of people already live? What does the word "discovery" reveal about who\'s telling the story?',why:'P&W\'s exact example from the book. The inquiry method asks: "How do you discover who discovered America?"'},
+    {recall:'What were the causes of World War I?',inquiry:'If historians disagree about the causes of events that happened 100 years ago with extensive documentation, what does that tell us about our ability to understand current events in real time?',why:'A list vs. a question about the nature of historical knowledge itself.'},
+    {recall:'Who wrote the Declaration of Independence?',inquiry:'The person who wrote "all men are created equal" enslaved over 600 people. What do we do with that contradiction? Can we separate the idea from the person?',why:'Attribution vs. moral complexity. The inquiry question has no right answer — which is the point.'},
+    {recall:'What was the Industrial Revolution?',inquiry:'Every revolution creates winners and losers. Who won and who lost in each major revolution — agricultural, industrial, digital? Are we in one now? How would you know?',why:'Definition vs. pattern recognition across centuries.'},
+  ]},
+  {name:'Health',pairs:[
+    {recall:'What are the four food groups?',inquiry:'Who decided what the "food groups" are? Have they changed? Who funded the research? Whose economic interests align with the current recommendations?',why:'Memorize categories vs. examine who creates the categories and why.'},
+    {recall:'How many hours of sleep do adults need?',inquiry:'Why do schools start at 7:30 AM when research shows teenagers\' brains don\'t fully activate until 10? Whose convenience does the schedule serve?',why:'A number vs. a structural question about how institutions ignore their own stated purposes.'},
+    {recall:'Define "mental health."',inquiry:'If the criteria for "mental illness" have changed dramatically over the past century (homosexuality was a diagnosis until 1973), how do we know our current definitions are correct? What does "correct" even mean here?',why:'Definition vs. epistemological humility about shifting cultural norms.'},
+    {recall:'What is the immune system?',inquiry:'During a pandemic, why did people with access to the same information reach opposite conclusions? What does that reveal about how "information" actually works?',why:'Biological facts vs. a question about epistemology, trust, and media ecology.'},
+  ]},
+  {name:'Economics',pairs:[
+    {recall:'Define supply and demand.',inquiry:'If an economics textbook says people are "rational actors," but you\'ve never met a fully rational person, what happens when you build a system based on a model that doesn\'t match reality?',why:'Textbook definition vs. examining the assumptions baked into the discipline itself.'},
+    {recall:'What is GDP?',inquiry:'GDP counts pollution cleanup as economic growth. If we measure the wrong things, do we optimize for the wrong outcomes? Who benefits from the current measurement?',why:'Definition vs. questioning the measurement itself — which is pure crap detection.'},
+    {recall:'Name three types of economic systems.',inquiry:'Every economic system claims to be the most "natural." What does it mean for a human-created system to be "natural"? What work does that word do?',why:'Classification vs. language analysis — P&W\'s "languaging" applied to economics.'},
+    {recall:'What causes inflation?',inquiry:'When a CEO earns 350× their median employee, is that an economic outcome or a moral choice? At what point does an economic description become a moral judgment? Who benefits from pretending the line doesn\'t exist?',why:'Causal mechanism vs. examining the boundary between description and values.'},
+  ]},
+];
+
+let currentTopic=0;
+function showTopic(n){
+  currentTopic=n;
+  document.querySelectorAll('.q-topic-bar button').forEach((b,i)=>{
+    b.className=i===n?'primary':'secondary';
+  });
+  const t=topics[n];
+  const el=document.getElementById('q-display');
+  el.innerHTML=`<h3 style="color:var(--amber);margin:16px 0 8px">${t.name}</h3>`+
+    t.pairs.map(p=>`<div class="q-pair">
+      <div class="q-label q-recall">📋 RECALL QUESTION</div>
+      <div class="q-text" style="color:var(--red)">${p.recall}</div>
+      <div style="margin:8px 0;text-align:center;color:var(--dim)">vs.</div>
+      <div class="q-label q-inquiry">🔍 INQUIRY QUESTION</div>
+      <div class="q-text" style="color:var(--green)">${p.inquiry}</div>
+      <div class="q-why">${p.why}</div>
+    </div>`).join('');
+}
+showTopic(0);
+
+// ========== 5. MEDIUM LAB ==========
+function showMedium(n){
+  document.querySelectorAll('.medium-panel').forEach((p,i)=>{p.classList.toggle('active',i===n)});
+  document.querySelectorAll('.medium-tabs button').forEach((b,i)=>{b.classList.toggle('active',i===n)});
+}
+
+function updatePovSim(el,cat){
+  document.getElementById('pv-'+cat+'-val').textContent='$'+el.value;
+  const sliders=document.querySelectorAll('#poverty-sim input[type=range]');
+  let total=0;sliders.forEach(s=>total+=parseInt(s.value));
+  const remaining=1200-total;
+  const remEl=document.getElementById('pov-remaining');
+  remEl.textContent='Remaining: $'+remaining;
+  remEl.style.color=remaining<0?'var(--red)':remaining===0?'var(--green)':'var(--amber)';
+  const fb=document.getElementById('pov-feedback');
+  if(remaining<0){
+    fb.innerHTML='<div class="analysis-item t-loaded" style="margin-top:8px">You\'re $'+Math.abs(remaining)+' over budget. What do you cut? This is the daily reality of poverty — not a knowledge problem but a constraint problem. Every "choice" eliminates another.</div>';
+    fb.style.display='block';
+  }else if(parseInt(document.querySelector('#poverty-sim input[type=range]:nth-child(1) input')?.value||document.querySelectorAll('#poverty-sim input[type=range]')[4].value)<100){
+    fb.innerHTML='<div class="analysis-item t-claim" style="margin-top:8px">Notice: education got the smallest allocation. When survival needs compete with growth needs, survival wins. The textbook says "lack of education causes poverty." Your budget says: poverty causes lack of education.</div>';
+    fb.style.display='block';
+  }else{
+    fb.style.display='none';
+  }
+}
+
+// ========== 6. THERMOMETER ==========
+const thermLevels=[
+  {max:20,label:'Authoritarian',color:'var(--red)',desc:'Watson\'s research: this environment produces apathetic conformity, dependence on authority, scapegoating, and escape. Students learn they cannot learn. The hidden curriculum overwhelms any content.'},
+  {max:35,label:'Traditional',color:'var(--red)',desc:'The standard school model. Teacher talks, students listen, tests determine worth. "Children enter school as question marks and leave as periods." Questions are suppressed; recall is rewarded.'},
+  {max:50,label:'Cautiously Progressive',color:'var(--amber)',desc:'Some flexibility, some student voice, but the fundamental power structure remains. The teacher is still the gatekeeper of knowledge. Better than traditional, but the medium still teaches compliance.'},
+  {max:65,label:'Transitional',color:'var(--amber)',desc:'Moving toward inquiry but not yet there. Students have voice but not agency. Questions are welcome but don\'t drive the curriculum. The environment sends mixed messages.'},
+  {max:80,label:'Inquiry-Oriented',color:'var(--green)',desc:'Students ask substantive questions. Mistakes are explored. Multiple perspectives are valued. The environment teaches that learning is an active process of meaning-making. P&W would approve of the direction.'},
+  {max:100,label:'Subversive',color:'var(--green)',desc:'A fully Postman & Weingartner environment: students drive inquiry, questions are the curriculum, mistakes are celebrated, and the hidden curriculum teaches critical thinking, independence, and crap detection. "The new education has as its purpose the development of a new kind of person."'},
+];
+
+function updateTherm(){
+  const sliders=document.querySelectorAll('#therm-questions input[type=range]');
+  let sum=0;sliders.forEach(s=>sum+=parseInt(s.value));
+  const avg=Math.round(sum/sliders.length);
+  document.getElementById('therm-score').textContent=avg+'%';
+  document.getElementById('therm-marker').style.left=avg+'%';
+  const level=thermLevels.find(l=>avg<=l.max);
+  const labelEl=document.getElementById('therm-label');
+  labelEl.textContent=level.label;
+  labelEl.style.color=level.color;
+  document.getElementById('therm-score').style.color=level.color;
+  document.getElementById('therm-detail').innerHTML=level.desc;
+}
+updateTherm();
+
+// ========== 7. INQUIRY METHOD ==========
+const phenomena=[
+  {title:'The Ship of Theseus',desc:'A ship has every plank replaced, one by one, over years. When the last original plank is swapped out, is it the same ship?',data:'If yes: what makes it the same? If no: at which plank did it become a different ship? If someone rebuilt the original from the old planks, which is the "real" ship?'},
+  {title:'The Paradox of Tolerance',desc:'A society that tolerates everything will eventually be destroyed by the intolerant. But a society that doesn\'t tolerate intolerance… is itself intolerant.',data:'Karl Popper, 1945. Every democracy faces this. There is no clean solution.'},
+  {title:'90% of Species Are Gone',desc:'99.9% of all species that have ever lived on Earth are now extinct.',data:'Estimated 5 billion species have existed. About 8.7 million exist today. Life\'s default outcome is extinction.'},
+  {title:'The Dunning-Kruger Effect',desc:'People with the least knowledge about a subject tend to be the most confident about it. People with the most knowledge tend to be the least confident.',data:'Kruger & Dunning, 1999. The skills needed to produce correct responses are the same skills needed to recognize correct responses.'},
+  {title:'The Ames Room',desc:'Two people of identical height stand in a specially constructed room. One appears to be a giant; the other, tiny. Your eyes refuse to see them as the same size, even when you know the room is distorted.',data:'Adelbert Ames Jr. — central to Postman & Weingartner\'s argument. "We don\'t get our perceptions from things; our perceptions come from us."'},
+  {title:'The Coastline Paradox',desc:'The length of a coastline depends on the size of your ruler. The smaller the ruler, the longer the coastline. With a small enough ruler, every coastline approaches infinite length.',data:'Benoit Mandelbrot, 1967. The "true" length of any coastline is undefined. Measurement itself shapes the result.'},
+  {title:'The Overnight Expert',desc:'After a pandemic, millions of people with no epidemiological training became confident they understood viral transmission, vaccine mechanisms, and public health policy better than career researchers.',data:'This happened globally, 2020-2023. Social media provided the distribution mechanism. The crap detector was humanity\'s most needed and least available tool.'},
+  {title:'The Pygmalion Effect',desc:'Teachers were told that randomly selected students were about to experience dramatic intellectual growth. Those students\' IQ scores actually increased significantly.',data:'Rosenthal & Jacobson, 1968. The teachers\' expectations literally altered the students\' measured intelligence. Cited extensively by P&W.'},
+  {title:'Identical Twins, Different Lives',desc:'Identical twins separated at birth and raised in different environments show different personalities, beliefs, political views, and life outcomes — despite sharing 100% of their DNA.',data:'Minnesota Study of Twins Reared Apart. Nature provides potential; environment actualizes it. "Human nature" is a grammatical category, not a scientific one.'},
+  {title:'The Backwards Bicycle',desc:'An engineer modified a bicycle so the handlebars steer in reverse (turn left, wheel goes right). Despite understanding the mechanism perfectly, it took him 8 months of daily practice to ride it. His 6-year-old son learned in 2 weeks.',data:'Destin Sandlin, Smarter Every Day. Knowing is not the same as understanding. Understanding is not the same as being able to do.'},
+];
+
+let currentPhenom=0,inquiryQuestions=[],inquiryCount=0,recallCount=0;
+
+function newPhenomenon(){
+  currentPhenom=(currentPhenom+1)%phenomena.length;
+  renderPhenomenon();
+}
+
+function renderPhenomenon(){
+  const p=phenomena[currentPhenom];
+  document.getElementById('phenom-card').innerHTML=`<div class="phenom-title">${p.title}</div><div class="phenom-desc">${p.desc}</div><div class="phenom-data">${p.data}</div>`;
+}
+
+const recallIndicators=/^(what|when|where|who|which|how many|how much|name|list|define|what year|what date|is it true|did)\b/i;
+const inquiryIndicators=/\b(why|how does|how do|how can|how would|what if|what would|what does .+ (mean|reveal|tell|suggest|imply)|could|should|what happens|what causes|what.s the relationship|how might|what assumptions)\b/i;
+
+function rateQuestion(q){
+  const trimmed=q.trim();
+  if(!trimmed.endsWith('?'))return{rating:'recall',badge:'badge-recall',label:'Not a question — try ending with "?"'};
+  if(trimmed.split(' ').length<4)return{rating:'recall',badge:'badge-recall',label:'Too brief — dig deeper'};
+  if(inquiryIndicators.test(trimmed)){
+    if(trimmed.split(' ').length>8)return{rating:'excellent',badge:'badge-excellent',label:'Excellent inquiry question'};
+    return{rating:'good',badge:'badge-good',label:'Good inquiry question'};
+  }
+  if(recallIndicators.test(trimmed))return{rating:'recall',badge:'badge-recall',label:'Recall question — try "why" or "what if"'};
+  return{rating:'good',badge:'badge-good',label:'Good question'};
+}
+
+function submitQuestion(){
+  const input=document.getElementById('inquiry-input');
+  const q=input.value.trim();
+  if(!q)return;
+  const rating=rateQuestion(q);
+  inquiryQuestions.unshift({text:q,...rating});
+  if(rating.rating==='recall')recallCount++;else inquiryCount++;
+  input.value='';
+  renderInquiryList();
+}
+
+function renderInquiryList(){
+  const total=inquiryCount+recallCount;
+  const statsEl=document.getElementById('q-stats');
+  if(total>0){
+    statsEl.style.display='flex';
+    document.getElementById('stat-total').textContent=total;
+    document.getElementById('stat-inquiry').textContent=inquiryCount;
+    document.getElementById('stat-recall').textContent=recallCount;
+    document.getElementById('stat-pct').textContent=Math.round(inquiryCount/total*100)+'%';
+  }
+  const list=document.getElementById('inquiry-list');
+  list.innerHTML=inquiryQuestions.map(q=>`<div class="q-entry"><div class="q-text">${esc(q.text)}</div><span class="q-badge ${q.badge}">${q.label}</span></div>`).join('');
+}
+
+renderPhenomenon();
+</script>
+</body>
+</html>

@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vehicles Laboratory — Braitenberg Interactive</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a24;--surface3:#222230;
+--text:#e0e0e8;--dim:#888;--muted:#555;
+--accent:#ff6b35;--gold:#ffd166;--green:#06d6a0;--blue:#118ab2;
+--love:#ef476f;--fear:#ffd166;--aggro:#ff6b35;--explore:#06d6a0;
+--r:10px;--rs:6px;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:var(--rs);padding:10px 18px;font-size:13px;font-weight:600;transition:all .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+canvas{display:block;touch-action:none}
+input[type=range]{accent-color:var(--accent)}
+
+/* Layout */
+.lab-container{max-width:1200px;margin:0 auto;padding:0 16px}
+
+/* Header */
+.lab-header{padding:40px 0 20px;text-align:center;border-bottom:1px solid #1a1a24}
+.lab-header h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#ff6b35,#ffd166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lab-header p{color:var(--dim);font-size:.9rem;margin-top:4px}
+
+/* Tab Nav */
+.tab-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(16px);border-bottom:1px solid #1a1a24;padding:8px 0}
+.tab-nav .lab-container{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tab-nav .lab-container::-webkit-scrollbar{display:none}
+.tab-btn{white-space:nowrap;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--dim);background:transparent;min-height:36px}
+.tab-btn:hover{color:var(--text);background:var(--surface2)}
+.tab-btn.active{color:#000;background:var(--accent)}
+
+/* Panels */
+.panel{display:none;padding:24px 0 60px}
+.panel.active{display:block}
+.panel-title{font-size:clamp(1.3rem,3vw,1.8rem);font-weight:800;margin-bottom:4px}
+.panel-desc{color:var(--dim);font-size:.85rem;margin-bottom:20px}
+.panel-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+
+/* Sim Canvas */
+.sim-wrap{position:relative;background:#08080d;border-radius:var(--r);border:1px solid #1e1e2a;overflow:hidden;margin-bottom:12px}
+.sim-canvas{width:100%;height:400px}
+@media(min-width:768px){.sim-canvas{height:500px}}
+.sim-overlay{position:absolute;top:8px;left:8px;font-size:11px;color:var(--dim);background:rgba(10,10,15,.7);padding:4px 8px;border-radius:4px;pointer-events:none}
+
+/* Control panels */
+.ctrl-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ctrl-group{background:var(--surface);border-radius:var(--rs);padding:12px;flex:1;min-width:180px}
+.ctrl-group label{display:block;font-size:.7rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.btn-row{display:flex;gap:4px;flex-wrap:wrap}
+.btn-sm{padding:7px 12px;font-size:12px;background:var(--surface2);color:var(--dim);border:1px solid #2a2a36;min-height:32px}
+.btn-sm:hover{background:var(--surface3);color:var(--text)}
+.btn-sm.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn-preset{padding:7px 14px;border-radius:14px;font-size:12px;font-weight:700;background:transparent;border:2px solid;min-height:32px}
+.btn-preset.p-fear{border-color:var(--fear);color:var(--fear)}.btn-preset.p-fear:hover,.btn-preset.p-fear.active{background:var(--fear);color:#000}
+.btn-preset.p-aggro{border-color:var(--aggro);color:var(--aggro)}.btn-preset.p-aggro:hover,.btn-preset.p-aggro.active{background:var(--aggro);color:#000}
+.btn-preset.p-love{border-color:var(--love);color:var(--love)}.btn-preset.p-love:hover,.btn-preset.p-love.active{background:var(--love);color:#000}
+.btn-preset.p-explore{border-color:var(--explore);color:var(--explore)}.btn-preset.p-explore:hover,.btn-preset.p-explore.active{background:var(--explore);color:#000}
+.status-bar{padding:8px 12px;background:var(--surface);border-radius:var(--rs);font-size:.85rem;color:var(--dim);text-align:center;margin-bottom:12px}
+.status-bar .name{color:var(--gold);font-weight:700}
+
+/* Wiring Diagram */
+.wiring-svg{width:100%;max-width:400px;margin:0 auto;display:block}
+
+/* Cards */
+.card{background:var(--surface);border-radius:var(--r);padding:16px;border:1px solid #1e1e2a;margin-bottom:10px}
+.card h3{font-size:1rem;margin-bottom:6px}
+.card p{color:var(--dim);font-size:.85rem}
+
+/* Vehicle catalog grid */
+.v-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.v-card{background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid #1e1e2a;cursor:pointer;transition:all .15s}
+.v-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.v-card.active{border-color:var(--accent);box-shadow:0 0 20px rgba(255,107,53,.15)}
+.v-card .num{font-size:1.6rem;font-weight:900;color:var(--accent);line-height:1}
+.v-card .vname{font-size:.95rem;font-weight:700;margin:4px 0 2px}
+.v-card .vpsych{color:var(--gold);font-size:.75rem;font-weight:600}
+.v-card .vdesc{color:var(--dim);font-size:.78rem;margin-top:4px}
+
+/* Attribution game */
+.attr-options{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+.attr-btn{padding:12px 20px;border-radius:var(--rs);background:var(--surface2);border:2px solid #2a2a36;color:var(--text);font-size:14px;font-weight:600;min-width:100px;transition:all .2s}
+.attr-btn:hover{border-color:var(--accent)}
+.attr-btn.selected{border-color:var(--gold);background:rgba(255,209,102,.1)}
+.attr-btn.correct{border-color:var(--green);background:rgba(6,214,160,.1);color:var(--green)}
+.attr-btn.wrong{border-color:var(--love);background:rgba(239,71,111,.1);color:var(--love)}
+.reveal-box{background:var(--surface);border-radius:var(--r);padding:20px;text-align:center;margin-top:16px;border:1px solid #1e1e2a}
+
+/* Evolution */
+.evo-stats{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
+.evo-stat{background:var(--surface);border-radius:var(--rs);padding:8px 12px;text-align:center;flex:1;min-width:80px}
+.evo-stat .val{font-size:1.3rem;font-weight:800;color:var(--accent)}
+.evo-stat .lbl{font-size:.7rem;color:var(--dim);text-transform:uppercase}
+
+/* Downhill */
+.downhill-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.downhill-cols{grid-template-columns:1fr}}
+
+/* Quote */
+blockquote{border-left:3px solid var(--accent);padding:12px 16px;margin:16px 0;background:var(--surface);border-radius:0 var(--rs) var(--rs) 0;font-style:italic;color:var(--dim);font-size:.85rem}
+blockquote cite{display:block;margin-top:6px;font-style:normal;color:var(--accent);font-size:.78rem}
+
+/* Footer */
+footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.8rem;border-top:1px solid #1a1a24}
+</style>
+</head>
+<body>
+
+<div class="lab-header">
+<div class="lab-container">
+<h1>🧪 Vehicles Laboratory</h1>
+<p>Braitenberg's Experiments in Synthetic Psychology — Interactive</p>
+</div>
+</div>
+
+<nav class="tab-nav">
+<div class="lab-container">
+<button class="tab-btn active" onclick="showTab('builder')">🔧 Builder</button>
+<button class="tab-btn" onclick="showTab('vehicles')">📖 14 Vehicles</button>
+<button class="tab-btn" onclick="showTab('wiring')">⚡ Wiring</button>
+<button class="tab-btn" onclick="showTab('evolution')">🧬 Evolution</button>
+<button class="tab-btn" onclick="showTab('attribution')">🎭 Attribution</button>
+<button class="tab-btn" onclick="showTab('ecosystem')">🌍 Ecosystem</button>
+<button class="tab-btn" onclick="showTab('downhill')">⛰️ Downhill</button>
+</div>
+</nav>
+
+<!-- ==================== 1. VEHICLE BUILDER ==================== -->
+<div class="panel active" id="panel-builder">
+<div class="lab-container">
+<div class="panel-label">The Workshop</div>
+<h2 class="panel-title">Vehicle Builder</h2>
+<p class="panel-desc">Wire sensors to motors. Tap canvas to place/drag light sources. Watch behavior emerge from structure.</p>
+
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="builderCanvas"></canvas>
+<div class="sim-overlay" id="builderOverlay">Tap to add lights · Drag to move</div>
+</div>
+
+<div class="status-bar">
+<span class="name" id="builderBehavior">Select a preset or configure wiring</span>
+<div id="builderDesc" style="margin-top:2px;font-size:.78rem;">Click canvas to place light sources</div>
+</div>
+
+<div class="ctrl-bar">
+<div class="ctrl-group">
+<label>Presets</label>
+<div class="btn-row">
+<button class="btn-preset p-fear" onclick="builderPreset('coward')">😰 Coward</button>
+<button class="btn-preset p-aggro" onclick="builderPreset('aggro')">😡 Aggro</button>
+<button class="btn-preset p-love" onclick="builderPreset('love')">❤️ Love</button>
+<button class="btn-preset p-explore" onclick="builderPreset('explorer')">🧭 Explorer</button>
+</div>
+</div>
+</div>
+
+<div class="ctrl-bar">
+<div class="ctrl-group">
+<label>Wiring</label>
+<div class="btn-row">
+<button class="btn-sm active" id="b-direct" onclick="bSetWire('direct')">Ipsilateral</button>
+<button class="btn-sm" id="b-crossed" onclick="bSetWire('crossed')">Contralateral</button>
+</div>
+</div>
+<div class="ctrl-group">
+<label>Connection</label>
+<div class="btn-row">
+<button class="btn-sm active" id="b-excit" onclick="bSetConn('excitatory')">Excitatory (+)</button>
+<button class="btn-sm" id="b-inhib" onclick="bSetConn('inhibitory')">Inhibitory (−)</button>
+</div>
+</div>
+<div class="ctrl-group">
+<label>Sensor Type</label>
+<div class="btn-row">
+<button class="btn-sm active" id="b-light" onclick="bSetSensor('light')">💡 Light</button>
+<button class="btn-sm" id="b-heat" onclick="bSetSensor('heat')">🔥 Heat</button>
+<button class="btn-sm" id="b-chem" onclick="bSetSensor('chemical')">🧪 Chem</button>
+</div>
+</div>
+<div class="ctrl-group">
+<label>Actions</label>
+<div class="btn-row">
+<button class="btn-sm" onclick="bToggle()" id="b-go">▶ Go</button>
+<button class="btn-sm" onclick="bReset()">↺ Reset</button>
+<button class="btn-sm" onclick="bAddVeh()">+ Vehicle</button>
+<button class="btn-sm" onclick="bClearLights()">🗑 Lights</button>
+</div>
+</div>
+</div>
+
+<div style="margin-top:8px;">
+<label style="font-size:.75rem;color:var(--dim)">Speed: </label>
+<input type="range" id="b-speed" min="1" max="5" value="2" style="width:120px;vertical-align:middle">
+<label style="font-size:.75rem;color:var(--dim);margin-left:16px">Gain: </label>
+<input type="range" id="b-gain" min="1" max="10" value="5" style="width:120px;vertical-align:middle">
+</div>
+</div>
+</div>
+
+<!-- ==================== 2. THE 14 VEHICLES ==================== -->
+<div class="panel" id="panel-vehicles">
+<div class="lab-container">
+<div class="panel-label">The Progression</div>
+<h2 class="panel-title">The 14 Vehicles</h2>
+<p class="panel-desc">Each vehicle adds one mechanism. Click to simulate. Tap canvas to add/remove light sources.</p>
+
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="vehiclesCanvas"></canvas>
+<div class="sim-overlay" id="vehOverlay">Select a vehicle below</div>
+</div>
+<div class="status-bar" id="vehStatus">Click a vehicle card to see it in action</div>
+
+<div class="v-grid" id="vGrid"></div>
+</div>
+</div>
+
+<!-- ==================== 3. WIRING DIAGRAM ==================== -->
+<div class="panel" id="panel-wiring">
+<div class="lab-container">
+<div class="panel-label">The Circuit Editor</div>
+<h2 class="panel-title">Wiring Diagram</h2>
+<p class="panel-desc">Change a single wire and watch behavior flip. Tiny structural changes → dramatic personality shifts.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+<div>
+<div class="card" style="text-align:center;padding:24px">
+<h3 style="margin-bottom:16px">Click wires to toggle</h3>
+<canvas id="wiringDiagram" width="360" height="300" style="width:100%;max-width:360px;background:#08080d;border-radius:8px;cursor:pointer"></canvas>
+<div style="margin-top:12px">
+<div class="btn-row" style="justify-content:center">
+<button class="btn-sm" onclick="wFlip('wiring')">Flip Wiring</button>
+<button class="btn-sm" onclick="wFlip('connection')">Flip Connection</button>
+<button class="btn-sm" onclick="wFlip('both')">Flip Both</button>
+</div>
+</div>
+<div id="wiringLabel" style="margin-top:12px;font-size:.9rem;color:var(--gold);font-weight:700">Direct + Excitatory = COWARD</div>
+</div>
+</div>
+<div>
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="wiringCanvas" style="height:300px"></canvas>
+</div>
+<div class="status-bar" id="wiringStatus">Wiring: Direct + Excitatory → COWARD</div>
+</div>
+</div>
+
+<blockquote>"When we analyze a mechanism, we tend to overestimate its complexity."<cite>— Braitenberg, Vehicle 5</cite></blockquote>
+</div>
+</div>
+
+<!-- ==================== 4. EVOLUTION CHAMBER ==================== -->
+<div class="panel" id="panel-evolution">
+<div class="lab-container">
+<div class="panel-label">Complexity from Simplicity</div>
+<h2 class="panel-title">Evolution Chamber</h2>
+<p class="panel-desc">Vehicles on a table. Fall off = death. Survivors reproduce with mutations. Watch intelligence evolve.</p>
+
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="evoCanvas"></canvas>
+<div class="sim-overlay" id="evoOverlay">Generation 0</div>
+</div>
+
+<div class="evo-stats">
+<div class="evo-stat"><div class="val" id="evoGen">0</div><div class="lbl">Generation</div></div>
+<div class="evo-stat"><div class="val" id="evoAlive">0</div><div class="lbl">Alive</div></div>
+<div class="evo-stat"><div class="val" id="evoBest">0</div><div class="lbl">Best Fitness</div></div>
+<div class="evo-stat"><div class="val" id="evoAvg">0</div><div class="lbl">Avg Fitness</div></div>
+</div>
+
+<div class="ctrl-bar">
+<div class="ctrl-group">
+<label>Controls</label>
+<div class="btn-row">
+<button class="btn-sm" onclick="evoToggle()" id="evo-go">▶ Start</button>
+<button class="btn-sm" onclick="evoReset()">↺ Reset</button>
+<button class="btn-sm" onclick="evoFast()">⏩ Fast</button>
+</div>
+</div>
+<div class="ctrl-group">
+<label>Mutation Rate</label>
+<input type="range" id="evoMut" min="1" max="50" value="15" style="width:100%">
+</div>
+</div>
+
+<blockquote>"Where there has been no conscious engineering at all… analysis will necessarily produce the feeling of a mysterious supernatural hand guiding the creation."<cite>— Braitenberg, Vehicle 6</cite></blockquote>
+</div>
+</div>
+
+<!-- ==================== 5. ATTRIBUTION GAME ==================== -->
+<div class="panel" id="panel-attribution">
+<div class="lab-container">
+<div class="panel-label">Confront Your Anthropomorphism</div>
+<h2 class="panel-title">Attribution Game</h2>
+<p class="panel-desc">Watch a vehicle behave. Label it. Then see what's really inside: 2 sensors, 2 motors, 1 wire.</p>
+
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="attrCanvas" style="height:350px"></canvas>
+</div>
+
+<div style="text-align:center;margin:16px 0">
+<p style="font-size:1rem;font-weight:600;margin-bottom:12px" id="attrPrompt">What word describes this vehicle's behavior?</p>
+<div class="attr-options" id="attrOptions"></div>
+<div id="attrFeedback"></div>
+</div>
+
+<div class="ctrl-bar" style="justify-content:center">
+<button class="btn-sm" onclick="attrNext()" id="attrNextBtn" style="padding:10px 24px;font-size:14px">Next Vehicle →</button>
+</div>
+
+<div id="attrScore" style="text-align:center;color:var(--dim);font-size:.85rem;margin-top:8px"></div>
+</div>
+</div>
+
+<!-- ==================== 6. MULTI-VEHICLE ECOSYSTEM ==================== -->
+<div class="panel" id="panel-ecosystem">
+<div class="lab-container">
+<div class="panel-label">Emergent Social Behavior</div>
+<h2 class="panel-title">Multi-Vehicle Ecosystem</h2>
+<p class="panel-desc">Drop vehicles with different wirings into one world. Watch flocking, avoidance, and competition emerge.</p>
+
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="ecoCanvas" style="height:450px"></canvas>
+<div class="sim-overlay" id="ecoOverlay">Tap canvas to add lights</div>
+</div>
+
+<div class="ctrl-bar">
+<div class="ctrl-group">
+<label>Add Vehicles</label>
+<div class="btn-row">
+<button class="btn-preset p-fear btn-sm" onclick="ecoAdd('coward')">+😰 Coward</button>
+<button class="btn-preset p-aggro btn-sm" onclick="ecoAdd('aggro')">+😡 Aggro</button>
+<button class="btn-preset p-love btn-sm" onclick="ecoAdd('love')">+❤️ Love</button>
+<button class="btn-preset p-explore btn-sm" onclick="ecoAdd('explorer')">+🧭 Explorer</button>
+<button class="btn-sm" onclick="ecoAdd('random')">+🎲 Random</button>
+</div>
+</div>
+<div class="ctrl-group">
+<label>World</label>
+<div class="btn-row">
+<button class="btn-sm" onclick="ecoToggle()" id="eco-go">▶ Go</button>
+<button class="btn-sm" onclick="ecoReset()">↺ Reset</button>
+<button class="btn-sm" onclick="ecoClear()">🗑 Clear All</button>
+<button class="btn-sm" onclick="ecoScatter()">💡 Scatter Lights</button>
+</div>
+</div>
+</div>
+
+<div id="ecoLegend" style="display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--dim);margin-top:8px"></div>
+</div>
+</div>
+
+<!-- ==================== 7. DOWNHILL PRINCIPLE ==================== -->
+<div class="panel" id="panel-downhill">
+<div class="lab-container">
+<div class="panel-label">Braitenberg's Key Insight</div>
+<h2 class="panel-title">The Downhill Principle</h2>
+<p class="panel-desc">Synthesis is easy. Analysis is hard. Build behavior from parts, then try to reverse-engineer it.</p>
+
+<div class="downhill-cols">
+<div>
+<div class="card">
+<h3>🔽 Downhill: Build It</h3>
+<p>You know the wiring. Predict the behavior. <em>Easy.</em></p>
+</div>
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="downBuildCanvas" style="height:280px"></canvas>
+</div>
+<div style="text-align:center;margin:8px 0">
+<div class="btn-row" style="justify-content:center">
+<button class="btn-sm" onclick="downNewBuild()">New Wiring</button>
+</div>
+<div id="downBuildLabel" style="margin-top:6px;font-size:.85rem;color:var(--gold);font-weight:600"></div>
+</div>
+</div>
+<div>
+<div class="card">
+<h3>🔼 Uphill: Guess It</h3>
+<p>You see the behavior. Guess the wiring. <em>Hard.</em></p>
+</div>
+<div class="sim-wrap">
+<canvas class="sim-canvas" id="downGuessCanvas" style="height:280px"></canvas>
+</div>
+<div style="text-align:center;margin:8px 0">
+<div class="btn-row" style="justify-content:center">
+<button class="btn-preset p-fear btn-sm" onclick="downGuess('coward')">Coward</button>
+<button class="btn-preset p-aggro btn-sm" onclick="downGuess('aggro')">Aggro</button>
+<button class="btn-preset p-love btn-sm" onclick="downGuess('love')">Love</button>
+<button class="btn-preset p-explore btn-sm" onclick="downGuess('explorer')">Explorer</button>
+</div>
+<div id="downGuessResult" style="margin-top:6px;font-size:.85rem;font-weight:600"></div>
+<div class="btn-row" style="justify-content:center;margin-top:6px">
+<button class="btn-sm" onclick="downNewGuess()">New Mystery</button>
+</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:16px">
+<div id="downScore" style="text-align:center;color:var(--dim);font-size:.85rem"></div>
+<blockquote>"It is pleasurable and easy to create little machines that do certain tricks. But it is much more difficult to start from the outside and to try to guess internal structure just from the observation of behavior."<cite>— Braitenberg, Vehicle 5</cite></blockquote>
+</div>
+</div>
+</div>
+
+<footer>
+<div class="lab-container">
+<p>Interactive laboratory for <em>Vehicles: Experiments in Synthetic Psychology</em> by Valentino Braitenberg (1984)</p>
+<p style="margin-top:4px;font-style:italic">"Get used to a way of thinking in which the hardware of the realization of an idea is much less important than the idea itself."</p>
+</div>
+</footer>
+
+<script>
+// ==================== SHARED UTILITIES ====================
+const TAU=Math.PI*2;
+const dpr=window.devicePixelRatio||1;
+
+function setupCanvas(c){
+  const r=c.getBoundingClientRect();
+  c.width=r.width*dpr;c.height=r.height*dpr;
+  const ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return{ctx,w:r.width,h:r.height};
+}
+
+function cPos(c,e){
+  const r=c.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return{x:t.clientX-r.left,y:t.clientY-r.top};
+}
+
+function drawGrid(ctx,w,h){
+  ctx.strokeStyle='#0e0e16';ctx.lineWidth=.5;
+  for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+  for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+}
+
+function drawLight(ctx,l,color='#ffd166'){
+  const g=ctx.createRadialGradient(l.x,l.y,0,l.x,l.y,100);
+  g.addColorStop(0,color+'33');g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(l.x,l.y,100,0,TAU);ctx.fill();
+  ctx.beginPath();ctx.arc(l.x,l.y,l.r||10,0,TAU);
+  ctx.fillStyle=color;ctx.fill();
+  ctx.strokeStyle=color+'aa';ctx.lineWidth=1.5;ctx.stroke();
+  for(let a=0;a<TAU;a+=Math.PI/4){
+    ctx.beginPath();ctx.moveTo(l.x+Math.cos(a)*14,l.y+Math.sin(a)*14);
+    ctx.lineTo(l.x+Math.cos(a)*22,l.y+Math.sin(a)*22);ctx.stroke();
+  }
+}
+
+const sourceColors={light:'#ffd166',heat:'#ff6b35',chemical:'#06d6a0'};
+
+function drawVehicle(ctx,v,color='#ff6b35',showWiring=true){
+  ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.angle);
+  // Body
+  ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-10,-8);ctx.lineTo(-10,8);ctx.closePath();
+  ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=color+'aa';ctx.lineWidth=1;ctx.stroke();
+  // Eyes
+  ctx.fillStyle='#ffd166';
+  ctx.beginPath();ctx.arc(6,-6,2.5,0,TAU);ctx.fill();
+  ctx.beginPath();ctx.arc(6,6,2.5,0,TAU);ctx.fill();
+  // Wiring
+  if(showWiring&&v.wiring){
+    const isExcit=v.connection==='excitatory';
+    ctx.strokeStyle=isExcit?'rgba(255,100,50,.5)':'rgba(6,214,160,.5)';
+    ctx.lineWidth=1;ctx.setLineDash([2,2]);
+    if(v.wiring==='direct'){
+      ctx.beginPath();ctx.moveTo(6,-6);ctx.lineTo(-10,-6);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(6,6);ctx.lineTo(-10,6);ctx.stroke();
+    }else{
+      ctx.beginPath();ctx.moveTo(6,-6);ctx.lineTo(-10,6);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(6,6);ctx.lineTo(-10,-6);ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+function sensorVal(veh,side,lights){
+  const off=side==='left'?Math.PI/6:-Math.PI/6;
+  const sx=veh.x+Math.cos(veh.angle+off)*10;
+  const sy=veh.y+Math.sin(veh.angle+off)*10;
+  let t=0;
+  for(const l of lights){
+    const dx=l.x-sx,dy=l.y-sy;
+    t+=5000/(dx*dx+dy*dy+100);
+  }
+  return t;
+}
+
+function stepVehicle(v,lights,dt=1,speedMult=1){
+  const isInhib=v.connection==='inhibitory';
+  const base=(isInhib?2.5:.3)*speedMult;
+  const gain=(isInhib?-1.8:1.5)*speedMult;
+  const sL=sensorVal(v,'left',lights);
+  const sR=sensorVal(v,'right',lights);
+  let mL,mR;
+  if(v.wiring==='direct'){mL=base+gain*sL;mR=base+gain*sR}
+  else{mL=base+gain*sR;mR=base+gain*sL}
+  mL=Math.max(0,mL)+(Math.random()-.5)*.08;
+  mR=Math.max(0,mR)+(Math.random()-.5)*.08;
+  v.angle+=(mR-mL)*.04*dt;
+  v.x+=Math.cos(v.angle)*((mL+mR)/2)*dt;
+  v.y+=Math.sin(v.angle)*((mL+mR)/2)*dt;
+}
+
+function wrapVeh(v,w,h){
+  if(v.x<-20)v.x=w+20;if(v.x>w+20)v.x=-20;
+  if(v.y<-20)v.y=h+20;if(v.y>h+20)v.y=-20;
+}
+
+function drawTrail(ctx,trail,color='rgba(255,107,53,.2)'){
+  if(trail.length<2)return;
+  ctx.beginPath();ctx.moveTo(trail[0].x,trail[0].y);
+  for(let i=1;i<trail.length;i++)ctx.lineTo(trail[i].x,trail[i].y);
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+}
+
+const presetMap={
+  coward:{wiring:'direct',connection:'excitatory',name:'COWARD (2a)',desc:'Turns away, flees',color:'#ffd166'},
+  aggro:{wiring:'crossed',connection:'excitatory',name:'AGGRESSIVE (2b)',desc:'Charges and rams',color:'#ff6b35'},
+  love:{wiring:'direct',connection:'inhibitory',name:'LOVE (3a)',desc:'Approaches gently, rests gazing',color:'#ef476f'},
+  explorer:{wiring:'crossed',connection:'inhibitory',name:'EXPLORER (3b)',desc:'Rests facing away, drifts on',color:'#06d6a0'},
+};
+
+function makeVeh(x,y,preset='coward'){
+  const p=presetMap[preset]||presetMap.coward;
+  return{x,y,angle:Math.random()*TAU,wiring:p.wiring,connection:p.connection,trail:[],preset,color:p.color};
+}
+
+// ==================== TAB SYSTEM ====================
+let activeTab='builder';
+function showTab(t){
+  activeTab=t;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',b.textContent.toLowerCase().includes(t.slice(0,4)));
+  });
+  // Use a simpler approach
+  const tabs=['builder','vehicles','wiring','evolution','attribution','ecosystem','downhill'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',tabs[i]===t);
+  });
+  // Init panels on first show
+  if(t==='vehicles'&&!vehInited)initVehicles();
+  if(t==='wiring'&&!wiringInited)initWiring();
+  if(t==='evolution'&&!evoInited)initEvo();
+  if(t==='attribution'&&!attrInited)initAttr();
+  if(t==='ecosystem'&&!ecoInited)initEco();
+  if(t==='downhill'&&!downInited)initDownhill();
+  // Resize canvases
+  setTimeout(()=>window.dispatchEvent(new Event('resize')),50);
+}
+
+// ==================== 1. BUILDER ====================
+let bCanvas,bCtx,bW,bH;
+let bLights=[],bVehs=[],bRunning=false,bDrag=null,bAnimId=null;
+let bWire='direct',bConn='excitatory',bSensorType='light';
+
+function bInit(){
+  const c=document.getElementById('builderCanvas');
+  bCanvas=c;
+  const s=setupCanvas(c);bCtx=s.ctx;bW=s.w;bH=s.h;
+  bLights=[{x:bW*.7,y:bH*.3,r:10,type:'light'}];
+  bVehs=[makeVeh(bW*.25,bH*.6,'coward')];
+  bDraw();
+
+  c.addEventListener('pointerdown',e=>{
+    const p=cPos(c,e);
+    const hit=bLights.find(l=>(l.x-p.x)**2+(l.y-p.y)**2<400);
+    if(hit){bDrag=hit}else{bLights.push({x:p.x,y:p.y,r:10,type:bSensorType});bDraw()}
+  });
+  c.addEventListener('pointermove',e=>{if(bDrag){const p=cPos(c,e);bDrag.x=p.x;bDrag.y=p.y;if(!bRunning)bDraw()}});
+  c.addEventListener('pointerup',()=>bDrag=null);
+  c.addEventListener('pointercancel',()=>bDrag=null);
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='builder')return;
+    const s=setupCanvas(bCanvas);bCtx=s.ctx;bW=s.w;bH=s.h;bDraw();
+  });
+}
+
+function bDraw(){
+  bCtx.clearRect(0,0,bW,bH);drawGrid(bCtx,bW,bH);
+  for(const l of bLights)drawLight(bCtx,l,sourceColors[l.type]||'#ffd166');
+  for(const v of bVehs){
+    drawTrail(bCtx,v.trail);
+    drawVehicle(bCtx,v,v.color||'#ff6b35');
+  }
+}
+
+function bTick(){
+  if(!bRunning){bAnimId=null;return}
+  const sp=+document.getElementById('b-speed').value;
+  const gn=+document.getElementById('b-gain').value/5;
+  for(const v of bVehs){
+    // Filter lights by sensor type
+    const relevant=bLights.filter(l=>l.type===bSensorType||bSensorType==='light');
+    stepVehicle(v,relevant,sp*.5,gn);
+    wrapVeh(v,bW,bH);
+    v.trail.push({x:v.x,y:v.y});
+    if(v.trail.length>400)v.trail.shift();
+  }
+  bDraw();
+  bAnimId=requestAnimationFrame(bTick);
+}
+
+function bToggle(){
+  bRunning=!bRunning;
+  document.getElementById('b-go').textContent=bRunning?'⏸ Pause':'▶ Go';
+  document.getElementById('b-go').classList.toggle('active',bRunning);
+  if(bRunning&&!bAnimId)bTick();
+}
+
+function bReset(){
+  bRunning=false;if(bAnimId)cancelAnimationFrame(bAnimId);bAnimId=null;
+  document.getElementById('b-go').textContent='▶ Go';
+  document.getElementById('b-go').classList.remove('active');
+  bLights=[{x:bW*.7,y:bH*.3,r:10,type:bSensorType}];
+  bVehs=[makeVeh(bW*.25,bH*.6,Object.keys(presetMap).find(k=>presetMap[k].wiring===bWire&&presetMap[k].connection===bConn)||'coward')];
+  bDraw();
+}
+
+function bAddVeh(){bVehs.push(makeVeh(bW*(.1+Math.random()*.8),bH*(.1+Math.random()*.8),
+  Object.keys(presetMap).find(k=>presetMap[k].wiring===bWire&&presetMap[k].connection===bConn)||'coward'));bDraw()}
+function bClearLights(){bLights=[];bDraw()}
+
+function bSetWire(w){
+  bWire=w;
+  document.getElementById('b-direct').classList.toggle('active',w==='direct');
+  document.getElementById('b-crossed').classList.toggle('active',w==='crossed');
+  bVehs.forEach(v=>{v.wiring=w;const p=Object.entries(presetMap).find(([k,pp])=>pp.wiring===w&&pp.connection===bConn);if(p)v.color=p[1].color});
+  bUpdateLabel();if(!bRunning)bDraw();
+}
+function bSetConn(c){
+  bConn=c;
+  document.getElementById('b-excit').classList.toggle('active',c==='excitatory');
+  document.getElementById('b-inhib').classList.toggle('active',c==='inhibitory');
+  bVehs.forEach(v=>{v.connection=c;const p=Object.entries(presetMap).find(([k,pp])=>pp.wiring===bWire&&pp.connection===c);if(p)v.color=p[1].color});
+  bUpdateLabel();if(!bRunning)bDraw();
+}
+function bSetSensor(s){
+  bSensorType=s;
+  ['light','heat','chemical'].forEach(t=>document.getElementById('b-'+t.slice(0,4).replace('chem','chem')).classList.remove('active'));
+  document.getElementById('b-'+s.slice(0,4)).classList.add('active');
+}
+// Fix sensor button ids
+function bUpdateLabel(){
+  const p=Object.values(presetMap).find(pp=>pp.wiring===bWire&&pp.connection===bConn);
+  if(p){
+    document.getElementById('builderBehavior').textContent=p.name;
+    document.getElementById('builderBehavior').style.color=p.color;
+    document.getElementById('builderDesc').textContent=p.desc;
+  }
+}
+function builderPreset(k){
+  const p=presetMap[k];if(!p)return;
+  bWire=p.wiring;bConn=p.connection;
+  document.getElementById('b-direct').classList.toggle('active',bWire==='direct');
+  document.getElementById('b-crossed').classList.toggle('active',bWire==='crossed');
+  document.getElementById('b-excit').classList.toggle('active',bConn==='excitatory');
+  document.getElementById('b-inhib').classList.toggle('active',bConn==='inhibitory');
+  bVehs.forEach(v=>{v.wiring=p.wiring;v.connection=p.connection;v.color=p.color;v.trail=[]});
+  document.querySelectorAll('.btn-preset').forEach(b=>b.classList.remove('active'));
+  bUpdateLabel();
+  if(!bRunning)bToggle();
+}
+
+bInit();bUpdateLabel();
+
+// Fix sensor button IDs
+document.getElementById('b-light').id='b-ligh';
+document.getElementById('b-ligh').id='b-light';
+// Actually let's fix bSetSensor properly
+function bSetSensor(s){
+  bSensorType=s;
+  document.getElementById('b-light').classList.toggle('active',s==='light');
+  document.getElementById('b-heat').classList.toggle('active',s==='heat');
+  document.getElementById('b-chem').classList.toggle('active',s==='chemical');
+}
+
+// ==================== 2. THE 14 VEHICLES ====================
+let vehInited=false;
+const vehicleData=[
+  {num:1,name:'Getting Around',psych:'Restlessness, "alive"',desc:'1 sensor, 1 motor. Moves faster in warmth.',adds:'1 sensor → 1 motor',sim:'v1'},
+  {num:2,name:'Fear & Aggression',psych:'Fear (2a) · Aggression (2b)',desc:'2 sensors, 2 motors. Wiring determines personality.',adds:'2 sensors, crossed/uncrossed wiring',sim:'v2'},
+  {num:3,name:'Love',psych:'Love (3a) · Explorer (3b)',desc:'Inhibitory connections create attraction.',adds:'Inhibitory connections',sim:'v3'},
+  {num:4,name:'Values & Tastes',psych:'Instincts · Will',desc:'Non-monotonic response. Thresholds = pondering.',adds:'Non-monotonic curves, thresholds',sim:'v4'},
+  {num:5,name:'Logic',psych:'Memory · Computation',desc:'Threshold device networks. McCulloch-Pitts neurons.',adds:'Logic gates',sim:'v5'},
+  {num:6,name:'Selection',psych:'Evolved intelligence',desc:'Darwinian selection on a table.',adds:'Reproduction + mutation',sim:'v6'},
+  {num:7,name:'Concepts',psych:'Association · Abstraction',desc:'Mnemotrix wire. Hebbian learning.',adds:'Hebbian learning',sim:'v7'},
+  {num:8,name:'Space & Things',psych:'Spatial perception',desc:'Camera eye. Internal maps.',adds:'Camera eyes, maps',sim:'v8'},
+  {num:9,name:'Shapes',psych:'"Thou" detection',desc:'Bilateral symmetry detector.',adds:'Symmetry detectors',sim:'v9'},
+  {num:10,name:'Getting Ideas',psych:'Insight · "Aha"',desc:'Chains of association snap into wholes.',adds:'Associative chains',sim:'v10'},
+  {num:11,name:'Rules',psych:'Causality · World model',desc:'Ergotrix wire. Directional learning.',adds:'Directional learning',sim:'v11'},
+  {num:12,name:'Trains of Thought',psych:'Attention · Free will',desc:'Global threshold control. Chaotic dynamics.',adds:'Global threshold',sim:'v12'},
+  {num:13,name:'Foresight',psych:'Prediction · Character',desc:'Fast internal model predicts futures.',adds:'Predictor + evaluator',sim:'v13'},
+  {num:14,name:'Egotism & Optimism',psych:'Goals · Dreams',desc:'Chooses the most pleasant predicted future.',adds:'Optimistic selection',sim:'v14'},
+];
+
+let vCanvas,vCtx,vW,vH,vAnimId,vSelected=null,vLights=[],vVehs=[];
+
+function initVehicles(){
+  vehInited=true;
+  const grid=document.getElementById('vGrid');
+  grid.innerHTML=vehicleData.map(v=>`<div class="v-card" onclick="selectVehicle(${v.num})" id="vc${v.num}"><div class="num">${v.num}</div><div class="vname">${v.name}</div><div class="vpsych">${v.psych}</div><div class="vdesc">${v.desc}</div></div>`).join('');
+
+  vCanvas=document.getElementById('vehiclesCanvas');
+  const s=setupCanvas(vCanvas);vCtx=s.ctx;vW=s.w;vH=s.h;
+
+  vCanvas.addEventListener('pointerdown',e=>{
+    const p=cPos(vCanvas,e);
+    const hit=vLights.find(l=>(l.x-p.x)**2+(l.y-p.y)**2<400);
+    if(hit){vCanvas._drag=hit}
+    else{vLights.push({x:p.x,y:p.y,r:10});vDraw()}
+  });
+  vCanvas.addEventListener('pointermove',e=>{if(vCanvas._drag){const p=cPos(vCanvas,e);vCanvas._drag.x=p.x;vCanvas._drag.y=p.y}});
+  vCanvas.addEventListener('pointerup',()=>vCanvas._drag=null);
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='vehicles')return;
+    const s=setupCanvas(vCanvas);vCtx=s.ctx;vW=s.w;vH=s.h;
+  });
+
+  selectVehicle(2);
+}
+
+function selectVehicle(num){
+  vSelected=num;
+  document.querySelectorAll('.v-card').forEach(c=>c.classList.remove('active'));
+  const el=document.getElementById('vc'+num);if(el)el.classList.add('active');
+
+  if(vAnimId)cancelAnimationFrame(vAnimId);
+  vLights=[{x:vW*.65,y:vH*.35,r:10},{x:vW*.4,y:vH*.7,r:10}];
+  vVehs=[];
+
+  const d=vehicleData[num-1];
+  document.getElementById('vehStatus').innerHTML=`<span style="color:var(--gold);font-weight:700">Vehicle ${num}: ${d.name}</span> — ${d.psych}`;
+  document.getElementById('vehOverlay').textContent=`Vehicle ${num} · +${d.adds}`;
+
+  // Create appropriate simulation
+  if(num<=3){
+    // Vehicles 1-3: direct sim
+    if(num===1){
+      vVehs=[{x:vW*.3,y:vH*.5,angle:Math.random()*TAU,wiring:'direct',connection:'excitatory',trail:[],color:'#ff6b35',isV1:true}];
+    }else if(num===2){
+      vVehs=[
+        makeVeh(vW*.2,vH*.4,'coward'),
+        makeVeh(vW*.2,vH*.6,'aggro'),
+      ];
+    }else{
+      vVehs=[
+        makeVeh(vW*.2,vH*.4,'love'),
+        makeVeh(vW*.2,vH*.6,'explorer'),
+      ];
+    }
+  }else if(num===4){
+    // Non-monotonic
+    vVehs=[{x:vW*.2,y:vH*.5,angle:Math.random()*TAU,wiring:'crossed',connection:'excitatory',trail:[],color:'#ff6b35',nonMono:true}];
+  }else{
+    // Vehicles 5+: show multiple types as proxy
+    const types=['coward','aggro','love','explorer'];
+    for(let i=0;i<Math.min(num-2,6);i++){
+      vVehs.push(makeVeh(vW*(.1+Math.random()*.8),vH*(.1+Math.random()*.8),types[i%4]));
+    }
+  }
+
+  vTick();
+}
+
+function vDraw(){
+  vCtx.clearRect(0,0,vW,vH);drawGrid(vCtx,vW,vH);
+  for(const l of vLights)drawLight(vCtx,l);
+  for(const v of vVehs){drawTrail(vCtx,v.trail,v.color?v.color+'33':'rgba(255,107,53,.15)');drawVehicle(vCtx,v,v.color)}
+}
+
+function vTick(){
+  for(const v of vVehs){
+    if(v.isV1){
+      // Vehicle 1: single sensor, speed proportional to nearest light
+      let stim=0;
+      for(const l of vLights){const dx=l.x-v.x,dy=l.y-v.y;stim+=3000/(dx*dx+dy*dy+100)}
+      const spd=.5+stim*1.5;
+      v.angle+=(Math.random()-.5)*.15;
+      v.x+=Math.cos(v.angle)*spd;v.y+=Math.sin(v.angle)*spd;
+    }else if(v.nonMono){
+      // Non-monotonic: attracted at medium distance, repelled close/far
+      const sL=sensorVal(v,'left',vLights);
+      const sR=sensorVal(v,'right',vLights);
+      const fL=Math.sin(sL*2)*2;const fR=Math.sin(sR*2)*2;
+      let mL=1.5+fR,mR=1.5+fL;
+      mL=Math.max(.1,mL);mR=Math.max(.1,mR);
+      v.angle+=(mR-mL)*.04;
+      v.x+=Math.cos(v.angle)*((mL+mR)/2);v.y+=Math.sin(v.angle)*((mL+mR)/2);
+    }else{
+      stepVehicle(v,vLights);
+    }
+    wrapVeh(v,vW,vH);
+    v.trail.push({x:v.x,y:v.y});if(v.trail.length>300)v.trail.shift();
+  }
+  vDraw();
+  vAnimId=requestAnimationFrame(vTick);
+}
+
+// ==================== 3. WIRING DIAGRAM ====================
+let wiringInited=false;
+let wWire='direct',wConn='excitatory';
+let wCanvas,wCtx,wW,wH,wLights=[],wVehs=[],wAnimId;
+
+function initWiring(){
+  wiringInited=true;
+  wCanvas=document.getElementById('wiringCanvas');
+  const s=setupCanvas(wCanvas);wCtx=s.ctx;wW=s.w;wH=s.h;
+  wLights=[{x:wW*.65,y:wH*.4,r:10}];
+  wVehs=[{x:wW*.25,y:wH*.6,angle:0,wiring:wWire,connection:wConn,trail:[],color:'#ff6b35'}];
+
+  wCanvas.addEventListener('pointerdown',e=>{
+    const p=cPos(wCanvas,e);
+    const hit=wLights.find(l=>(l.x-p.x)**2+(l.y-p.y)**2<400);
+    if(hit)wCanvas._drag=hit;
+    else{wLights.push({x:p.x,y:p.y,r:10})}
+  });
+  wCanvas.addEventListener('pointermove',e=>{if(wCanvas._drag){const p=cPos(wCanvas,e);wCanvas._drag.x=p.x;wCanvas._drag.y=p.y}});
+  wCanvas.addEventListener('pointerup',()=>wCanvas._drag=null);
+
+  // Wiring diagram canvas
+  document.getElementById('wiringDiagram').addEventListener('click',()=>wFlip('both'));
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='wiring')return;
+    const s=setupCanvas(wCanvas);wCtx=s.ctx;wW=s.w;wH=s.h;
+  });
+
+  wDrawDiagram();wTick();
+}
+
+function wDrawDiagram(){
+  const c=document.getElementById('wiringDiagram');
+  const ctx=c.getContext('2d');
+  const w=360,h=300;
+  ctx.clearRect(0,0,w,h);
+
+  const isExcit=wConn==='excitatory';
+  const isCrossed=wWire==='crossed';
+  const wireColor=isExcit?'#ff6b35':'#06d6a0';
+
+  // Sensors
+  ctx.fillStyle='#ffd166';
+  ctx.beginPath();ctx.arc(80,90,12,0,TAU);ctx.fill();
+  ctx.beginPath();ctx.arc(80,210,12,0,TAU);ctx.fill();
+  ctx.fillStyle='#888';ctx.font='12px system-ui';ctx.textAlign='center';
+  ctx.fillText('L sensor',80,70);ctx.fillText('R sensor',80,240);
+
+  // Motors
+  ctx.fillStyle='#888';
+  ctx.fillRect(260,78,30,24);ctx.fillRect(260,198,30,24);
+  ctx.fillStyle='#ccc';ctx.font='11px system-ui';
+  ctx.fillText('L motor',275,70);ctx.fillText('R motor',275,240);
+
+  // Wires
+  ctx.strokeStyle=wireColor;ctx.lineWidth=3;
+  if(!isCrossed){
+    ctx.beginPath();ctx.moveTo(92,90);ctx.lineTo(260,90);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(92,210);ctx.lineTo(260,210);ctx.stroke();
+  }else{
+    ctx.beginPath();ctx.moveTo(92,90);ctx.bezierCurveTo(170,90,190,210,260,210);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(92,210);ctx.bezierCurveTo(170,210,190,90,260,90);ctx.stroke();
+  }
+
+  // Signs
+  ctx.fillStyle=wireColor;ctx.font='bold 18px system-ui';ctx.textAlign='center';
+  ctx.fillText(isExcit?'+':'−',180,isCrossed?130:85);
+  ctx.fillText(isExcit?'+':'−',180,isCrossed?185:215);
+
+  // Label
+  const p=Object.values(presetMap).find(pp=>pp.wiring===wWire&&pp.connection===wConn);
+  ctx.fillStyle=p?p.color:'#fff';ctx.font='bold 14px system-ui';
+  ctx.fillText(p?p.name:'',180,280);
+
+  // Vehicle body
+  ctx.fillStyle='#333';
+  ctx.beginPath();ctx.moveTo(300,150);ctx.lineTo(160,80);ctx.lineTo(160,220);ctx.closePath();
+  ctx.fillStyle='rgba(255,107,53,.1)';ctx.fill();
+  ctx.strokeStyle='#333';ctx.lineWidth=1;ctx.stroke();
+}
+
+function wFlip(what){
+  if(what==='wiring'||what==='both')wWire=wWire==='direct'?'crossed':'direct';
+  if(what==='connection'||what==='both')wConn=wConn==='excitatory'?'inhibitory':'excitatory';
+  wVehs.forEach(v=>{v.wiring=wWire;v.connection=wConn;v.trail=[];
+    v.x=wW*.25;v.y=wH*.6;v.angle=0;
+    const p=Object.values(presetMap).find(pp=>pp.wiring===wWire&&pp.connection===wConn);
+    if(p)v.color=p.color;
+  });
+  wDrawDiagram();
+  const p=Object.values(presetMap).find(pp=>pp.wiring===wWire&&pp.connection===wConn);
+  document.getElementById('wiringLabel').textContent=`${wWire==='direct'?'Direct':'Crossed'} + ${wConn==='excitatory'?'Excitatory':'Inhibitory'} = ${p?p.name:''}`;
+  document.getElementById('wiringStatus').textContent=`Wiring: ${wWire==='direct'?'Ipsilateral':'Contralateral'} + ${wConn} → ${p?p.name:''}`;
+}
+
+function wTick(){
+  if(activeTab!=='wiring'){wAnimId=requestAnimationFrame(wTick);return}
+  for(const v of wVehs){
+    stepVehicle(v,wLights);wrapVeh(v,wW,wH);
+    v.trail.push({x:v.x,y:v.y});if(v.trail.length>300)v.trail.shift();
+  }
+  wCtx.clearRect(0,0,wW,wH);drawGrid(wCtx,wW,wH);
+  for(const l of wLights)drawLight(wCtx,l);
+  for(const v of wVehs){drawTrail(wCtx,v.trail,v.color+'33');drawVehicle(wCtx,v,v.color)}
+  wAnimId=requestAnimationFrame(wTick);
+}
+
+// ==================== 4. EVOLUTION CHAMBER ====================
+let evoInited=false;
+let evoCanvas,evoCtx,evoW,evoH,evoAnimId;
+let evoRunning=false,evoFastMode=false;
+let evoGen=0,evoCreatures=[],evoLights=[];
+const EVO_POP=20,EVO_MARGIN=30;
+
+function initEvo(){
+  evoInited=true;
+  evoCanvas=document.getElementById('evoCanvas');
+  const s=setupCanvas(evoCanvas);evoCtx=s.ctx;evoW=s.w;evoH=s.h;
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='evolution')return;
+    const s=setupCanvas(evoCanvas);evoCtx=s.ctx;evoW=s.w;evoH=s.h;
+  });
+
+  evoReset();
+}
+
+function evoMakeCreature(){
+  // Genome: [wiring_bias, conn_bias, turn_noise, speed_mult, edge_sensitivity]
+  return{
+    x:EVO_MARGIN+Math.random()*(evoW-2*EVO_MARGIN),
+    y:EVO_MARGIN+Math.random()*(evoH-2*EVO_MARGIN),
+    angle:Math.random()*TAU,
+    genome:[Math.random(),Math.random(),Math.random()*.3,0.5+Math.random(),Math.random()],
+    fitness:0,alive:true,trail:[],age:0
+  };
+}
+
+function evoStep(){
+  const alive=evoCreatures.filter(c=>c.alive);
+  for(const c of alive){
+    c.age++;
+    // Genome-driven behavior
+    const g=c.genome;
+    const edgeDist=Math.min(c.x,c.y,evoW-c.x,evoH-c.y);
+    const edgeSense=g[4]*3;
+
+    // Turn away from edges
+    let turnBias=0;
+    if(edgeDist<60){
+      const cx=evoW/2,cy=evoH/2;
+      const toCenter=Math.atan2(cy-c.y,cx-c.x);
+      let diff=toCenter-c.angle;
+      while(diff>Math.PI)diff-=TAU;while(diff<-Math.PI)diff+=TAU;
+      turnBias=diff*edgeSense*(1-edgeDist/60);
+    }
+
+    // Light seeking (genome determines approach)
+    let lightTurn=0;
+    for(const l of evoLights){
+      const dx=l.x-c.x,dy=l.y-c.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<150){
+        const toLight=Math.atan2(dy,dx);
+        let diff=toLight-c.angle;
+        while(diff>Math.PI)diff-=TAU;while(diff<-Math.PI)diff+=TAU;
+        lightTurn+=diff*(g[0]-.3)*.05;
+      }
+    }
+
+    c.angle+=turnBias+(Math.random()-.5)*g[2]+lightTurn;
+    const spd=g[3]*1.2;
+    c.x+=Math.cos(c.angle)*spd;
+    c.y+=Math.sin(c.angle)*spd;
+
+    // Death: fall off edges
+    if(c.x<5||c.x>evoW-5||c.y<5||c.y>evoH-5){
+      c.alive=false;
+    }else{
+      c.fitness=c.age;
+    }
+
+    c.trail.push({x:c.x,y:c.y});if(c.trail.length>100)c.trail.shift();
+  }
+
+  // Check generation end
+  const stillAlive=evoCreatures.filter(c=>c.alive);
+  if(stillAlive.length<=2||evoCreatures[0].age>600){
+    evoNextGen();
+  }
+
+  evoUpdateStats();
+}
+
+function evoNextGen(){
+  evoGen++;
+  // Sort by fitness
+  evoCreatures.sort((a,b)=>b.fitness-a.fitness);
+  const parents=evoCreatures.slice(0,5);
+  const mutRate=(+document.getElementById('evoMut').value)/100;
+
+  evoCreatures=[];
+  for(let i=0;i<EVO_POP;i++){
+    const p=parents[i%parents.length];
+    const child=evoMakeCreature();
+    child.genome=p.genome.map(g=>Math.max(0,Math.min(1,g+(Math.random()-.5)*mutRate)));
+    evoCreatures.push(child);
+  }
+}
+
+function evoUpdateStats(){
+  const alive=evoCreatures.filter(c=>c.alive);
+  document.getElementById('evoGen').textContent=evoGen;
+  document.getElementById('evoAlive').textContent=alive.length;
+  const fits=evoCreatures.map(c=>c.fitness);
+  document.getElementById('evoBest').textContent=Math.max(...fits);
+  document.getElementById('evoAvg').textContent=Math.round(fits.reduce((a,b)=>a+b,0)/fits.length);
+  document.getElementById('evoOverlay').textContent=`Generation ${evoGen} · ${alive.length} alive`;
+}
+
+function evoDraw(){
+  evoCtx.clearRect(0,0,evoW,evoH);
+
+  // Table border
+  evoCtx.strokeStyle='#ff6b3544';evoCtx.lineWidth=3;
+  evoCtx.strokeRect(2,2,evoW-4,evoH-4);
+  // Danger zone
+  evoCtx.fillStyle='rgba(255,50,50,.03)';
+  evoCtx.fillRect(0,0,evoW,20);evoCtx.fillRect(0,evoH-20,evoW,20);
+  evoCtx.fillRect(0,0,20,evoH);evoCtx.fillRect(evoW-20,0,20,evoH);
+
+  drawGrid(evoCtx,evoW,evoH);
+  for(const l of evoLights)drawLight(evoCtx,l);
+
+  for(const c of evoCreatures){
+    if(!c.alive){
+      // Dead: gray dot at edge
+      evoCtx.beginPath();evoCtx.arc(Math.max(5,Math.min(evoW-5,c.x)),Math.max(5,Math.min(evoH-5,c.y)),3,0,TAU);
+      evoCtx.fillStyle='#333';evoCtx.fill();
+      continue;
+    }
+    // Trail
+    if(c.trail.length>1){
+      evoCtx.beginPath();evoCtx.moveTo(c.trail[0].x,c.trail[0].y);
+      for(const p of c.trail)evoCtx.lineTo(p.x,p.y);
+      evoCtx.strokeStyle='rgba(6,214,160,.15)';evoCtx.lineWidth=1;evoCtx.stroke();
+    }
+    // Body
+    evoCtx.save();evoCtx.translate(c.x,c.y);evoCtx.rotate(c.angle);
+    evoCtx.beginPath();evoCtx.moveTo(8,0);evoCtx.lineTo(-5,-4);evoCtx.lineTo(-5,4);evoCtx.closePath();
+    const fit=c.fitness/300;
+    evoCtx.fillStyle=`hsl(${120+fit*120},70%,50%)`;evoCtx.fill();
+    evoCtx.restore();
+  }
+}
+
+function evoTick(){
+  if(!evoRunning){evoAnimId=null;return}
+  const steps=evoFastMode?5:1;
+  for(let i=0;i<steps;i++)evoStep();
+  evoDraw();
+  evoAnimId=requestAnimationFrame(evoTick);
+}
+
+function evoToggle(){
+  evoRunning=!evoRunning;
+  document.getElementById('evo-go').textContent=evoRunning?'⏸ Pause':'▶ Start';
+  document.getElementById('evo-go').classList.toggle('active',evoRunning);
+  if(evoRunning&&!evoAnimId)evoTick();
+}
+
+function evoReset(){
+  evoRunning=false;evoGen=0;if(evoAnimId)cancelAnimationFrame(evoAnimId);evoAnimId=null;
+  document.getElementById('evo-go').textContent='▶ Start';
+  document.getElementById('evo-go').classList.remove('active');
+  evoLights=[{x:evoW*.5,y:evoH*.5,r:10}];
+  evoCreatures=[];for(let i=0;i<EVO_POP;i++)evoCreatures.push(evoMakeCreature());
+  evoUpdateStats();evoDraw();
+}
+
+function evoFast(){evoFastMode=!evoFastMode}
+
+// ==================== 5. ATTRIBUTION GAME ====================
+let attrInited=false;
+let attrCanvas,attrCtx,attrW,attrH,attrAnimId;
+let attrVeh,attrLights,attrSecret,attrRevealed=false,attrScore=0,attrTotal=0;
+
+const attrLabels=['Afraid','Curious','Aggressive','Loving','Exploring','Restless'];
+const attrMapping={coward:'Afraid',aggro:'Aggressive',love:'Loving',explorer:'Exploring'};
+
+function initAttr(){
+  attrInited=true;
+  attrCanvas=document.getElementById('attrCanvas');
+  const s=setupCanvas(attrCanvas);attrCtx=s.ctx;attrW=s.w;attrH=s.h;
+
+  attrCanvas.addEventListener('pointerdown',e=>{
+    const p=cPos(attrCanvas,e);
+    attrLights.push({x:p.x,y:p.y,r:10});
+  });
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='attribution')return;
+    const s=setupCanvas(attrCanvas);attrCtx=s.ctx;attrW=s.w;attrH=s.h;
+  });
+
+  attrNext();
+}
+
+function attrNext(){
+  attrRevealed=false;
+  const types=['coward','aggro','love','explorer'];
+  attrSecret=types[Math.floor(Math.random()*types.length)];
+  const p=presetMap[attrSecret];
+  attrVeh={x:attrW*.3,y:attrH*.5,angle:Math.random()*TAU,wiring:p.wiring,connection:p.connection,trail:[],color:'#888'};
+  attrLights=[{x:attrW*.7,y:attrH*.35,r:10},{x:attrW*.5,y:attrH*.7,r:10}];
+
+  document.getElementById('attrPrompt').textContent='What word describes this vehicle\'s behavior?';
+  document.getElementById('attrFeedback').innerHTML='';
+  const opts=document.getElementById('attrOptions');
+  // Shuffle labels
+  const shuffled=[...attrLabels].sort(()=>Math.random()-.5).slice(0,4);
+  if(!shuffled.includes(attrMapping[attrSecret]))shuffled[0]=attrMapping[attrSecret];
+  shuffled.sort(()=>Math.random()-.5);
+  opts.innerHTML=shuffled.map(l=>`<button class="attr-btn" onclick="attrGuess('${l}')">${l}</button>`).join('');
+
+  if(attrAnimId)cancelAnimationFrame(attrAnimId);
+  attrTick();
+}
+
+function attrGuess(label){
+  if(attrRevealed)return;
+  attrRevealed=true;attrTotal++;
+  const correct=label===attrMapping[attrSecret];
+  if(correct)attrScore++;
+
+  document.querySelectorAll('.attr-btn').forEach(b=>{
+    if(b.textContent===attrMapping[attrSecret])b.classList.add('correct');
+    else if(b.textContent===label&&!correct)b.classList.add('wrong');
+    b.disabled=true;
+  });
+
+  const p=presetMap[attrSecret];
+  attrVeh.color=p.color;
+
+  document.getElementById('attrFeedback').innerHTML=`
+    <div class="reveal-box">
+      <p style="font-size:1.1rem;font-weight:700;color:${correct?'var(--green)':'var(--love)'}">${correct?'✓ Correct!':'✗ Not quite.'}</p>
+      <p style="margin-top:8px;color:var(--dim)">It's <strong style="color:${p.color}">${p.name}</strong></p>
+      <p style="margin-top:4px;color:var(--dim);font-size:.85rem">${p.wiring==='direct'?'Ipsilateral':'Contralateral'} wiring · ${p.connection} connections</p>
+      <p style="margin-top:4px;color:var(--dim);font-size:.85rem">${p.desc}</p>
+      <p style="margin-top:8px;font-style:italic;color:var(--muted);font-size:.8rem">Just 2 sensors, 2 motors, and a wire. Yet you called it "${label.toLowerCase()}."</p>
+    </div>`;
+
+  document.getElementById('attrScore').textContent=`Score: ${attrScore}/${attrTotal}`;
+}
+
+function attrTick(){
+  if(activeTab!=='attribution'){attrAnimId=requestAnimationFrame(attrTick);return}
+  stepVehicle(attrVeh,attrLights);
+  wrapVeh(attrVeh,attrW,attrH);
+  attrVeh.trail.push({x:attrVeh.x,y:attrVeh.y});if(attrVeh.trail.length>300)attrVeh.trail.shift();
+
+  attrCtx.clearRect(0,0,attrW,attrH);drawGrid(attrCtx,attrW,attrH);
+  for(const l of attrLights)drawLight(attrCtx,l);
+  drawTrail(attrCtx,attrVeh.trail,attrVeh.color+'33');
+  drawVehicle(attrCtx,attrVeh,attrVeh.color,attrRevealed);
+  attrAnimId=requestAnimationFrame(attrTick);
+}
+
+// ==================== 6. ECOSYSTEM ====================
+let ecoInited=false;
+let ecoCanvas,ecoCtx,ecoW,ecoH,ecoAnimId;
+let ecoRunning=false,ecoVehs=[],ecoLights=[];
+
+function initEco(){
+  ecoInited=true;
+  ecoCanvas=document.getElementById('ecoCanvas');
+  const s=setupCanvas(ecoCanvas);ecoCtx=s.ctx;ecoW=s.w;ecoH=s.h;
+
+  ecoCanvas.addEventListener('pointerdown',e=>{
+    const p=cPos(ecoCanvas,e);
+    const hit=ecoLights.find(l=>(l.x-p.x)**2+(l.y-p.y)**2<400);
+    if(hit)ecoCanvas._drag=hit;
+    else ecoLights.push({x:p.x,y:p.y,r:10});
+  });
+  ecoCanvas.addEventListener('pointermove',e=>{if(ecoCanvas._drag){const p=cPos(ecoCanvas,e);ecoCanvas._drag.x=p.x;ecoCanvas._drag.y=p.y}});
+  ecoCanvas.addEventListener('pointerup',()=>ecoCanvas._drag=null);
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='ecosystem')return;
+    const s=setupCanvas(ecoCanvas);ecoCtx=s.ctx;ecoW=s.w;ecoH=s.h;
+  });
+
+  // Start with a mixed population
+  ecoLights=[{x:ecoW*.3,y:ecoH*.3,r:10},{x:ecoW*.7,y:ecoH*.6,r:10},{x:ecoW*.5,y:ecoH*.5,r:10}];
+  ['coward','aggro','love','explorer'].forEach(t=>{
+    for(let i=0;i<2;i++)ecoVehs.push(makeVeh(ecoW*(.1+Math.random()*.8),ecoH*(.1+Math.random()*.8),t));
+  });
+
+  ecoUpdateLegend();
+  ecoToggle();
+}
+
+function ecoAdd(type){
+  if(type==='random')type=['coward','aggro','love','explorer'][Math.floor(Math.random()*4)];
+  ecoVehs.push(makeVeh(ecoW*(.1+Math.random()*.8),ecoH*(.1+Math.random()*.8),type));
+  ecoUpdateLegend();
+  if(!ecoRunning)ecoToggle();
+}
+
+function ecoReset(){
+  ecoRunning=false;if(ecoAnimId)cancelAnimationFrame(ecoAnimId);ecoAnimId=null;
+  document.getElementById('eco-go').textContent='▶ Go';
+  ecoVehs=[];ecoLights=[{x:ecoW*.5,y:ecoH*.5,r:10}];
+  ecoUpdateLegend();ecoDraw();
+}
+function ecoClear(){ecoVehs=[];ecoLights=[];ecoUpdateLegend();ecoDraw()}
+function ecoScatter(){
+  for(let i=0;i<5;i++)ecoLights.push({x:ecoW*(.1+Math.random()*.8),y:ecoH*(.1+Math.random()*.8),r:10});
+}
+
+function ecoUpdateLegend(){
+  const counts={};
+  ecoVehs.forEach(v=>{counts[v.preset]=(counts[v.preset]||0)+1});
+  document.getElementById('ecoLegend').innerHTML=Object.entries(counts).map(([k,n])=>{
+    const p=presetMap[k];
+    return`<span style="color:${p.color}">● ${p.name}: ${n}</span>`;
+  }).join('');
+  document.getElementById('ecoOverlay').textContent=`${ecoVehs.length} vehicles · ${ecoLights.length} lights`;
+}
+
+function ecoDraw(){
+  ecoCtx.clearRect(0,0,ecoW,ecoH);drawGrid(ecoCtx,ecoW,ecoH);
+  for(const l of ecoLights)drawLight(ecoCtx,l);
+  for(const v of ecoVehs){
+    drawTrail(ecoCtx,v.trail,v.color+'22');
+    drawVehicle(ecoCtx,v,v.color);
+  }
+}
+
+function ecoTick(){
+  if(!ecoRunning){ecoAnimId=null;return}
+  for(const v of ecoVehs){
+    stepVehicle(v,ecoLights);wrapVeh(v,ecoW,ecoH);
+    v.trail.push({x:v.x,y:v.y});if(v.trail.length>200)v.trail.shift();
+  }
+  ecoDraw();
+  ecoAnimId=requestAnimationFrame(ecoTick);
+}
+
+function ecoToggle(){
+  ecoRunning=!ecoRunning;
+  document.getElementById('eco-go').textContent=ecoRunning?'⏸ Pause':'▶ Go';
+  document.getElementById('eco-go').classList.toggle('active',ecoRunning);
+  if(ecoRunning&&!ecoAnimId)ecoTick();
+}
+
+// ==================== 7. DOWNHILL PRINCIPLE ====================
+let downInited=false;
+let downBuildCanvas,downBuildCtx,downBW,downBH;
+let downGuessCanvas,downGuessCtx,downGW,downGH;
+let downBuildVeh,downBuildLights,downBuildType;
+let downGuessVeh,downGuessLights,downGuessSecret;
+let downAnimId,downCorrect=0,downTotal=0;
+
+function initDownhill(){
+  downInited=true;
+  downBuildCanvas=document.getElementById('downBuildCanvas');
+  downGuessCanvas=document.getElementById('downGuessCanvas');
+  let s=setupCanvas(downBuildCanvas);downBuildCtx=s.ctx;downBW=s.w;downBH=s.h;
+  s=setupCanvas(downGuessCanvas);downGuessCtx=s.ctx;downGW=s.w;downGH=s.h;
+
+  window.addEventListener('resize',()=>{
+    if(activeTab!=='downhill')return;
+    let s=setupCanvas(downBuildCanvas);downBuildCtx=s.ctx;downBW=s.w;downBH=s.h;
+    s=setupCanvas(downGuessCanvas);downGuessCtx=s.ctx;downGW=s.w;downGH=s.h;
+  });
+
+  downNewBuild();downNewGuess();
+  downTick();
+}
+
+function downNewBuild(){
+  const types=['coward','aggro','love','explorer'];
+  downBuildType=types[Math.floor(Math.random()*types.length)];
+  const p=presetMap[downBuildType];
+  downBuildVeh={x:downBW*.25,y:downBH*.5,angle:Math.random()*TAU,wiring:p.wiring,connection:p.connection,trail:[],color:p.color};
+  downBuildLights=[{x:downBW*.7,y:downBH*.35,r:10}];
+  document.getElementById('downBuildLabel').innerHTML=`<span style="color:${p.color}">${p.name}</span><br><span style="color:var(--dim);font-size:.78rem">${p.wiring==='direct'?'Ipsilateral':'Contralateral'} · ${p.connection}</span>`;
+}
+
+function downNewGuess(){
+  const types=['coward','aggro','love','explorer'];
+  downGuessSecret=types[Math.floor(Math.random()*types.length)];
+  const p=presetMap[downGuessSecret];
+  downGuessVeh={x:downGW*.25,y:downGH*.5,angle:Math.random()*TAU,wiring:p.wiring,connection:p.connection,trail:[],color:'#888'};
+  downGuessLights=[{x:downGW*.65,y:downGH*.4,r:10}];
+  document.getElementById('downGuessResult').textContent='Watch and guess...';
+  document.getElementById('downGuessResult').style.color='var(--dim)';
+  document.querySelectorAll('#panel-downhill .btn-preset').forEach(b=>{b.classList.remove('active');b.disabled=false});
+}
+
+function downGuess(type){
+  downTotal++;
+  const correct=type===downGuessSecret;
+  if(correct)downCorrect++;
+  const p=presetMap[downGuessSecret];
+  downGuessVeh.color=p.color;
+  document.getElementById('downGuessResult').innerHTML=correct
+    ?`<span style="color:var(--green)">✓ Correct! It was ${p.name}</span>`
+    :`<span style="color:var(--love)">✗ It was ${p.name}</span>`;
+  document.getElementById('downScore').textContent=`Uphill score: ${downCorrect}/${downTotal} — ${downTotal>3?(downCorrect/downTotal<.6?'Analysis IS hard!':'You\'re getting good at this!'):''}`;
+  document.querySelectorAll('#panel-downhill .btn-preset').forEach(b=>b.disabled=true);
+}
+
+function downTick(){
+  if(activeTab==='downhill'){
+    // Build side
+    if(downBuildVeh){
+      stepVehicle(downBuildVeh,downBuildLights);wrapVeh(downBuildVeh,downBW,downBH);
+      downBuildVeh.trail.push({x:downBuildVeh.x,y:downBuildVeh.y});if(downBuildVeh.trail.length>200)downBuildVeh.trail.shift();
+      downBuildCtx.clearRect(0,0,downBW,downBH);drawGrid(downBuildCtx,downBW,downBH);
+      for(const l of downBuildLights)drawLight(downBuildCtx,l);
+      drawTrail(downBuildCtx,downBuildVeh.trail,downBuildVeh.color+'33');
+      drawVehicle(downBuildCtx,downBuildVeh,downBuildVeh.color);
+    }
+    // Guess side
+    if(downGuessVeh){
+      stepVehicle(downGuessVeh,downGuessLights);wrapVeh(downGuessVeh,downGW,downGH);
+      downGuessVeh.trail.push({x:downGuessVeh.x,y:downGuessVeh.y});if(downGuessVeh.trail.length>200)downGuessVeh.trail.shift();
+      downGuessCtx.clearRect(0,0,downGW,downGH);drawGrid(downGuessCtx,downGW,downGH);
+      for(const l of downGuessLights)drawLight(downGuessCtx,l);
+      drawTrail(downGuessCtx,downGuessVeh.trail,downGuessVeh.color+'33');
+      drawVehicle(downGuessCtx,downGuessVeh,downGuessVeh.color,false);
+    }
+  }
+  requestAnimationFrame(downTick);
+}
+
+// ==================== INIT ====================
+// Builder is shown by default and already initialized
+</script>
+</body>
+</html>

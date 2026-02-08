@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Memory Lab v2 — Make It Stick</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#13131a;--card:#1a1a24;--border:#2a2a3a;
+  --text:#e0e0e8;--dim:#888;--accent:#6c63ff;--accent2:#ff6b6b;
+  --success:#4ecdc4;--warn:#ffd93d;--glow:rgba(108,99,255,.15);
+  --radius:12px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(108,99,255,.08),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.hero h1{font-size:clamp(2.2rem,6vw,4rem);font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{font-size:clamp(1rem,2.5vw,1.3rem);color:var(--dim);max-width:600px;margin:0 auto 2rem}
+.hero .badge{display:inline-block;padding:.4rem 1rem;border:1px solid var(--border);border-radius:99px;font-size:.8rem;color:var(--dim);margin-bottom:1.5rem;letter-spacing:.05em;text-transform:uppercase}
+.hero blockquote{font-style:italic;color:var(--dim);max-width:500px;margin:1.5rem auto 2.5rem;font-size:.95rem;border-left:3px solid var(--accent);padding-left:1rem;text-align:left}
+
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 2rem;background:var(--accent);color:#fff;border:none;border-radius:99px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;min-height:44px;text-decoration:none}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(108,99,255,.3)}
+.btn--outline{background:transparent;border:2px solid var(--accent);color:var(--accent)}
+.btn--outline:hover{background:var(--accent);color:#fff}
+.btn--sm{padding:.6rem 1.2rem;font-size:.85rem}
+.btn--success{background:var(--success)}
+.btn--danger{background:var(--accent2)}
+.btn:disabled{opacity:.4;cursor:default;transform:none!important;box-shadow:none!important}
+
+section{padding:4rem 1.5rem;max-width:800px;margin:0 auto}
+.section-num{font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:.5rem;display:block}
+section h2{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin-bottom:.5rem}
+section .intro{color:var(--dim);margin-bottom:2rem;font-size:.95rem}
+section blockquote{font-style:italic;color:var(--dim);border-left:3px solid var(--accent);padding:.5rem 1rem;margin:1.5rem 0;font-size:.9rem;background:var(--glow);border-radius:0 var(--radius) var(--radius) 0}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin:1.5rem 0}
+.card h3{font-size:1.1rem;margin-bottom:.75rem}
+
+.quiz-option{display:block;width:100%;text-align:left;padding:1rem;margin:.5rem 0;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.95rem;cursor:pointer;transition:all .2s;min-height:44px;font-family:inherit}
+.quiz-option:hover:not(:disabled){border-color:var(--accent);background:var(--glow)}
+.quiz-option.correct{border-color:var(--success);background:rgba(78,205,196,.1)}
+.quiz-option.wrong{border-color:var(--accent2);background:rgba(255,107,107,.1)}
+.quiz-option:disabled{cursor:default;opacity:.8}
+
+.stat-row{display:flex;gap:1rem;flex-wrap:wrap;margin:1rem 0}
+.stat{flex:1;min-width:120px;background:var(--surface);border-radius:var(--radius);padding:1rem;text-align:center}
+.stat .num{font-size:2rem;font-weight:800;color:var(--accent)}
+.stat .label{font-size:.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+
+.recall-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;color:var(--text);font-size:1rem;resize:vertical;min-height:80px;font-family:inherit}
+.recall-input:focus{outline:none;border-color:var(--accent)}
+
+.result-bar{height:36px;border-radius:8px;overflow:hidden;background:var(--surface);margin:.5rem 0;position:relative}
+.result-fill{height:100%;border-radius:8px;transition:width 1s ease;display:flex;align-items:center;padding:0 .75rem;font-size:.8rem;font-weight:600;color:#fff;white-space:nowrap;min-width:fit-content}
+.result-fill.a{background:var(--accent)}
+.result-fill.b{background:var(--accent2)}
+.result-fill.c{background:var(--success)}
+
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:4px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.tag--read{background:rgba(108,99,255,.2);color:var(--accent)}
+.tag--test{background:rgba(78,205,196,.2);color:var(--success)}
+
+.confidence-slider{width:100%;appearance:none;height:8px;border-radius:4px;background:var(--surface);outline:none;margin:.5rem 0}
+.confidence-slider::-webkit-slider-thumb{appearance:none;width:28px;height:28px;border-radius:50%;background:var(--accent);cursor:pointer}
+.confidence-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--dim)}
+
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:200;transition:width .3s}
+
+.nav-dots{position:fixed;right:1rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.5rem;z-index:100}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;border:none;padding:0}
+.nav-dot.active{background:var(--accent);transform:scale(1.3)}
+
+.hidden{display:none!important}
+.fade-in{opacity:0;transform:translateY(20px);transition:all .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+.separator{width:60px;height:3px;background:var(--accent);border-radius:2px;margin:2rem auto}
+
+.score-display{font-size:3rem;font-weight:800;text-align:center;margin:1rem 0}
+
+.timer-display{font-size:2.5rem;font-weight:800;color:var(--accent);text-align:center;margin:.5rem 0;font-variant-numeric:tabular-nums}
+.timer-display.urgent{color:var(--accent2);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.painting-card{border-radius:var(--radius);overflow:hidden;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.painting-card:hover{border-color:var(--accent)}
+.painting-card .swatch{height:120px;display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.painting-card .info{padding:.75rem;font-size:.85rem;text-align:center}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+
+.blank-input{display:inline-block;min-width:80px;padding:2px 6px;background:transparent;border:none;border-bottom:2px dashed var(--accent);color:var(--text);font-size:inherit;font-family:inherit;outline:none;min-height:28px}
+.blank-input.correct{border-bottom-color:var(--success);color:var(--success)}
+.blank-input.wrong{border-bottom-color:var(--accent2);color:var(--accent2)}
+
+canvas{display:block}
+
+.dot-field{position:relative;width:100%;height:300px;background:var(--surface);border-radius:var(--radius);overflow:hidden;margin:1rem 0}
+.dot-field .dot{position:absolute;width:8px;height:8px;border-radius:50%;transition:all 2s ease}
+
+.difficulty-btn{padding:.6rem 1.2rem;border:2px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:.9rem;font-family:inherit;transition:all .2s;min-height:44px}
+.difficulty-btn:hover{border-color:var(--accent)}
+.difficulty-btn.selected{border-color:var(--accent);background:var(--glow)}
+
+.chart-container{position:relative;margin:1rem 0}
+
+@media(max-width:600px){
+  section{padding:3rem 1rem}
+  .grid-2{grid-template-columns:1fr}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .nav-dots{right:.5rem}
+  .stat-row{flex-direction:column}
+}
+
+.footer{text-align:center;padding:3rem 1.5rem;color:var(--dim);font-size:.8rem;border-top:1px solid var(--border);margin-top:2rem}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<nav class="nav-dots" id="navDots"></nav>
+
+<!-- ==================== HERO ==================== -->
+<div class="hero" id="sec-hero">
+  <span class="badge">Interactive Experiment v2</span>
+  <h1>The Memory Lab</h1>
+  <p class="sub">You are the subject <em>and</em> the scientist.<br>Eight experiments. One brain. No shortcuts.</p>
+  <blockquote>"Learning is deeper and more durable when it's effortful. Learning that's easy is like writing in sand, here today and gone tomorrow."<br>— Make It Stick</blockquote>
+  <a href="#sec-1" class="btn" id="beginBtn">Begin the Experiment ↓</a>
+</div>
+
+<!-- ==================== 1. FLUENCY TRAP ==================== -->
+<section id="sec-1" class="fade-in">
+  <span class="section-num">Experiment 01</span>
+  <h2>The Fluency Trap</h2>
+  <p class="intro">Re-reading feels effective. It isn't. Let's prove it on your brain right now.</p>
+  <blockquote>"Rereading has three strikes against it. It is time consuming. It doesn't result in durable memory. And it often involves a kind of unwitting self-deception."</blockquote>
+
+  <div id="ft-setup" class="card">
+    <h3>You'll study a passage about an unusual topic</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">The system will randomly assign you to one of two groups:</p>
+    <div class="grid-2" style="margin:1rem 0">
+      <div style="padding:1rem;background:var(--surface);border-radius:8px;text-align:center">
+        <div class="tag tag--read">Group A</div>
+        <p style="font-size:.85rem;margin-top:.5rem;color:var(--dim)">Read the passage <strong>twice</strong></p>
+      </div>
+      <div style="padding:1rem;background:var(--surface);border-radius:8px;text-align:center">
+        <div class="tag tag--test">Group B</div>
+        <p style="font-size:.85rem;margin-top:.5rem;color:var(--dim)">Read once, then <strong>test yourself</strong></p>
+      </div>
+    </div>
+    <p style="color:var(--dim);font-size:.85rem">Then we wait. A surprise quiz comes later. Which group wins?</p>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" onclick="startFluencyTrap()">Assign Me & Start</button>
+    </div>
+  </div>
+
+  <div id="ft-study" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h3 id="ft-phase-label">Phase 1: Read carefully</h3>
+      <div class="tag" id="ft-group-tag">Group ?</div>
+    </div>
+    <div id="ft-passage" style="background:var(--surface);padding:1.25rem;border-radius:8px;line-height:1.8;font-size:.95rem"></div>
+    <div class="timer-display" id="ft-timer"></div>
+    <div id="ft-confidence" class="hidden" style="margin-top:1rem">
+      <label style="font-size:.85rem;font-weight:600">How well do you feel you've learned this? <span id="ft-conf-val">50</span>%</label>
+      <input type="range" class="confidence-slider" id="ft-conf-slider" min="0" max="100" value="50" oninput="document.getElementById('ft-conf-val').textContent=this.value">
+      <div class="confidence-labels"><span>Not at all</span><span>Perfectly</span></div>
+    </div>
+    <div id="ft-actions" style="text-align:center;margin-top:1rem"></div>
+  </div>
+
+  <div id="ft-retrieval" class="card hidden">
+    <h3>Retrieval Practice: Answer from memory</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">The passage is hidden. Write what you remember about each question.</p>
+    <div id="ft-retrieval-qs"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" onclick="ftFinishRetrieval()">Done — I've answered what I can</button>
+    </div>
+  </div>
+
+  <div id="ft-waiting" class="card hidden">
+    <h3>⏳ Now We Wait</h3>
+    <p style="color:var(--dim);font-size:.9rem;margin-bottom:1rem">The real test comes after a delay. Continue through the other experiments — this simulates the passage of time. The surprise quiz will appear at the end.</p>
+    <p style="font-size:.85rem">Your group: <strong id="ft-wait-group"></strong></p>
+    <p style="font-size:.85rem">Your confidence: <strong id="ft-wait-conf"></strong>%</p>
+    <div style="text-align:center;margin-top:1rem">
+      <a href="#sec-2" class="btn btn--sm btn--outline">Continue to next experiment →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 2. SPACED vs MASSED ==================== -->
+<section id="sec-2" class="fade-in">
+  <span class="section-num">Experiment 02</span>
+  <h2>Spaced vs Massed Practice</h2>
+  <p class="intro">Cramming feels productive. Spacing feels like you're forgetting. But spacing wins every time.</p>
+  <blockquote>"When you space out practice at a task and get a little rusty between sessions, retrieval is harder and feels less productive, but the effort produces longer lasting learning."</blockquote>
+
+  <div id="sp-intro" class="card">
+    <h3>Two sets of vocabulary — two strategies</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">You'll learn 6 Swahili-English word pairs. <strong>Set A</strong> gets crammed (3 rounds back-to-back). <strong>Set B</strong> gets spaced (1 round now, revisited between other experiments).</p>
+    <div class="grid-2" style="margin:1rem 0">
+      <div style="padding:1rem;background:var(--surface);border-radius:8px;text-align:center">
+        <div style="font-size:2rem">📚</div>
+        <div class="tag tag--read" style="margin:.5rem 0">Set A — Massed</div>
+        <p style="font-size:.8rem;color:var(--dim)">3× back-to-back right now</p>
+      </div>
+      <div style="padding:1rem;background:var(--surface);border-radius:8px;text-align:center">
+        <div style="font-size:2rem">⏱️</div>
+        <div class="tag tag--test" style="margin:.5rem 0">Set B — Spaced</div>
+        <p style="font-size:.8rem;color:var(--dim)">1× now, 1× later, 1× later still</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" onclick="startSpaced()">Start Learning</button>
+    </div>
+  </div>
+
+  <div id="sp-practice" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h3 id="sp-title">Learning...</h3>
+      <span id="sp-round-tag" class="tag"></span>
+    </div>
+    <div id="sp-content" style="margin:1rem 0"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" id="sp-next-btn" onclick="spNext()">Next</button>
+    </div>
+  </div>
+
+  <div id="sp-waiting" class="card hidden">
+    <h3>✓ Massed practice complete for Set A</h3>
+    <p style="color:var(--dim);font-size:.9rem">Set B will appear again during later experiments (spacing!). Continue onward.</p>
+    <div style="text-align:center;margin-top:1rem">
+      <a href="#sec-3" class="btn btn--sm btn--outline">Continue →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 3. INTERLEAVING PAINTBALL ==================== -->
+<section id="sec-3" class="fade-in">
+  <span class="section-num">Experiment 03</span>
+  <h2>Interleaving Paintball</h2>
+  <p class="intro">Art attribution: learn to tell artists apart. Blocked vs interleaved — which builds better discrimination?</p>
+  <blockquote>"Students who practiced solving problems clustered by type averaged only 20% correct on the final test, while students whose practice was interleaved averaged 63%."</blockquote>
+
+  <div id="il-intro" class="card">
+    <h3>Learn 3 artists' styles</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">You'll see paintings by three artists. Phase 1 is <strong>blocked</strong> (all paintings by one artist, then the next). Phase 2 is <strong>interleaved</strong> (mixed randomly). Then: identify NEW paintings.</p>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" onclick="startInterleaving()">Start Training</button>
+    </div>
+  </div>
+
+  <div id="il-training" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h3 id="il-train-title">Training</h3>
+      <span id="il-train-tag" class="tag"></span>
+    </div>
+    <div id="il-train-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" id="il-train-btn" onclick="ilTrainNext()">Next</button>
+    </div>
+  </div>
+
+  <div id="il-test" class="card hidden">
+    <h3>Test: Who painted this?</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">These are NEW paintings you haven't seen. Identify the artist.</p>
+    <div id="il-test-content"></div>
+  </div>
+
+  <div id="il-results" class="card hidden">
+    <h3>Results: Blocked vs Interleaved Training</h3>
+    <div id="il-results-content"></div>
+  </div>
+</section>
+
+<!-- ==================== SPACED SET B REMINDER 1 ==================== -->
+<div id="spaced-reminder-1" class="hidden" style="max-width:800px;margin:0 auto;padding:0 1.5rem">
+  <div class="card" style="border-color:var(--success);background:rgba(78,205,196,.05)">
+    <h3 style="color:var(--success)">⏱️ Spaced Practice — Set B Review #2</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Remember those Swahili words? Time for round 2. This is spacing in action.</p>
+    <div id="sp-review-1-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm btn--success" onclick="spReview1Submit()">Check & Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 4. GENERATION EFFECT ==================== -->
+<section id="sec-4" class="fade-in">
+  <span class="section-num">Experiment 04</span>
+  <h2>Generation Effect Lab</h2>
+  <p class="intro">Generating answers — even wrong ones — beats passively receiving them.</p>
+  <blockquote>"It's better to solve a problem than to memorize a solution. It's better to attempt a solution and supply the incorrect answer than not to make the attempt."</blockquote>
+
+  <div id="gen-setup" class="card">
+    <h3>Two ways to learn definitions</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">You'll see 8 definitions. For half, you just <strong>read</strong> the complete definition. For the other half, you must <strong>fill in missing letters</strong>. Later: recall ALL of them.</p>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" onclick="startGeneration()">Start</button>
+    </div>
+  </div>
+
+  <div id="gen-study" class="card hidden">
+    <h3 id="gen-study-title">Study Phase</h3>
+    <div id="gen-study-content" style="margin:1rem 0"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" id="gen-study-btn" onclick="genStudyNext()">Next</button>
+    </div>
+  </div>
+
+  <div id="gen-test" class="card hidden">
+    <h3>Now recall ALL definitions</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">For each term, type the definition from memory. Both the ones you read AND the ones you generated.</p>
+    <div id="gen-test-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" onclick="scoreGeneration()">Check Results</button>
+    </div>
+  </div>
+
+  <div id="gen-results" class="card hidden">
+    <h3>Read vs Generated — Which stuck?</h3>
+    <div id="gen-results-content"></div>
+  </div>
+</section>
+
+<!-- ==================== 5. CALIBRATION DASHBOARD ==================== -->
+<section id="sec-5" class="fade-in">
+  <span class="section-num">Experiment 05</span>
+  <h2>Calibration Dashboard</h2>
+  <p class="intro">Perfect calibration means your confidence matches your accuracy. Most people are overconfident.</p>
+  <blockquote>"We are poor judges of when we are learning well and when we're not."</blockquote>
+
+  <div id="cal-quiz" class="card">
+    <h3>Rate your confidence, then answer</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">For each question, set your confidence slider FIRST, then pick an answer.</p>
+    <div id="cal-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" id="cal-start-btn" onclick="startCalibration()">Start Quiz</button>
+    </div>
+  </div>
+
+  <div id="cal-results" class="card hidden">
+    <h3>Your Calibration Curve</h3>
+    <canvas id="calCanvas" width="600" height="350" style="width:100%;height:auto;border-radius:8px;background:var(--surface)"></canvas>
+    <div id="cal-results-text" style="margin-top:1rem"></div>
+  </div>
+</section>
+
+<!-- ==================== SPACED SET B REMINDER 2 ==================== -->
+<div id="spaced-reminder-2" class="hidden" style="max-width:800px;margin:0 auto;padding:0 1.5rem">
+  <div class="card" style="border-color:var(--success);background:rgba(78,205,196,.05)">
+    <h3 style="color:var(--success)">⏱️ Spaced Practice — Set B Review #3 (Final)</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Last review of the spaced set. How much do you remember?</p>
+    <div id="sp-review-2-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm btn--success" onclick="spReview2Submit()">Check & Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 6. DESIRABLE DIFFICULTY GYM ==================== -->
+<section id="sec-6" class="fade-in">
+  <span class="section-num">Experiment 06</span>
+  <h2>Desirable Difficulty Gym</h2>
+  <p class="intro">Easy feels good. Hard feels frustrating. But hard = more learning.</p>
+  <blockquote>"The more effort required to retrieve something, the better you learn it."</blockquote>
+
+  <div id="dd-intro" class="card">
+    <h3>Three rounds, three difficulty levels</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">You'll solve problems at Easy, Medium, and Hard levels. Track how your performance improves — and notice which difficulty teaches the most.</p>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" onclick="startDifficulty()">Enter the Gym</button>
+    </div>
+  </div>
+
+  <div id="dd-round" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h3 id="dd-round-title">Round 1</h3>
+      <span id="dd-diff-tag" class="tag"></span>
+    </div>
+    <div id="dd-problem" style="margin:1rem 0"></div>
+    <div id="dd-input-area" style="margin:1rem 0"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" id="dd-submit-btn" onclick="ddSubmit()">Submit</button>
+    </div>
+    <div id="dd-feedback" style="margin-top:.75rem"></div>
+  </div>
+
+  <div id="dd-results" class="card hidden">
+    <h3>Performance by Difficulty</h3>
+    <canvas id="ddCanvas" width="600" height="300" style="width:100%;height:auto;border-radius:8px;background:var(--surface)"></canvas>
+    <div id="dd-results-text" style="margin-top:1rem"></div>
+  </div>
+</section>
+
+<!-- ==================== 7. MEMORY CONSOLIDATION ==================== -->
+<section id="sec-7" class="fade-in">
+  <span class="section-num">Experiment 07</span>
+  <h2>Memory Consolidation</h2>
+  <p class="intro">Sleep is when learning consolidates. Watch it happen.</p>
+  <blockquote>"Effortful learning changes the brain, building new connections and capability."</blockquote>
+
+  <div class="card">
+    <h3>Watch memories consolidate</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Click through the phases to see how scattered learning organizes into durable knowledge.</p>
+    <div class="dot-field" id="consolidation-field"></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:1rem">
+      <button class="btn btn--sm" onclick="showConsolidation('learn')" id="consol-learn">☀️ Daytime Learning</button>
+      <button class="btn btn--sm btn--outline" onclick="showConsolidation('sleep')" id="consol-sleep">🌙 Sleep (Consolidation)</button>
+      <button class="btn btn--sm btn--success" onclick="showConsolidation('morning')" id="consol-morning">🌅 Morning (Integrated)</button>
+    </div>
+    <div id="consol-text" style="margin-top:1rem;color:var(--dim);font-size:.9rem;text-align:center"></div>
+  </div>
+
+  <div class="card">
+    <h3>The Spacing Across Days Effect</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Each sleep cycle reconsolidates. This is why spacing across days beats cramming in one session.</p>
+    <canvas id="consolCanvas" width="600" height="250" style="width:100%;height:auto;border-radius:8px;background:var(--surface)"></canvas>
+    <p style="margin-top:1rem;font-size:.85rem;color:var(--dim)">Surgical residents who spaced training over 4 weeks outperformed those who crammed into 1 day. 16% of the crammers damaged patients' vessels beyond repair.</p>
+  </div>
+</section>
+
+<!-- ==================== 8. SURPRISE FINAL ==================== -->
+<section id="sec-8" class="fade-in">
+  <span class="section-num">Experiment 08</span>
+  <h2>Surprise Final</h2>
+  <p class="intro">No warning. This test pulls from EVERY previous section. This IS spaced retrieval practice — the demo practices what it preaches.</p>
+  <blockquote>"Periodic practice arrests forgetting, strengthens retrieval routes, and is essential for hanging onto the knowledge you want to gain."</blockquote>
+
+  <div id="sf-start" class="card">
+    <h3>Ready?</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">This final exam covers material from all 7 previous experiments. No peeking.</p>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--danger" onclick="startSurpriseFinal()">🎯 Begin Final Exam</button>
+    </div>
+  </div>
+
+  <div id="sf-quiz" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h3 id="sf-q-title">Question 1</h3>
+      <span id="sf-q-source" class="tag" style="font-size:.65rem"></span>
+    </div>
+    <div id="sf-q-content"></div>
+  </div>
+
+  <div id="sf-results" class="card hidden">
+    <h3>Final Results: The Full Picture</h3>
+    <div id="sf-results-content"></div>
+  </div>
+
+  <!-- Fluency trap delayed quiz -->
+  <div id="ft-delayed" class="card hidden" style="border-color:var(--warn);background:rgba(255,217,61,.05)">
+    <h3 style="color:var(--warn)">⚡ Fluency Trap — Delayed Quiz</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Remember that passage from the very beginning? Time for the real test.</p>
+    <div id="ft-delayed-qs"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm" style="background:var(--warn);color:#000" onclick="scoreFluencyDelayed()">Score My Answers</button>
+    </div>
+  </div>
+
+  <div id="ft-delayed-results" class="card hidden">
+    <h3>The Fluency Trap — Revealed</h3>
+    <div id="ft-delayed-results-content"></div>
+  </div>
+
+  <!-- Spaced vs Massed final comparison -->
+  <div id="sp-final" class="card hidden" style="border-color:var(--success);background:rgba(78,205,196,.05)">
+    <h3 style="color:var(--success)">📊 Spaced vs Massed — Final Test</h3>
+    <p style="color:var(--dim);font-size:.85rem;margin-bottom:1rem">Now recall ALL the Swahili words — both sets. Same test for both.</p>
+    <div id="sp-final-content"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn--sm btn--success" onclick="scoreSpacedFinal()">Score Both Sets</button>
+    </div>
+  </div>
+
+  <div id="sp-final-results" class="card hidden">
+    <h3>Massed vs Spaced — The Verdict</h3>
+    <div id="sp-final-results-content"></div>
+  </div>
+</section>
+
+<!-- ==================== TAKEAWAY ==================== -->
+<section id="sec-takeaway" class="fade-in" style="text-align:center">
+  <div class="separator"></div>
+  <h2>What You Just Experienced</h2>
+  <p class="intro" style="max-width:600px;margin:1rem auto 2rem">Every experiment used the strategies the book recommends. You didn't just read about them — you lived them.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;text-align:left;margin:2rem 0">
+    <div class="card"><h3 style="color:var(--accent2)">🪤 Fluency Trap</h3><p style="font-size:.85rem;color:var(--dim)">Re-reading felt effective. Retrieval practice won.</p></div>
+    <div class="card"><h3 style="color:var(--success)">⏱️ Spacing</h3><p style="font-size:.85rem;color:var(--dim)">Spaced words returned throughout. Massed words crammed and faded.</p></div>
+    <div class="card"><h3 style="color:var(--accent)">🎨 Interleaving</h3><p style="font-size:.85rem;color:var(--dim)">Mixed training built better discrimination than blocked.</p></div>
+    <div class="card"><h3 style="color:#a78bfa">✍️ Generation</h3><p style="font-size:.85rem;color:var(--dim)">Filling blanks beat passive reading for recall.</p></div>
+    <div class="card"><h3 style="color:#f472b6">📐 Calibration</h3><p style="font-size:.85rem;color:var(--dim)">Your confidence vs accuracy curve revealed blind spots.</p></div>
+    <div class="card"><h3 style="color:var(--warn)">💪 Difficulty</h3><p style="font-size:.85rem;color:var(--dim)">Hard problems taught more than easy ones felt.</p></div>
+    <div class="card"><h3 style="color:#60a5fa">🌙 Consolidation</h3><p style="font-size:.85rem;color:var(--dim)">Sleep organizes scattered learning into integrated knowledge.</p></div>
+    <div class="card"><h3 style="color:var(--accent2)">🎯 Surprise Final</h3><p style="font-size:.85rem;color:var(--dim)">The demo practiced what it preached—spaced retrieval across sections.</p></div>
+  </div>
+
+  <blockquote style="max-width:600px;margin:2rem auto;text-align:left">"Effortful learning changes the brain, building new connections and capability. This single fact—that our intellectual abilities are not fixed from birth but are, to a considerable degree, ours to shape—is a resounding answer to the nagging voice that too often asks us 'Why bother?'"</blockquote>
+
+  <p style="color:var(--dim);font-size:.9rem;margin-top:2rem">Based on <strong>Make It Stick: The Science of Successful Learning</strong><br>by Peter C. Brown, Henry L. Roediger III & Mark A. McDaniel</p>
+</section>
+
+<footer class="footer">
+  <p>The Memory Lab v2 — An interactive experiment inspired by Make It Stick (2014)</p>
+</footer>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+const STATE = {
+  ftGroup: null, // 'reread' or 'retrieval'
+  ftConf: 50,
+  ftRetrievalAnswers: {},
+  ftDelayedAnswers: {},
+  spSetA: [], spSetB: [],
+  spMassedRound: 0,
+  spReview1Done: false,
+  spReview2Done: false,
+  ilBlockedScore: 0, ilInterleavedScore: 0,
+  genReadItems: [], genGenItems: [],
+  calData: [],
+  ddScores: {easy:[], medium:[], hard:[]},
+  sfAnswers: [],
+  surpriseFinalItems: []
+};
+
+// ============================================================
+// NAV
+// ============================================================
+const sections = ['sec-hero','sec-1','sec-2','sec-3','sec-4','sec-5','sec-6','sec-7','sec-8','sec-takeaway'];
+const dotsContainer = document.getElementById('navDots');
+sections.forEach((id,i) => {
+  const dot = document.createElement('button');
+  dot.className = 'nav-dot';
+  dot.onclick = () => document.getElementById(id).scrollIntoView({behavior:'smooth'});
+  dotsContainer.appendChild(dot);
+});
+function updateNav(){
+  const dots = dotsContainer.children;
+  const scrollY = window.scrollY + window.innerHeight/2;
+  let active = 0;
+  sections.forEach((id,i) => { const el = document.getElementById(id); if(el && el.offsetTop <= scrollY) active = i; });
+  Array.from(dots).forEach((d,i) => d.classList.toggle('active', i===active));
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progressBar').style.width = total>0?(window.scrollY/total*100)+'%':'0%';
+}
+window.addEventListener('scroll', updateNav);
+updateNav();
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') });
+}, {threshold:0.1});
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function $(id){ return document.getElementById(id); }
+function show(id){ $(id).classList.remove('hidden'); }
+function hide(id){ $(id).classList.add('hidden'); }
+function similarity(a,b){ a=a.toLowerCase().trim(); b=b.toLowerCase().trim(); if(a===b) return 1; if(!a||!b) return 0; const longer=a.length>b.length?a:b, shorter=a.length>b.length?b:a; if(longer.length===0) return 1; const costs=[]; for(let i=0;i<=longer.length;i++){let lastVal=i; for(let j=0;j<=shorter.length;j++){if(i===0) costs[j]=j; else if(j>0){let newVal=costs[j-1]; if(longer[i-1]!==shorter[j-1]) newVal=Math.min(newVal,lastVal,costs[j])+1; costs[j-1]=lastVal; lastVal=newVal;}} if(i>0) costs[shorter.length]=lastVal;} return (longer.length-costs[shorter.length])/longer.length; }
+function fuzzyMatch(input, target, threshold=0.7){ return similarity(input,target) >= threshold; }
+
+// ============================================================
+// 1. FLUENCY TRAP
+// ============================================================
+const FT_PASSAGE = `The axolotl is a neotenic salamander native to Lake Xochimilco in Mexico City. Unlike most amphibians, axolotls retain their larval features throughout life — a phenomenon called neoteny. They keep their external gills, which appear as feathery projections behind the head. Adult axolotls can reach 30 centimeters in length. They possess remarkable regenerative abilities: they can regrow entire limbs, parts of their brain, heart, and spinal cord without scarring. Their genome is approximately 32 billion base pairs — ten times larger than the human genome. Axolotls are critically endangered in the wild due to urbanization, pollution, and invasive species like tilapia. In laboratories, they have been studied since the 1860s, making them one of the longest-running model organisms in science.`;
+
+const FT_QUESTIONS = [
+  {q: "Where are axolotls native to?", a: "Lake Xochimilco in Mexico City"},
+  {q: "What is the phenomenon of retaining larval features called?", a: "neoteny"},
+  {q: "What body parts can they regenerate? Name at least 3.", a: "limbs, brain, heart, spinal cord"},
+  {q: "How large is their genome compared to humans?", a: "ten times larger (32 billion base pairs)"},
+  {q: "What invasive species threatens them?", a: "tilapia"},
+  {q: "Since when have they been studied in laboratories?", a: "the 1860s"},
+];
+
+function startFluencyTrap(){
+  STATE.ftGroup = Math.random() < 0.5 ? 'reread' : 'retrieval';
+  hide('ft-setup');
+  show('ft-study');
+  
+  const tag = $('ft-group-tag');
+  tag.textContent = STATE.ftGroup === 'reread' ? 'Group A — Re-read' : 'Group B — Retrieval';
+  tag.className = 'tag ' + (STATE.ftGroup === 'reread' ? 'tag--read' : 'tag--test');
+  
+  $('ft-passage').textContent = FT_PASSAGE;
+  $('ft-phase-label').textContent = 'Phase 1: Read carefully';
+  
+  let t = 40;
+  $('ft-timer').textContent = t + 's';
+  const iv = setInterval(() => {
+    t--;
+    $('ft-timer').textContent = t + 's';
+    if(t <= 5) $('ft-timer').classList.add('urgent');
+    if(t <= 0){
+      clearInterval(iv);
+      $('ft-timer').classList.remove('urgent');
+      ftPhase2();
+    }
+  }, 1000);
+}
+
+function ftPhase2(){
+  if(STATE.ftGroup === 'reread'){
+    $('ft-phase-label').textContent = 'Phase 2: Read it again (re-reading strategy)';
+    $('ft-passage').textContent = FT_PASSAGE;
+    let t = 30;
+    $('ft-timer').textContent = t + 's';
+    const iv = setInterval(() => {
+      t--;
+      $('ft-timer').textContent = t + 's';
+      if(t <= 5) $('ft-timer').classList.add('urgent');
+      if(t <= 0){
+        clearInterval(iv);
+        $('ft-timer').textContent = '';
+        $('ft-timer').classList.remove('urgent');
+        $('ft-passage').innerHTML = '<p style="color:var(--dim);text-align:center"><em>Passage hidden.</em></p>';
+        show('ft-confidence');
+        $('ft-actions').innerHTML = '<button class="btn btn--sm" onclick="ftFinishStudy()">Continue</button>';
+      }
+    }, 1000);
+  } else {
+    $('ft-timer').textContent = '';
+    $('ft-passage').innerHTML = '<p style="color:var(--dim);text-align:center"><em>Passage hidden. Now retrieve from memory!</em></p>';
+    $('ft-phase-label').textContent = 'Phase 2: Retrieval practice';
+    show('ft-confidence');
+    $('ft-actions').innerHTML = '<button class="btn btn--sm" onclick="ftStartRetrieval()">Start Retrieval Practice</button>';
+  }
+}
+
+function ftStartRetrieval(){
+  STATE.ftConf = parseInt($('ft-conf-slider').value);
+  hide('ft-study');
+  show('ft-retrieval');
+  const container = $('ft-retrieval-qs');
+  container.innerHTML = '';
+  FT_QUESTIONS.forEach((q,i) => {
+    container.innerHTML += `<div style="margin-bottom:1rem"><p style="font-weight:600;font-size:.9rem">${q.q}</p><input type="text" class="recall-input" style="min-height:40px;margin-top:.25rem" id="ft-ret-${i}" placeholder="Answer from memory..."></div>`;
+  });
+}
+
+function ftFinishRetrieval(){
+  FT_QUESTIONS.forEach((q,i) => {
+    STATE.ftRetrievalAnswers[i] = $('ft-ret-'+i).value;
+  });
+  hide('ft-retrieval');
+  show('ft-waiting');
+  $('ft-wait-group').textContent = 'B — Retrieval Practice';
+  $('ft-wait-conf').textContent = STATE.ftConf;
+}
+
+function ftFinishStudy(){
+  STATE.ftConf = parseInt($('ft-conf-slider').value);
+  hide('ft-study');
+  show('ft-waiting');
+  $('ft-wait-group').textContent = 'A — Re-reading';
+  $('ft-wait-conf').textContent = STATE.ftConf;
+}
+
+// ============================================================
+// 2. SPACED vs MASSED
+// ============================================================
+const SWAHILI_A = [
+  {sw:'wingu', en:'cloud'}, {sw:'mti', en:'tree'}, {sw:'jiwe', en:'stone'},
+  {sw:'ndege', en:'bird'}, {sw:'mwezi', en:'moon'}, {sw:'bahari', en:'ocean'}
+];
+const SWAHILI_B = [
+  {sw:'nyota', en:'star'}, {sw:'mto', en:'river'}, {sw:'simba', en:'lion'},
+  {sw:'mlima', en:'mountain'}, {sw:'jua', en:'sun'}, {sw:'samaki', en:'fish'}
+];
+
+let spPhase='', spIdx=0, spRound=0;
+
+function startSpaced(){
+  STATE.spSetA = SWAHILI_A; STATE.spSetB = SWAHILI_B;
+  hide('sp-intro');
+  show('sp-practice');
+  spPhase = 'show-a';
+  spRound = 1;
+  spIdx = 0;
+  $('sp-title').textContent = 'Set A — Massed Practice (Round 1/3): Study';
+  $('sp-round-tag').textContent = 'MASSED'; $('sp-round-tag').className = 'tag tag--read';
+  showSpCard();
+}
+
+function showSpCard(){
+  const set = spPhase.includes('a') ? STATE.spSetA : STATE.spSetB;
+  const isTest = spPhase.includes('test');
+  if(spIdx >= set.length){
+    spAdvance();
+    return;
+  }
+  const item = set[spIdx];
+  if(isTest){
+    $('sp-content').innerHTML = `<div style="text-align:center"><p style="font-size:1.5rem;font-weight:700;color:var(--accent)">${item.sw}</p><p style="color:var(--dim);font-size:.85rem;margin:.5rem 0">What does this mean in English?</p><input type="text" id="sp-answer" class="recall-input" style="min-height:40px;max-width:300px;margin:0 auto;display:block" placeholder="English meaning..."></div>`;
+    $('sp-next-btn').textContent = 'Submit';
+  } else {
+    $('sp-content').innerHTML = `<div style="text-align:center"><p style="font-size:1.5rem;font-weight:700;color:var(--accent)">${item.sw}</p><p style="font-size:1.2rem;margin-top:.5rem">${item.en}</p><p style="color:var(--dim);font-size:.8rem;margin-top:.25rem">${spIdx+1}/${set.length}</p></div>`;
+    $('sp-next-btn').textContent = 'Next';
+  }
+}
+
+function spNext(){
+  const set = spPhase.includes('a') ? STATE.spSetA : STATE.spSetB;
+  if(spPhase.includes('test') && $('sp-answer')){
+    const val = $('sp-answer').value.trim().toLowerCase();
+    const correct = fuzzyMatch(val, set[spIdx].en);
+    $('sp-content').innerHTML += `<p style="text-align:center;margin-top:.5rem;color:${correct?'var(--success)':'var(--accent2)'}">${correct?'✓ Correct!':'✗ It was: '+set[spIdx].en}</p>`;
+    setTimeout(()=>{ spIdx++; showSpCard(); }, 800);
+    return;
+  }
+  spIdx++;
+  showSpCard();
+}
+
+function spAdvance(){
+  spIdx = 0;
+  if(spPhase === 'show-a'){
+    spPhase = 'test-a'; spRound = 1;
+    $('sp-title').textContent = 'Set A — Massed Practice (Round 1/3): Test';
+    showSpCard();
+  } else if(spPhase === 'test-a' && spRound < 3){
+    spRound++;
+    spPhase = 'show-a';
+    $('sp-title').textContent = `Set A — Massed Practice (Round ${spRound}/3): Study`;
+    showSpCard();
+  } else if(spPhase === 'test-a' && spRound >= 3){
+    // Now show Set B round 1
+    spPhase = 'show-b'; spRound = 1;
+    $('sp-title').textContent = 'Set B — Spaced Practice (Round 1/3): Study';
+    $('sp-round-tag').textContent = 'SPACED'; $('sp-round-tag').className = 'tag tag--test';
+    showSpCard();
+  } else if(spPhase === 'show-b'){
+    spPhase = 'test-b';
+    $('sp-title').textContent = 'Set B — Spaced Practice (Round 1/3): Test';
+    showSpCard();
+  } else if(spPhase === 'test-b'){
+    hide('sp-practice');
+    show('sp-waiting');
+    // Show spaced reminder 1 after interleaving section
+    setupSpReview(1);
+  } else if(spPhase === 'show-a' && spRound > 1){
+    spPhase = 'test-a';
+    $('sp-title').textContent = `Set A — Massed Practice (Round ${spRound}/3): Test`;
+    showSpCard();
+  }
+}
+
+function setupSpReview(n){
+  const container = $(`sp-review-${n}-content`);
+  container.innerHTML = '';
+  STATE.spSetB.forEach((item,i) => {
+    container.innerHTML += `<div style="display:flex;align-items:center;gap:.75rem;margin:.5rem 0"><span style="font-weight:700;color:var(--success);min-width:80px">${item.sw}</span><span>→</span><input type="text" id="sp-rev-${n}-${i}" class="recall-input" style="min-height:36px;flex:1" placeholder="English?"></div>`;
+  });
+}
+
+// Triggered by intersection observer or manual
+function triggerSpReview1(){
+  if(!STATE.spReview1Done){
+    show('spaced-reminder-1');
+  }
+}
+
+function spReview1Submit(){
+  STATE.spReview1Done = true;
+  let html = '';
+  STATE.spSetB.forEach((item,i) => {
+    const val = $(`sp-rev-1-${i}`).value.trim().toLowerCase();
+    const correct = fuzzyMatch(val, item.en);
+    html += `<span style="color:${correct?'var(--success)':'var(--accent2)'}"> ${item.sw}=${correct?'✓':'✗ '+item.en}</span>`;
+  });
+  $('sp-review-1-content').innerHTML = `<p style="font-size:.9rem">${html}</p><p style="color:var(--dim);font-size:.85rem;margin-top:.5rem">✓ Round 2 done. One more review coming later.</p>`;
+  setupSpReview(2);
+}
+
+function triggerSpReview2(){
+  if(!STATE.spReview2Done && STATE.spReview1Done){
+    show('spaced-reminder-2');
+  }
+}
+
+function spReview2Submit(){
+  STATE.spReview2Done = true;
+  let html = '';
+  STATE.spSetB.forEach((item,i) => {
+    const val = $(`sp-rev-2-${i}`).value.trim().toLowerCase();
+    const correct = fuzzyMatch(val, item.en);
+    html += `<span style="color:${correct?'var(--success)':'var(--accent2)'}"> ${item.sw}=${correct?'✓':'✗ '+item.en}</span>`;
+  });
+  $('sp-review-2-content').innerHTML = `<p style="font-size:.9rem">${html}</p><p style="color:var(--dim);font-size:.85rem;margin-top:.5rem">✓ All 3 spaced rounds done. The final comparison comes at the end.</p>`;
+}
+
+// Trigger spaced reviews when sections come into view
+const spObs1 = new IntersectionObserver(e => { if(e[0].isIntersecting) triggerSpReview1(); }, {threshold:0.3});
+const spObs2 = new IntersectionObserver(e => { if(e[0].isIntersecting) triggerSpReview2(); }, {threshold:0.3});
+spObs1.observe($('sec-4'));
+spObs2.observe($('sec-6'));
+
+// ============================================================
+// 3. INTERLEAVING PAINTBALL
+// ============================================================
+// Using abstract "paintings" with distinct visual styles (CSS-generated)
+const ARTISTS = {
+  'Monet': {colors:['#87CEEB','#90EE90','#DDA0DD'], pattern:'soft', emoji:'🌊'},
+  'Kandinsky': {colors:['#FF4500','#FFD700','#1E90FF'], pattern:'geometric', emoji:'🔺'},
+  'Rothko': {colors:['#8B0000','#FF8C00','#4B0082'], pattern:'fields', emoji:'🟥'}
+};
+
+const PAINTINGS_DB = {
+  'Monet': [
+    {id:'m1',desc:'Water Lilies Study',c1:'#87CEEB',c2:'#90EE90',c3:'#E6E6FA'},
+    {id:'m2',desc:'Garden at Giverny',c1:'#98FB98',c2:'#87CEFA',c3:'#DDA0DD'},
+    {id:'m3',desc:'Sunrise Impression',c1:'#FFB6C1',c2:'#87CEEB',c3:'#F0E68C'},
+    {id:'m4',desc:'Haystack Series',c1:'#F5DEB3',c2:'#87CEEB',c3:'#90EE90'},
+    {id:'m5',desc:'Thames Fog',c1:'#B0C4DE',c2:'#D3D3D3',c3:'#E6E6FA'},
+  ],
+  'Kandinsky': [
+    {id:'k1',desc:'Composition VII',c1:'#FF4500',c2:'#FFD700',c3:'#1E90FF'},
+    {id:'k2',desc:'Several Circles',c1:'#FF6347',c2:'#00CED1',c3:'#FFD700'},
+    {id:'k3',desc:'Yellow-Red-Blue',c1:'#FFD700',c2:'#DC143C',c3:'#4169E1'},
+    {id:'k4',desc:'On White II',c1:'#FF4500',c2:'#000',c3:'#FFD700'},
+    {id:'k5',desc:'Transverse Line',c1:'#FF6347',c2:'#9370DB',c3:'#FFD700'},
+  ],
+  'Rothko': [
+    {id:'r1',desc:'No. 61 (Rust & Blue)',c1:'#8B4513',c2:'#4682B4',c3:'#2F4F4F'},
+    {id:'r2',desc:'Orange & Yellow',c1:'#FF8C00',c2:'#FFD700',c3:'#FF6347'},
+    {id:'r3',desc:'No. 14 (White & Red)',c1:'#DC143C',c2:'#FFF5EE',c3:'#8B0000'},
+    {id:'r4',desc:'Black in Deep Red',c1:'#8B0000',c2:'#000',c3:'#4B0000'},
+    {id:'r5',desc:'Green on Blue',c1:'#2E8B57',c2:'#4682B4',c3:'#006400'},
+  ]
+};
+
+function makePaintingHTML(p, artist, showLabel=true){
+  const a = ARTISTS[artist];
+  let inner = '';
+  if(a.pattern === 'soft'){
+    inner = `<div style="width:100%;height:100%;background:linear-gradient(135deg,${p.c1},${p.c2},${p.c3});filter:blur(0px);opacity:.8"></div>`;
+  } else if(a.pattern === 'geometric'){
+    inner = `<div style="width:100%;height:100%;background:${p.c3};display:flex;align-items:center;justify-content:center">
+      <div style="width:40px;height:40px;background:${p.c1};transform:rotate(45deg);margin:5px"></div>
+      <div style="width:30px;height:30px;border-radius:50%;background:${p.c2};margin:5px"></div>
+      <div style="width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:35px solid ${p.c1};margin:5px"></div>
+    </div>`;
+  } else {
+    inner = `<div style="width:100%;height:100%;display:flex;flex-direction:column">
+      <div style="flex:1;background:${p.c1}"></div>
+      <div style="flex:1;background:${p.c2}"></div>
+      <div style="flex:.5;background:${p.c3}"></div>
+    </div>`;
+  }
+  return `<div class="painting-card"><div class="swatch">${inner}</div>${showLabel ? `<div class="info"><strong>${a.emoji} ${artist}</strong><br><span style="color:var(--dim)">${p.desc}</span></div>` : `<div class="info"><span style="color:var(--dim)">${p.desc}</span></div>`}</div>`;
+}
+
+let ilPhase='', ilIdx=0, ilBlockedOrder=[], ilInterleavedOrder=[], ilTestItems=[], ilTestIdx=0;
+let ilBlockedCorrect=0, ilInterleavedCorrect=0, ilBlockedTotal=0, ilInterleavedTotal=0;
+
+function startInterleaving(){
+  hide('il-intro');
+  show('il-training');
+  // Phase 1: Blocked — show 2 of each artist in blocks
+  ilBlockedOrder = [];
+  ['Monet','Kandinsky','Rothko'].forEach(a => {
+    ilBlockedOrder.push({artist:a, painting:PAINTINGS_DB[a][0]});
+    ilBlockedOrder.push({artist:a, painting:PAINTINGS_DB[a][1]});
+  });
+  // Phase 2: Interleaved — show 2 more of each, shuffled
+  ilInterleavedOrder = shuffle([
+    {artist:'Monet', painting:PAINTINGS_DB['Monet'][2]},
+    {artist:'Kandinsky', painting:PAINTINGS_DB['Kandinsky'][2]},
+    {artist:'Rothko', painting:PAINTINGS_DB['Rothko'][2]},
+    {artist:'Monet', painting:PAINTINGS_DB['Monet'][3]},
+    {artist:'Kandinsky', painting:PAINTINGS_DB['Kandinsky'][3]},
+    {artist:'Rothko', painting:PAINTINGS_DB['Rothko'][3]},
+  ]);
+  
+  ilPhase = 'blocked'; ilIdx = 0;
+  $('il-train-title').textContent = 'Blocked Training — One artist at a time';
+  $('il-train-tag').textContent = 'BLOCKED'; $('il-train-tag').className = 'tag tag--read';
+  showIlTrainCard();
+}
+
+function showIlTrainCard(){
+  const list = ilPhase === 'blocked' ? ilBlockedOrder : ilInterleavedOrder;
+  if(ilIdx >= list.length){
+    if(ilPhase === 'blocked'){
+      ilPhase = 'interleaved'; ilIdx = 0;
+      $('il-train-title').textContent = 'Interleaved Training — Artists mixed randomly';
+      $('il-train-tag').textContent = 'INTERLEAVED'; $('il-train-tag').className = 'tag tag--test';
+      showIlTrainCard();
+    } else {
+      startIlTest();
+    }
+    return;
+  }
+  const item = list[ilIdx];
+  $('il-train-content').innerHTML = `<div style="max-width:250px;margin:0 auto">${makePaintingHTML(item.painting, item.artist, true)}</div><p style="text-align:center;color:var(--dim);font-size:.8rem;margin-top:.5rem">${ilIdx+1}/${list.length}</p>`;
+}
+
+function ilTrainNext(){ ilIdx++; showIlTrainCard(); }
+
+function startIlTest(){
+  hide('il-training');
+  show('il-test');
+  // Test on NEW paintings (index 4) — 3 blocked-trained, 3 interleaved-trained style questions
+  // Actually we test on index 4 for all; the question is whether the user can identify style
+  ilTestItems = shuffle([
+    {painting:PAINTINGS_DB['Monet'][4], artist:'Monet', source:'blocked'},
+    {painting:PAINTINGS_DB['Kandinsky'][4], artist:'Kandinsky', source:'blocked'},
+    {painting:PAINTINGS_DB['Rothko'][4], artist:'Rothko', source:'blocked'},
+  ]);
+  ilTestIdx = 0;
+  ilBlockedCorrect = 0; ilInterleavedCorrect = 0;
+  ilBlockedTotal = 3; ilInterleavedTotal = 0;
+  showIlTestQ();
+}
+
+function showIlTestQ(){
+  if(ilTestIdx >= ilTestItems.length){
+    showIlResults();
+    return;
+  }
+  const item = ilTestItems[ilTestIdx];
+  let html = `<div style="max-width:250px;margin:0 auto">${makePaintingHTML(item.painting, item.artist, false)}</div>`;
+  html += `<p style="text-align:center;font-weight:600;margin:1rem 0">Who painted this? (${ilTestIdx+1}/${ilTestItems.length})</p>`;
+  ['Monet','Kandinsky','Rothko'].forEach(a => {
+    html += `<button class="quiz-option" onclick="ilTestAnswer(this,'${a}')">${ARTISTS[a].emoji} ${a}</button>`;
+  });
+  $('il-test-content').innerHTML = html;
+}
+
+function ilTestAnswer(btn, answer){
+  const item = ilTestItems[ilTestIdx];
+  const correct = answer === item.artist;
+  if(correct) ilBlockedCorrect++;
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  $('il-test-content').querySelectorAll('.quiz-option').forEach(b => {
+    b.disabled = true;
+    if(b.textContent.includes(item.artist)) b.classList.add('correct');
+  });
+  setTimeout(() => { ilTestIdx++; showIlTestQ(); }, 1000);
+}
+
+function showIlResults(){
+  hide('il-test');
+  show('il-results');
+  const pct = Math.round(ilBlockedCorrect/3*100);
+  $('il-results-content').innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="num" style="color:var(--accent)">${ilBlockedCorrect}/3</div><div class="label">Correct on new paintings</div></div>
+    </div>
+    <p style="margin-top:1rem;font-size:.9rem;color:var(--dim)">In the original study, students who learned in <strong>interleaved</strong> order scored <strong>63%</strong> on new paintings vs <strong>20%</strong> for blocked learners. The interleaved training forces you to notice <em>what makes each artist different</em> — discrimination skills that blocked practice never builds.</p>
+    <p style="margin-top:.75rem;font-size:.9rem">🎨 The paintings that felt confusing during mixed training are exactly the ones you learned to tell apart.</p>
+  `;
+}
+
+// ============================================================
+// 4. GENERATION EFFECT
+// ============================================================
+const GEN_DEFS = [
+  {term:'Retrieval practice', def:'Pulling knowledge from memory to strengthen it', mode:null},
+  {term:'Spaced practice', def:'Spreading study sessions over time with gaps between them', mode:null},
+  {term:'Interleaving', def:'Mixing different problem types during practice sessions', mode:null},
+  {term:'Desirable difficulty', def:'Challenges that slow learning but make it more durable', mode:null},
+  {term:'Fluency illusion', def:'Mistaking familiarity with text for actual knowledge', mode:null},
+  {term:'Generation effect', def:'Producing answers creates stronger memories than reading them', mode:null},
+  {term:'Calibration', def:'Aligning your confidence with your actual knowledge level', mode:null},
+  {term:'Elaboration', def:'Connecting new learning to what you already know in your own words', mode:null},
+];
+
+let genIdx = 0, genItems = [];
+
+function startGeneration(){
+  hide('gen-setup');
+  show('gen-study');
+  // Randomly assign half to read, half to generate
+  genItems = shuffle([...GEN_DEFS]);
+  genItems.forEach((item,i) => { item.mode = i < 4 ? 'read' : 'generate'; });
+  genItems = shuffle(genItems);
+  STATE.genReadItems = genItems.filter(i => i.mode === 'read');
+  STATE.genGenItems = genItems.filter(i => i.mode === 'generate');
+  genIdx = 0;
+  showGenStudy();
+}
+
+function makeGapped(def){
+  // Remove ~40% of letters
+  return def.split('').map((ch,i) => {
+    if(/[a-zA-Z]/.test(ch) && i % 3 === 0) return '_';
+    return ch;
+  }).join('');
+}
+
+function showGenStudy(){
+  if(genIdx >= genItems.length){
+    // Transition to test
+    hide('gen-study');
+    show('gen-test');
+    const container = $('gen-test-content');
+    container.innerHTML = '';
+    const testOrder = shuffle([...genItems]);
+    testOrder.forEach((item,i) => {
+      container.innerHTML += `<div style="margin-bottom:1rem"><p style="font-weight:600;font-size:.9rem">${item.term} <span class="tag" style="font-size:.6rem;${item.mode==='read'?'background:rgba(108,99,255,.2);color:var(--accent)':'background:rgba(78,205,196,.2);color:var(--success)'}">${item.mode}</span></p><input type="text" id="gen-recall-${i}" data-term="${item.term}" data-mode="${item.mode}" data-def="${item.def}" class="recall-input" style="min-height:40px;margin-top:.25rem" placeholder="Write the definition from memory..."></div>`;
+    });
+    return;
+  }
+  const item = genItems[genIdx];
+  const modeTag = item.mode === 'read' ? '<span class="tag tag--read">Just Read</span>' : '<span class="tag tag--test">Fill In Blanks</span>';
+  $('gen-study-title').innerHTML = `Definition ${genIdx+1}/${genItems.length} ${modeTag}`;
+  
+  if(item.mode === 'read'){
+    $('gen-study-content').innerHTML = `<div style="padding:1rem;background:var(--surface);border-radius:8px"><p><strong>${item.term}:</strong> ${item.def}</p></div><p style="color:var(--dim);font-size:.8rem;margin-top:.5rem">Read and absorb this definition.</p>`;
+  } else {
+    const gapped = makeGapped(item.def);
+    $('gen-study-content').innerHTML = `<div style="padding:1rem;background:var(--surface);border-radius:8px"><p><strong>${item.term}:</strong></p><p style="margin-top:.5rem">${gapped}</p><input type="text" id="gen-fill" class="recall-input" style="min-height:40px;margin-top:.5rem" placeholder="Type the full definition..."></div><p style="color:var(--dim);font-size:.8rem;margin-top:.5rem">Try to reconstruct the complete definition.</p>`;
+  }
+}
+
+function genStudyNext(){
+  genIdx++;
+  showGenStudy();
+}
+
+function scoreGeneration(){
+  let readCorrect=0, readTotal=0, genCorrect=0, genTotal=0;
+  const inputs = $('gen-test-content').querySelectorAll('input');
+  inputs.forEach(inp => {
+    const mode = inp.dataset.mode;
+    const def = inp.dataset.def;
+    const val = inp.value.trim();
+    // Score based on key word overlap
+    const defWords = def.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const valWords = val.toLowerCase().split(/\s+/);
+    const matches = defWords.filter(dw => valWords.some(vw => fuzzyMatch(vw, dw, 0.75)));
+    const score = defWords.length > 0 ? matches.length / defWords.length : 0;
+    const pass = score >= 0.4;
+    
+    if(mode === 'read'){ readTotal++; if(pass) readCorrect++; }
+    else { genTotal++; if(pass) genCorrect++; }
+    
+    inp.style.borderColor = pass ? 'var(--success)' : 'var(--accent2)';
+    inp.style.color = pass ? 'var(--success)' : 'var(--accent2)';
+  });
+  
+  hide('gen-test');
+  show('gen-results');
+  const rPct = readTotal ? Math.round(readCorrect/readTotal*100) : 0;
+  const gPct = genTotal ? Math.round(genCorrect/genTotal*100) : 0;
+  
+  $('gen-results-content').innerHTML = `
+    <div class="grid-2" style="margin:1rem 0">
+      <div style="text-align:center;padding:1rem;background:var(--surface);border-radius:8px">
+        <div class="tag tag--read">Read passively</div>
+        <div style="font-size:2.5rem;font-weight:800;color:var(--accent);margin:.5rem 0">${rPct}%</div>
+        <div style="font-size:.8rem;color:var(--dim)">${readCorrect}/${readTotal} recalled</div>
+      </div>
+      <div style="text-align:center;padding:1rem;background:var(--surface);border-radius:8px">
+        <div class="tag tag--test">Generated</div>
+        <div style="font-size:2.5rem;font-weight:800;color:var(--success);margin:.5rem 0">${gPct}%</div>
+        <div style="font-size:.8rem;color:var(--dim)">${genCorrect}/${genTotal} recalled</div>
+      </div>
+    </div>
+    <p style="font-size:.9rem;color:var(--dim);margin-top:1rem">${gPct >= rPct ? 'As predicted: the definitions you had to <strong>generate</strong> stuck better than the ones you passively read. Even partial generation (filling blanks) creates stronger memory traces.' : 'Interesting—you bucked the typical pattern. But across studies, the generation effect reliably produces ~15-20% better recall for items you had to produce vs merely read.'}</p>
+    <p style="font-size:.85rem;margin-top:.75rem">🧠 <strong>The science:</strong> "Filling in a missing letter (foot-s__e) beats studying the complete pair (foot-shoe)." Generation forces encoding effort.</p>
+  `;
+}
+
+// ============================================================
+// 5. CALIBRATION DASHBOARD
+// ============================================================
+const CAL_QUESTIONS = [
+  {q:"In the Columbia Middle School study, quizzed students averaged what grade on quizzed material?", opts:['B+','A-','C+','B-'], correct:1},
+  {q:"What percentage of college students use rereading as their primary study strategy?", opts:['About 40%','About 60%','Over 80%','About 25%'], correct:2},
+  {q:"Interleaved practice improved final test scores by how much vs blocked practice?", opts:['50%','100%','215%','150%'], correct:2},
+  {q:"The Dunning-Kruger effect shows that the least competent tend to:", opts:['Underestimate their ability','Accurately assess themselves','Overestimate their ability','Refuse to be tested'], correct:2},
+  {q:"Axolotls can regenerate which of these? (from the passage earlier)", opts:['Only their tail','Limbs, brain, heart, spinal cord','Only limbs and tail','Nothing — they cannot regenerate'], correct:1},
+  {q:"How many base pairs are in the axolotl genome?", opts:['3.2 billion','10 billion','32 billion','100 billion'], correct:2},
+  {q:"What is the term for challenges that slow learning but make it more durable?", opts:['Productive failure','Desirable difficulties','Optimal friction','Cognitive load'], correct:1},
+  {q:"Surgical residents who crammed training in 1 day — what happened to 16% of them?", opts:['They failed the written exam','They quit the program','They damaged patients\' vessels beyond repair','They fell asleep during surgery'], correct:2},
+];
+
+let calIdx=0;
+
+function startCalibration(){
+  calIdx = 0;
+  STATE.calData = [];
+  $('cal-start-btn').classList.add('hidden');
+  showCalQ();
+}
+
+function showCalQ(){
+  if(calIdx >= CAL_QUESTIONS.length){
+    showCalResults();
+    return;
+  }
+  const q = CAL_QUESTIONS[calIdx];
+  let html = `<div style="margin-bottom:1rem">
+    <label style="font-size:.85rem;font-weight:600">Your confidence: <span id="cal-conf-val">50</span>%</label>
+    <input type="range" class="confidence-slider" id="cal-conf" min="0" max="100" value="50" oninput="document.getElementById('cal-conf-val').textContent=this.value">
+    <div class="confidence-labels"><span>Total guess</span><span>100% certain</span></div>
+  </div>
+  <p style="font-weight:600;margin-bottom:.75rem">Q${calIdx+1}/${CAL_QUESTIONS.length}: ${q.q}</p>`;
+  q.opts.forEach((opt,i) => {
+    html += `<button class="quiz-option" onclick="calAnswer(this,${i})">${opt}</button>`;
+  });
+  $('cal-content').innerHTML = html;
+}
+
+function calAnswer(btn, idx){
+  const q = CAL_QUESTIONS[calIdx];
+  const conf = parseInt($('cal-conf').value);
+  const correct = idx === q.correct;
+  STATE.calData.push({conf, correct, qIdx:calIdx});
+  
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  $('cal-content').querySelectorAll('.quiz-option').forEach((b,i) => {
+    b.disabled = true;
+    if(i === q.correct) b.classList.add('correct');
+  });
+  setTimeout(() => { calIdx++; showCalQ(); }, 1200);
+}
+
+function showCalResults(){
+  $('cal-content').innerHTML = '<p style="color:var(--dim);text-align:center">Quiz complete! See your calibration curve below.</p>';
+  show('cal-results');
+  
+  // Draw calibration curve
+  const canvas = $('calCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = {l:60, r:30, t:30, b:50};
+  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+  
+  ctx.clearRect(0,0,W,H);
+  
+  // Grid
+  ctx.strokeStyle = '#2a2a3a'; ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const x = pad.l + cw*i/4;
+    const y = pad.t + ch*i/4;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+ch); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cw, y); ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ch); ctx.lineTo(pad.l+cw, pad.t+ch); ctx.stroke();
+  
+  ctx.fillStyle = '#888'; ctx.font = '11px sans-serif';
+  ctx.fillText('Confidence →', W/2-30, H-5);
+  ctx.save(); ctx.translate(12, H/2+30); ctx.rotate(-Math.PI/2); ctx.fillText('Accuracy →', 0, 0); ctx.restore();
+  ['0%','25%','50%','75%','100%'].forEach((l,i) => {
+    ctx.fillText(l, pad.l + cw*i/4 - 10, pad.t+ch+15);
+    ctx.fillText(l, pad.l-35, pad.t+ch - ch*i/4 + 4);
+  });
+  
+  // Perfect calibration diagonal
+  ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t+ch); ctx.lineTo(pad.l+cw, pad.t); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#4ecdc4'; ctx.fillText('Perfect calibration', pad.l+cw-100, pad.t+15);
+  
+  // Bin data into confidence ranges
+  const bins = [{lo:0,hi:25,items:[]},{lo:25,hi:50,items:[]},{lo:50,hi:75,items:[]},{lo:75,hi:100,items:[]}];
+  STATE.calData.forEach(d => {
+    const b = bins.find(b => d.conf >= b.lo && (d.conf < b.hi || (b.hi===100 && d.conf<=100)));
+    if(b) b.items.push(d);
+  });
+  
+  // Plot points for each item
+  ctx.fillStyle = 'rgba(108,99,255,.6)';
+  STATE.calData.forEach(d => {
+    const x = pad.l + (d.conf/100)*cw;
+    const y = pad.t + ch - (d.correct ? 1 : 0)*ch;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+  });
+  
+  // Plot bin averages
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3; ctx.fillStyle = '#ff6b6b';
+  let points = [];
+  bins.forEach(b => {
+    if(b.items.length === 0) return;
+    const avgConf = b.items.reduce((s,d)=>s+d.conf,0)/b.items.length;
+    const accuracy = b.items.filter(d=>d.correct).length/b.items.length;
+    const x = pad.l + (avgConf/100)*cw;
+    const y = pad.t + ch - accuracy*ch;
+    points.push({x,y});
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
+  });
+  if(points.length > 1){
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+    points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+  }
+  ctx.fillText('Your curve', pad.l+10, pad.t+15);
+  
+  // Summary
+  const avgConf = Math.round(STATE.calData.reduce((s,d)=>s+d.conf,0)/STATE.calData.length);
+  const accuracy = Math.round(STATE.calData.filter(d=>d.correct).length/STATE.calData.length*100);
+  const gap = avgConf - accuracy;
+  
+  $('cal-results-text').innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="num" style="color:var(--accent)">${avgConf}%</div><div class="label">Avg Confidence</div></div>
+      <div class="stat"><div class="num" style="color:var(--success)">${accuracy}%</div><div class="label">Accuracy</div></div>
+      <div class="stat"><div class="num" style="color:${gap>15?'var(--accent2)':'var(--success)}'}">${gap>0?'+':''}${gap}%</div><div class="label">Gap</div></div>
+    </div>
+    <p style="margin-top:1rem;font-size:.9rem;color:var(--dim)">${gap > 15 ? 'Significantly overconfident — this is the norm, not the exception. Regular self-testing is the antidote.' : gap > 0 ? 'Slightly overconfident — better than most! Regular testing sharpens calibration over time.' : 'Well calibrated or even underconfident. You have a realistic sense of what you know.'}</p>
+    <p style="font-size:.85rem;margin-top:.5rem">📐 The diagonal line = perfect calibration. If your dots are above it, you're overconfident. Below = underconfident.</p>
+  `;
+}
+
+// ============================================================
+// 6. DESIRABLE DIFFICULTY GYM
+// ============================================================
+const DD_PROBLEMS = {
+  easy: [
+    {q:'8 + 5 = ?', a:13}, {q:'12 - 7 = ?', a:5}, {q:'3 × 4 = ?', a:12},
+    {q:'20 ÷ 4 = ?', a:5}, {q:'9 + 6 = ?', a:15}, {q:'15 - 8 = ?', a:7},
+  ],
+  medium: [
+    {q:'17 × 6 = ?', a:102}, {q:'144 ÷ 12 = ?', a:12}, {q:'23 × 4 = ?', a:92},
+    {q:'256 ÷ 16 = ?', a:16}, {q:'38 × 7 = ?', a:266}, {q:'195 ÷ 13 = ?', a:15},
+  ],
+  hard: [
+    {q:'47 × 23 = ?', a:1081}, {q:'√1764 = ?', a:42}, {q:'68 × 37 = ?', a:2516},
+    {q:'29³ = ?', a:24389}, {q:'17 × 19 = ?', a:323}, {q:'√2025 = ?', a:45},
+  ]
+};
+
+let ddDiff='', ddRound=0, ddProbIdx=0, ddRounds=[];
+const DD_SEQUENCE = ['easy','medium','hard','easy','medium','hard'];
+
+function startDifficulty(){
+  hide('dd-intro');
+  show('dd-round');
+  STATE.ddScores = {easy:[], medium:[], hard:[]};
+  ddRound = 0;
+  ddProbIdx = 0;
+  nextDDRound();
+}
+
+function nextDDRound(){
+  if(ddRound >= DD_SEQUENCE.length){
+    showDDResults();
+    return;
+  }
+  ddDiff = DD_SEQUENCE[ddRound];
+  ddProbIdx = ddRound < 3 ? 0 : 1; // Use different problems in round 2
+  const colors = {easy:'var(--success)', medium:'var(--warn)', hard:'var(--accent2)'};
+  $('dd-round-title').textContent = `Round ${ddRound+1}/6`;
+  $('dd-diff-tag').textContent = ddDiff.toUpperCase();
+  $('dd-diff-tag').style.background = colors[ddDiff]+'33';
+  $('dd-diff-tag').style.color = colors[ddDiff];
+  $('dd-feedback').innerHTML = '';
+  showDDProblem();
+}
+
+function showDDProblem(){
+  const p = DD_PROBLEMS[ddDiff][ddProbIdx];
+  $('dd-problem').innerHTML = `<p style="font-size:1.5rem;font-weight:700;text-align:center;color:var(--accent)">${p.q}</p>`;
+  $('dd-input-area').innerHTML = `<div style="text-align:center"><input type="number" id="dd-answer" class="recall-input" style="min-height:44px;max-width:200px;margin:0 auto;display:block;text-align:center;font-size:1.2rem" placeholder="Your answer"></div>`;
+  $('dd-submit-btn').disabled = false;
+}
+
+function ddSubmit(){
+  const p = DD_PROBLEMS[ddDiff][ddProbIdx];
+  const val = parseInt($('dd-answer').value);
+  const correct = val === p.a;
+  STATE.ddScores[ddDiff].push(correct ? 1 : 0);
+  $('dd-submit-btn').disabled = true;
+  $('dd-feedback').innerHTML = `<p style="text-align:center;color:${correct?'var(--success)':'var(--accent2)'}; font-weight:600">${correct ? '✓ Correct!' : '✗ Answer: '+p.a}</p>`;
+  setTimeout(() => { ddRound++; nextDDRound(); }, 1200);
+}
+
+function showDDResults(){
+  hide('dd-round');
+  show('dd-results');
+  
+  const canvas = $('ddCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = {l:60, r:30, t:30, b:50};
+  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+  
+  ctx.clearRect(0,0,W,H);
+  
+  // Axes
+  ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ch); ctx.lineTo(pad.l+cw, pad.t+ch); ctx.stroke();
+  
+  ctx.fillStyle = '#888'; ctx.font = '12px sans-serif';
+  const diffs = ['easy','medium','hard'];
+  const colors = ['#4ecdc4','#ffd93d','#ff6b6b'];
+  const labels = ['Easy','Medium','Hard'];
+  const barW = cw/3 * 0.6;
+  
+  diffs.forEach((d,i) => {
+    const scores = STATE.ddScores[d];
+    const pct = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length*100 : 0;
+    const x = pad.l + cw*i/3 + cw/6 - barW/2;
+    const barH = (pct/100)*ch;
+    
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(x, pad.t+ch-barH, barW, barH);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(Math.round(pct)+'%', x+barW/2-15, pad.t+ch-barH-8);
+    
+    ctx.fillStyle = '#888';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(labels[i], x+barW/2-15, pad.t+ch+18);
+  });
+  
+  ctx.fillStyle = '#888';
+  ctx.fillText('Accuracy', 5, pad.t+ch/2);
+  
+  const easyPct = STATE.ddScores.easy.length ? Math.round(STATE.ddScores.easy.reduce((a,b)=>a+b,0)/STATE.ddScores.easy.length*100) : 0;
+  const hardPct = STATE.ddScores.hard.length ? Math.round(STATE.ddScores.hard.reduce((a,b)=>a+b,0)/STATE.ddScores.hard.length*100) : 0;
+  
+  $('dd-results-text').innerHTML = `
+    <p style="font-size:.9rem;color:var(--dim)">Easy problems: <strong>${easyPct}% correct</strong> — feels great, but you already knew this.<br>Hard problems: <strong>${hardPct}% correct</strong> — frustrating, but THIS is where learning happens.</p>
+    <p style="margin-top:.75rem;font-size:.9rem">💪 <strong>The Bjorks' insight:</strong> If you're always getting things right, you're not learning — you're performing. The struggle IS the signal that your brain is building new connections.</p>
+    <p style="margin-top:.5rem;font-size:.85rem;color:var(--dim)">"The more effort required to retrieve something, the better you learn it."</p>
+  `;
+}
+
+// ============================================================
+// 7. MEMORY CONSOLIDATION
+// ============================================================
+let consolDots = [];
+
+function initConsolidation(){
+  const field = $('consolidation-field');
+  const w = field.offsetWidth || 600;
+  const h = 300;
+  consolDots = [];
+  // Create 30 dots in 5 color groups
+  const colors = ['#6c63ff','#ff6b6b','#4ecdc4','#ffd93d','#a78bfa'];
+  for(let g=0; g<5; g++){
+    for(let i=0; i<6; i++){
+      consolDots.push({
+        color: colors[g],
+        group: g,
+        x: Math.random()*90+5,
+        y: Math.random()*85+5,
+        targetX: 0, targetY: 0
+      });
+    }
+  }
+  // Pre-compute cluster positions
+  const clusterCenters = [{x:20,y:25},{x:75,y:20},{x:50,y:55},{x:20,y:80},{x:78,y:78}];
+  consolDots.forEach(d => {
+    const c = clusterCenters[d.group];
+    d.targetX = c.x + (Math.random()-0.5)*15;
+    d.targetY = c.y + (Math.random()-0.5)*15;
+  });
+}
+
+function showConsolidation(phase){
+  const field = $('consolidation-field');
+  field.innerHTML = '';
+  
+  consolDots.forEach(d => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = d.color;
+    
+    if(phase === 'learn'){
+      dot.style.left = d.x+'%'; dot.style.top = d.y+'%';
+      dot.style.opacity = '0.5';
+    } else if(phase === 'sleep'){
+      // Animate toward clusters
+      dot.style.left = d.x+'%'; dot.style.top = d.y+'%';
+      dot.style.opacity = '0.7';
+      setTimeout(() => {
+        dot.style.left = (d.x + d.targetX)/2+'%';
+        dot.style.top = (d.y + d.targetY)/2+'%';
+      }, 100);
+    } else {
+      dot.style.left = d.targetX+'%'; dot.style.top = d.targetY+'%';
+      dot.style.opacity = '1';
+      dot.style.boxShadow = `0 0 8px ${d.color}`;
+    }
+    field.appendChild(dot);
+  });
+  
+  // Draw connection lines for morning phase
+  if(phase === 'morning'){
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none';
+    const w = field.offsetWidth, h = field.offsetHeight;
+    consolDots.forEach((d,i) => {
+      consolDots.forEach((d2,j) => {
+        if(j <= i || d.group !== d2.group) return;
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', d.targetX*w/100);
+        line.setAttribute('y1', d.targetY*h/100);
+        line.setAttribute('x2', d2.targetX*w/100);
+        line.setAttribute('y2', d2.targetY*h/100);
+        line.setAttribute('stroke', d.color);
+        line.setAttribute('stroke-opacity', '0.3');
+        line.setAttribute('stroke-width', '1');
+        svg.appendChild(line);
+      });
+    });
+    field.appendChild(svg);
+  }
+  
+  const texts = {
+    learn: '☀️ Daytime: New information arrives as scattered, unorganized fragments. This is how your brain looks right after a study session.',
+    sleep: '🌙 Sleep: During sleep, your hippocampus replays the day\'s learning. Memories begin migrating toward related clusters. Consolidation is happening.',
+    morning: '🌅 Morning: Memories are now organized into coherent clusters with connections. Knowledge is integrated and durable. This is why spacing across days works — each sleep cycle reconsolidates.'
+  };
+  $('consol-text').textContent = texts[phase];
+}
+
+function drawConsolChart(){
+  const canvas = $('consolCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = {l:50, r:20, t:20, b:40};
+  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+  
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = '#2a2a3a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ch); ctx.lineTo(pad.l+cw, pad.t+ch); ctx.stroke();
+  
+  ctx.fillStyle = '#888'; ctx.font = '11px sans-serif';
+  ctx.fillText('Memory Strength', 5, pad.t+ch/2);
+  const days = ['Day 1','Day 2','Day 3','','Day 7','','','Day 14','','','','','','Day 30'];
+  
+  // Cramming curve
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for(let x=0;x<=cw;x++){
+    const t = x/cw;
+    const y = Math.exp(-4*t)*0.9;
+    ctx.lineTo(pad.l+x, pad.t+ch-y*ch);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#ff6b6b'; ctx.fillText('Crammed (1 session)', pad.l+cw-130, pad.t+ch-10);
+  
+  // Spaced curve
+  ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const reviews = [0, 0.07, 0.2, 0.5];
+  let mem = 0.5;
+  for(let x=0;x<=cw;x++){
+    const t = x/cw;
+    mem *= 0.997;
+    reviews.forEach(r => { if(Math.abs(t-r) < 0.005) mem = Math.min(1, mem + 0.25); });
+    ctx.lineTo(pad.l+x, pad.t+ch-mem*ch);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#4ecdc4'; ctx.fillText('Spaced (4 sessions)', pad.l+cw-130, pad.t+25);
+  
+  // Sleep markers
+  ctx.fillStyle = '#555'; ctx.font = '10px sans-serif';
+  for(let i=0; i<5; i++){
+    const x = pad.l + (i/4)*cw;
+    ctx.fillText('💤', x-5, pad.t+ch+25);
+  }
+  ctx.fillText('Each 💤 = sleep consolidation cycle', pad.l, pad.t+ch+35);
+}
+
+// Init consolidation on load
+setTimeout(() => { initConsolidation(); drawConsolChart(); }, 500);
+
+// ============================================================
+// 8. SURPRISE FINAL
+// ============================================================
+const SF_QUESTIONS = [
+  {q:"What phenomenon describes axolotls retaining larval features?", opts:['Metamorphosis','Neoteny','Paedogenesis','Atavism'], correct:1, source:'Exp 1: Fluency Trap'},
+  {q:"What is the Swahili word for 'star'?", opts:['jua','nyota','mwezi','ndege'], correct:1, source:'Exp 2: Spaced Practice'},
+  {q:"Which artist uses bold color fields stacked horizontally?", opts:['Monet','Kandinsky','Rothko'], correct:2, source:'Exp 3: Interleaving'},
+  {q:"The act of pulling knowledge from memory to strengthen it is called ___ practice.", opts:['Spaced','Retrieval','Interleaved','Elaboration'], correct:1, source:'Exp 4: Generation'},
+  {q:"What does 'desirable difficulty' mean?", opts:['Making things as hard as possible','Challenges that slow learning but deepen it','Difficulty that causes frustration','Any problem you can\'t solve'], correct:1, source:'Exp 6: Difficulty Gym'},
+  {q:"During which phase do memories consolidate and organize?", opts:['Active study','Sleep','Testing','Morning review'], correct:1, source:'Exp 7: Consolidation'},
+  {q:"What is the Swahili word for 'lion'?", opts:['samaki','mlima','simba','mto'], correct:2, source:'Exp 2: Spaced Practice'},
+  {q:"The illusion that re-reading creates mastery is called a ___ illusion.", opts:['Knowledge','Competence','Fluency','Memory'], correct:2, source:'Exp 1: Fluency Trap'},
+  {q:"Perfect calibration on a confidence-accuracy plot looks like:", opts:['A horizontal line','A diagonal line','A curve','A vertical line'], correct:1, source:'Exp 5: Calibration'},
+  {q:"Filling in missing letters (foot-s__e) creates stronger memory than reading the complete pair. This is the ___ effect.", opts:['Testing','Spacing','Generation','Encoding'], correct:2, source:'Exp 4: Generation'},
+];
+
+let sfIdx = 0;
+
+function startSurpriseFinal(){
+  hide('sf-start');
+  show('sf-quiz');
+  STATE.sfAnswers = [];
+  sfIdx = 0;
+  showSFQuestion();
+  
+  // Also trigger delayed fluency test and spaced final
+  setTimeout(() => {
+    show('ft-delayed');
+    buildFluencyDelayed();
+    show('sp-final');
+    buildSpacedFinal();
+  }, 500);
+}
+
+function showSFQuestion(){
+  if(sfIdx >= SF_QUESTIONS.length){
+    showSFResults();
+    return;
+  }
+  const q = SF_QUESTIONS[sfIdx];
+  $('sf-q-title').textContent = `Question ${sfIdx+1}/${SF_QUESTIONS.length}`;
+  $('sf-q-source').textContent = q.source;
+  let html = `<p style="font-weight:600;margin-bottom:.75rem">${q.q}</p>`;
+  q.opts.forEach((opt,i) => {
+    html += `<button class="quiz-option" onclick="sfAnswer(this,${i})">${opt}</button>`;
+  });
+  $('sf-q-content').innerHTML = html;
+}
+
+function sfAnswer(btn, idx){
+  const q = SF_QUESTIONS[sfIdx];
+  const correct = idx === q.correct;
+  STATE.sfAnswers.push({correct, source: q.source});
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  $('sf-q-content').querySelectorAll('.quiz-option').forEach((b,i) => {
+    b.disabled = true;
+    if(i === q.correct) b.classList.add('correct');
+  });
+  setTimeout(() => { sfIdx++; showSFQuestion(); }, 1000);
+}
+
+function showSFResults(){
+  hide('sf-quiz');
+  show('sf-results');
+  const correct = STATE.sfAnswers.filter(a=>a.correct).length;
+  const total = STATE.sfAnswers.length;
+  const pct = Math.round(correct/total*100);
+  
+  // Group by source
+  const bySource = {};
+  STATE.sfAnswers.forEach(a => {
+    if(!bySource[a.source]) bySource[a.source] = {correct:0, total:0};
+    bySource[a.source].total++;
+    if(a.correct) bySource[a.source].correct++;
+  });
+  
+  let sourceHTML = '';
+  Object.entries(bySource).forEach(([src, data]) => {
+    const p = Math.round(data.correct/data.total*100);
+    sourceHTML += `<div style="display:flex;align-items:center;gap:.75rem;margin:.4rem 0"><span style="flex:1;font-size:.85rem">${src}</span><div class="result-bar" style="flex:2"><div class="result-fill ${p>=75?'c':p>=50?'a':'b'}" style="width:${p}%">${p}%</div></div></div>`;
+  });
+  
+  $('sf-results-content').innerHTML = `
+    <div style="text-align:center;margin:1rem 0">
+      <div style="font-size:3.5rem;font-weight:800;color:${pct>=70?'var(--success)':pct>=50?'var(--accent)':'var(--accent2)'}">${pct}%</div>
+      <div style="color:var(--dim);font-size:.9rem">${correct}/${total} correct across all sections</div>
+    </div>
+    <h4 style="margin:1rem 0 .5rem">By section:</h4>
+    ${sourceHTML}
+    <p style="margin-top:1.5rem;font-size:.9rem;color:var(--dim)">🎯 <strong>This surprise test IS the lesson.</strong> You just did spaced retrieval practice across everything you learned. The questions you struggled with? Those are being encoded more deeply right now because of the effort. The demo practices what it preaches.</p>
+  `;
+}
+
+// ============================================================
+// FLUENCY TRAP DELAYED QUIZ
+// ============================================================
+function buildFluencyDelayed(){
+  const container = $('ft-delayed-qs');
+  container.innerHTML = '';
+  FT_QUESTIONS.forEach((q,i) => {
+    container.innerHTML += `<div style="margin-bottom:1rem"><p style="font-weight:600;font-size:.9rem">${q.q}</p><input type="text" class="recall-input" style="min-height:40px;margin-top:.25rem" id="ft-del-${i}" placeholder="Answer from memory..."></div>`;
+  });
+}
+
+function scoreFluencyDelayed(){
+  let score = 0;
+  FT_QUESTIONS.forEach((q,i) => {
+    const val = $('ft-del-'+i).value.trim().toLowerCase();
+    const target = q.a.toLowerCase();
+    const words = target.split(/[\s,]+/).filter(w => w.length > 2);
+    const matched = words.filter(w => val.includes(w.substring(0, Math.min(4, w.length))));
+    if(matched.length >= Math.ceil(words.length * 0.3)) score++;
+  });
+  
+  hide('ft-delayed');
+  show('ft-delayed-results');
+  
+  const pct = Math.round(score/FT_QUESTIONS.length*100);
+  const group = STATE.ftGroup || 'unknown';
+  
+  $('ft-delayed-results-content').innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="num" style="color:var(--accent)">${STATE.ftConf}%</div><div class="label">Your confidence</div></div>
+      <div class="stat"><div class="num" style="color:${pct>=50?'var(--success)':'var(--accent2)'}">${pct}%</div><div class="label">Actual recall</div></div>
+      <div class="stat"><div class="num" style="color:var(--dim)">${group === 'reread' ? 'Re-read' : 'Retrieval'}</div><div class="label">Your group</div></div>
+    </div>
+    <p style="margin-top:1rem;font-size:.9rem;color:var(--dim)">${group === 'reread' 
+      ? `You were in the <strong>re-reading</strong> group. The passage felt familiar on that second read, which inflated your confidence to ${STATE.ftConf}%. But familiarity ≠ knowledge. In studies, retrieval practice groups outperform re-readers by 20-50% on delayed tests.`
+      : `You were in the <strong>retrieval practice</strong> group. That quizzing after reading — even though it felt harder — was building stronger memory traces. Studies show retrieval groups outperform re-readers by 20-50% on delayed tests.`
+    }</p>
+    <p style="margin-top:.75rem;font-size:.9rem">🪤 <strong>The Fluency Trap:</strong> Re-reading creates familiarity that <em>feels</em> like knowledge. This is why 80%+ of students use it — it's comfortable. But comfort ≠ learning.</p>
+  `;
+}
+
+// ============================================================
+// SPACED vs MASSED FINAL TEST
+// ============================================================
+function buildSpacedFinal(){
+  const container = $('sp-final-content');
+  container.innerHTML = '<h4 style="margin-bottom:.75rem">Set A (Massed — crammed):</h4>';
+  STATE.spSetA.forEach((item,i) => {
+    container.innerHTML += `<div style="display:flex;align-items:center;gap:.75rem;margin:.4rem 0"><span style="font-weight:700;color:var(--accent);min-width:80px">${item.sw}</span><span>→</span><input type="text" id="sp-fin-a-${i}" class="recall-input" style="min-height:36px;flex:1" placeholder="English?"></div>`;
+  });
+  container.innerHTML += '<h4 style="margin:1rem 0 .75rem">Set B (Spaced — reviewed over time):</h4>';
+  STATE.spSetB.forEach((item,i) => {
+    container.innerHTML += `<div style="display:flex;align-items:center;gap:.75rem;margin:.4rem 0"><span style="font-weight:700;color:var(--success);min-width:80px">${item.sw}</span><span>→</span><input type="text" id="sp-fin-b-${i}" class="recall-input" style="min-height:36px;flex:1" placeholder="English?"></div>`;
+  });
+}
+
+function scoreSpacedFinal(){
+  let massedCorrect=0, spacedCorrect=0;
+  STATE.spSetA.forEach((item,i) => {
+    const val = $('sp-fin-a-'+i)?.value.trim().toLowerCase() || '';
+    if(fuzzyMatch(val, item.en)) massedCorrect++;
+  });
+  STATE.spSetB.forEach((item,i) => {
+    const val = $('sp-fin-b-'+i)?.value.trim().toLowerCase() || '';
+    if(fuzzyMatch(val, item.en)) spacedCorrect++;
+  });
+  
+  hide('sp-final');
+  show('sp-final-results');
+  
+  const mPct = Math.round(massedCorrect/6*100);
+  const sPct = Math.round(spacedCorrect/6*100);
+  
+  $('sp-final-results-content').innerHTML = `
+    <div class="grid-2" style="margin:1rem 0">
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:8px">
+        <div style="font-size:.8rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em">Massed (Crammed)</div>
+        <div style="font-size:3rem;font-weight:800;color:var(--accent)">${mPct}%</div>
+        <div style="font-size:.85rem;color:var(--dim)">${massedCorrect}/6 recalled</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:8px">
+        <div style="font-size:.8rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em">Spaced (Over Time)</div>
+        <div style="font-size:3rem;font-weight:800;color:var(--success)">${sPct}%</div>
+        <div style="font-size:.85rem;color:var(--dim)">${spacedCorrect}/6 recalled</div>
+      </div>
+    </div>
+    <div style="margin:1rem 0">
+      <div style="display:flex;align-items:center;gap:.75rem;margin:.5rem 0">
+        <span style="width:80px;font-size:.85rem;text-align:right">Massed:</span>
+        <div class="result-bar" style="flex:1"><div class="result-fill a" style="width:${mPct}%">${mPct}%</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span style="width:80px;font-size:.85rem;text-align:right">Spaced:</span>
+        <div class="result-bar" style="flex:1"><div class="result-fill c" style="width:${sPct}%">${sPct}%</div></div>
+      </div>
+    </div>
+    <p style="font-size:.9rem;color:var(--dim);margin-top:1rem">${sPct > mPct 
+      ? '<strong>Spacing wins.</strong> You practiced Set B the same number of times as Set A, but spread over the session instead of back-to-back. The forgetting between sessions forced effortful retrieval — and that effort built stronger memories.'
+      : sPct === mPct 
+      ? 'A tie! With a longer delay (days instead of minutes), the spacing advantage would be dramatic. Research shows spaced practice produces 10-30% better retention over weeks.'
+      : 'Interesting — massed held up this time. But research overwhelmingly shows that with longer delays (days/weeks), spaced practice dominates. In this short demo, the difference is compressed.'
+    }</p>
+    <p style="font-size:.85rem;margin-top:.75rem">⏱️ Surgical residents who spaced training over 4 weeks outperformed 1-day crammers. 16% of crammers damaged patients' vessels beyond repair.</p>
+  `;
+}
+
+// ============================================================
+// SCROLL-TRIGGERED EVENTS
+// ============================================================
+window.addEventListener('scroll', updateNav);
+
+// Start button trigger
+$('beginBtn').addEventListener('click', () => {
+  // Initialize consolidation when user starts
+  setTimeout(() => { initConsolidation(); drawConsolChart(); }, 1000);
+});
+</script>
+</body>
+</html>

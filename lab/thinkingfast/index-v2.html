@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bias Lab v2 — Thinking, Fast and Slow</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080e;--card:#111120;--accent:#7c6fff;--accent2:#ff5c5c;--text:#e4e2df;--dim:#6e6e80;--green:#3dd9b6;--orange:#ffa64d;--border:#1c1c2e;--glow:rgba(124,111,255,.12)}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
+.container{max-width:740px;margin:0 auto;padding:0 20px}
+
+/* Progress */
+.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:1000;transition:width .3s}
+
+/* Nav dots */
+.nav-dots{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:999;display:flex;flex-direction:column;gap:10px}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .3s;border:none}
+.nav-dot.active{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 20px;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(124,111,255,.06) 0%,transparent 70%)}
+.hero h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:800;letter-spacing:-.03em;margin-bottom:12px;background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{font-size:clamp(1rem,2.5vw,1.25rem);color:var(--dim);max-width:540px;margin-bottom:32px}
+.hero .badge{display:inline-block;padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:.8rem;color:var(--accent);margin-bottom:24px}
+.hero .warning{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 24px;max-width:500px;font-size:.9rem;color:var(--orange);margin-bottom:28px}
+.cta{display:inline-block;padding:16px 44px;background:var(--accent);color:#fff;border-radius:50px;font-size:1.05rem;font-weight:700;cursor:pointer;border:none;transition:all .3s;text-decoration:none}
+.cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,111,255,.4)}
+
+/* Sections */
+section{min-height:100vh;padding:80px 20px;opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s}
+section.visible{opacity:1;transform:none}
+.section-num{font-size:.8rem;color:var(--accent);font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.section-title{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin-bottom:6px}
+.section-quote{font-style:italic;color:var(--dim);margin-bottom:28px;font-size:.9rem;border-left:3px solid var(--accent);padding-left:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin:16px 0;transition:border-color .3s}
+.card:hover{border-color:rgba(124,111,255,.3)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 24px;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;border:none;min-height:44px;transition:all .2s;margin:4px;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#6b5ce0}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-secondary:hover{background:#2a2a3e}
+.btn-danger{background:var(--accent2);color:#fff}
+.btn-success{background:var(--green);color:#0a0a0f}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Choices */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.choice-btn{padding:14px;border-radius:10px;background:var(--card);border:2px solid var(--border);color:var(--text);font-size:.95rem;cursor:pointer;min-height:44px;transition:all .2s;text-align:center;-webkit-tap-highlight-color:transparent}
+.choice-btn:hover{border-color:var(--accent);background:rgba(124,111,255,.06)}
+.choice-btn.selected{border-color:var(--accent);background:rgba(124,111,255,.12)}
+.choice-btn.correct{border-color:var(--green);background:rgba(61,217,182,.1)}
+.choice-btn.wrong{border-color:var(--accent2);background:rgba(255,92,92,.1)}
+
+/* Reveal */
+.reveal-box{background:linear-gradient(135deg,rgba(124,111,255,.07),rgba(255,92,92,.07));border:1px solid var(--accent);border-radius:14px;padding:22px;margin:16px 0;display:none;animation:fadeIn .5s}
+.reveal-box.show{display:block}
+.reveal-box h3{color:var(--accent);margin-bottom:6px;font-size:1.1rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Slider */
+.slider-wrap{margin:16px 0}
+.slider-wrap input[type=range]{width:100%;height:6px;-webkit-appearance:none;background:var(--border);border-radius:3px;outline:none}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--accent);cursor:pointer}
+.slider-val{text-align:center;font-size:1.8rem;font-weight:700;color:var(--accent);margin:6px 0}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+.stat .num{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.stat .label{font-size:.75rem;color:var(--dim);margin-top:3px}
+
+/* Input */
+input[type=number],input[type=text]{background:var(--card);border:2px solid var(--border);color:var(--text);padding:12px 16px;border-radius:10px;font-size:1rem;width:100%;max-width:200px;outline:none;min-height:44px}
+input:focus{border-color:var(--accent)}
+
+/* Canvas area */
+.canvas-area{position:relative;width:100%;height:300px;background:#0d0d18;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:16px 0}
+canvas{display:block}
+
+/* Bar chart */
+.bar-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.bar-label{width:80px;font-size:.8rem;color:var(--dim);text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:24px;background:var(--border);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px;transition:width 1s ease;display:flex;align-items:center;padding:0 8px;font-size:.75rem;font-weight:600;color:#fff;min-width:fit-content}
+
+/* Pct bar */
+.pct-bar{height:28px;border-radius:6px;background:var(--border);margin:8px 0;overflow:hidden}
+.pct-fill{height:100%;border-radius:6px;transition:width 1s ease;display:flex;align-items:center;padding:0 10px;font-size:.8rem;font-weight:600;color:#fff}
+
+/* Footer */
+footer{text-align:center;padding:60px 20px;color:var(--dim);font-size:.85rem}
+
+/* Gorilla-specific */
+.gorilla-game{position:relative;width:100%;height:320px;background:#0a0a14;border-radius:12px;overflow:hidden;border:1px solid var(--border);touch-action:none;user-select:none}
+.gorilla-game .ball{position:absolute;width:20px;height:20px;border-radius:50%;transition:none}
+.gorilla-game .gorilla-emoji{position:absolute;font-size:40px;top:50%;transform:translateY(-50%);pointer-events:none;z-index:5}
+.gorilla-game .count-display{position:absolute;top:10px;right:14px;font-size:1.2rem;font-weight:700;color:var(--accent);z-index:10}
+.gorilla-game .timer-display{position:absolute;top:10px;left:14px;font-size:.9rem;color:var(--dim);z-index:10}
+
+/* Experience bar (peak-end) */
+.exp-bar{display:flex;align-items:end;gap:2px;height:120px;margin:12px 0}
+.exp-segment{flex:1;background:var(--accent2);border-radius:2px 2px 0 0;transition:height .3s;min-width:3px}
+
+/* Responsive */
+@media(max-width:480px){
+.choices{grid-template-columns:1fr}
+.nav-dots{right:8px;gap:8px}
+.gorilla-game{height:260px}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="nav-dots" id="nav-dots"></div>
+
+<!-- HERO -->
+<div class="hero" id="hero">
+<div class="badge">Version 2 — 8 Experiments</div>
+<h1>The Bias Lab</h1>
+<p class="sub">Eight interactive experiments from <em>Thinking, Fast and Slow</em>. You are the test subject. Your brain will betray you.</p>
+<div class="warning">⚠️ This is not a quiz. It's a psychology lab. Every experiment is designed to expose a specific cognitive blind spot. Pay attention — or don't. That's actually the first test.</div>
+<button class="cta" onclick="startGorilla()">Enter the Lab →</button>
+</div>
+
+<!-- 1. GORILLA TEST -->
+<section id="s1">
+<div class="container">
+<div class="section-num">Experiment 01</div>
+<div class="section-title">The Gorilla Test</div>
+<div class="section-quote">"We can be blind to the obvious, and we are also blind to our blindness."</div>
+<div class="card">
+<p id="gorilla-instructions">Bouncing balls will appear below — some <span style="color:#5599ff">blue</span>, some <span style="color:#ff5555">red</span>. <strong>Count how many times the BLUE balls bounce off the walls.</strong> Focus carefully — it's harder than it sounds.</p>
+<div class="gorilla-game" id="gorilla-arena" style="display:none">
+<div class="timer-display" id="gorilla-timer">15s</div>
+<div class="count-display">Blue bounces: <span id="gorilla-hint">watch!</span></div>
+</div>
+<div id="gorilla-controls">
+<button class="btn btn-primary" id="gorilla-start-btn" onclick="runGorilla()">Start Counting →</button>
+</div>
+<div id="gorilla-answer-area" style="display:none;margin-top:16px">
+<p style="margin-bottom:10px"><strong>How many times did the blue balls bounce off the walls?</strong></p>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<input type="number" id="gorilla-count-input" placeholder="Your count" style="max-width:140px">
+<button class="btn btn-primary" onclick="checkGorilla()">Submit</button>
+</div>
+</div>
+<div class="reveal-box" id="gorilla-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 2. ANCHORING LAB -->
+<section id="s2">
+<div class="container">
+<div class="section-num">Experiment 02</div>
+<div class="section-title">The Anchoring Lab</div>
+<div class="section-quote">"People who are exposed to a random number will be influenced by it when they estimate an uncertain quantity."</div>
+<div class="card" id="anchor-card">
+<div id="anchor-content"></div>
+<div class="reveal-box" id="anchor-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 3. PROSPECT THEORY -->
+<section id="s3">
+<div class="container">
+<div class="section-num">Experiment 03</div>
+<div class="section-title">Prospect Theory Playground</div>
+<div class="section-quote">"Losses loom larger than gains."</div>
+<div class="card">
+<p style="margin-bottom:12px">For each scenario, rate how intensely you'd <em>feel</em> the outcome, from 0 (nothing) to 100 (extreme). We'll plot your personal value function.</p>
+<div id="prospect-content"></div>
+<div class="reveal-box" id="prospect-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 4. FRAMING SURGERY -->
+<section id="s4">
+<div class="container">
+<div class="section-num">Experiment 04</div>
+<div class="section-title">Framing Surgery</div>
+<div class="section-quote">"Our preferences are about framed problems, and our moral intuitions are about descriptions, not about substance."</div>
+<div class="card">
+<div id="framing-content"></div>
+<div class="reveal-box" id="framing-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 5. PLANNING FALLACY -->
+<section id="s5">
+<div class="container">
+<div class="section-num">Experiment 05</div>
+<div class="section-title">The Planning Fallacy</div>
+<div class="section-quote">"The prevalent tendency to underweight or ignore distributional information is perhaps the major source of error in forecasting."</div>
+<div class="card">
+<div id="planning-content"></div>
+<div class="reveal-box" id="planning-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 6. PEAK-END RULE -->
+<section id="s6">
+<div class="container">
+<div class="section-num">Experiment 06</div>
+<div class="section-title">Peak-End Rule</div>
+<div class="section-quote">"Odd as it may seem, I am my remembering self, and the experiencing self, who does my living, is like a stranger to me."</div>
+<div class="card">
+<div id="peakend-content"></div>
+<div class="reveal-box" id="peakend-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 7. WYSIATI MACHINE -->
+<section id="s7">
+<div class="container">
+<div class="section-num">Experiment 07</div>
+<div class="section-title">The WYSIATI Machine</div>
+<div class="section-quote">"The confidence that individuals have in their beliefs depends mostly on the quality of the story they can tell about what they see, even if they see little."</div>
+<div class="card">
+<div id="wysiati-content"></div>
+<div class="reveal-box" id="wysiati-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- 8. REGRESSION TO THE MEAN -->
+<section id="s8">
+<div class="container">
+<div class="section-num">Experiment 08</div>
+<div class="section-title">Regression to the Mean</div>
+<div class="section-quote">"The illusion that we understand the past feeds the further illusion that one can predict and control the future."</div>
+<div class="card">
+<div id="regression-content"></div>
+<div class="reveal-box" id="regression-reveal"></div>
+</div>
+</div>
+</section>
+
+<!-- FINAL SCORECARD -->
+<section id="s9">
+<div class="container">
+<div class="section-num">Your Results</div>
+<div class="section-title">The Bias Scorecard</div>
+<div class="section-quote">"We are prone to overestimate how much we understand about the world and to underestimate the role of chance in events."</div>
+<div class="card">
+<div id="final-scorecard"></div>
+</div>
+</div>
+</section>
+
+<footer>
+<p>Based on <em>Thinking, Fast and Slow</em> by Daniel Kahneman (2011)</p>
+<p style="margin-top:4px">You were the test subject. Now you know. 🧪</p>
+</footer>
+
+<script>
+// ========== GLOBALS ==========
+const scores = {};
+const sectionIds = ['hero','s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+
+// ========== NAVIGATION ==========
+(function initNav(){
+  const nd = document.getElementById('nav-dots');
+  sectionIds.forEach((id,i) => {
+    if(i===0) return;
+    const d = document.createElement('button');
+    d.className='nav-dot';d.title='Section '+i;
+    d.onclick=()=>document.getElementById(id).scrollIntoView({behavior:'smooth'});
+    nd.appendChild(d);
+  });
+})();
+
+// Progress & observers
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('progress').style.width=(window.scrollY/h*100)+'%';
+});
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      const idx=sectionIds.indexOf(e.target.id);
+      document.querySelectorAll('.nav-dot').forEach((d,i)=>d.classList.toggle('active',i===idx-1));
+    }
+  });
+},{threshold:.15});
+document.querySelectorAll('section').forEach(s=>obs.observe(s));
+
+function go(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+
+// ========== 1. GORILLA TEST ==========
+let gorillaData={blueBounces:0,gorillaAppeared:false};
+
+function startGorilla(){go('s1')}
+
+function runGorilla(){
+  const arena=document.getElementById('gorilla-arena');
+  arena.style.display='block';
+  document.getElementById('gorilla-start-btn').style.display='none';
+  const W=arena.clientWidth, H=arena.clientHeight;
+  gorillaData.blueBounces=0;
+
+  // Create balls
+  const balls=[];
+  const colors=['#5599ff','#5599ff','#5599ff','#ff5555','#ff5555','#ff5555'];
+  colors.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='ball';
+    el.style.background=c;
+    el.style.left=Math.random()*(W-20)+'px';
+    el.style.top=Math.random()*(H-20)+'px';
+    arena.appendChild(el);
+    balls.push({el,x:parseFloat(el.style.left),y:parseFloat(el.style.top),
+      vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,color:c});
+  });
+
+  let gorillaEl=null;
+  let gorillaX=-50;
+  let gorillaPhase=false;
+  let elapsed=0;
+  const duration=15000;
+  const gorillaStart=5000, gorillaEnd=10000;
+
+  function tick(){
+    elapsed+=16;
+    // Update timer
+    const rem=Math.max(0,Math.ceil((duration-elapsed)/1000));
+    document.getElementById('gorilla-timer').textContent=rem+'s';
+
+    // Move balls
+    balls.forEach(b=>{
+      b.x+=b.vx; b.y+=b.vy;
+      if(b.x<=0||b.x>=W-20){b.vx*=-1;b.x=Math.max(0,Math.min(W-20,b.x));if(b.color==='#5599ff')gorillaData.blueBounces++;}
+      if(b.y<=0||b.y>=H-20){b.vy*=-1;b.y=Math.max(0,Math.min(H-20,b.y));if(b.color==='#5599ff')gorillaData.blueBounces++;}
+      b.el.style.left=b.x+'px';b.el.style.top=b.y+'px';
+    });
+
+    // Gorilla walks across middle third of time
+    if(elapsed>=gorillaStart&&elapsed<=gorillaEnd){
+      if(!gorillaEl){
+        gorillaEl=document.createElement('div');
+        gorillaEl.className='gorilla-emoji';
+        gorillaEl.textContent='🦍';
+        gorillaEl.style.left='-50px';
+        arena.appendChild(gorillaEl);
+        gorillaData.gorillaAppeared=true;
+      }
+      const progress=(elapsed-gorillaStart)/(gorillaEnd-gorillaStart);
+      gorillaEl.style.left=(progress*(W+50)-50)+'px';
+    } else if(elapsed>gorillaEnd&&gorillaEl){
+      gorillaEl.remove();gorillaEl=null;
+    }
+
+    if(elapsed<duration){
+      requestAnimationFrame(tick);
+    } else {
+      // Done
+      balls.forEach(b=>b.el.remove());
+      if(gorillaEl)gorillaEl.remove();
+      arena.style.display='none';
+      document.getElementById('gorilla-answer-area').style.display='block';
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function checkGorilla(){
+  const userCount=parseInt(document.getElementById('gorilla-count-input').value)||0;
+  const r=document.getElementById('gorilla-reveal');
+  const actual=gorillaData.blueBounces;
+  const diff=Math.abs(userCount-actual);
+
+  r.innerHTML=`<h3>Did you see the gorilla? 🦍</h3>
+    <p>A gorilla emoji walked across the entire screen from left to right during the middle of the test.</p>
+    <p style="margin-top:10px">This replicates the famous <strong>selective attention experiment</strong> by Simons & Chabris (1999), which Kahneman discusses extensively. When System 1 is focused on counting, it literally cannot process unexpected stimuli.</p>
+    <p style="margin-top:10px">Your count: <strong>${userCount}</strong> | Actual blue bounces: <strong>~${actual}</strong></p>
+    <p style="margin-top:10px;color:var(--dim)"><em>"We can be blind to the obvious, and we are also blind to our blindness."</em> — The gorilla is invisible not because you can't see it, but because System 1 is <strong>fully allocated</strong> to counting.</p>
+    <button class="btn btn-primary" onclick="go('s2')" style="margin-top:14px">Next: Anchoring Lab →</button>`;
+  r.classList.add('show');
+  scores.gorilla={userCount,actual,gorillaAppeared:gorillaData.gorillaAppeared};
+}
+
+// ========== 2. ANCHORING LAB ==========
+const anchorQuestions=[
+  {q:"What is the population of Canada (in millions)?",answer:39,unit:"M"},
+  {q:"In what year was the printing press invented?",answer:1440,unit:""},
+  {q:"What is the height of the Eiffel Tower in meters?",answer:330,unit:"m"},
+  {q:"How many countries are in Africa?",answer:54,unit:""},
+  {q:"What is the length of the Amazon River in miles?",answer:4000,unit:"mi"},
+];
+let anchorRound=0, anchorResults=[];
+
+function initAnchoring(){
+  anchorRound=0;anchorResults=[];
+  showAnchorRound();
+}
+
+function showAnchorRound(){
+  if(anchorRound>=anchorQuestions.length){showAnchorResults();return;}
+  const aq=anchorQuestions[anchorRound];
+  // Generate anchor: randomly high or low
+  const isHigh=Math.random()<.5;
+  let anchor;
+  if(isHigh){
+    anchor=Math.round(aq.answer*(1.5+Math.random()*1.5));
+  } else {
+    anchor=Math.round(aq.answer*(0.1+Math.random()*0.3));
+  }
+  const el=document.getElementById('anchor-content');
+  el.innerHTML=`
+    <p style="margin-bottom:8px;color:var(--dim)">Round ${anchorRound+1} of ${anchorQuestions.length}</p>
+    <p style="margin-bottom:14px">Before you answer, consider this number:</p>
+    <div style="font-size:3.5rem;font-weight:800;text-align:center;color:var(--accent);margin:16px 0">${anchor.toLocaleString()}</div>
+    <p style="margin-bottom:14px;font-size:.85rem;color:var(--dim)">(This number is random and irrelevant. Or is it?)</p>
+    <p style="margin-bottom:14px"><strong>${aq.q}</strong></p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="number" id="anchor-input" placeholder="Your estimate" style="max-width:180px">
+      <button class="btn btn-primary" onclick="submitAnchorRound(${anchor},${isHigh?1:0})">Submit</button>
+    </div>`;
+}
+
+function submitAnchorRound(anchor,isHigh){
+  const v=parseFloat(document.getElementById('anchor-input').value);
+  if(isNaN(v))return;
+  const aq=anchorQuestions[anchorRound];
+  anchorResults.push({q:aq.q,answer:aq.answer,anchor,isHigh,estimate:v,
+    pull:((v-aq.answer)/aq.answer*100)});
+  anchorRound++;
+  showAnchorRound();
+}
+
+function showAnchorResults(){
+  const el=document.getElementById('anchor-content');
+  let highPulls=[],lowPulls=[];
+  anchorResults.forEach(r=>{
+    if(r.isHigh)highPulls.push(r.estimate>r.answer?1:0);
+    else lowPulls.push(r.estimate<r.answer?1:0);
+  });
+  const highPct=highPulls.length?Math.round(highPulls.reduce((a,b)=>a+b,0)/highPulls.length*100):0;
+  const lowPct=lowPulls.length?Math.round(lowPulls.reduce((a,b)=>a+b,0)/lowPulls.length*100):0;
+
+  let rows=anchorResults.map(r=>`
+    <div class="bar-row">
+      <div class="bar-label">${r.isHigh?'⬆️ High':'⬇️ Low'}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.min(100,Math.abs(r.pull))}%;background:${r.isHigh?'var(--accent)':'var(--accent2)'}">
+          ${r.estimate.toLocaleString()} (actual: ${r.answer.toLocaleString()})
+        </div>
+      </div>
+    </div>`).join('');
+
+  const totalAnchored=anchorResults.filter(r=>(r.isHigh&&r.estimate>r.answer)||(!r.isHigh&&r.estimate<r.answer)).length;
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">Your Anchoring Results</h3>
+    <p>Across ${anchorResults.length} questions, the "random" number pulled your estimate in its direction <strong>${totalAnchored} out of ${anchorResults.length} times</strong>.</p>
+    ${rows}
+    <div class="stat-grid" style="margin-top:14px">
+      <div class="stat"><div class="num">${totalAnchored}/${anchorResults.length}</div><div class="label">Times anchored</div></div>
+      <div class="stat"><div class="num">${highPct}%</div><div class="label">High anchors → overestimate</div></div>
+      <div class="stat"><div class="num">${lowPct}%</div><div class="label">Low anchors → underestimate</div></div>
+    </div>`;
+
+  const rv=document.getElementById('anchor-reveal');
+  rv.innerHTML=`<h3>The Anchor Trap</h3>
+    <p>In Kahneman & Tversky's original experiment, a spinning wheel (rigged to 10 or 65) biased estimates of African nations in the UN by <strong>20+ percentage points</strong>.</p>
+    <p style="margin-top:10px">System 1 treats the anchor as a plausible starting point. System 2 adjusts — but <strong>never enough</strong>. This isn't about intelligence; anchoring affects judges (sentencing), real estate agents (pricing), and doctors (diagnosis).</p>
+    <p style="margin-top:10px;color:var(--dim)"><em>"The anchoring effect is not a laboratory curiosity."</em></p>
+    <button class="btn btn-primary" onclick="go('s3')" style="margin-top:14px">Next: Prospect Theory →</button>`;
+  rv.classList.add('show');
+  scores.anchoring={totalAnchored,total:anchorResults.length,results:anchorResults};
+}
+
+// ========== 3. PROSPECT THEORY ==========
+const prospectScenarios=[
+  {amount:-500,label:"Lose $500"},
+  {amount:-100,label:"Lose $100"},
+  {amount:-20,label:"Lose $20"},
+  {amount:20,label:"Win $20"},
+  {amount:100,label:"Win $100"},
+  {amount:500,label:"Win $500"},
+];
+let prospectRound=0, prospectData=[];
+
+function initProspect(){
+  prospectRound=0;prospectData=[];
+  showProspectRound();
+}
+
+function showProspectRound(){
+  if(prospectRound>=prospectScenarios.length){showProspectResults();return;}
+  const s=prospectScenarios[prospectRound];
+  const isLoss=s.amount<0;
+  const el=document.getElementById('prospect-content');
+  el.innerHTML=`
+    <p style="margin-bottom:8px;color:var(--dim)">Scenario ${prospectRound+1} of ${prospectScenarios.length}</p>
+    <p style="font-size:1.4rem;font-weight:700;text-align:center;margin:20px 0;color:${isLoss?'var(--accent2)':'var(--green)'}">
+      You just ${isLoss?'lost':'won'} <strong>$${Math.abs(s.amount)}</strong>
+    </p>
+    <p style="margin-bottom:10px">How intensely do you <em>feel</em> this? (0 = barely notice, 100 = extreme)</p>
+    <div class="slider-wrap">
+      <input type="range" id="prospect-slider" min="0" max="100" value="50">
+      <div class="slider-val"><span id="prospect-val">50</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitProspectRound()">Next →</button>`;
+  document.getElementById('prospect-slider').addEventListener('input',function(){
+    document.getElementById('prospect-val').textContent=this.value;
+  });
+}
+
+function submitProspectRound(){
+  const v=parseInt(document.getElementById('prospect-slider').value);
+  const s=prospectScenarios[prospectRound];
+  prospectData.push({amount:s.amount,feeling:v});
+  prospectRound++;
+  showProspectRound();
+}
+
+function showProspectResults(){
+  const el=document.getElementById('prospect-content');
+  // Build SVG value function
+  const w=400,h=280,cx=w/2,cy=h/2;
+  let userPath='';
+  // Normalize: map amounts to x, feelings to y (losses go negative on y)
+  const maxAmt=500,maxFeel=100;
+  prospectData.forEach(d=>{
+    const x=cx+(d.amount/maxAmt)*(w/2-20);
+    const y=d.amount<0 ? cy+(d.feeling/maxFeel)*(h/2-20) : cy-(d.feeling/maxFeel)*(h/2-20);
+    userPath+=userPath?`L${x},${y}`:`M${x},${y}`;
+  });
+
+  // Kahneman's theoretical curve (S-shaped, steeper for losses)
+  let theoryPath='';
+  for(let i=-500;i<=500;i+=20){
+    const x=cx+(i/maxAmt)*(w/2-20);
+    let y;
+    if(i>=0){
+      y=cy-Math.pow(i/maxAmt,.8)*(h/2-20)*.6;
+    } else {
+      y=cy+Math.pow(-i/maxAmt,.8)*(h/2-20)*.9; // 1.5x steeper for losses
+    }
+    theoryPath+=theoryPath?`L${x},${y}`:`M${x},${y}`;
+  }
+
+  // Calculate loss aversion ratio
+  const loss100=prospectData.find(d=>d.amount===-100);
+  const gain100=prospectData.find(d=>d.amount===100);
+  const lossRatio=loss100&&gain100&&gain100.feeling>0?(loss100.feeling/gain100.feeling).toFixed(1):'N/A';
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">Your Value Function</h3>
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;margin:0 auto;display:block">
+      <line x1="20" y1="${cy}" x2="${w-20}" y2="${cy}" stroke="var(--dim)" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="${cx}" y1="20" x2="${cx}" y2="${h-20}" stroke="var(--dim)" stroke-width="1" stroke-dasharray="4"/>
+      <text x="${w-16}" y="${cy-6}" fill="var(--dim)" font-size="10" text-anchor="end">Gains →</text>
+      <text x="24" y="${cy-6}" fill="var(--dim)" font-size="10">← Losses</text>
+      <text x="${cx+4}" y="16" fill="var(--dim)" font-size="10">Good ↑</text>
+      <text x="${cx+4}" y="${h-8}" fill="var(--dim)" font-size="10">Bad ↓</text>
+      <path d="${theoryPath}" fill="none" stroke="var(--dim)" stroke-width="1.5" stroke-dasharray="6" opacity=".5"/>
+      <path d="${userPath}" fill="none" stroke="var(--accent)" stroke-width="3"/>
+      ${prospectData.map(d=>{
+        const x=cx+(d.amount/maxAmt)*(w/2-20);
+        const y=d.amount<0?cy+(d.feeling/maxFeel)*(h/2-20):cy-(d.feeling/maxFeel)*(h/2-20);
+        return `<circle cx="${x}" cy="${y}" r="5" fill="${d.amount<0?'var(--accent2)':'var(--green)'}"/>`;
+      }).join('')}
+    </svg>
+    <div style="display:flex;gap:16px;justify-content:center;margin:10px 0;font-size:.8rem;color:var(--dim)">
+      <span>━ Your curve</span><span style="opacity:.5">╌ ╌ Kahneman's theory</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${lossRatio}x</div><div class="label">Your loss aversion<br>(losses÷gains at $100)</div></div>
+      <div class="stat"><div class="num">~2x</div><div class="label">Kahneman's<br>typical ratio</div></div>
+    </div>`;
+
+  const rv=document.getElementById('prospect-reveal');
+  rv.innerHTML=`<h3>Prospect Theory</h3>
+    <p>Your curve should show two things: (1) <strong>diminishing sensitivity</strong> — the jump from $0→$100 feels bigger than $400→$500; and (2) <strong>loss aversion</strong> — losses feel worse than equivalent gains feel good.</p>
+    <p style="margin-top:10px">Kahneman & Tversky's S-curve (dashed line) captures a fundamental asymmetry: <em>"Losses loom larger than gains."</em> This explains why people hold losing stocks, overvalue what they own, and reject fair gambles.</p>
+    <p style="margin-top:10px;color:var(--dim)">Your loss aversion ratio of ${lossRatio}x means you feel losses ~${lossRatio}x as intensely as gains. The population average is about 2x.</p>
+    <button class="btn btn-primary" onclick="go('s4')" style="margin-top:14px">Next: Framing Surgery →</button>`;
+  rv.classList.add('show');
+  scores.prospect={lossRatio,data:prospectData};
+}
+
+// ========== 4. FRAMING SURGERY ==========
+let framingPhase=0, framingChoices=[];
+const framingScenarios=[
+  {
+    setup:"You need surgery. Your doctor presents the data:",
+    frameA:"This surgery has a <strong>90% survival rate</strong>.",
+    frameB:"This surgery has a <strong>10% mortality rate</strong>.",
+    qA:"Would you choose to have this surgery?",
+    qB:"Would you choose to have this surgery?",
+  },
+  {
+    setup:"A new policy is being proposed for your city:",
+    frameA:"The policy will <strong>save 200 jobs</strong> out of 600 at-risk positions.",
+    frameB:"The policy will result in <strong>400 job losses</strong> out of 600 at-risk positions.",
+    qA:"Do you support this policy?",
+    qB:"Do you support this policy?",
+  }
+];
+
+function initFraming(){
+  framingPhase=0;framingChoices=[];
+  showFramingPhase();
+}
+
+function showFramingPhase(){
+  const el=document.getElementById('framing-content');
+  if(framingPhase>=framingScenarios.length*2){showFramingResults();return;}
+  const sIdx=Math.floor(framingPhase/2);
+  const isSecondFrame=framingPhase%2===1;
+  const s=framingScenarios[sIdx];
+
+  if(!isSecondFrame){
+    // Show frame A
+    el.innerHTML=`
+      <p style="margin-bottom:8px;color:var(--dim)">Scenario ${sIdx+1} — Part 1</p>
+      <p style="margin-bottom:14px">${s.setup}</p>
+      <div style="background:rgba(61,217,182,.08);border:1px solid var(--green);border-radius:10px;padding:16px;margin:12px 0;font-size:1.1rem">${s.frameA}</div>
+      <p style="margin-bottom:14px"><strong>${s.qA}</strong></p>
+      <div class="choices">
+        <button class="choice-btn" onclick="submitFraming('yes')">✅ Yes</button>
+        <button class="choice-btn" onclick="submitFraming('no')">❌ No</button>
+      </div>`;
+  } else {
+    // Show frame B (of same scenario)
+    el.innerHTML=`
+      <p style="margin-bottom:8px;color:var(--dim)">Scenario ${sIdx+1} — Part 2</p>
+      <p style="margin-bottom:14px">${s.setup}</p>
+      <div style="background:rgba(255,92,92,.08);border:1px solid var(--accent2);border-radius:10px;padding:16px;margin:12px 0;font-size:1.1rem">${s.frameB}</div>
+      <p style="margin-bottom:14px"><strong>${s.qB}</strong></p>
+      <div class="choices">
+        <button class="choice-btn" onclick="submitFraming('yes')">✅ Yes</button>
+        <button class="choice-btn" onclick="submitFraming('no')">❌ No</button>
+      </div>`;
+  }
+}
+
+function submitFraming(choice){
+  framingChoices.push(choice);
+  framingPhase++;
+  showFramingPhase();
+}
+
+function showFramingResults(){
+  const el=document.getElementById('framing-content');
+  let flipped=0;
+  let details='';
+  for(let i=0;i<framingScenarios.length;i++){
+    const a=framingChoices[i*2];
+    const b=framingChoices[i*2+1];
+    const s=framingScenarios[i];
+    const didFlip=a!==b;
+    if(didFlip)flipped++;
+    details+=`
+      <div style="margin:12px 0;padding:12px;background:var(--bg);border-radius:8px">
+        <p style="font-size:.85rem;color:var(--dim)">Scenario ${i+1}</p>
+        <p>Frame A (positive): <strong>${a.toUpperCase()}</strong></p>
+        <p>Frame B (negative): <strong>${b.toUpperCase()}</strong></p>
+        <p style="color:${didFlip?'var(--accent2)':'var(--green)'}">
+          ${didFlip?'🔄 Your choice FLIPPED — same facts, different answer!':'✅ Consistent — you saw through the frame.'}
+        </p>
+      </div>`;
+  }
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">Framing Results</h3>
+    <p>Both frames in each scenario describe <strong>identical outcomes</strong>. 90% survival = 10% mortality. Save 200/600 = lose 400/600.</p>
+    ${details}
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${flipped}/${framingScenarios.length}</div><div class="label">Choices flipped<br>by framing</div></div>
+      <div class="stat"><div class="num">~40%</div><div class="label">Of people flip<br>on surgery frame</div></div>
+    </div>`;
+
+  const rv=document.getElementById('framing-reveal');
+  rv.innerHTML=`<h3>The Frame Game</h3>
+    <p>${flipped>0
+      ?'Your choices changed even though the <em>facts</em> didn\'t. This is the framing effect — System 1 reacts to the emotional coloring of "survival" vs "mortality," not the underlying statistics.'
+      :'You maintained consistency — but most people don\'t. In studies, "90% survival" makes people much more likely to choose surgery than "10% mortality."'}</p>
+    <p style="margin-top:10px">Kahneman: <em>"The framing of a decision sometimes matters more than the facts."</em> This isn't a parlor trick — it affects medical decisions, jury verdicts, and policy choices.</p>
+    <button class="btn btn-primary" onclick="go('s5')" style="margin-top:14px">Next: Planning Fallacy →</button>`;
+  rv.classList.add('show');
+  scores.framing={flipped,total:framingScenarios.length};
+}
+
+// ========== 5. PLANNING FALLACY ==========
+const planningTasks=[
+  {task:"Write a 10-page research paper",baseRate:42,unit:"hours",outside:"Students estimated ~34 hours on average. Actual average: 56 hours. Only 30% finished by their estimate."},
+  {task:"Renovate a kitchen",baseRate:14,unit:"weeks",outside:"Average estimate: 8 weeks. Actual average: 14 weeks. Costs average 40% over budget."},
+  {task:"Read a 400-page nonfiction book",baseRate:20,unit:"hours",outside:"Average estimate: 10 hours. Actual average: 16-20 hours (with comprehension). People forget about re-reading, note-taking, and life."},
+  {task:"Learn basic conversational Spanish",baseRate:480,unit:"hours",outside:"People estimate ~100 hours. State Department data: 480-600 hours for English speakers to reach conversational Spanish."},
+];
+let planRound=0, planResults=[];
+
+function initPlanning(){
+  planRound=0;planResults=[];
+  showPlanRound();
+}
+
+function showPlanRound(){
+  if(planRound>=planningTasks.length){showPlanResults();return;}
+  const t=planningTasks[planRound];
+  const el=document.getElementById('planning-content');
+  el.innerHTML=`
+    <p style="margin-bottom:8px;color:var(--dim)">Task ${planRound+1} of ${planningTasks.length}</p>
+    <p style="font-size:1.2rem;margin-bottom:14px"><strong>${t.task}</strong></p>
+    <p style="margin-bottom:14px">How long would this take you? (in ${t.unit})</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="number" id="plan-input" placeholder="${t.unit}" style="max-width:140px">
+      <button class="btn btn-primary" onclick="submitPlanRound()">Estimate</button>
+    </div>`;
+}
+
+function submitPlanRound(){
+  const v=parseFloat(document.getElementById('plan-input').value);
+  if(isNaN(v)||v<=0)return;
+  const t=planningTasks[planRound];
+  planResults.push({task:t.task,estimate:v,baseRate:t.baseRate,unit:t.unit,outside:t.outside,
+    ratio:(v/t.baseRate*100).toFixed(0)});
+  planRound++;
+  showPlanRound();
+}
+
+function showPlanResults(){
+  const el=document.getElementById('planning-content');
+  let rows=planResults.map((r,i)=>{
+    const pct=Math.min(150,r.estimate/r.baseRate*100);
+    return `
+    <div style="margin:12px 0;padding:12px;background:var(--bg);border-radius:8px">
+      <p style="font-weight:600;margin-bottom:6px">${r.task}</p>
+      <div class="bar-row">
+        <div class="bar-label">You</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:var(--accent)">${r.estimate} ${r.unit}</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Base rate</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:100%;background:var(--accent2)">${r.baseRate} ${r.unit}</div>
+        </div>
+      </div>
+      <p style="font-size:.8rem;color:var(--dim);margin-top:4px">${r.outside}</p>
+    </div>`;
+  }).join('');
+
+  const avgRatio=planResults.reduce((s,r)=>s+parseFloat(r.ratio),0)/planResults.length;
+  const underCount=planResults.filter(r=>r.estimate<r.baseRate).length;
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">Your Planning vs Reality</h3>
+    ${rows}
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${underCount}/${planResults.length}</div><div class="label">Underestimates</div></div>
+      <div class="stat"><div class="num">${Math.round(avgRatio)}%</div><div class="label">Avg estimate vs base rate</div></div>
+    </div>`;
+
+  const rv=document.getElementById('planning-reveal');
+  rv.innerHTML=`<h3>The Planning Fallacy</h3>
+    <p>${underCount>=planResults.length-1
+      ?'You underestimated nearly every task — welcome to the human race. This is the <strong>planning fallacy</strong>: we use the "inside view" (imagining our specific plan) rather than the "outside view" (how long it actually takes people).'
+      :'Interesting — you were more calibrated than most. But did you notice that even when you tried to be realistic, the base rates were still surprising?'}</p>
+    <p style="margin-top:10px">Kahneman's cure: <strong>reference class forecasting</strong>. Don't ask "how long will MY project take?" Ask "how long do projects LIKE THIS usually take?" The outside view is almost always more accurate.</p>
+    <p style="margin-top:10px;color:var(--dim)"><em>"The prevalent tendency to underweight or ignore distributional information is perhaps the major source of error in forecasting."</em></p>
+    <button class="btn btn-primary" onclick="go('s6')" style="margin-top:14px">Next: Peak-End Rule →</button>`;
+  rv.classList.add('show');
+  scores.planning={underCount,total:planResults.length,avgRatio:Math.round(avgRatio)};
+}
+
+// ========== 6. PEAK-END RULE ==========
+let peakEndPhase=0;
+const expA_data=[];  // long, mildly unpleasant
+const expB_data=[];  // short, sharply unpleasant
+
+function initPeakEnd(){
+  peakEndPhase=0;
+  // Generate experiences
+  expA_data.length=0; expB_data.length=0;
+  // Experience A: 60 seconds, mild discomfort (3-5), gentle end
+  for(let i=0;i<60;i++){
+    let v=3+Math.sin(i/8)*1.5+Math.random()*0.5;
+    if(i>50)v=Math.max(1.5,v-((i-50)/10)*1.5); // gentle ending
+    expA_data.push(Math.max(1,Math.min(7,v)));
+  }
+  // Experience B: 30 seconds, sharp spike in middle, abrupt end
+  for(let i=0;i<30;i++){
+    let v=2+Math.random()*0.5;
+    if(i>=12&&i<=18)v=6+Math.sin((i-12)/6*Math.PI)*2; // sharp peak
+    if(i>=28)v=5; // bad ending
+    expB_data.push(Math.max(1,Math.min(9,v)));
+  }
+  showPeakEndPhase();
+}
+
+function showPeakEndPhase(){
+  const el=document.getElementById('peakend-content');
+  if(peakEndPhase===0){
+    // Show Experience A
+    el.innerHTML=`
+      <p style="margin-bottom:14px"><strong>Experience A:</strong> Imagine holding your hand in mildly cold water. The discomfort level over time:</p>
+      <div style="display:flex;align-items:end;gap:1px;height:100px;margin:16px 0;padding:4px;background:var(--bg);border-radius:8px">
+        ${expA_data.map((v,i)=>`<div style="flex:1;background:${v>5?'var(--accent2)':'var(--orange)'};height:${v/9*100}%;border-radius:1px;min-width:2px;opacity:${0.5+v/14}" title="t=${i}s: ${v.toFixed(1)}"></div>`).join('')}
+      </div>
+      <p style="font-size:.8rem;color:var(--dim);margin-bottom:14px">Duration: 60 seconds | Peak discomfort: ${Math.max(...expA_data).toFixed(1)}/9 | Ends gently</p>
+      <p>Total "discomfort units" experienced: <strong>${expA_data.reduce((a,b)=>a+b,0).toFixed(0)}</strong></p>
+      <p style="margin-top:14px"><strong>How unpleasant was Experience A?</strong> (1 = barely, 10 = terrible)</p>
+      <div class="slider-wrap">
+        <input type="range" id="peakend-a" min="1" max="10" value="5">
+        <div class="slider-val"><span id="pe-a-val">5</span>/10</div>
+      </div>
+      <button class="btn btn-primary" onclick="peakEndPhase=1;showPeakEndPhase()">Rate & Continue →</button>`;
+    const sl=document.getElementById('peakend-a');
+    sl.addEventListener('input',function(){document.getElementById('pe-a-val').textContent=this.value;});
+  } else if(peakEndPhase===1){
+    const ratingA=parseInt(document.getElementById('peakend-a')?.value||5);
+    scores.peakEndA=ratingA;
+    // Show Experience B
+    el.innerHTML=`
+      <p style="margin-bottom:14px"><strong>Experience B:</strong> A shorter exposure, but with a sharp spike:</p>
+      <div style="display:flex;align-items:end;gap:2px;height:100px;margin:16px 0;padding:4px;background:var(--bg);border-radius:8px">
+        ${expB_data.map((v,i)=>`<div style="flex:1;background:${v>5?'var(--accent2)':'var(--orange)'};height:${v/9*100}%;border-radius:1px;min-width:3px;opacity:${0.5+v/14}" title="t=${i}s: ${v.toFixed(1)}"></div>`).join('')}
+      </div>
+      <p style="font-size:.8rem;color:var(--dim);margin-bottom:14px">Duration: 30 seconds | Peak discomfort: ${Math.max(...expB_data).toFixed(1)}/9 | Ends abruptly at high discomfort</p>
+      <p>Total "discomfort units" experienced: <strong>${expB_data.reduce((a,b)=>a+b,0).toFixed(0)}</strong></p>
+      <p style="margin-top:14px"><strong>How unpleasant was Experience B?</strong> (1 = barely, 10 = terrible)</p>
+      <div class="slider-wrap">
+        <input type="range" id="peakend-b" min="1" max="10" value="5">
+        <div class="slider-val"><span id="pe-b-val">5</span>/10</div>
+      </div>
+      <button class="btn btn-primary" onclick="peakEndPhase=2;showPeakEndPhase()">Rate & See Results →</button>`;
+    const sl=document.getElementById('peakend-b');
+    sl.addEventListener('input',function(){document.getElementById('pe-b-val').textContent=this.value;});
+  } else {
+    const ratingA=scores.peakEndA;
+    const ratingB=parseInt(document.getElementById('peakend-b')?.value||5);
+    scores.peakEndB=ratingB;
+    const totalA=expA_data.reduce((a,b)=>a+b,0);
+    const totalB=expB_data.reduce((a,b)=>a+b,0);
+    const peakA=Math.max(...expA_data);
+    const peakB=Math.max(...expB_data);
+    const endA=expA_data[expA_data.length-1];
+    const endB=expB_data[expB_data.length-1];
+
+    el.innerHTML=`
+      <h3 style="color:var(--accent);margin-bottom:10px">Peak-End Analysis</h3>
+      <div class="stat-grid">
+        <div class="stat"><div class="num">${totalA.toFixed(0)}</div><div class="label">Exp A: total<br>discomfort units</div></div>
+        <div class="stat"><div class="num">${totalB.toFixed(0)}</div><div class="label">Exp B: total<br>discomfort units</div></div>
+        <div class="stat"><div class="num">${ratingA}/10</div><div class="label">Your rating<br>of Exp A</div></div>
+        <div class="stat"><div class="num">${ratingB}/10</div><div class="label">Your rating<br>of Exp B</div></div>
+      </div>
+      <div style="margin-top:14px;padding:14px;background:var(--bg);border-radius:8px">
+        <p><strong>Experience A</strong> had <strong>${(totalA/totalB).toFixed(1)}x more total discomfort</strong> (${totalA.toFixed(0)} vs ${totalB.toFixed(0)} units). But...</p>
+        <p style="margin-top:8px"><strong>Experience B</strong> had a higher peak (${peakB.toFixed(1)} vs ${peakA.toFixed(1)}) and a worse ending (${endB.toFixed(1)} vs ${endA.toFixed(1)}).</p>
+        <p style="margin-top:8px;color:${ratingB>=ratingA?'var(--accent2)':'var(--green)'}">
+          ${ratingB>=ratingA
+            ?'📊 You rated B as worse or equal — matching the peak-end prediction! Your remembering self weighted the PEAK and the ENDING, ignoring duration.'
+            :'📊 You rated A as worse — you might be an unusually rational evaluator. Most people rate the shorter, sharper experience as worse despite less total suffering.'}
+        </p>
+      </div>`;
+
+    const rv=document.getElementById('peakend-reveal');
+    rv.innerHTML=`<h3>The Two Selves</h3>
+      <p>Kahneman's cold-hand experiment: subjects preferred a 90-second trial (60s cold + 30s slightly warmer) over a 60-second trial of pure cold — choosing <strong>more total pain</strong> because it ended better.</p>
+      <p style="margin-top:10px">Your <strong>experiencing self</strong> lives through every moment equally. But your <strong>remembering self</strong> uses only the <strong>peak intensity</strong> and the <strong>ending</strong> to judge the whole experience. Duration is nearly ignored.</p>
+      <p style="margin-top:10px;color:var(--dim)"><em>"Odd as it may seem, I am my remembering self, and the experiencing self, who does my living, is like a stranger to me."</em></p>
+      <button class="btn btn-primary" onclick="go('s7')" style="margin-top:14px">Next: WYSIATI Machine →</button>`;
+    rv.classList.add('show');
+    scores.peakEnd={ratingA,ratingB,totalA:totalA.toFixed(0),totalB:totalB.toFixed(0),
+      predicted:ratingB>=ratingA};
+  }
+}
+
+// ========== 7. WYSIATI MACHINE ==========
+const wysiatiScenarios=[
+  {
+    partial:"Sarah is a department manager at a Fortune 500 company. She consistently exceeds her quarterly targets, received a leadership award last year, and is described by colleagues as 'brilliant and driven.'",
+    question:"How likely is Sarah to be promoted to VP within 2 years? (0-100%)",
+    hidden:"Sarah has had 3 managers in 2 years due to high turnover in her division. Her 'exceeded targets' were based on metrics that were later found to be miscalculated. Two direct reports filed HR complaints about her management style. The leadership award was given to everyone in her cohort. The company is currently in a hiring freeze with planned layoffs.",
+    typical:75,
+  },
+  {
+    partial:"A new restaurant just opened downtown. It has a Michelin-trained chef, a beautiful interior, and has been packed every night for its first two weeks.",
+    question:"What are the chances this restaurant is still open in 2 years? (0-100%)",
+    hidden:"60% of restaurants fail within the first year, and 80% within 5 years. The location previously housed 3 failed restaurants. The chef left his last two positions within 8 months. The building's lease increases 40% after year one. Being 'packed' in the first weeks is normal (novelty effect) and doesn't predict long-term success.",
+    typical:70,
+  }
+];
+let wysiatiRound=0, wysiatiData=[];
+
+function initWysiati(){
+  wysiatiRound=0;wysiatiData=[];
+  showWysiatiRound();
+}
+
+function showWysiatiRound(){
+  const el=document.getElementById('wysiati-content');
+  if(wysiatiRound>=wysiatiScenarios.length){showWysiatiResults();return;}
+  const s=wysiatiScenarios[wysiatiRound];
+  const phase=wysiatiData.length>wysiatiRound?'reveal':'initial';
+
+  if(phase==='initial'){
+    el.innerHTML=`
+      <p style="margin-bottom:8px;color:var(--dim)">Scenario ${wysiatiRound+1} of ${wysiatiScenarios.length}</p>
+      <div style="padding:16px;background:var(--bg);border-radius:10px;margin:12px 0;border-left:3px solid var(--accent)">
+        <p>${s.partial}</p>
+      </div>
+      <p style="margin-bottom:14px"><strong>${s.question}</strong></p>
+      <div class="slider-wrap">
+        <input type="range" id="wysiati-slider" min="0" max="100" value="50">
+        <div class="slider-val"><span id="wysiati-val">50</span>%</div>
+      </div>
+      <button class="btn btn-primary" onclick="submitWysiatiInitial()">Lock In →</button>`;
+    document.getElementById('wysiati-slider').addEventListener('input',function(){
+      document.getElementById('wysiati-val').textContent=this.value;
+    });
+  }
+}
+
+function submitWysiatiInitial(){
+  const v=parseInt(document.getElementById('wysiati-slider').value);
+  const s=wysiatiScenarios[wysiatiRound];
+  const el=document.getElementById('wysiati-content');
+
+  el.innerHTML=`
+    <p style="margin-bottom:8px;color:var(--dim)">Scenario ${wysiatiRound+1} — Now read the rest</p>
+    <div style="padding:16px;background:var(--bg);border-radius:10px;margin:12px 0;border-left:3px solid var(--accent)">
+      <p>${s.partial}</p>
+    </div>
+    <div style="padding:16px;background:rgba(255,92,92,.06);border-radius:10px;margin:12px 0;border-left:3px solid var(--accent2)">
+      <p style="color:var(--accent2);font-weight:600;margin-bottom:6px">🔓 Hidden Information:</p>
+      <p>${s.hidden}</p>
+    </div>
+    <p style="margin-bottom:8px">Your initial estimate: <strong>${v}%</strong></p>
+    <p style="margin-bottom:14px"><strong>Now, with ALL the information — what's your revised estimate?</strong></p>
+    <div class="slider-wrap">
+      <input type="range" id="wysiati-slider2" min="0" max="100" value="${v}">
+      <div class="slider-val"><span id="wysiati-val2">${v}</span>%</div>
+    </div>
+    <button class="btn btn-primary" onclick="submitWysiatiRevised(${v})">Submit Revised →</button>`;
+  document.getElementById('wysiati-slider2').addEventListener('input',function(){
+    document.getElementById('wysiati-val2').textContent=this.value;
+  });
+}
+
+function submitWysiatiRevised(initial){
+  const revised=parseInt(document.getElementById('wysiati-slider2').value);
+  wysiatiData.push({initial,revised,drop:initial-revised});
+  wysiatiRound++;
+  showWysiatiRound();
+}
+
+function showWysiatiResults(){
+  const el=document.getElementById('wysiati-content');
+  const avgDrop=wysiatiData.reduce((s,d)=>s+d.drop,0)/wysiatiData.length;
+  const avgInitial=wysiatiData.reduce((s,d)=>s+d.initial,0)/wysiatiData.length;
+
+  let rows=wysiatiData.map((d,i)=>`
+    <div style="margin:10px 0;padding:12px;background:var(--bg);border-radius:8px">
+      <p style="font-size:.85rem;color:var(--dim)">Scenario ${i+1}</p>
+      <div class="bar-row">
+        <div class="bar-label">Before</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.initial}%;background:var(--accent)">${d.initial}%</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">After</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.revised}%;background:var(--accent2)">${d.revised}%</div></div>
+      </div>
+      <p style="font-size:.85rem;color:${d.drop>0?'var(--green)':'var(--orange)'}">${d.drop>0?`↓ Dropped ${d.drop} points`:`${d.drop===0?'No change':'↑ Increased '+Math.abs(d.drop)+' points'}`}</p>
+    </div>`).join('');
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">WYSIATI Results</h3>
+    ${rows}
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${Math.round(avgInitial)}%</div><div class="label">Avg initial<br>confidence</div></div>
+      <div class="stat"><div class="num">${Math.round(avgDrop)}pts</div><div class="label">Avg confidence<br>drop</div></div>
+    </div>`;
+
+  const rv=document.getElementById('wysiati-reveal');
+  rv.innerHTML=`<h3>What You See Is All There Is</h3>
+    <p><strong>WYSIATI</strong> is Kahneman's acronym for System 1's most dangerous habit: building a complete, coherent story from whatever scraps of information are available — and feeling confident about it.</p>
+    <p style="margin-top:10px">${avgDrop>15
+      ?'Your confidence dropped significantly — good. The hidden information <em>should</em> have been considered from the start. But System 1 can\'t flag what it doesn\'t know.'
+      :avgDrop>0
+      ?'Your confidence dropped somewhat, but possibly not enough. The hidden information fundamentally changes each scenario. System 1 made you feel confident with half the story.'
+      :'Your confidence barely budged — which itself is a finding. Once System 1 builds a coherent narrative, new contradicting evidence struggles to break through. This is <strong>belief perseverance</strong>.'}</p>
+    <p style="margin-top:10px;color:var(--dim)"><em>"Our comforting conviction that the world makes sense rests on a secure foundation: our almost unlimited ability to ignore our ignorance."</em></p>
+    <button class="btn btn-primary" onclick="go('s8')" style="margin-top:14px">Next: Regression to the Mean →</button>`;
+  rv.classList.add('show');
+  scores.wysiati={avgInitial:Math.round(avgInitial),avgDrop:Math.round(avgDrop),data:wysiatiData};
+}
+
+// ========== 8. REGRESSION TO THE MEAN ==========
+let regPlayers=[];
+let regRound=0;
+const REG_ROUNDS=5;
+
+function initRegression(){
+  // Create 8 players with true skill levels
+  regPlayers=[];
+  const names=['Alex','Jordan','Sam','Casey','Morgan','Riley','Quinn','Avery'];
+  names.forEach(n=>{
+    regPlayers.push({name:n,skill:40+Math.random()*40, performances:[]});
+  });
+  regRound=0;
+  simulateRound();
+  showRegressionRound();
+}
+
+function simulateRound(){
+  regPlayers.forEach(p=>{
+    // Performance = skill + noise
+    const noise=(Math.random()-0.5)*40;
+    p.performances.push(Math.max(0,Math.min(100,p.skill+noise)));
+  });
+}
+
+function showRegressionRound(){
+  const el=document.getElementById('regression-content');
+  if(regRound>=REG_ROUNDS){showRegressionResults();return;}
+
+  const lastPerf=regPlayers.map(p=>({name:p.name,score:p.performances[p.performances.length-1]}));
+  lastPerf.sort((a,b)=>b.score-a.score);
+  const best=lastPerf[0];
+  const worst=lastPerf[lastPerf.length-1];
+
+  let leaderboard=lastPerf.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin:4px 0;padding:6px 10px;border-radius:6px;
+      background:${i===0?'rgba(61,217,182,.1)':i===lastPerf.length-1?'rgba(255,92,92,.1)':'transparent'}">
+      <span style="width:20px;color:var(--dim);font-size:.8rem">${i+1}.</span>
+      <span style="flex:1;font-weight:${i===0||i===lastPerf.length-1?'700':'400'}">${p.name}</span>
+      <span style="font-weight:700;color:${i===0?'var(--green)':i===lastPerf.length-1?'var(--accent2)':'var(--accent)'}">${p.score.toFixed(0)}</span>
+    </div>`).join('');
+
+  el.innerHTML=`
+    <p style="margin-bottom:8px;color:var(--dim)">Season ${regRound+1} of ${REG_ROUNDS}</p>
+    <p style="margin-bottom:14px">Here are this season's performance scores:</p>
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin:12px 0">${leaderboard}</div>
+    <p style="margin-bottom:10px"><strong>${best.name}</strong> dominated this season! <strong>${worst.name}</strong> was worst. What will happen next season?</p>
+    <p style="margin-bottom:14px">Will <strong>${best.name}</strong>'s next performance be:</p>
+    <div class="choices">
+      <button class="choice-btn" onclick="submitRegressionPrediction('better')">📈 Even better</button>
+      <button class="choice-btn" onclick="submitRegressionPrediction('same')">➡️ About the same</button>
+      <button class="choice-btn" onclick="submitRegressionPrediction('worse')">📉 Worse</button>
+      <button class="choice-btn" onclick="submitRegressionPrediction('skip')">🤷 No idea</button>
+    </div>`;
+}
+
+function submitRegressionPrediction(pred){
+  // Track prediction vs reality
+  const bestIdx=regPlayers.reduce((bi,p,i)=>
+    p.performances[p.performances.length-1]>regPlayers[bi].performances[regPlayers[bi].performances.length-1]?i:bi,0);
+  simulateRound();
+  const prevBest=regPlayers[bestIdx].performances[regPlayers[bestIdx].performances.length-2];
+  const newPerf=regPlayers[bestIdx].performances[regPlayers[bestIdx].performances.length-1];
+  if(!scores.regression)scores.regression={predictions:[],regressions:0,total:0};
+  scores.regression.total++;
+  if(newPerf<prevBest)scores.regression.regressions++;
+  scores.regression.predictions.push({pred,actual:newPerf<prevBest?'worse':newPerf>prevBest?'better':'same'});
+  regRound++;
+  showRegressionRound();
+}
+
+function showRegressionResults(){
+  const el=document.getElementById('regression-content');
+
+  // Build performance chart for all players
+  let svgW=400,svgH=200;
+  const colors=['#7c6fff','#ff5c5c','#3dd9b6','#ffa64d','#ff69b4','#69b4ff','#b4ff69','#ff9a69'];
+  let lines=regPlayers.map((p,pi)=>{
+    let path='';
+    p.performances.forEach((v,i)=>{
+      const x=30+i/(p.performances.length-1)*(svgW-60);
+      const y=svgH-20-(v/100)*(svgH-40);
+      path+=path?`L${x},${y}`:`M${x},${y}`;
+    });
+    return `<path d="${path}" fill="none" stroke="${colors[pi]}" stroke-width="1.5" opacity=".7"/>`;
+  }).join('');
+
+  const regPct=scores.regression?Math.round(scores.regression.regressions/scores.regression.total*100):0;
+
+  el.innerHTML=`
+    <h3 style="color:var(--accent);margin-bottom:10px">Performance Over ${REG_ROUNDS+1} Seasons</h3>
+    <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;max-width:${svgW}px;margin:0 auto;display:block">
+      <line x1="30" y1="${svgH-20}" x2="${svgW-30}" y2="${svgH-20}" stroke="var(--dim)" stroke-width=".5"/>
+      ${lines}
+      ${regPlayers.map((p,pi)=>{
+        const lastPerf=p.performances[p.performances.length-1];
+        const y=svgH-20-(lastPerf/100)*(svgH-40);
+        return `<text x="${svgW-26}" y="${y+4}" fill="${colors[pi]}" font-size="8">${p.name}</text>`;
+      }).join('')}
+    </svg>
+    <p style="margin-top:14px">Notice how the lines <strong>zigzag wildly</strong>? Top performers drop. Bottom performers rise. This isn't coaching, motivation, or choking — it's <strong>regression to the mean</strong>.</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="num">${regPct}%</div><div class="label">Of top performers<br>regressed next season</div></div>
+      <div class="stat"><div class="num">~70%</div><div class="label">Expected from<br>pure statistics</div></div>
+    </div>`;
+
+  const rv=document.getElementById('regression-reveal');
+  rv.innerHTML=`<h3>Regression to the Mean</h3>
+    <p>Each player has a fixed "true skill" level, but performance includes random noise. An extreme score is likely due partly to luck — so the next score <strong>regresses toward their true level</strong>.</p>
+    <p style="margin-top:10px">Kahneman's flight instructor story: cadets praised after great landings did worse next time; cadets punished after poor landings improved. The instructors concluded <em>punishment works, praise backfires</em>. But it was just regression — no causation at all.</p>
+    <p style="margin-top:10px">System 1 <strong>demands causal stories</strong>. "They got complacent." "The pressure got to them." "The coach's halftime speech worked." Usually, it's just statistics.</p>
+    <p style="margin-top:10px;color:var(--dim)"><em>"Success = talent + luck. Great success = a little more talent + a lot of luck."</em></p>
+    <button class="btn btn-primary" onclick="showFinalScorecard()" style="margin-top:14px">See Final Results →</button>`;
+  rv.classList.add('show');
+}
+
+// ========== FINAL SCORECARD ==========
+function showFinalScorecard(){
+  go('s9');
+  setTimeout(()=>{
+    const el=document.getElementById('final-scorecard');
+    let items=[];
+    let tricked=0,total=0;
+
+    // 1. Gorilla
+    if(scores.gorilla){total++;
+      items.push({label:'Gorilla Test',icon:'🦍',detail:'Attention blindness demo',tricked:true});tricked++;}
+
+    // 2. Anchoring
+    if(scores.anchoring){total++;
+      const t=scores.anchoring.totalAnchored>scores.anchoring.total/2;
+      if(t)tricked++;
+      items.push({label:'Anchoring',icon:'⚓',detail:`Anchored ${scores.anchoring.totalAnchored}/${scores.anchoring.total} times`,tricked:t});}
+
+    // 3. Prospect
+    if(scores.prospect){total++;
+      const t=parseFloat(scores.prospect.lossRatio)>1.2;
+      if(t)tricked++;
+      items.push({label:'Prospect Theory',icon:'📉',detail:`Loss aversion: ${scores.prospect.lossRatio}x`,tricked:t});}
+
+    // 4. Framing
+    if(scores.framing){total++;
+      const t=scores.framing.flipped>0;
+      if(t)tricked++;
+      items.push({label:'Framing',icon:'🖼️',detail:`${scores.framing.flipped}/${scores.framing.total} flipped`,tricked:t});}
+
+    // 5. Planning
+    if(scores.planning){total++;
+      const t=scores.planning.underCount>scores.planning.total/2;
+      if(t)tricked++;
+      items.push({label:'Planning Fallacy',icon:'📅',detail:`Underestimated ${scores.planning.underCount}/${scores.planning.total}`,tricked:t});}
+
+    // 6. Peak-End
+    if(scores.peakEnd){total++;
+      const t=scores.peakEnd.predicted;
+      if(t)tricked++;
+      items.push({label:'Peak-End Rule',icon:'📊',detail:t?'Rated shorter+sharper as worse':'Rated by total discomfort',tricked:t});}
+
+    // 7. WYSIATI
+    if(scores.wysiati){total++;
+      const t=scores.wysiati.avgDrop<20;
+      if(t)tricked++;
+      items.push({label:'WYSIATI',icon:'👁️',detail:`Confidence drop: ${scores.wysiati.avgDrop}pts`,tricked:t});}
+
+    // 8. Regression
+    if(scores.regression){total++;
+      items.push({label:'Regression',icon:'📈',detail:'Statistics > narratives',tricked:false});}
+
+    const pct=total>0?Math.round(tricked/total*100):0;
+
+    el.innerHTML=`
+      <p style="margin-bottom:16px">Eight experiments. Here's where your System 1 showed its hand:</p>
+      <div class="stat-grid">
+        ${items.map(i=>`
+          <div class="stat" style="border-color:${i.tricked?'var(--accent2)':'var(--green)'}">
+            <div style="font-size:1.5rem">${i.icon}</div>
+            <div class="label" style="margin-top:6px"><strong>${i.label}</strong><br>
+            <span style="color:${i.tricked?'var(--accent2)':'var(--green)'}">${i.tricked?'🧠 Biased':'✅ Resisted'}</span><br>
+            <span style="font-size:.7rem">${i.detail}</span></div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:24px;font-size:1.1rem">
+        <strong>System 1 influenced you on ${tricked} of ${total} experiments (${pct}%).</strong>
+      </div>
+      <div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:10px">
+        <p>${tricked>=5
+          ?'This is completely normal. These biases affect everyone — Nobel laureates, surgeons, statisticians. The point was never to "beat" them but to <strong>feel them operating in real time</strong>.'
+          :tricked>=3
+          ?'A typical result. You felt the pull even when you resisted. Kahneman\'s insight: knowing about biases doesn\'t eliminate them — it just gives you a chance to pause and engage System 2.'
+          :'Impressive resistance, but remember: even if you answered "correctly," you likely <em>felt</em> the intuitive pull. System 1 still fired. You just overrode it — and that takes effort.'}</p>
+        <p style="margin-top:12px;color:var(--dim)"><em>"The best we can do is a compromise: learn to recognize situations in which mistakes are likely and try harder to avoid significant mistakes when the stakes are high."</em></p>
+        <p style="margin-top:16px;color:var(--dim)"><em>"Nothing in life is as important as you think it is while you are thinking about it."</em></p>
+      </div>`;
+  },400);
+}
+
+// ========== INIT ALL EXPERIMENTS ==========
+initAnchoring();
+initProspect();
+initFraming();
+initPlanning();
+initPeakEnd();
+initWysiati();
+initRegression();
+</script>
+</body>
+</html>

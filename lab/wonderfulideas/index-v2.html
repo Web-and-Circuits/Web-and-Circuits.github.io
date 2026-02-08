@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Having of Wonderful Ideas — V2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#13131f;--accent:#6c63ff;--accent2:#ff6b9d;--accent3:#00d4aa;--text:#e8e6f0;--dim:#7a7890;--glow:rgba(108,99,255,.15)}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Georgia',serif;line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+.section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;position:relative}
+.container{max-width:720px;width:100%;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+h2{font-size:clamp(1.4rem,3.5vw,2rem);line-height:1.3;margin-bottom:1rem}
+h3{font-size:1rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:.5rem;font-family:system-ui,sans-serif}
+p{margin-bottom:1rem}
+.quote{border-left:3px solid var(--accent);padding:.75rem 1.25rem;margin:1.5rem 0;font-style:italic;color:var(--dim);background:var(--glow);border-radius:0 8px 8px 0}
+.btn{display:inline-block;padding:12px 24px;border-radius:8px;border:none;font-size:.95rem;font-family:system-ui,sans-serif;cursor:pointer;transition:all .3s;min-height:44px;font-weight:600}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5a52e0;transform:translateY(-2px);box-shadow:0 8px 25px rgba(108,99,255,.3)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid rgba(255,255,255,.1)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-sm{padding:8px 16px;font-size:.85rem}
+.interactive-area{background:var(--card);border-radius:16px;padding:1.5rem;margin:1.5rem 0;border:1px solid rgba(255,255,255,.05)}
+.fade-in{opacity:0;transform:translateY(30px);transition:all .8s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* Nav */
+.nav{position:fixed;top:50%;right:.5rem;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:6px}
+.nav-dot{width:44px;height:44px;border-radius:50%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+.nav-dot::after{content:'';width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+.nav-dot.active::after{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.nav-dot:hover::after{background:rgba(255,255,255,.4)}
+.nav-label{position:absolute;right:100%;white-space:nowrap;font-family:system-ui,sans-serif;font-size:.7rem;color:var(--dim);opacity:0;transition:opacity .2s;padding-right:8px;pointer-events:none}
+.nav-dot:hover .nav-label{opacity:1}
+
+/* Shared UI */
+.tag{display:inline-block;padding:4px 10px;border-radius:4px;font-size:.75rem;font-family:system-ui,sans-serif;font-weight:600}
+.reveal{max-height:0;overflow:hidden;transition:max-height 1s ease,opacity .6s;opacity:0}
+.reveal.open{max-height:2000px;opacity:1}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:500px){.grid-2{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:1.25rem;cursor:pointer;transition:all .3s}
+.card:hover{border-color:var(--accent);background:rgba(108,99,255,.05)}
+.card.selected{border-color:var(--accent);background:rgba(108,99,255,.1)}
+.counter{font-size:2.5rem;font-weight:700;color:var(--accent);font-family:system-ui,sans-serif}
+.label{font-size:.8rem;color:var(--dim);font-family:system-ui,sans-serif;text-transform:uppercase;letter-spacing:.1em}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);color:var(--dim);font-family:system-ui,sans-serif;font-size:.85rem;animation:float 3s infinite}
+.scroll-hint::after{content:'↓';display:block;text-align:center;font-size:1.5rem;margin-top:.25rem}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* Moon */
+.moon-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:1rem 0}
+.moon-cell{aspect-ratio:1;border-radius:50%;position:relative;cursor:pointer;transition:all .3s;border:2px solid transparent}
+.moon-cell:hover{border-color:rgba(255,255,255,.2)}
+.moon-cell.selected-moon{border-color:var(--accent)}
+.moon-day{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--dim);font-family:system-ui,sans-serif}
+
+/* Pendulum */
+.pend-canvas{width:100%;height:280px;border-radius:12px;background:#0d0d18;display:block}
+.slider-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-row .val{width:40px;text-align:right;color:var(--text);font-weight:600}
+.hypo-btn{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text);font-family:system-ui,sans-serif;font-size:.8rem;cursor:pointer;transition:all .2s;margin:3px}
+.hypo-btn:hover{background:rgba(108,99,255,.15);border-color:var(--accent)}
+.hypo-btn.confirmed{background:rgba(0,212,170,.15);border-color:var(--accent3);color:var(--accent3)}
+.hypo-btn.rejected{background:rgba(255,107,157,.1);border-color:var(--accent2);color:var(--accent2);text-decoration:line-through}
+
+/* Straw ordering */
+.straw{height:6px;border-radius:3px;cursor:pointer;transition:all .3s;margin:5px 0}
+.straw-container{padding:.5rem;user-select:none;min-height:60px}
+
+/* Mystery Box */
+.terminal-grid{display:grid;gap:2px;margin:1rem auto;position:relative}
+.terminal{width:100%;aspect-ratio:1;border-radius:50%;background:#1a1a2e;border:2px solid rgba(255,255,255,.2);cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;font-size:.8rem;font-weight:700;color:var(--dim)}
+.terminal:hover{border-color:var(--accent)}
+.terminal.sel{border-color:var(--accent);background:rgba(108,99,255,.2);color:var(--accent)}
+.terminal.lit{border-color:var(--accent3);background:rgba(0,212,170,.15);color:var(--accent3);box-shadow:0 0 12px rgba(0,212,170,.3)}
+.wire-display{margin:1rem 0;padding:.75rem;background:rgba(0,0,0,.3);border-radius:8px;font-family:monospace;font-size:.8rem;color:var(--dim);max-height:150px;overflow-y:auto}
+
+/* Interview */
+.chat-bubble{padding:10px 14px;border-radius:12px;margin:6px 0;font-family:system-ui,sans-serif;font-size:.9rem;max-width:85%;animation:slideUp .3s ease}
+.chat-child{background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-you{background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.2);color:var(--text);align-self:flex-end;margin-left:auto;border-bottom-right-radius:4px}
+.chat-area{display:flex;flex-direction:column;max-height:320px;overflow-y:auto;padding:.5rem}
+.chat-options{display:flex;flex-wrap:wrap;gap:6px;margin-top:.5rem}
+.chat-opt{padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text);font-family:system-ui,sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s;min-height:44px}
+.chat-opt:hover{border-color:var(--accent);background:rgba(108,99,255,.1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Timer */
+.timer-display{font-size:3rem;font-family:system-ui,sans-serif;font-weight:700;text-align:center;margin:.5rem 0;color:var(--accent2)}
+.puzzle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:1rem auto;max-width:280px}
+.puzzle-tile{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;font-family:system-ui,sans-serif;cursor:pointer;transition:all .15s;border:none;color:#fff}
+
+/* Ramp */
+.ramp-svg{width:100%;max-width:500px;display:block;margin:1rem auto}
+.predict-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer;position:absolute;transition:all .3s}
+
+footer{text-align:center;padding:3rem 1rem;color:var(--dim);font-size:.85rem}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav"></nav>
+
+<!-- HERO -->
+<section class="section" id="hero">
+<div class="container" style="text-align:center">
+<h3>An Interactive Exploration</h3>
+<h1>The Having of<br>Wonderful Ideas</h1>
+<p style="color:var(--dim);font-size:1.1rem;margin-bottom:2rem">Eleanor Duckworth's vision of learning—<br>experienced, not explained.</p>
+<p style="color:var(--dim);max-width:480px;margin:0 auto 2rem;font-size:.9rem">Seven experiments. Each one embodies an idea from the book.<br><strong style="color:var(--text)">Nobody will tell you the answer first.</strong></p>
+<a href="#s1" class="btn btn-primary">Begin</a>
+<div class="scroll-hint">scroll to discover</div>
+</div>
+</section>
+
+<!-- 1. MOON PUZZLE -->
+<section class="section" id="s1">
+<div class="container fade-in">
+<h3>I. The Moon Puzzle</h3>
+<h2>What do you notice?</h2>
+<p>Teachers in Duckworth's class observed the moon every night for months. Below is 28 days of data. No labels. Just look.</p>
+<div class="interactive-area">
+<div class="moon-grid" id="moonGrid"></div>
+<p style="font-family:system-ui,sans-serif;font-size:.8rem;color:var(--dim);margin-top:1.5rem">Study the pattern. When you think you see it, describe the rule:</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0">
+<button class="btn btn-ghost btn-sm" onclick="moonGuess('cycle')">It repeats in a cycle</button>
+<button class="btn btn-ghost btn-sm" onclick="moonGuess('grow-shrink')">It grows then shrinks</button>
+<button class="btn btn-ghost btn-sm" onclick="moonGuess('left-right')">The lit side switches</button>
+<button class="btn btn-ghost btn-sm" onclick="moonGuess('random')">I don't see a pattern yet</button>
+</div>
+<div id="moonFeedback" style="min-height:1rem;margin-top:.5rem;font-family:system-ui,sans-serif;font-size:.9rem"></div>
+<div id="moonReveal" class="reveal">
+<p style="margin-top:1rem">What you're seeing are <strong>lunar phases</strong>. The lit portion grows (waxing) for ~14 days, then shrinks (waning) for ~14 days. The lit side appears on the right during waxing, left during waning.</p>
+<p style="color:var(--dim);font-size:.9rem">Duckworth's teachers—educated adults—spent <em>months</em> confused about the moon before their understanding clicked. One teacher wrote: <strong>"What I do know about the moon is mine forever."</strong> That knowledge wasn't given. It was earned through confusion.</p>
+<p style="color:var(--dim);font-size:.9rem">Click any moon above to see its day number. Can you predict what day 29 looks like?</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 2. PENDULUM LAB -->
+<section class="section" id="s2">
+<div class="container fade-in">
+<h3>II. Pendulum Lab</h3>
+<h2>What controls the swing?</h2>
+<p>You can change four things. Only <em>one</em> affects the period. Which one?</p>
+<div class="interactive-area">
+<canvas class="pend-canvas" id="pendCanvas"></canvas>
+<div style="margin-top:1rem">
+<div class="slider-row"><span style="width:80px">Length</span><input type="range" id="pendLen" min="40" max="220" value="120" oninput="pendUpdate()"><span class="val" id="pendLenVal">120</span></div>
+<div class="slider-row"><span style="width:80px">Weight</span><input type="range" id="pendWt" min="8" max="40" value="20" oninput="pendUpdate()"><span class="val" id="pendWtVal">20</span></div>
+<div class="slider-row"><span style="width:80px">Push</span><input type="range" id="pendPush" min="1" max="10" value="3" oninput="pendUpdate()"><span class="val" id="pendPushVal">3</span></div>
+<div class="slider-row"><span style="width:80px">Angle</span><input type="range" id="pendAngle" min="10" max="70" value="30" oninput="pendUpdate()"><span class="val" id="pendAngleVal">30°</span></div>
+</div>
+<div style="display:flex;align-items:baseline;gap:1rem;margin:1rem 0">
+<span style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">Period:</span>
+<span class="counter" id="pendPeriod" style="font-size:2rem">—</span>
+<span class="label">seconds</span>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">What's your hypothesis? Which variable matters?</p>
+<div style="display:flex;flex-wrap:wrap;gap:4px;margin:.5rem 0" id="hypoArea">
+<button class="hypo-btn" onclick="pendHypo(this,'length')">Length</button>
+<button class="hypo-btn" onclick="pendHypo(this,'weight')">Weight</button>
+<button class="hypo-btn" onclick="pendHypo(this,'push')">Push force</button>
+<button class="hypo-btn" onclick="pendHypo(this,'angle')">Starting angle</button>
+</div>
+<div id="pendFeedback" style="min-height:1rem;margin-top:.5rem;font-family:system-ui,sans-serif;font-size:.9rem"></div>
+<div id="pendReveal" class="reveal">
+<p style="margin-top:1rem;color:var(--accent3)"><strong>✦ Only length affects the period.</strong></p>
+<p style="color:var(--dim);font-size:.9rem">Weight, push, and angle change the <em>amplitude</em> (how far it swings) but not the <em>period</em> (how long each swing takes). This surprises nearly everyone. Galileo supposedly discovered it watching a chandelier in the Pisa cathedral.</p>
+<p style="color:var(--dim);font-size:.9rem">Duckworth's point: if someone <em>told</em> you "only length matters," you'd nod and forget. By experimenting, you now <em>own</em> that knowledge. "Having confidence in one's ideas does not mean 'I know my ideas are right'; it means 'I am willing to try out my ideas.'"</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 3. STRAW ORDERING -->
+<section class="section" id="s3">
+<div class="container fade-in">
+<h3>III. Ordering Things</h3>
+<h2>There isn't one right answer.</h2>
+<p>Here are objects. Order them however makes sense to you. Then try a <em>different</em> ordering.</p>
+<div class="interactive-area">
+<div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap" id="strawTabs"></div>
+<div id="strawSetDesc" style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim);margin-bottom:.5rem"></div>
+<p style="font-family:system-ui,sans-serif;font-size:.8rem;color:var(--dim)">Tap items to place them. Tap placed items to remove.</p>
+<div id="strawSource" class="straw-container"></div>
+<div style="border-top:2px dashed rgba(255,255,255,.1);margin:.5rem 0;padding-top:.5rem">
+<p style="font-family:system-ui,sans-serif;font-size:.75rem;color:var(--dim)">Your ordering:</p>
+<div id="strawTarget" class="straw-container"></div>
+</div>
+<div style="margin:.5rem 0">
+<input type="text" id="strawReason" placeholder="What's your ordering principle?" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text);font-family:system-ui,sans-serif;font-size:.9rem;min-height:44px">
+<button class="btn btn-primary btn-sm" style="margin-top:.5rem" onclick="saveOrdering()">Save this ordering</button>
+</div>
+<div id="strawOrderings" style="margin-top:.5rem;font-family:system-ui,sans-serif;font-size:.85rem"></div>
+<div id="strawFeedback" style="min-height:1rem;font-family:system-ui,sans-serif;font-size:.9rem"></div>
+<div id="strawReveal" class="reveal">
+<p style="margin-top:1rem">Kevin, a seven-year-old, ordered drinking straws by length without being asked. That was <em>his</em> wonderful idea. But another child might order these same objects by color, by weight, by how much they like them.</p>
+<p style="color:var(--dim);font-size:.9rem"><strong>Two children ordering differently are both thinking.</strong> The wonderful idea isn't the "right" answer—it's having a principle at all. The variety of valid orderings is the point.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 4. MYSTERY BOX -->
+<section class="section" id="s4">
+<div class="container fade-in">
+<h3>IV. The Mystery Box</h3>
+<h2>You can test it, but you can't open it.</h2>
+<p>A box with terminals on top. Inside: hidden wires connecting some terminals. Touch a battery+bulb across any two terminals. If the bulb lights, they're connected inside.</p>
+<div class="interactive-area">
+<div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap">
+<button class="btn btn-ghost btn-sm" onclick="setBox(0)" id="boxTab0" style="border-color:var(--accent)">Box 1 (4 terminals)</button>
+<button class="btn btn-ghost btn-sm" onclick="setBox(1)" id="boxTab1">Box 2 (5 terminals)</button>
+<button class="btn btn-ghost btn-sm" onclick="setBox(2)" id="boxTab2">Box 3 (6 terminals)</button>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:.8rem;color:var(--dim)">Tap two terminals to test them. 💡 = connected inside. Track what you learn.</p>
+<div id="boxArea" style="display:flex;justify-content:center"></div>
+<div class="wire-display" id="boxLog">No tests yet.</div>
+<div style="margin-top:.75rem">
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)">Draw your theory — which terminals are wired together inside?</p>
+<textarea id="boxGuessInput" rows="2" placeholder="e.g., A-B connected, C-D connected, B-C connected" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text);font-family:system-ui,sans-serif;font-size:.85rem;resize:none"></textarea>
+<button class="btn btn-primary btn-sm" style="margin-top:.5rem" onclick="checkBoxGuess()">Check my theory</button>
+</div>
+<div id="boxResult" style="min-height:1rem;margin-top:.5rem;font-family:system-ui,sans-serif;font-size:.9rem"></div>
+</div>
+<p style="color:var(--dim);font-size:.9rem">Hank, a fifth grader, connected six batteries in series to burn out whatever was inside his box. When he reconnected and the circuit was dead, he knew it had been a bulb. <strong>The courage to try matters more than knowing in advance.</strong></p>
+</div>
+</section>
+
+<!-- 5. CLINICAL INTERVIEW -->
+<section class="section" id="s5">
+<div class="container fade-in">
+<h3>V. The Clinical Interview</h3>
+<h2>The "wrong" answer is the interesting one.</h2>
+<p>A child gives a "wrong" answer. Your instinct: correct them. Duckworth's method: ask <em>why</em>. Discover the sophisticated reasoning behind the "error."</p>
+<div class="interactive-area">
+<div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap">
+<button class="btn btn-ghost btn-sm" onclick="setScenario(0)" id="scnTab0" style="border-color:var(--accent)">The Half</button>
+<button class="btn btn-ghost btn-sm" onclick="setScenario(1)" id="scnTab1">Heavy & Light</button>
+<button class="btn btn-ghost btn-sm" onclick="setScenario(2)" id="scnTab2">The Shadow</button>
+</div>
+<div class="chat-area" id="chatArea"></div>
+<div class="chat-options" id="chatOptions"></div>
+<div id="interviewReveal" class="reveal">
+<p style="margin-top:1rem;color:var(--accent3)"><strong>✦ You just did what Duckworth calls "extended clinical interviewing."</strong></p>
+<p style="color:var(--dim);font-size:.9rem">"Instead of explaining things to students, try to understand their sense." The child wasn't wrong—they were operating with a coherent framework that happened to differ from the standard one. Understanding <em>their</em> logic teaches <em>you</em> more than correcting them ever could.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 6. GIVE THEM TIME -->
+<section class="section" id="s6">
+<div class="container fade-in">
+<h3>VI. Give Them Time</h3>
+<h2>Rushing kills wonderful ideas.</h2>
+<div class="quote">"I needed time for my confusion."</div>
+<p>Same puzzle. Two conditions. Notice how your thinking changes.</p>
+<div class="interactive-area">
+<div style="text-align:center;margin-bottom:1rem">
+<div id="timerMode" style="font-family:system-ui,sans-serif;font-size:.9rem;color:var(--dim);margin-bottom:.5rem"></div>
+<div class="timer-display" id="timerDisplay" style="display:none"></div>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--dim)" id="puzzleInstructions"></p>
+<div id="puzzleArea"></div>
+<div style="margin-top:1rem;text-align:center" id="puzzleControls">
+<button class="btn btn-primary" onclick="startTimedPuzzle()">Try with a 15-second timer</button>
+<button class="btn btn-ghost" onclick="startUntimedPuzzle()" style="margin-left:8px">Try with no timer</button>
+</div>
+<div id="puzzleResult" style="min-height:1rem;margin-top:.5rem;font-family:system-ui,sans-serif;font-size:.9rem;text-align:center"></div>
+<div id="timeReveal" class="reveal">
+<p style="margin-top:1rem">With a timer, you likely guessed or panicked. Without one, you could <em>think</em>.</p>
+<p style="color:var(--dim);font-size:.9rem">Duckworth's thesis: "All of us need time for our confusion if we are to build the breadth and depth that give significance to our knowledge." Speed tests measure <em>recall</em>, not <em>understanding</em>. The most powerful ideas come to people who are given time to sit with not-knowing.</p>
+<p style="color:var(--dim);font-size:.9rem">Piaget's answer to "the American question" (How do we speed up development?): <strong>"The question is not how fast you go but how far you go."</strong></p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 7. RAMP DOTS -->
+<section class="section" id="s7">
+<div class="container fade-in">
+<h3>VII. The Ramp Dots</h3>
+<h2>Predict first. Then see.</h2>
+<p>A ball rolls down a ramp, leaving paint dots at regular time intervals. Where are the dots closest together? Where farthest apart?</p>
+<div class="interactive-area">
+<div style="text-align:center">
+<svg class="ramp-svg" viewBox="0 0 500 180">
+<line x1="50" y1="30" x2="450" y2="150" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+<text x="30" y="170" fill="#555" font-size="11" font-family="system-ui,sans-serif">top</text>
+<text x="430" y="170" fill="#555" font-size="11" font-family="system-ui,sans-serif">bottom</text>
+</svg>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:.9rem">Make your prediction:</p>
+<div class="grid-2" style="margin:.75rem 0">
+<div class="card" onclick="rampPick(this,'closer')">
+<strong>Closer at bottom</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">Faster = more dots per area</p>
+</div>
+<div class="card" onclick="rampPick(this,'farther')">
+<strong>Farther at bottom</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">Faster = more distance between dots</p>
+</div>
+<div class="card" onclick="rampPick(this,'even')">
+<strong>Evenly spaced</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">Rotation is constant</p>
+</div>
+<div class="card" onclick="rampPick(this,'unsure')">
+<strong>Not sure</strong>
+<p style="font-size:.8rem;color:var(--dim);margin:0">I'd need to see it</p>
+</div>
+</div>
+<div id="rampRevealArea" class="reveal">
+<div style="text-align:center;margin:1rem 0">
+<svg width="100%" viewBox="0 0 500 50" style="max-width:500px">
+<line x1="20" y1="25" x2="480" y2="25" stroke="#333" stroke-width="2"/>
+<circle cx="35" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="58" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="88" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="128" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="180" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="247" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="332" cy="25" r="5" fill="var(--accent)"/>
+<circle cx="438" cy="25" r="5" fill="var(--accent)"/>
+<text x="25" y="48" font-size="9" fill="#555" font-family="system-ui,sans-serif">top</text>
+<text x="415" y="48" font-size="9" fill="#555" font-family="system-ui,sans-serif">bottom</text>
+</svg>
+</div>
+<p>The dots get <strong>farther apart</strong> toward the bottom. The ball drops paint at regular <em>time</em> intervals, but covers more <em>distance</em> each interval as it accelerates.</p>
+<p style="color:var(--dim);font-size:.9rem" id="rampPersonal"></p>
+<p style="color:var(--dim);font-size:.9rem">One teacher, seeing the result, measured with a string and said: "They don't get closer together as noticeably as I thought they would!" She was <em>still seeing what she expected</em>, even with the evidence in front of her.</p>
+<p style="color:var(--dim);font-size:.9rem"><strong>That confusion is productive.</strong> Sit with being wrong. The gap between your prediction and reality is where learning lives.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CONCLUSION -->
+<section class="section" id="s8">
+<div class="container fade-in" style="text-align:center">
+<h3>VIII. What You Discovered Is Yours</h3>
+<h2>Nobody told you the answers first.</h2>
+<div class="interactive-area" style="text-align:left">
+<p>You studied moon data and found the cycle yourself. You experimented with a pendulum until you discovered only length matters. You ordered objects and realized there isn't one right way. You probed a mystery box without opening it. You listened to a child's "wrong" answer and found intelligence inside it. You felt the difference between rushing and thinking. You predicted, were wrong, and learned from the gap.</p>
+<p><strong>None of these insights came from being told.</strong></p>
+<p>That is Duckworth's thesis. And you just experienced it.</p>
+</div>
+<div class="quote" style="text-align:left;margin:2rem 0">"The wonderful ideas that I refer to need not necessarily look wonderful to the outside world. I see no difference in kind between wonderful ideas that many other people have already had, and wonderful ideas that nobody has yet happened upon."</div>
+<p style="margin:2rem 0;font-size:1.1rem">"You don't want to cover a subject;<br>you want to <em>uncover</em> it."</p>
+<p style="color:var(--dim);font-size:.85rem;margin:2rem auto;max-width:500px">Eleanor Duckworth, <em>The Having of Wonderful Ideas and Other Essays on Teaching and Learning</em>, 3rd edition, Teachers College Press, 2006.</p>
+</div>
+</section>
+
+<footer>
+<p>An interactive exploration of Eleanor Duckworth's ideas. Not affiliated with the author or publisher.</p>
+<p style="margin-top:.5rem">Built with nothing but HTML, CSS, and JS — and a wonderful idea.</p>
+</footer>
+
+<script>
+// ===== NAV =====
+const secs=['hero','s1','s2','s3','s4','s5','s6','s7','s8'];
+const secNames=['','Moon','Pendulum','Ordering','Mystery Box','Interview','Time','Ramp',''];
+const nav=document.getElementById('nav');
+secs.forEach((s,i)=>{
+const d=document.createElement('button');
+d.className='nav-dot';d.innerHTML='<span class="nav-label">'+secNames[i]+'</span>';
+d.onclick=()=>document.getElementById(s).scrollIntoView({behavior:'smooth'});
+nav.appendChild(d);
+});
+function updateNav(){
+const dots=nav.querySelectorAll('.nav-dot');
+let active=0;
+secs.forEach((s,i)=>{const el=document.getElementById(s);if(el&&el.getBoundingClientRect().top<innerHeight/2)active=i});
+dots.forEach((d,i)=>d.classList.toggle('active',i===active));
+}
+addEventListener('scroll',updateNav);updateNav();
+
+// Fade in
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+// ===== 1. MOON =====
+function moonPhase(day){
+// day 0 = new moon, returns illumination 0-1 and side 'right'|'left'
+const cycle=29.53;
+const phase=(day%cycle)/cycle;
+let illum;
+if(phase<0.5)illum=phase*2; // waxing: 0->1
+else illum=(1-phase)*2; // waning: 1->0
+const side=phase<0.5?'right':'left';
+return{illum,side};
+}
+const moonGrid=document.getElementById('moonGrid');
+for(let d=0;d<28;d++){
+const{illum,side}=moonPhase(d);
+const cell=document.createElement('div');
+cell.className='moon-cell';
+cell.title='Day '+(d+1);
+// Draw moon as gradient
+const dark='#1a1a2e';
+const light='#e8e6f0';
+const pct=Math.round(illum*100);
+if(side==='right'){
+cell.style.background=`linear-gradient(to right, ${dark} ${100-pct}%, ${light} ${100-pct}%)`;
+}else{
+cell.style.background=`linear-gradient(to left, ${dark} ${100-pct}%, ${light} ${100-pct}%)`;
+}
+if(illum<0.03)cell.style.background=dark;
+if(illum>0.97)cell.style.background=light;
+cell.onclick=()=>{
+document.querySelectorAll('.moon-cell').forEach(c=>c.classList.remove('selected-moon'));
+cell.classList.add('selected-moon');
+};
+moonGrid.appendChild(cell);
+}
+let moonClues=0;
+function moonGuess(type){
+moonClues++;
+const fb=document.getElementById('moonFeedback');
+if(type==='random'){
+fb.innerHTML='<span style="color:var(--dim)">Look more carefully. Compare the first row to the last row. What changes?</span>';
+}else if(type==='cycle'){
+fb.innerHTML='<span style="color:var(--accent3)">Yes! It repeats roughly every 29.5 days. What else do you notice about how it changes?</span>';
+if(moonClues>=2)document.getElementById('moonReveal').classList.add('open');
+}else if(type==='grow-shrink'){
+fb.innerHTML='<span style="color:var(--accent3)">Exactly — it waxes and wanes. Can you see when the lit side switches?</span>';
+if(moonClues>=2)document.getElementById('moonReveal').classList.add('open');
+}else if(type==='left-right'){
+fb.innerHTML='<span style="color:var(--accent3)">Sharp eye! The lit side is on the right while growing, left while shrinking.</span>';
+document.getElementById('moonReveal').classList.add('open');
+}
+}
+
+// ===== 2. PENDULUM =====
+let pendAnim;
+const pendCanvas=document.getElementById('pendCanvas');
+const pendCtx=pendCanvas.getContext('2d');
+let pendTime=0;
+let pendMeasurements=[];
+
+function pendUpdate(){
+const len=+document.getElementById('pendLen').value;
+const wt=+document.getElementById('pendWt').value;
+const push=+document.getElementById('pendPush').value;
+const angle=+document.getElementById('pendAngle').value;
+document.getElementById('pendLenVal').textContent=len;
+document.getElementById('pendWtVal').textContent=wt;
+document.getElementById('pendPushVal').textContent=push;
+document.getElementById('pendAngleVal').textContent=angle+'°';
+// Period only depends on length (T = 2π√(L/g))
+const period=(2*Math.PI*Math.sqrt(len/400)).toFixed(2);
+document.getElementById('pendPeriod').textContent=period;
+}
+function drawPendulum(){
+const w=pendCanvas.width=pendCanvas.offsetWidth;
+const h=pendCanvas.height=pendCanvas.offsetHeight;
+const len=+document.getElementById('pendLen').value;
+const wt=+document.getElementById('pendWt').value;
+const angle=+document.getElementById('pendAngle').value;
+const period=2*Math.PI*Math.sqrt(len/400);
+const theta=(angle*Math.PI/180)*Math.cos(2*Math.PI*pendTime/period);
+const ox=w/2,oy=20;
+const bx=ox+Math.sin(theta)*len;
+const by=oy+Math.cos(theta)*len;
+pendCtx.clearRect(0,0,w,h);
+// pivot
+pendCtx.fillStyle='#555';
+pendCtx.fillRect(ox-30,0,60,8);
+// string
+pendCtx.beginPath();pendCtx.moveTo(ox,oy);pendCtx.lineTo(bx,by);
+pendCtx.strokeStyle='#888';pendCtx.lineWidth=2;pendCtx.stroke();
+// bob
+pendCtx.beginPath();pendCtx.arc(bx,by,wt/2+4,0,Math.PI*2);
+pendCtx.fillStyle='#6c63ff';pendCtx.fill();
+pendCtx.strokeStyle='#8b83ff';pendCtx.lineWidth=2;pendCtx.stroke();
+pendTime+=0.03;
+pendAnim=requestAnimationFrame(drawPendulum);
+}
+pendUpdate();
+// Start animation when visible
+const pendObs=new IntersectionObserver(es=>{
+es.forEach(e=>{
+if(e.isIntersecting){if(!pendAnim)drawPendulum()}
+else{cancelAnimationFrame(pendAnim);pendAnim=null}
+});
+},{threshold:.1});
+pendObs.observe(document.getElementById('s2'));
+
+let pendHypotheses={};
+function pendHypo(btn,variable){
+// Test: change that variable, does period change?
+const correct=variable==='length';
+btn.classList.add(correct?'confirmed':'rejected');
+pendHypotheses[variable]=correct;
+const fb=document.getElementById('pendFeedback');
+if(correct){
+fb.innerHTML='<span style="color:var(--accent3)">✦ Yes! Try changing length and watch the period. Now try changing the others — notice the period stays the same.</span>';
+document.getElementById('pendReveal').classList.add('open');
+}else{
+fb.innerHTML='<span style="color:var(--accent2)">Try it: change '+variable+' while keeping everything else the same. Does the period number change?</span>';
+}
+}
+
+// ===== 3. STRAW ORDERING =====
+const strawSets=[
+{name:'Straws',items:[
+{id:0,label:'',w:45,color:'#ff6b9d'},
+{id:1,label:'',w:70,color:'#6c63ff'},
+{id:2,label:'',w:95,color:'#00d4aa'},
+{id:3,label:'',w:120,color:'#ff9f43'},
+{id:4,label:'',w:150,color:'#a855f7'},
+{id:5,label:'',w:180,color:'#38bdf8'},
+{id:6,label:'',w:210,color:'#f43f5e'},
+{id:7,label:'',w:250,color:'#22d3ee'}
+],desc:'Eight colored straws of different lengths. How would you order them?'},
+{name:'Animals',items:[
+{id:0,label:'🐜',w:30,color:'#666'},
+{id:1,label:'🐁',w:50,color:'#888'},
+{id:2,label:'🐈',w:80,color:'#aaa'},
+{id:3,label:'🐕',w:110,color:'#bbb'},
+{id:4,label:'🐎',w:160,color:'#ccc'},
+{id:5,label:'🐘',w:220,color:'#ddd'},
+{id:6,label:'🐋',w:260,color:'#eee'}
+],desc:'Animals. By size? Speed? Lifespan? Domestication? Legs? There are many valid orderings.'},
+{name:'Shapes',items:[
+{id:0,label:'●',w:40,color:'#ff6b9d'},
+{id:1,label:'■',w:60,color:'#6c63ff'},
+{id:2,label:'▲',w:50,color:'#00d4aa'},
+{id:3,label:'◆',w:70,color:'#ff9f43'},
+{id:4,label:'★',w:55,color:'#a855f7'},
+{id:5,label:'⬡',w:80,color:'#38bdf8'}
+],desc:'Shapes. By number of sides? By area? By roundness? By complexity? You decide.'}
+];
+let currentStrawSet=0;
+let strawPlaced=[];
+let savedOrderings=[];
+
+function initStrawTabs(){
+const tabs=document.getElementById('strawTabs');
+tabs.innerHTML='';
+strawSets.forEach((s,i)=>{
+const b=document.createElement('button');
+b.className='btn btn-ghost btn-sm';
+b.textContent=s.name;
+if(i===currentStrawSet)b.style.borderColor='var(--accent)';
+b.onclick=()=>{currentStrawSet=i;strawPlaced=[];savedOrderings=[];initStrawTabs();renderStraws()};
+tabs.appendChild(b);
+});
+}
+function renderStraws(){
+const set=strawSets[currentStrawSet];
+document.getElementById('strawSetDesc').textContent=set.desc;
+const src=document.getElementById('strawSource');
+const tgt=document.getElementById('strawTarget');
+src.innerHTML='';tgt.innerHTML='';
+set.items.forEach((item,i)=>{
+if(strawPlaced.includes(item.id))return;
+const el=document.createElement('div');
+if(item.label&&item.label.length>1){
+el.style.cssText='font-size:2rem;display:inline-block;margin:4px 8px;cursor:pointer;transition:all .2s;padding:4px;border-radius:8px';
+el.textContent=item.label;
+el.onmouseenter=()=>el.style.background='rgba(108,99,255,.1)';
+el.onmouseleave=()=>el.style.background='none';
+}else{
+el.className='straw';
+el.style.width=item.w+'px';
+el.style.background=item.color;
+if(item.label)el.textContent=item.label;
+}
+el.onclick=()=>{strawPlaced.push(item.id);renderStraws()};
+src.appendChild(el);
+});
+strawPlaced.forEach((id,i)=>{
+const item=set.items.find(x=>x.id===id);
+const el=document.createElement('div');
+if(item.label&&item.label.length>1){
+el.style.cssText='font-size:2rem;display:inline-block;margin:4px 8px;cursor:pointer;transition:all .2s;padding:4px;border-radius:8px';
+el.textContent=item.label;
+}else{
+el.className='straw';
+el.style.width=item.w+'px';
+el.style.background=item.color;
+}
+el.onclick=()=>{strawPlaced.splice(i,1);renderStraws()};
+tgt.appendChild(el);
+});
+}
+function saveOrdering(){
+const reason=document.getElementById('strawReason').value.trim();
+if(strawPlaced.length<2){document.getElementById('strawFeedback').innerHTML='<span style="color:var(--accent2)">Place at least 2 items first.</span>';return}
+const set=strawSets[currentStrawSet];
+const ordering=strawPlaced.map(id=>{const it=set.items.find(x=>x.id===id);return it.label||'straw'+(id+1)}).join(' → ');
+savedOrderings.push({order:ordering,reason:reason||'(no reason given)'});
+const container=document.getElementById('strawOrderings');
+container.innerHTML='<p style="color:var(--accent3);margin-bottom:.5rem"><strong>Your orderings:</strong></p>'+
+savedOrderings.map((o,i)=>'<p style="font-size:.85rem;margin:4px 0"><span style="color:var(--accent)">#'+(i+1)+':</span> '+o.order+'<br><span style="color:var(--dim)">Principle: '+o.reason+'</span></p>').join('');
+if(savedOrderings.length>=2){
+document.getElementById('strawReveal').classList.add('open');
+document.getElementById('strawFeedback').innerHTML='<span style="color:var(--accent3)">✦ You found multiple valid orderings. That\'s the wonderful idea.</span>';
+}else{
+document.getElementById('strawFeedback').innerHTML='<span style="color:var(--dim)">Good! Now try a completely different principle. Reset and order them another way.</span>';
+}
+strawPlaced=[];
+document.getElementById('strawReason').value='';
+renderStraws();
+}
+initStrawTabs();renderStraws();
+
+// ===== 4. MYSTERY BOX =====
+const boxes=[
+{n:4,labels:['A','B','C','D'],wires:[[0,1],[2,3]]},
+{n:5,labels:['A','B','C','D','E'],wires:[[0,2],[1,3],[3,4]]},
+{n:6,labels:['A','B','C','D','E','F'],wires:[[0,3],[1,4],[2,5],[0,5]]}
+];
+let currentBox=0;
+let boxSelected=[];
+let boxTests=[];
+
+function setBox(idx){
+currentBox=idx;boxSelected=[];boxTests=[];
+document.querySelectorAll('[id^=boxTab]').forEach((b,i)=>b.style.borderColor=i===idx?'var(--accent)':'rgba(255,255,255,.1)');
+renderBox();
+document.getElementById('boxLog').textContent='No tests yet.';
+document.getElementById('boxResult').innerHTML='';
+}
+function renderBox(){
+const box=boxes[currentBox];
+const area=document.getElementById('boxArea');
+const size=box.n<=4?80:65;
+const gap=box.n<=4?20:12;
+area.innerHTML='';
+const wrap=document.createElement('div');
+wrap.style.cssText='display:flex;gap:'+gap+'px;flex-wrap:wrap;justify-content:center;padding:1rem';
+box.labels.forEach((lbl,i)=>{
+const t=document.createElement('button');
+t.className='terminal'+(boxSelected.includes(i)?' sel':'');
+t.style.width=t.style.height=size+'px';
+t.textContent=lbl;
+t.onclick=()=>selectTerminal(i);
+wrap.appendChild(t);
+});
+area.appendChild(wrap);
+}
+function selectTerminal(idx){
+if(boxSelected.includes(idx)){boxSelected=boxSelected.filter(x=>x!==idx)}
+else if(boxSelected.length<2){boxSelected.push(idx)}
+if(boxSelected.length===2){
+testTerminals(boxSelected[0],boxSelected[1]);
+boxSelected=[];
+}
+renderBox();
+}
+function testTerminals(a,b){
+const box=boxes[currentBox];
+const connected=box.wires.some(w=>(w[0]===a&&w[1]===b)||(w[0]===b&&w[1]===a));
+const la=box.labels[a],lb=box.labels[b];
+boxTests.push({a:la,b:lb,connected});
+const log=document.getElementById('boxLog');
+log.innerHTML=boxTests.map(t=>
+'<span style="color:'+(t.connected?'var(--accent3)':'var(--dim)')+'">'+t.a+'↔'+t.b+': '+(t.connected?'💡 LIT':'dark')+'</span>'
+).join('<br>');
+log.scrollTop=log.scrollHeight;
+// Brief flash
+if(connected){
+const terms=document.getElementById('boxArea').querySelectorAll('.terminal');
+[a,b].forEach(i=>terms[i].classList.add('lit'));
+setTimeout(()=>[a,b].forEach(i=>terms[i].classList.remove('lit')),600);
+}
+}
+function checkBoxGuess(){
+const input=document.getElementById('boxGuessInput').value.toUpperCase();
+const box=boxes[currentBox];
+const res=document.getElementById('boxResult');
+// Check if they've tested enough
+if(boxTests.length<box.n){
+res.innerHTML='<span style="color:var(--dim)">Have you tested enough pairs? Try more combinations before guessing.</span>';
+return;
+}
+// Check if they identified all wires
+let allFound=true;
+box.wires.forEach(w=>{
+const la=box.labels[w[0]],lb=box.labels[w[1]];
+if(!input.includes(la)&&!input.includes(lb))allFound=false;
+if(!(input.includes(la+'-'+lb)||input.includes(lb+'-'+la)||
+input.includes(la+'↔'+lb)||input.includes(lb+'↔'+la)||
+(input.includes(la)&&input.includes(lb)))){}
+});
+// Simple check: count mentioned pairs
+let mentionedPairs=0;
+box.wires.forEach(w=>{
+const la=box.labels[w[0]],lb=box.labels[w[1]];
+if(input.includes(la)&&input.includes(lb))mentionedPairs++;
+});
+if(mentionedPairs>=box.wires.length){
+res.innerHTML='<span style="color:var(--accent3)"><strong>✦ You mapped the circuit!</strong> The hidden wires are: '+
+box.wires.map(w=>box.labels[w[0]]+'↔'+box.labels[w[1]]).join(', ')+
+'</span><p style="color:var(--dim);font-size:.85rem;margin-top:.5rem">You deduced the internal structure without ever opening the box. That\'s exactly what Duckworth\'s students did — and the process of figuring it out mattered more than the answer.</p>';
+}else{
+res.innerHTML='<span style="color:var(--accent2)">Not quite — you found '+mentionedPairs+' of '+box.wires.length+' connections. Keep testing pairs!</span>';
+}
+}
+renderBox();
+
+// ===== 5. CLINICAL INTERVIEW =====
+const scenarios=[
+{name:'The Half',
+intro:{speaker:'teacher',text:'I showed Emma, age 6, two identical clay balls and asked: "Are they the same amount?" She said yes. Then I flattened one into a pancake.'},
+opening:{speaker:'child',text:'"Now the pancake has MORE clay because it\'s bigger!"'},
+options:[
+{text:'"No, they\'re the same — I didn\'t add or remove any clay."',type:'correct',
+response:{speaker:'narrator',text:'You just corrected her. She nods, but has she learned anything? She\'ll give the same "wrong" answer tomorrow. Let\'s try again with curiosity instead.'},
+followup:null},
+{text:'"What makes you think it\'s bigger?"',type:'explore',
+response:{speaker:'child',text:'"Look! It goes all the way out here and the ball is just little." (She gestures at the width of the pancake.)'},
+followup:[
+{text:'"But what about how thick they are?"',type:'hint',
+response:{speaker:'child',text:'"Well... the ball IS fatter..." (She pauses, genuinely puzzled now. She\'s starting to consider two dimensions at once.)'},
+followup:[
+{text:'"So one is wider and one is fatter. Interesting. Which one wins?"',type:'explore',
+response:{speaker:'child',text:'"I... I don\'t know. Maybe they could be the same? Because this one is thin but wide and this one is fat but small?" (She\'s constructing the concept of COMPENSATION — a profound cognitive achievement.)'},
+followup:[
+{text:'"That\'s a really interesting idea."',type:'done',
+response:{speaker:'narrator',text:'✦ Emma just invented the concept of conservation through her own reasoning. You didn\'t tell her the answer. You asked questions that helped her notice the contradiction in her own thinking. That\'s the extended clinical interview.'},
+followup:null}
+]}
+]},
+{text:'"Is there any way the ball could have more?"',type:'explore',
+response:{speaker:'child',text:'"Hmm... well it IS taller. But the pancake is wider. So... I don\'t know!" (She\'s confused — and that confusion is exactly where learning happens.)'},
+followup:[
+{text:'"You said one is taller and one is wider. That\'s an important thing to notice."',type:'done',
+response:{speaker:'narrator',text:'✦ You helped Emma see that she was tracking TWO dimensions, not one. She didn\'t "get the right answer" — she got something better: awareness of her own reasoning. Duckworth: "Instead of explaining things to students, try to understand their sense."'},
+followup:null}
+]}
+]}
+]},
+{name:'Heavy & Light',
+intro:{speaker:'teacher',text:'I dropped a heavy ball and a light ball from the same height and asked Marcus, age 9, which would hit the ground first.'},
+opening:{speaker:'child',text:'"The heavy one hits first! Because gravity pulls harder on heavy things."'},
+options:[
+{text:'"Actually, they hit at the same time. Galileo proved this."',type:'correct',
+response:{speaker:'narrator',text:'You told him the fact. He\'ll memorize it for the test and forget it next week. Worse: his reasoning WAS partially correct — gravity DOES pull harder on heavier objects. He just missed that heavier objects also resist acceleration more. Let\'s explore instead.'},
+followup:null},
+{text:'"That\'s interesting — why do you think gravity pulls harder on heavy things?"',type:'explore',
+response:{speaker:'child',text:'"Because... heavy things are harder to hold up? Like, a bowling ball pulls my arm down way more than a tennis ball."'},
+followup:[
+{text:'"Good. So heavy things are harder to hold. Are they also harder to push sideways?"',type:'explore',
+response:{speaker:'child',text:'"Yeah! A bowling ball is way harder to push." (He\'s discovering inertia without knowing the word.)'},
+followup:[
+{text:'"So gravity pulls the heavy one more... but it\'s also harder to get moving. What might that mean?"',type:'explore',
+response:{speaker:'child',text:'"Wait... does the harder-to-move part cancel out the pulled-more part? Do they... actually hit at the same time?!" (His eyes widen.)'},
+followup:[
+{text:'"Want to try it and see?"',type:'done',
+response:{speaker:'narrator',text:'✦ Marcus just reinvented Galileo\'s insight. He didn\'t memorize a fact — he REASONED his way to it. His original answer ("heavy falls faster") was wrong but his REASONING was sophisticated. The "error" contained the seeds of the correct understanding.'},
+followup:null}
+]}
+]}
+]}
+]},
+{name:'The Shadow',
+intro:{speaker:'teacher',text:'I asked Priya, age 7, to make a shadow bigger using a flashlight and a block.'},
+opening:{speaker:'child',text:'(She moves the block FARTHER from the wall.) "Look, I made it bigger! No wait... it got smaller." (She\'s confused.)'},
+options:[
+{text:'"You need to move the block closer to the light, not the wall."',type:'correct',
+response:{speaker:'narrator',text:'You gave her the procedure. She can now make a big shadow. But does she understand WHY? She\'ll forget which direction by tomorrow. Let\'s let her figure it out.'},
+followup:null},
+{text:'"Hmm, that\'s surprising! What happened?"',type:'explore',
+response:{speaker:'child',text:'"I thought bigger would be farther. But it got smaller. That\'s weird."'},
+followup:[
+{text:'"Try moving it the other way."',type:'explore',
+response:{speaker:'child',text:'"Oh! Now it\'s getting bigger! But I\'m going TOWARD the light..." (She moves the block back and forth, watching the shadow.) "It\'s like... the closer to the light, the bigger the shadow."'},
+followup:[
+{text:'"Why do you think that happens?"',type:'explore',
+response:{speaker:'child',text:'"Maybe... the light is like... spreading out? So if the block is close, it catches MORE of the spreading light?" (She\'s gesturing with her hands, miming light rays diverging from a point.)'},
+followup:[
+{text:'"That\'s a really powerful idea — the light spreading out."',type:'done',
+response:{speaker:'narrator',text:'✦ Priya just constructed a mental model of light propagation — diverging rays from a point source. No diagram, no explanation, no formula. She built it from her own experience and surprise. The "wrong" first move (farther = bigger) was essential: without that error, she wouldn\'t have had the contradiction that drove her understanding.'},
+followup:null}
+]}
+]}
+]}
+]}
+];
+let currentScenario=0;
+let chatHistory=[];
+
+function setScenario(idx){
+currentScenario=idx;
+document.querySelectorAll('[id^=scnTab]').forEach((b,i)=>b.style.borderColor=i===idx?'var(--accent)':'rgba(255,255,255,.1)');
+chatHistory=[];
+document.getElementById('interviewReveal').classList.remove('open');
+const s=scenarios[idx];
+addBubble(s.intro.speaker,s.intro.text);
+setTimeout(()=>{
+addBubble('child',s.opening.text);
+showOptions(s.options);
+},800);
+}
+function addBubble(speaker,text){
+const area=document.getElementById('chatArea');
+const div=document.createElement('div');
+div.className='chat-bubble '+(speaker==='child'?'chat-child':speaker==='narrator'?'chat-you':'chat-you');
+if(speaker==='teacher')div.style.cssText='background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);font-style:italic;align-self:center;max-width:95%';
+if(speaker==='narrator')div.style.cssText='background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.2);align-self:center;max-width:95%';
+div.innerHTML=text;
+area.appendChild(div);
+area.scrollTop=area.scrollHeight;
+chatHistory.push({speaker,text});
+}
+function showOptions(options){
+if(!options)return;
+const container=document.getElementById('chatOptions');
+container.innerHTML='';
+options.forEach(opt=>{
+const btn=document.createElement('button');
+btn.className='chat-opt';
+btn.textContent=opt.text;
+btn.onclick=()=>{
+container.innerHTML='';
+addBubble('you',opt.text);
+setTimeout(()=>{
+addBubble(opt.response.speaker,opt.response.text);
+if(opt.type==='correct'){
+// Reset after correction
+setTimeout(()=>setScenario(currentScenario),2000);
+}else if(opt.type==='done'){
+document.getElementById('interviewReveal').classList.add('open');
+}else if(opt.followup){
+setTimeout(()=>showOptions(opt.followup),600);
+}
+},600);
+};
+container.appendChild(btn);
+});
+}
+setScenario(0);
+
+// ===== 6. GIVE THEM TIME =====
+// Number sequence puzzle
+const puzzles=[
+{seq:[2,6,12,20,30],answer:42,hint:'Look at differences between consecutive numbers'},
+{seq:[1,1,2,3,5,8],answer:13,hint:'Each number is the sum of the two before it'},
+{seq:[3,7,15,31,63],answer:127,hint:'How does each number relate to the previous?'}
+];
+let currentPuzzle=0;
+let timerInterval=null;
+let timerStartTime=null;
+let timedAttempts=[];
+let untimedAttempts=[];
+let puzzlePhase=null; // 'timed' | 'untimed' | null
+
+function renderPuzzle(){
+const p=puzzles[currentPuzzle];
+const area=document.getElementById('puzzleArea');
+document.getElementById('puzzleInstructions').textContent='What number comes next in this sequence?';
+area.innerHTML='<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:1rem 0;align-items:center">'+
+p.seq.map(n=>'<span style="font-size:1.8rem;font-weight:700;font-family:system-ui,sans-serif;color:var(--text)">'+n+'</span>').join('<span style="color:var(--dim);font-size:1.5rem">→</span>')+
+'<span style="color:var(--dim);font-size:1.5rem">→</span>'+
+'<input type="number" id="puzzleAnswer" style="width:80px;padding:8px 12px;border-radius:8px;border:2px solid var(--accent);background:rgba(108,99,255,.1);color:var(--text);font-size:1.5rem;font-weight:700;font-family:system-ui,sans-serif;text-align:center;min-height:44px" onkeydown="if(event.key===\'Enter\')submitPuzzle()">'+
+'</div>'+
+'<div style="text-align:center"><button class="btn btn-primary btn-sm" onclick="submitPuzzle()">Submit</button></div>';
+}
+function startTimedPuzzle(){
+puzzlePhase='timed';
+currentPuzzle=0;
+document.getElementById('puzzleControls').style.display='none';
+document.getElementById('timerDisplay').style.display='block';
+document.getElementById('timerMode').innerHTML='<span class="tag" style="background:rgba(255,107,157,.15);color:var(--accent2)">⏱ TIMED — 15 seconds</span>';
+renderPuzzle();
+let timeLeft=15;
+document.getElementById('timerDisplay').textContent=timeLeft;
+timerInterval=setInterval(()=>{
+timeLeft--;
+document.getElementById('timerDisplay').textContent=timeLeft;
+if(timeLeft<=5)document.getElementById('timerDisplay').style.color='var(--accent2)';
+if(timeLeft<=0){
+clearInterval(timerInterval);
+timedAttempts.push({puzzle:currentPuzzle,answer:null,correct:false});
+document.getElementById('puzzleResult').innerHTML='<span style="color:var(--accent2)">Time\'s up!</span>';
+setTimeout(showUntimedOption,1500);
+}
+},1000);
+}
+function startUntimedPuzzle(){
+puzzlePhase='untimed';
+currentPuzzle=0;
+document.getElementById('puzzleControls').style.display='none';
+document.getElementById('timerDisplay').style.display='none';
+document.getElementById('timerMode').innerHTML='<span class="tag" style="background:rgba(0,212,170,.15);color:var(--accent3)">No timer. Take your time.</span>';
+renderPuzzle();
+timerStartTime=Date.now();
+}
+function submitPuzzle(){
+const input=document.getElementById('puzzleAnswer');
+const val=parseInt(input.value);
+const p=puzzles[currentPuzzle];
+const correct=val===p.answer;
+const res=document.getElementById('puzzleResult');
+if(puzzlePhase==='timed'){
+clearInterval(timerInterval);
+timedAttempts.push({puzzle:currentPuzzle,answer:val,correct});
+if(correct)res.innerHTML='<span style="color:var(--accent3)">Correct! But how did it feel?</span>';
+else res.innerHTML='<span style="color:var(--accent2)">Not quite. The answer was '+p.answer+'. The pressure made it hard to think, didn\'t it?</span>';
+setTimeout(showUntimedOption,2000);
+}else{
+const elapsed=((Date.now()-timerStartTime)/1000).toFixed(1);
+untimedAttempts.push({puzzle:currentPuzzle,answer:val,correct,time:elapsed});
+if(correct){
+res.innerHTML='<span style="color:var(--accent3)">✦ Correct! You took '+elapsed+'s. Notice how different that felt from rushing.</span>';
+setTimeout(()=>{
+document.getElementById('timeReveal').classList.add('open');
+showTimeComparison();
+},1500);
+}else{
+res.innerHTML='<span style="color:var(--dim)">Not quite. Hint: '+p.hint+'. Take your time.</span>';
+timerStartTime=Date.now();
+}
+}
+}
+function showUntimedOption(){
+document.getElementById('puzzleResult').innerHTML='';
+document.getElementById('timerDisplay').style.display='none';
+document.getElementById('timerMode').innerHTML='<span class="tag" style="background:rgba(0,212,170,.15);color:var(--accent3)">Now try again. No timer. Take your time.</span>';
+puzzlePhase='untimed';
+currentPuzzle=0;
+renderPuzzle();
+timerStartTime=Date.now();
+}
+function showTimeComparison(){
+if(timedAttempts.length>0){
+const timedCorrect=timedAttempts.filter(a=>a.correct).length;
+document.getElementById('puzzleResult').innerHTML=
+'<p style="margin-top:.5rem">Timed: '+(timedCorrect?'got it, but under pressure':'couldn\'t get it in time')+'.<br>Untimed: solved it thoughtfully.</p>';
+}
+}
+
+// ===== 7. RAMP DOTS =====
+function rampPick(el,choice){
+document.querySelectorAll('#s7 .card').forEach(c=>c.classList.remove('selected'));
+el.classList.add('selected');
+const personal=document.getElementById('rampPersonal');
+if(choice==='farther'){
+personal.textContent='You predicted correctly! But notice: even knowing the answer, it still feels counterintuitive. That dissonance is worth sitting with.';
+}else if(choice==='closer'){
+personal.textContent='About half of adults predict "closer together." Your intuition said "faster = more dots." But faster means more DISTANCE between each dot, since the paint drips at a constant rate.';
+}else if(choice==='even'){
+personal.textContent='If the ball weren\'t accelerating, they\'d be even. The ramp is what changes things — gravity makes the ball go faster and faster.';
+}else{
+personal.textContent='Honest uncertainty is a great starting point. You now have the answer — but more importantly, you had the experience of not knowing and being curious.';
+}
+document.getElementById('rampRevealArea').classList.add('open');
+}
+
+// ===== FINAL =====
+const finalObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.querySelector('.fade-in')?.classList.add('visible')})},{threshold:.3});
+const s8el=document.getElementById('s8');
+if(s8el)finalObs.observe(s8el);
+</script>
+</body>
+</html>

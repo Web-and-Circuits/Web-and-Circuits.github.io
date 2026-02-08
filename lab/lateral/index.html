@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lateral Thinking — An Interactive Experience</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#14141f;--surface2:#1e1e2e;--accent:#6c63ff;--accent2:#ff6b6b;--accent3:#4ecdc4;--text:#e0e0e0;--dim:#888;--gold:#ffd93d;--radius:12px}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+
+/* Navigation */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(108,99,255,.15);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+nav .logo{font-size:1.1rem;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+nav .logo span{color:var(--accent2)}
+.nav-dots{display:flex;gap:8px}
+.nav-dots a{width:10px;height:10px;border-radius:50%;background:var(--dim);display:block;transition:.3s;opacity:.4}
+.nav-dots a.active,.nav-dots a:hover{background:var(--accent);opacity:1;transform:scale(1.3)}
+
+/* Sections */
+section{min-height:100vh;padding:80px 20px 60px;max-width:800px;margin:0 auto;display:flex;flex-direction:column;justify-content:center}
+section h2{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+section .subtitle{color:var(--dim);font-size:.95rem;margin-bottom:32px;font-style:italic}
+.quote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(108,99,255,.06);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:var(--dim);font-size:.95rem}
+.quote cite{display:block;margin-top:8px;font-size:.8rem;color:var(--accent);font-style:normal}
+
+/* Cards and Buttons */
+.card{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;margin:16px 0;transition:.3s}
+.card:hover{border-color:rgba(108,99,255,.2)}
+button,.btn{font-family:inherit;background:var(--accent);color:#fff;border:none;padding:14px 28px;border-radius:var(--radius);font-size:1rem;cursor:pointer;transition:.2s;min-height:44px;min-width:44px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,99,255,.3)}
+button:active,.btn:active{transform:translateY(0)}
+button.secondary{background:var(--surface2);border:1px solid rgba(255,255,255,.1)}
+button.secondary:hover{border-color:var(--accent)}
+button.success{background:#2d9a4e}
+button.danger{background:var(--accent2)}
+input[type="text"],textarea{font-family:inherit;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:14px;font-size:1rem;color:var(--text);width:100%;transition:.2s;min-height:44px}
+input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.tag{display:inline-block;padding:6px 14px;border-radius:20px;font-size:.85rem;font-weight:600;margin:4px}
+.tag-v{background:rgba(255,107,107,.15);color:var(--accent2)}
+.tag-l{background:rgba(108,99,255,.15);color:var(--accent)}
+.flex-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.fade-in.visible{opacity:1;transform:none}
+.result{margin-top:16px;padding:16px;border-radius:var(--radius);background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.15);display:none}
+.result.show{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.4)}70%{box-shadow:0 0 0 12px rgba(108,99,255,0)}}
+.progress-ring{width:48px;height:48px;position:relative;display:inline-block}
+.progress-ring svg{transform:rotate(-90deg)}
+.progress-ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.grid-2{grid-template-columns:1fr}}
+.hidden{display:none!important}
+
+/* Hero */
+#hero{text-align:center;min-height:100vh}
+#hero h1{font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#fff,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+#hero .tagline{font-size:clamp(1rem,3vw,1.3rem);color:var(--dim);max-width:500px;margin:0 auto 40px}
+.scroll-hint{animation:bounce 2s infinite;color:var(--dim);font-size:.85rem;margin-top:48px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* Nine dots */
+.dots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;width:180px;height:180px;margin:20px auto}
+.dots-grid .dot{width:16px;height:16px;border-radius:50%;background:var(--text);place-self:center}
+
+/* Assumption chips */
+.assumption-chip{padding:10px 18px;border-radius:20px;background:var(--surface2);border:2px solid rgba(255,255,255,.1);cursor:pointer;font-size:.9rem;transition:.3s;min-height:44px;display:inline-flex;align-items:center}
+.assumption-chip:hover{border-color:var(--accent)}
+.assumption-chip.challenged{border-color:var(--accent2);background:rgba(255,107,107,.1);text-decoration:line-through;color:var(--dim)}
+
+/* PO machine */
+.po-display{font-size:1.5rem;text-align:center;padding:24px;background:var(--surface);border-radius:var(--radius);margin:16px 0;min-height:80px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06)}
+
+/* Timer */
+.timer{font-size:2rem;font-weight:800;color:var(--accent);text-align:center;font-variant-numeric:tabular-nums}
+
+/* Section counter */
+.section-num{font-size:.75rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim);margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Lateral<span>Thinking</span></div>
+  <div class="nav-dots" id="navDots"></div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div>
+    <p class="section-num">Edward de Bono</p>
+    <h1>Think Sideways</h1>
+    <p class="tagline">An interactive exploration of lateral thinking. Don't just read about creativity — practice it.</p>
+    <button onclick="scrollToSection(1)" style="margin-top:8px">Begin ↓</button>
+    <p class="scroll-hint">8 exercises that will change how you see problems</p>
+  </div>
+</section>
+
+<!-- 1. PATTERN TRAP -->
+<section id="s1" class="fade-in">
+  <p class="section-num">01 — The Pattern Trap</p>
+  <h2>Your Mind Is a River</h2>
+  <p class="subtitle">Why your best thinking is also your worst enemy</p>
+  <div class="quote">"The mind is a cliché making and cliché using system."<cite>— Edward de Bono</cite></div>
+  <p>Your mind carves channels like water on a landscape. Information flows into existing grooves — efficient, but rigid. Try this:</p>
+  <div class="card" id="patternCard">
+    <p><strong>Quick — complete this sequence:</strong></p>
+    <p style="font-size:2rem;text-align:center;margin:20px 0;font-weight:800;letter-spacing:4px" id="seqDisplay">2, 4, 8, 16, ___</p>
+    <div style="text-align:center">
+      <input type="text" id="seqInput" placeholder="Your answer..." style="max-width:200px;text-align:center" onkeydown="if(event.key==='Enter')checkSeq()">
+      <div style="margin-top:12px"><button onclick="checkSeq()">Check</button></div>
+    </div>
+    <div class="result" id="seqResult"></div>
+  </div>
+  <div class="card hidden" id="patternReveal">
+    <p>You almost certainly said <strong>32</strong>. The pattern "doubling" is so strong it becomes a mental groove.</p>
+    <p style="margin-top:12px">But: <strong>2, 4, 8, 16, 31</strong> is also valid. It's the maximum number of regions when you draw 1, 2, 3, 4, 5 chords across a circle. The "doubling" pattern is a <em>cliché</em> — satisfying, but not the only truth.</p>
+    <p style="margin-top:12px">This is the core insight: <strong>In a self-maximizing system, the arrangement of information is always less than the best possible arrangement.</strong> Your first pattern isn't wrong — it's just one channel.</p>
+  </div>
+</section>
+
+<!-- 2. VERTICAL vs LATERAL -->
+<section id="s2" class="fade-in">
+  <p class="section-num">02 — Two Kinds of Thinking</p>
+  <h2>Dig Deeper or Dig Elsewhere?</h2>
+  <p class="subtitle">Vertical vs. lateral thinking — feel the difference</p>
+  <div class="quote">"You cannot dig a hole in a different place by digging the same hole deeper."<cite>— Edward de Bono</cite></div>
+  <p>Sort these traits. Which belong to <span class="tag tag-v">Vertical</span> thinking and which to <span class="tag tag-l">Lateral</span>?</p>
+  <div id="sortGame" style="margin-top:20px"></div>
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card" style="text-align:center;border:2px dashed rgba(255,107,107,.3);min-height:120px" id="vDrop">
+      <p class="tag tag-v" style="margin-bottom:8px">Vertical</p>
+      <div id="vItems"></div>
+    </div>
+    <div class="card" style="text-align:center;border:2px dashed rgba(108,99,255,.3);min-height:120px" id="lDrop">
+      <p class="tag tag-l" style="margin-bottom:8px">Lateral</p>
+      <div id="lItems"></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:12px"><button onclick="checkSort()" id="sortCheck">Check Answers</button></div>
+  <div class="result" id="sortResult"></div>
+</section>
+
+<!-- 3. NINE DOTS -->
+<section id="s3" class="fade-in">
+  <p class="section-num">03 — Challenge Assumptions</p>
+  <h2>The Invisible Prison</h2>
+  <p class="subtitle">The boundaries nobody told you about</p>
+  <div class="quote">"Whenever there is a cry of 'cheating' it reveals the use of certain assumed boundaries or limits."<cite>— Edward de Bono</cite></div>
+  <p>The classic nine dots: connect all 9 dots using <strong>4 straight lines</strong> without lifting your pen.</p>
+  <div class="dots-grid">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+  <p style="text-align:center;margin:16px 0"><em>Most people fail. Why?</em></p>
+  <div style="text-align:center"><button onclick="revealDots()" id="dotsBtn">I'm stuck — show me</button></div>
+  <div class="result" id="dotsResult">
+    <p>The assumption: <strong>you must stay within the square formed by the dots.</strong> Nobody said that. You assumed it.</p>
+    <svg width="220" height="220" viewBox="-10 -10 220 220" style="display:block;margin:16px auto">
+      <circle cx="20" cy="20" r="8" fill="#e0e0e0"/><circle cx="100" cy="20" r="8" fill="#e0e0e0"/><circle cx="180" cy="20" r="8" fill="#e0e0e0"/>
+      <circle cx="20" cy="100" r="8" fill="#e0e0e0"/><circle cx="100" cy="100" r="8" fill="#e0e0e0"/><circle cx="180" cy="100" r="8" fill="#e0e0e0"/>
+      <circle cx="20" cy="180" r="8" fill="#e0e0e0"/><circle cx="100" cy="180" r="8" fill="#e0e0e0"/><circle cx="180" cy="180" r="8" fill="#e0e0e0"/>
+      <polyline points="-20,180 180,180 180,20 20,20 20,100 200,100" fill="none" stroke="#6c63ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="8,4"/>
+    </svg>
+    <p style="text-align:center;margin-top:8px;font-size:.85rem;color:var(--dim)">The lines extend beyond the dots — breaking the invisible boundary.</p>
+    <div style="margin-top:16px">
+      <p><strong>Now challenge your own assumptions.</strong> Click any assumption below to break it:</p>
+      <div class="flex-wrap" id="assumptions"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. REVERSAL METHOD -->
+<section id="s4" class="fade-in">
+  <p class="section-num">04 — The Reversal Method</p>
+  <h2>Turn It Upside Down</h2>
+  <p class="subtitle">Kick hard against what's fixed to move in the opposite direction</p>
+  <div class="quote">"In the reversal method one kicks hard against what is there and fixed in order to move away in the opposite direction."<cite>— Edward de Bono</cite></div>
+  <p>Take a situation. Reverse it. See what ideas emerge — not because the reversal is correct, but because it's <em>provocative</em>.</p>
+  <div class="card">
+    <p id="reversalPrompt" style="font-size:1.2rem;font-weight:600;text-align:center;margin-bottom:16px"></p>
+    <p id="reversalFlip" style="font-size:1.1rem;text-align:center;color:var(--accent);margin-bottom:16px;display:none"></p>
+    <div style="text-align:center;margin-bottom:16px">
+      <button onclick="doReversal()" id="reversalBtn">Reverse It ↻</button>
+      <button onclick="newReversal()" class="secondary" style="margin-left:8px">New Situation</button>
+    </div>
+    <p style="text-align:center;font-size:.9rem;color:var(--dim)" id="reversalHint">What ideas does the reversal provoke? Write one below:</p>
+    <textarea id="reversalIdea" rows="2" placeholder="The reversal makes me think of..." style="margin-top:8px"></textarea>
+    <div style="text-align:center;margin-top:12px"><button onclick="saveReversal()" class="secondary" id="reversalSave" style="display:none">Save & See Example →</button></div>
+    <div class="result" id="reversalResult"></div>
+  </div>
+</section>
+
+<!-- 5. RANDOM ENTRY POINT (PO) -->
+<section id="s5" class="fade-in">
+  <p class="section-num">05 — Random Entry Point & PO</p>
+  <h2>The Provocative Operation</h2>
+  <p class="subtitle">PO is to lateral thinking what NO is to logical thinking</p>
+  <div class="quote">"In this type of system nothing can be truly irrelevant."<cite>— Edward de Bono</cite></div>
+  <p>PO means: <em>"I'm saying this not because it's true, but to see where it leads."</em> Use a random word to crack open a problem.</p>
+  <div class="card">
+    <p style="margin-bottom:12px"><strong>Your problem:</strong></p>
+    <div style="text-align:center;margin-bottom:16px">
+      <button onclick="newProblem()" class="secondary" style="font-size:.85rem">🎲 New Problem</button>
+    </div>
+    <div class="po-display" id="poProblem">How to make meetings more productive</div>
+    <div style="text-align:center;margin:16px 0">
+      <button onclick="generatePO()" style="animation:pulse 2s infinite">PO! Random Word</button>
+    </div>
+    <div class="po-display" id="poWord" style="display:none;font-weight:800;color:var(--gold)"></div>
+    <div id="poPrompt" style="display:none">
+      <p style="margin:16px 0;text-align:center;font-size:.9rem;color:var(--dim)">3 minutes. Write every idea the collision triggers — no filtering!</p>
+      <textarea id="poIdeas" rows="4" placeholder="The random word makes me think of..."></textarea>
+      <div class="timer" id="poTimer" style="margin-top:12px">3:00</div>
+      <div style="text-align:center;margin-top:12px"><button onclick="startPoTimer()" id="poTimerBtn">Start Timer</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. DOMINANT IDEA -->
+<section id="s6" class="fade-in">
+  <p class="section-num">06 — Dominant Idea Identification</p>
+  <h2>What's Controlling You?</h2>
+  <p class="subtitle">Unless you can name the cage, you can't escape it</p>
+  <div class="quote">"Unless one can pick out the dominant idea one is going to be dominated by it."<cite>— Edward de Bono</cite></div>
+  <p>Read this scenario. What's the <strong>dominant idea</strong> everyone is trapped by?</p>
+  <div class="card">
+    <p id="domScenario" style="margin-bottom:16px"></p>
+    <div class="flex-wrap" id="domChoices"></div>
+    <div class="result" id="domResult"></div>
+  </div>
+  <div style="text-align:center;margin-top:12px"><button onclick="newDomScenario()" class="secondary">Next Scenario →</button></div>
+</section>
+
+<!-- 7. BRAINSTORM ARENA -->
+<section id="s7" class="fade-in">
+  <p class="section-num">07 — Brainstorming Rules</p>
+  <h2>The Evaluation Killer</h2>
+  <p class="subtitle">Why your inner critic is murdering your best ideas</p>
+  <div class="quote">"The need to be right all the time is the biggest bar there is to new ideas."<cite>— Edward de Bono</cite></div>
+  <p>De Bono's brainstorming rules in action. Rate each response — is it <strong>legitimate brainstorming</strong> or <strong>illegal evaluation</strong>?</p>
+  <div id="brainGame"></div>
+  <div class="result" id="brainScore"></div>
+</section>
+
+<!-- 8. BLOCKED BY OPENNESS -->
+<section id="s8" class="fade-in">
+  <p class="section-num">08 — Blocked by Openness</p>
+  <h2>The Adequate Is the Enemy</h2>
+  <p class="subtitle">The most dangerous block has no roadblock at all</p>
+  <div class="quote">"We have developed methods for dealing with things that are wrong but no methods for dealing with things that are right. When something is right our thinking comes to a halt."<cite>— Edward de Bono</cite></div>
+  <p>You're not stuck because the road is blocked. You're stuck because the road looks fine — you just didn't notice the side turning.</p>
+  <div class="card">
+    <p><strong>The Elevator Puzzle:</strong> A man lives on the 15th floor. Every morning he takes the elevator down to the ground floor. Every evening he takes the elevator to the 10th floor and walks the rest. On rainy days, he takes the elevator all the way up. Why?</p>
+    <textarea id="elevatorAnswer" rows="2" placeholder="Your explanation..." style="margin-top:12px"></textarea>
+    <div style="text-align:center;margin-top:12px"><button onclick="checkElevator()">Reveal</button></div>
+    <div class="result" id="elevatorResult">
+      <p><strong>He's a dwarf.</strong> He can't reach higher than the 10th button. On rainy days, he uses his umbrella to press the 15th button.</p>
+      <p style="margin-top:12px">The assumption: <em>the man is of normal height.</em> His behavior seems bizarre — but only because you assumed something about him, not because the behavior itself is strange.</p>
+      <p style="margin-top:12px;color:var(--accent);font-weight:600">The road seemed open — the question was clear, the scenario ordinary. That's exactly why you were blocked.</p>
+    </div>
+  </div>
+  
+  <div class="card" style="margin-top:32px;text-align:center;background:linear-gradient(135deg,rgba(108,99,255,.1),rgba(78,205,196,.1))">
+    <h3 style="margin-bottom:12px;font-size:1.3rem">Your Lateral Toolkit</h3>
+    <p style="color:var(--dim);margin-bottom:16px">You've practiced 8 techniques. Here's your cheat sheet:</p>
+    <div style="text-align:left;display:inline-block">
+      <p>🔄 <strong>Generate Alternatives</strong> — Set a quota. Don't stop at the first good idea.</p>
+      <p>🔓 <strong>Challenge Assumptions</strong> — The boundaries are self-imposed.</p>
+      <p>⏸️ <strong>Suspend Judgement</strong> — Wrong ideas lead to right ones.</p>
+      <p>↩️ <strong>Reverse It</strong> — Turn the situation upside down.</p>
+      <p>🎲 <strong>Random Entry</strong> — Use PO to collide unrelated things.</p>
+      <p>👁️ <strong>Find the Dominant Idea</strong> — Name the cage to escape it.</p>
+      <p>🔪 <strong>Fractionate</strong> — Break patterns into pieces, recombine.</p>
+      <p>🚪 <strong>Beware Openness</strong> — Adequate ≠ optimal.</p>
+    </div>
+    <div style="margin-top:24px">
+      <button onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to Top ↑</button>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:40px 20px;color:var(--dim);font-size:.8rem">
+  <p>Based on <em>Lateral Thinking: A Textbook of Creativity</em> by Edward de Bono (1970)</p>
+  <p style="margin-top:4px">This is an educational demo, not affiliated with the de Bono estate.</p>
+</footer>
+
+<script>
+// NAV
+const sections=['hero','s1','s2','s3','s4','s5','s6','s7','s8'];
+const navDots=document.getElementById('navDots');
+sections.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s;a.dataset.i=i;navDots.appendChild(a)});
+function scrollToSection(i){document.getElementById(sections[i]).scrollIntoView({behavior:'smooth'})}
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const i=sections.indexOf(e.target.id);document.querySelectorAll('.nav-dots a').forEach((a,j)=>a.classList.toggle('active',j===i))}})},{threshold:.3});
+sections.forEach(s=>obs.observe(document.getElementById(s)));
+
+// Fade in
+const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>fadeObs.observe(el));
+
+// S1 - PATTERN
+function checkSeq(){
+  const v=document.getElementById('seqInput').value.trim();
+  const r=document.getElementById('seqResult');
+  const rv=document.getElementById('patternReveal');
+  r.classList.add('show');
+  if(v==='32'){
+    r.innerHTML='<p>You said <strong>32</strong>. That\'s the pattern your mind carved. But is it the only one?</p>';
+  }else if(v==='31'){
+    r.innerHTML='<p>🎯 <strong>Impressive!</strong> You found the non-obvious answer. Most minds lock onto "doubling."</p>';
+  }else{
+    r.innerHTML='<p>Interesting choice: <strong>'+v+'</strong>. Most people say 32 (doubling). But there\'s another valid answer...</p>';
+  }
+  rv.classList.remove('hidden');
+}
+
+// S2 - SORT
+const traits=[
+  {text:'Must be right at every step',type:'v'},
+  {text:'Welcomes chance intrusions',type:'l'},
+  {text:'Sequential steps',type:'v'},
+  {text:'Can make jumps',type:'l'},
+  {text:'Selective',type:'v'},
+  {text:'Generative',type:'l'},
+  {text:'Follows most likely paths',type:'v'},
+  {text:'Explores least likely paths',type:'l'},
+];
+let shuffled=[...traits].sort(()=>Math.random()-.5);
+const sortDiv=document.getElementById('sortGame');
+let userSort={};
+function renderSort(){
+  sortDiv.innerHTML='';
+  shuffled.forEach((t,i)=>{
+    if(userSort[i])return;
+    const b=document.createElement('button');
+    b.className='secondary';b.style.margin='4px';b.style.fontSize='.9rem';
+    b.textContent=t.text;
+    b.onclick=()=>{
+      userSort[i]=currentDrop;
+      const target=currentDrop==='v'?document.getElementById('vItems'):document.getElementById('lItems');
+      const tag=document.createElement('span');
+      tag.className='tag '+(currentDrop==='v'?'tag-v':'tag-l');
+      tag.textContent=t.text;tag.dataset.idx=i;
+      target.appendChild(tag);
+      renderSort();
+    };
+    sortDiv.appendChild(b);
+  });
+  if(Object.keys(userSort).length===shuffled.length&&sortDiv.children.length===0){
+    sortDiv.innerHTML='<p style="text-align:center;color:var(--dim)">All sorted! Click Check Answers.</p>';
+  }
+}
+let currentDrop='v';
+document.getElementById('vDrop').onclick=()=>{currentDrop='v';document.getElementById('vDrop').style.borderColor='rgba(255,107,107,.8)';document.getElementById('lDrop').style.borderColor='rgba(108,99,255,.3)'};
+document.getElementById('lDrop').onclick=()=>{currentDrop='l';document.getElementById('lDrop').style.borderColor='rgba(108,99,255,.8)';document.getElementById('vDrop').style.borderColor='rgba(255,107,107,.3)'};
+renderSort();
+
+function checkSort(){
+  let correct=0;
+  Object.keys(userSort).forEach(i=>{if(userSort[i]===shuffled[i].type)correct++});
+  const r=document.getElementById('sortResult');
+  r.classList.add('show');
+  if(correct===shuffled.length){
+    r.innerHTML='<p>🎯 <strong>Perfect!</strong> You can tell the two modes apart. The key: vertical is about <em>selection</em>, lateral is about <em>generation</em>. Both are needed.</p>';
+  }else{
+    r.innerHTML='<p><strong>'+correct+'/'+shuffled.length+'</strong> correct. The tricky ones blur together — that\'s the point. In practice, you switch between modes. But knowing when you\'re in each mode is the skill.</p>';
+  }
+}
+
+// S3 - NINE DOTS / ASSUMPTIONS
+function revealDots(){document.getElementById('dotsResult').classList.add('show');document.getElementById('dotsBtn').textContent='Solution shown ✓'}
+const assumptions=['Teachers must stand at the front','Meetings need agendas','Hospitals are for sick people','Schools have classrooms','Money is physical','Roads are for cars','Books have pages','Dinner is in the evening'];
+const assDiv=document.getElementById('assumptions');
+assumptions.forEach(a=>{
+  const chip=document.createElement('button');chip.className='assumption-chip';chip.textContent=a;
+  chip.onclick=()=>{chip.classList.toggle('challenged')};
+  assDiv.appendChild(chip);
+});
+
+// S4 - REVERSAL
+const reversals=[
+  {sit:'A teacher instructs students',rev:'Students instruct the teacher',insight:'Peer teaching, student-led seminars, teachers learning from digital-native students. This reversal led to "flipped classrooms."'},
+  {sit:'Police protect the public',rev:'The public protects the police',insight:'Community policing, neighborhood watch, civilian oversight. When communities take ownership of safety, both sides benefit.'},
+  {sit:'Customers come to the shop',rev:'The shop comes to the customers',insight:'Food trucks, pop-up stores, Amazon delivery, mobile libraries. The reversal of retail created e-commerce.'},
+  {sit:'You go to work',rev:'Work comes to you',insight:'Remote work, telecommuting, distributed teams. A reversal that reshaped how billions work.'},
+  {sit:'Doctors cure diseases',rev:'Diseases cure doctors (of assumptions)',insight:'Studying disease teaches more about health than studying health directly. Errors reveal how the system works.'},
+  {sit:'Traffic lights control cars',rev:'Cars control traffic lights',insight:'Adaptive traffic systems, sensor-driven signals, smart intersections. Many cities now use this exact reversal.'},
+];
+let revIdx=0;
+function newReversal(){revIdx=(revIdx+1)%reversals.length;showReversal()}
+function showReversal(){
+  const r=reversals[revIdx];
+  document.getElementById('reversalPrompt').textContent=r.sit;
+  document.getElementById('reversalFlip').style.display='none';
+  document.getElementById('reversalResult').classList.remove('show');
+  document.getElementById('reversalSave').style.display='none';
+  document.getElementById('reversalIdea').value='';
+}
+function doReversal(){
+  document.getElementById('reversalFlip').textContent='↻ '+reversals[revIdx].rev;
+  document.getElementById('reversalFlip').style.display='block';
+  document.getElementById('reversalSave').style.display='inline-flex';
+}
+function saveReversal(){
+  const r=document.getElementById('reversalResult');
+  r.innerHTML='<p><strong>De Bono\'s insight:</strong> '+reversals[revIdx].insight+'</p>';
+  r.classList.add('show');
+}
+showReversal();
+
+// S5 - PO / RANDOM
+const problems=['How to make meetings more productive','How to reduce traffic congestion','How to help people learn faster','How to make hospitals less stressful','How to reduce food waste','Better design for umbrellas','How to make exercise enjoyable','How to reduce loneliness in cities'];
+const randomWords=['butterfly','volcano','sandwich','telescope','anchor','carousel','thunder','pocket','glacier','lighthouse','cinnamon','skeleton','trampoline','origami','whistle','compass','hammock','fireworks','labyrinth','pearl'];
+let currentProblem=0;
+function newProblem(){currentProblem=(currentProblem+1)%problems.length;document.getElementById('poProblem').textContent=problems[currentProblem];document.getElementById('poWord').style.display='none';document.getElementById('poPrompt').style.display='none'}
+function generatePO(){
+  const w=randomWords[Math.floor(Math.random()*randomWords.length)];
+  const wd=document.getElementById('poWord');
+  wd.textContent='PO: '+w;wd.style.display='flex';
+  document.getElementById('poPrompt').style.display='block';
+  clearInterval(poInterval);
+  document.getElementById('poTimer').textContent='3:00';
+  document.getElementById('poTimerBtn').textContent='Start Timer';
+}
+let poInterval;
+function startPoTimer(){
+  let t=180;
+  clearInterval(poInterval);
+  document.getElementById('poTimerBtn').textContent='Running...';
+  poInterval=setInterval(()=>{
+    t--;
+    const m=Math.floor(t/60),s=t%60;
+    document.getElementById('poTimer').textContent=m+':'+(s<10?'0':'')+s;
+    if(t<=0){clearInterval(poInterval);document.getElementById('poTimer').textContent='Time! Review your ideas.';document.getElementById('poTimer').style.color=var('--accent2')||'#ff6b6b'}
+  },1000);
+}
+
+// S6 - DOMINANT IDEA
+const domScenarios=[
+  {text:'A city is redesigning its downtown. Every proposal focuses on wider roads, bigger parking garages, and better traffic signals. Pedestrians, cyclists, and public transit are afterthoughts.',dominant:'Cars must be accommodated',alts:['Buildings should be taller','Roads should be straighter','Parking should be cheaper'],insight:'The dominant idea is that a city exists for cars. Challenge it: what if the city existed for people? This shift gave us pedestrian plazas, bike lanes, and car-free zones.'},
+  {text:'A company keeps trying to improve customer service by adding more support staff, longer hours, and faster response times. Customer satisfaction barely moves.',dominant:'Problems need to be solved faster',alts:['Staff need better training','Hours should be 24/7','Responses should be automated'],insight:'The dominant idea is reactive: fix problems faster. The lateral escape: eliminate the problems. Amazon\'s "anticipatory shipping" and Apple\'s focus on making products that don\'t need support both escape this dominant idea.'},
+  {text:'Education reformers debate class sizes, teacher pay, testing frequency, and curriculum content. Students spend 12+ years in the same basic structure.',dominant:'Learning happens in classrooms on a schedule',alts:['Teachers should be paid more','Tests should be harder','Classes should be smaller'],insight:'The dominant idea is the industrial model of education: same age, same room, same pace. Alternatives: self-paced learning, apprenticeships, project-based learning, learning from the world not about it.'},
+];
+let domIdx=0;
+function renderDom(){
+  const s=domScenarios[domIdx];
+  document.getElementById('domScenario').textContent=s.text;
+  const c=document.getElementById('domChoices');c.innerHTML='';
+  const all=[s.dominant,...s.alts].sort(()=>Math.random()-.5);
+  all.forEach(a=>{
+    const b=document.createElement('button');b.className='secondary';b.style.margin='4px';b.style.fontSize='.9rem';
+    b.textContent=a;
+    b.onclick=()=>{
+      const r=document.getElementById('domResult');
+      if(a===s.dominant){
+        r.innerHTML='<p>✅ <strong>Exactly.</strong> "'+s.dominant+'" is the invisible frame. '+s.insight+'</p>';
+      }else{
+        r.innerHTML='<p>Not quite. "'+a+'" is a detail <em>within</em> the dominant frame. The dominant idea is: <strong>"'+s.dominant+'"</strong></p><p style="margin-top:8px">'+s.insight+'</p>';
+      }
+      r.classList.add('show');
+    };
+    c.appendChild(b);
+  });
+  document.getElementById('domResult').classList.remove('show');
+}
+function newDomScenario(){domIdx=(domIdx+1)%domScenarios.length;renderDom()}
+renderDom();
+
+// S7 - BRAINSTORM
+const brainItems=[
+  {text:'"What if we made the product edible?"',type:'ok',reason:'Outrageous? Yes. But that\'s brainstorming. Edible packaging is now a real industry.'},
+  {text:'"That would never work because of regulations."',type:'eval',reason:'Classic evaluation. Kills the idea before it can breathe.'},
+  {text:'"What about using magnets somehow?"',type:'ok',reason:'Vague, but valid. In brainstorming, vague sparks are fuel.'},
+  {text:'"That\'s not new — Apple already tried it."',type:'eval',reason:'Evaluating novelty is still evaluation. Even old ideas can lead somewhere new.'},
+  {text:'"Po — what if customers paid us NOT to provide the service?"',type:'ok',reason:'Absurd? Perfect. This is how insurance, warranties, and SaaS were born.'},
+  {text:'"Let me play devil\'s advocate for a moment..."',type:'eval',reason:'Devil\'s advocate = evaluation in disguise. Save it for the evaluation session.'},
+  {text:'"A machine that runs on jealousy!"',type:'ok',reason:'Ridiculous — and exactly right. What if jealousy really was the fuel? Competitive features, leaderboards, social proof.'},
+  {text:'"We need to be realistic here."',type:'eval',reason:'The brainstorm room is a holiday from realism. Reality comes later, in evaluation.'},
+];
+let brainIdx=0,brainCorrect=0;
+function renderBrain(){
+  const g=document.getElementById('brainGame');
+  if(brainIdx>=brainItems.length){
+    document.getElementById('brainScore').classList.add('show');
+    document.getElementById('brainScore').innerHTML='<p><strong>'+brainCorrect+'/'+brainItems.length+'</strong> correct. Remember: during brainstorming, anything goes. Evaluation comes later — always separately.</p>';
+    return;
+  }
+  const item=brainItems[brainIdx];
+  g.innerHTML='<div class="card"><p style="font-size:1.1rem;margin-bottom:16px;text-align:center">'+item.text+'</p><div style="text-align:center"><button class="success" onclick="brainAnswer(\'ok\')" style="margin:4px">✓ Legitimate</button><button class="danger" onclick="brainAnswer(\'eval\')" style="margin:4px">✗ Evaluation!</button></div><p style="text-align:center;margin-top:8px;color:var(--dim);font-size:.85rem">'+(brainIdx+1)+'/'+brainItems.length+'</p></div>';
+}
+function brainAnswer(a){
+  const item=brainItems[brainIdx];
+  const correct=a===item.type;
+  if(correct)brainCorrect++;
+  const g=document.getElementById('brainGame');
+  g.innerHTML='<div class="card" style="border-color:'+(correct?'#2d9a4e':'var(--accent2)')+'"><p style="text-align:center;font-size:1.1rem;margin-bottom:8px">'+(correct?'✅ Correct!':'❌ Not quite.')+'</p><p style="color:var(--dim);font-size:.9rem">'+item.reason+'</p><div style="text-align:center;margin-top:12px"><button onclick="brainIdx++;renderBrain()" class="secondary">Next →</button></div></div>';
+}
+renderBrain();
+
+// S8 - ELEVATOR
+function checkElevator(){document.getElementById('elevatorResult').classList.add('show')}
+</script>
+</body>
+</html>

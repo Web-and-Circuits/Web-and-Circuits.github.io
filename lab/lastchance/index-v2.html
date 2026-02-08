@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last Chance to See — Douglas Adams · V2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#080e12;--bg2:#0c1920;--bg3:#111f2a;--bg4:#162836;
+--accent:#3dd6c8;--accent2:#2ba89d;--accentDim:rgba(61,214,200,.12);
+--text:#d4e4e8;--text2:#7a9aa6;--text3:#4a6a76;
+--gold:#e8c547;--warm:#e8a247;--danger:#e85c47;--pink:#d64c8a;
+--font:'Georgia','Times New Roman',serif;--mono:'Courier New',monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:var(--bg)}
+a{color:var(--accent)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(8,14,18,.92);backdrop-filter:blur(16px);
+border-bottom:1px solid rgba(61,214,200,.1);padding:.5rem .8rem;display:flex;gap:.3rem;
+flex-wrap:wrap;justify-content:center}
+nav a{color:var(--text2);text-decoration:none;font-size:.75rem;padding:.25rem .5rem;border-radius:4px;
+transition:all .2s;white-space:nowrap}
+nav a:hover,nav a.active{color:var(--accent);background:rgba(61,214,200,.08)}
+
+/* LAYOUT */
+section{max-width:860px;margin:0 auto;padding:5rem 1.5rem 3rem}
+.section-header{margin-bottom:2.5rem}
+h2{font-size:2.2rem;color:var(--accent);letter-spacing:-.03em;margin-bottom:.4rem}
+.section-num{font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;color:var(--text3);margin-bottom:.3rem}
+.subtitle{color:var(--text2);font-size:1.05rem;font-style:italic;line-height:1.6}
+h3{color:var(--gold);font-size:1.15rem;margin:1.5rem 0 .5rem}
+p{margin-bottom:1rem}
+.quote{border-left:3px solid var(--accent2);padding:.8rem 1.2rem;margin:1.5rem 0;
+background:rgba(61,214,200,.04);font-style:italic}
+.quote cite{display:block;margin-top:.5rem;font-style:normal;font-size:.8rem;color:var(--text2)}
+
+/* HERO */
+#hero{text-align:center;padding:8rem 1.5rem 5rem;max-width:860px;margin:0 auto;position:relative}
+#hero h1{font-size:3rem;color:var(--accent);letter-spacing:-.04em;margin-bottom:.3rem;line-height:1.1}
+#hero .year{color:var(--text3);font-size:1rem;letter-spacing:.2em;margin-bottom:1rem}
+#hero .tagline{color:var(--text2);font-size:1.1rem;max-width:620px;margin:0 auto 2.5rem;line-height:1.8}
+#hero .start-btn{display:inline-block;padding:.8rem 2rem;border:1px solid var(--accent2);color:var(--accent);
+background:transparent;border-radius:6px;font-family:var(--font);font-size:1rem;cursor:pointer;
+transition:all .3s;text-decoration:none}
+#hero .start-btn:hover{background:rgba(61,214,200,.1);transform:translateY(-1px)}
+.hero-epigraph{margin-top:3rem;color:var(--text3);font-size:.95rem;font-style:italic;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* SHARED COMPONENTS */
+.btn{display:inline-block;padding:.5rem 1.2rem;border:1px solid var(--accent2);color:var(--accent);
+background:transparent;border-radius:5px;font-family:var(--font);font-size:.9rem;cursor:pointer;transition:all .2s}
+.btn:hover{background:rgba(61,214,200,.1)}
+.btn.primary{background:var(--accent2);color:var(--bg);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent)}
+.btn:disabled{opacity:.3;cursor:default}
+.tag{display:inline-block;padding:.15rem .5rem;border-radius:3px;font-size:.75rem;font-weight:bold;letter-spacing:.03em}
+.tag-cr{background:rgba(232,92,71,.15);color:var(--danger)}
+.tag-en{background:rgba(232,162,71,.15);color:var(--warm)}
+.tag-vu{background:rgba(232,197,71,.15);color:var(--gold)}
+.tag-lc{background:rgba(61,214,200,.15);color:var(--accent)}
+.tag-ex{background:rgba(214,76,138,.15);color:var(--pink)}
+.tag-ok{background:rgba(61,214,200,.2);color:var(--accent)}
+.hidden{display:none}
+
+/* ===== 1. SPECIES STATUS TRACKER ===== */
+#tracker .timeline-grid{display:grid;gap:1.2rem;margin-top:1.5rem}
+.tracker-card{background:var(--bg2);border:1px solid rgba(61,214,200,.08);border-radius:10px;
+padding:1.3rem;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+.tracker-card:hover{border-color:rgba(61,214,200,.25)}
+.tracker-card.open{border-color:var(--accent2)}
+.tracker-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.tracker-name{font-size:1.15rem;color:var(--accent)}
+.tracker-latin{font-size:.8rem;color:var(--text3);font-style:italic}
+.tracker-tags{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+.tracker-arrow{color:var(--text3);margin:0 .3rem;font-size:.8rem}
+.tracker-detail{max-height:0;overflow:hidden;transition:max-height .5s ease}
+.tracker-card.open .tracker-detail{max-height:600px}
+.tracker-timeline{display:flex;align-items:stretch;margin:1rem 0;position:relative;min-height:80px}
+.tl-point{flex:1;text-align:center;position:relative;padding-top:2.5rem}
+.tl-point::before{content:'';position:absolute;top:10px;left:50%;width:12px;height:12px;
+border-radius:50%;transform:translateX(-50%);border:2px solid var(--accent2);background:var(--bg2);z-index:2}
+.tl-point.now::before{background:var(--accent);border-color:var(--accent)}
+.tl-point.extinct::before{background:var(--danger);border-color:var(--danger)}
+.tl-line{position:absolute;top:15px;left:0;right:0;height:2px;background:rgba(61,214,200,.15);z-index:1}
+.tl-year{font-size:.7rem;color:var(--text3);margin-bottom:.2rem}
+.tl-pop{font-size:.85rem;font-weight:bold}
+.tl-pop.up{color:var(--accent)}
+.tl-pop.down{color:var(--danger)}
+.tl-pop.flat{color:var(--warm)}
+.tl-pop.gone{color:var(--pink)}
+.tl-note{font-size:.75rem;color:var(--text2);margin-top:.2rem;line-height:1.3}
+.tracker-adams{margin-top:1rem;padding:.8rem 1rem;background:rgba(61,214,200,.03);
+border-radius:6px;font-style:italic;font-size:.9rem;color:var(--text2);line-height:1.6}
+.tracker-verdict{margin-top:.8rem;font-size:.9rem;padding:.6rem .8rem;border-radius:6px}
+.verdict-hope{background:rgba(61,214,200,.06);border-left:3px solid var(--accent)}
+.verdict-loss{background:rgba(232,92,71,.06);border-left:3px solid var(--danger)}
+.verdict-mixed{background:rgba(232,197,71,.06);border-left:3px solid var(--gold)}
+
+/* ===== 2. BAIJI RIVER ===== */
+#baiji{background:linear-gradient(180deg,var(--bg) 0%,#060a0f 50%,#040608 100%);padding-bottom:4rem}
+#baiji-scene{position:relative;width:100%;max-width:700px;margin:2rem auto;height:350px;
+background:linear-gradient(180deg,#0a1215 0%,#0d1a1f 30%,#091015 60%,#060a0e 100%);
+border-radius:12px;overflow:hidden;border:1px solid rgba(61,214,200,.06);cursor:pointer;user-select:none}
+#baiji-water{position:absolute;bottom:0;left:0;right:0;height:65%;
+background:linear-gradient(180deg,rgba(20,50,60,.3) 0%,rgba(10,25,30,.6) 100%)}
+.sonar-ring{position:absolute;border-radius:50%;border:1px solid rgba(61,214,200,.3);
+pointer-events:none;animation:sonarExpand 3s ease-out forwards}
+@keyframes sonarExpand{0%{transform:scale(0);opacity:.8}100%{transform:scale(4);opacity:0}}
+#baiji-hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;
+font-family:var(--mono);font-size:.75rem;color:var(--accent);opacity:.7}
+#baiji-year-display{font-size:1rem;font-weight:bold}
+#baiji-status{color:var(--text2)}
+#baiji-noise-bar{position:absolute;bottom:12px;left:12px;right:12px;height:6px;background:rgba(255,255,255,.05);border-radius:3px}
+#baiji-noise-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--warm),var(--danger));
+transition:width 1s;width:5%}
+#baiji-noise-label{position:absolute;bottom:22px;left:12px;font-family:var(--mono);font-size:.65rem;color:var(--text3)}
+#baiji-message{position:absolute;bottom:50px;left:0;right:0;text-align:center;
+font-size:1.1rem;color:var(--text2);opacity:0;transition:opacity 1.5s;pointer-events:none;padding:0 1rem}
+#baiji-controls{text-align:center;margin-top:1rem}
+#baiji-ping-count{font-family:var(--mono);font-size:.8rem;color:var(--text3);margin-top:.5rem;text-align:center}
+.dolphin-echo{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);
+opacity:0;pointer-events:none;animation:echoBlip 2s ease-out forwards}
+@keyframes echoBlip{0%{opacity:0;transform:scale(0)}15%{opacity:.9;transform:scale(1.5)}100%{opacity:0;transform:scale(0)}}
+.boat-noise{position:absolute;width:30px;height:4px;background:var(--danger);opacity:0;
+border-radius:2px;pointer-events:none;animation:noiseFlash .5s ease-out forwards}
+@keyframes noiseFlash{0%{opacity:.6;transform:scaleX(1)}100%{opacity:0;transform:scaleX(3)}}
+
+/* ===== 3. KAKAPO MATING ===== */
+#kakapo{background:linear-gradient(180deg,var(--bg) 0%,#0a0f08 50%,var(--bg) 100%)}
+#kakapo-game{position:relative;width:100%;max-width:600px;margin:2rem auto;height:400px;
+background:linear-gradient(180deg,#0c1a0f 0%,#0a150c 40%,#081008 100%);
+border-radius:12px;overflow:hidden;border:1px solid rgba(80,180,80,.1);user-select:none}
+.kakapo-sprite{position:absolute;font-size:2rem;transition:all 2s ease-in-out;cursor:pointer}
+.kakapo-boom{position:absolute;font-family:var(--mono);color:rgba(80,180,80,.4);font-size:.7rem;
+pointer-events:none;animation:boomFade 3s ease-out forwards}
+@keyframes boomFade{0%{opacity:.8;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}
+#kakapo-hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;
+font-family:var(--mono);font-size:.7rem;color:rgba(80,180,80,.5)}
+#kakapo-log{margin-top:1rem;max-width:600px;margin-left:auto;margin-right:auto;
+font-family:var(--mono);font-size:.8rem;color:var(--text2);max-height:200px;overflow-y:auto;
+background:var(--bg2);border-radius:8px;padding:.8rem;line-height:1.5}
+#kakapo-log .fail{color:var(--danger)}
+#kakapo-log .event{color:var(--gold)}
+#kakapo-log .success{color:var(--accent)}
+#kakapo-controls{text-align:center;margin-top:1rem}
+.stoat-sprite{position:absolute;font-size:1.2rem;pointer-events:none;animation:stoatRun 3s linear forwards}
+@keyframes stoatRun{0%{transform:translateX(-40px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateX(40px);opacity:0}}
+
+/* ===== 4. KOMODO ENCOUNTER ===== */
+#komodo{background:linear-gradient(180deg,var(--bg) 0%,#120e08 50%,var(--bg) 100%)}
+#komodo-scene{position:relative;width:100%;max-width:700px;margin:2rem auto;min-height:300px;
+background:var(--bg2);border-radius:12px;overflow:hidden;border:1px solid rgba(232,162,71,.08);padding:2rem;cursor:pointer}
+#komodo-text{font-size:1.05rem;line-height:1.9;min-height:200px}
+#komodo-text .word{opacity:0;display:inline;transition:opacity .4s}
+#komodo-text .word.visible{opacity:1}
+#komodo-text .word.tense{color:var(--warm)}
+#komodo-text .word.shock{color:var(--danger);font-weight:bold}
+#komodo-hud{display:flex;justify-content:space-between;margin-bottom:1rem;font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+.heartbeat-bar{display:inline-block;width:60px;height:8px;background:rgba(232,92,71,.1);border-radius:4px;overflow:hidden;vertical-align:middle}
+.heartbeat-fill{height:100%;background:var(--danger);transition:width .5s;border-radius:4px}
+#komodo-controls{text-align:center;margin-top:1.5rem}
+.grass-sway{position:absolute;bottom:0;left:0;right:0;height:40px;overflow:hidden;pointer-events:none}
+.grass-blade{position:absolute;bottom:0;width:3px;background:linear-gradient(0deg,#2a3a1a,#1a2a10);
+border-radius:2px 2px 0 0;transform-origin:bottom center;animation:sway 3s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+
+/* ===== 5. OBSERVATIONAL LENS ===== */
+#lens .lens-scene{background:var(--bg2);border:1px solid var(--accentDim);border-radius:10px;
+margin:1.5rem 0;overflow:hidden}
+.lens-tabs{display:flex;border-bottom:1px solid rgba(61,214,200,.08)}
+.lens-tab{flex:1;padding:.6rem;text-align:center;cursor:pointer;font-size:.85rem;color:var(--text3);
+transition:all .2s;border-bottom:2px solid transparent}
+.lens-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.lens-tab:hover{color:var(--text2)}
+.lens-content{padding:1.5rem;min-height:180px;font-size:.95rem;line-height:1.8}
+.lens-content .highlight{background:rgba(61,214,200,.08);border-left:3px solid var(--accent);
+padding:.4rem .8rem;margin:.5rem 0;border-radius:0 4px 4px 0}
+.lens-content .invisible{color:var(--text3);font-style:italic}
+.lens-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:.8rem}
+
+/* ===== 6. AYE-AYE FINGER ===== */
+#ayeaye{background:linear-gradient(180deg,var(--bg) 0%,#0e0c14 50%,var(--bg) 100%)}
+#ayeaye-game{position:relative;width:100%;max-width:600px;margin:2rem auto;height:300px;
+background:linear-gradient(180deg,#12101a 0%,#0e0c14 100%);border-radius:12px;overflow:hidden;
+border:1px solid rgba(150,120,200,.1);cursor:pointer}
+.branch{position:absolute;height:18px;border-radius:9px;cursor:pointer;transition:all .3s}
+.branch:hover{filter:brightness(1.3)}
+.grub-spot{position:absolute;width:20px;height:20px;border-radius:50%;cursor:pointer;
+border:2px dashed transparent;transition:all .3s}
+.grub-spot.listening{border-color:rgba(150,120,200,.4);animation:pulse 1s infinite}
+.grub-spot.found{border-color:var(--accent);background:rgba(61,214,200,.1)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+#ayeaye-hud{position:absolute;top:10px;left:10px;right:10px;font-family:var(--mono);font-size:.7rem;
+color:rgba(150,120,200,.5);display:flex;justify-content:space-between}
+#ayeaye-finger{position:absolute;font-size:1.5rem;pointer-events:none;transition:all .3s;opacity:0}
+#ayeaye-msg{text-align:center;margin-top:1rem;font-size:.9rem;color:var(--text2);min-height:3rem}
+#ayeaye-controls{text-align:center;margin-top:1rem}
+
+/* ===== 7. CONSERVATION IMPACT ===== */
+#impact .impact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem}
+.impact-card{background:var(--bg2);border-radius:10px;padding:1.2rem;
+border:1px solid rgba(61,214,200,.08);transition:all .3s;cursor:pointer}
+.impact-card:hover{border-color:rgba(61,214,200,.2);transform:translateY(-2px)}
+.impact-card h4{color:var(--accent);margin-bottom:.2rem;font-size:1rem}
+.impact-card .impact-species{font-size:.8rem;color:var(--text3);font-style:italic;margin-bottom:.6rem}
+.impact-bar-wrap{height:8px;background:rgba(255,255,255,.04);border-radius:4px;margin:.5rem 0;overflow:hidden}
+.impact-bar{height:100%;border-radius:4px;transition:width 1.5s ease-out}
+.impact-nums{display:flex;justify-content:space-between;font-size:.75rem;font-family:var(--mono)}
+.impact-nums .then{color:var(--text3)}
+.impact-nums .now{font-weight:bold}
+.impact-story{max-height:0;overflow:hidden;transition:max-height .4s;font-size:.85rem;color:var(--text2);line-height:1.6}
+.impact-card.open .impact-story{max-height:300px;margin-top:.8rem;padding-top:.8rem;border-top:1px solid rgba(61,214,200,.06)}
+
+/* FOOTER */
+footer{text-align:center;padding:4rem 1.5rem 3rem;color:var(--text3);font-size:.85rem;
+border-top:1px solid rgba(61,214,200,.06);max-width:860px;margin:0 auto}
+footer .adams-final{color:var(--text2);font-style:italic;font-size:1rem;margin-bottom:1.5rem;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  #hero h1{font-size:2rem}
+  h2{font-size:1.6rem}
+  section{padding:3rem 1rem 2rem}
+  #baiji-scene,#kakapo-game,#ayeaye-game{height:280px}
+  .tracker-timeline{flex-wrap:wrap}
+  .tl-point{min-width:25%}
+  .impact-grid{grid-template-columns:1fr}
+  nav a{font-size:.65rem;padding:.2rem .3rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#hero">Home</a>
+  <a href="#tracker">📊 Species</a>
+  <a href="#baiji">🐬 Baiji</a>
+  <a href="#kakapo">🦜 Kakapo</a>
+  <a href="#komodo">🦎 Komodo</a>
+  <a href="#lens">👁️ Lens</a>
+  <a href="#ayeaye">🖐️ Aye-Aye</a>
+  <a href="#impact">🌍 Impact</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="year">1 9 9 0 — 2 0 2 5</div>
+  <h1>Last Chance to See</h1>
+  <p class="tagline">
+    In 1990, Douglas Adams — a man who wrote about the end of the world for a living — went to see
+    the actual ends of actual worlds. Some of them are still ending. Some have already ended.
+    A few, against all odds, haven't.
+  </p>
+  <a href="#tracker" class="start-btn">See what happened →</a>
+  <p class="hero-epigraph">
+    "Human beings, who are almost unique in having the ability to learn from the experience of others,
+    are also remarkable for their apparent disinclination to do so."
+  </p>
+</section>
+
+<!-- 1. SPECIES STATUS TRACKER -->
+<section id="tracker">
+  <div class="section-header">
+    <div class="section-num">I. The Scorecard</div>
+    <h2>Species Status Tracker</h2>
+    <p class="subtitle">Where they were when Adams found them. Where they are now. Click each to see the data — and feel the weight of it.</p>
+  </div>
+  <div class="timeline-grid" id="tracker-grid"></div>
+</section>
+
+<!-- 2. THE BAIJI -->
+<section id="baiji">
+  <div class="section-header">
+    <div class="section-num">II. The Silence</div>
+    <h2>The Yangtze River Dolphin</h2>
+    <p class="subtitle">Adams compared the baiji's world to "being a blind man in a discotheque."<br>
+    Click the river to send sonar pings. Try to find the dolphin. Watch what happens to the river.</p>
+  </div>
+
+  <div id="baiji-scene">
+    <div id="baiji-water"></div>
+    <div id="baiji-hud">
+      <span id="baiji-year-display">1990</span>
+      <span id="baiji-status">Sonar active — listening</span>
+    </div>
+    <div id="baiji-noise-label">River noise</div>
+    <div id="baiji-noise-bar"><div id="baiji-noise-fill"></div></div>
+    <div id="baiji-message"></div>
+  </div>
+  <div id="baiji-ping-count"></div>
+  <div id="baiji-controls">
+    <button class="btn" id="baiji-advance" onclick="advanceBaijiYear()">Advance decade →</button>
+    <button class="btn" id="baiji-reset" onclick="resetBaiji()" style="margin-left:.5rem">Reset</button>
+  </div>
+</section>
+
+<!-- 3. KAKAPO MATING -->
+<section id="kakapo">
+  <div class="section-header">
+    <div class="section-num">III. The Comedy</div>
+    <h2>Kakapo Mating Simulator</h2>
+    <p class="subtitle">Try to get two kakapos to mate. It is, by design, nearly impossible.<br>
+    The kakapo has forgotten how to fly, and has also forgotten that it has forgotten how to fly.</p>
+  </div>
+
+  <div id="kakapo-game"></div>
+  <div id="kakapo-log"></div>
+  <div id="kakapo-controls">
+    <button class="btn primary" id="kakapo-start" onclick="startKakapo()">Start Mating Season</button>
+    <button class="btn" onclick="resetKakapo()" style="margin-left:.5rem">Reset</button>
+  </div>
+</section>
+
+<!-- 4. KOMODO ENCOUNTER -->
+<section id="komodo">
+  <div class="section-header">
+    <div class="section-num">IV. The Presence</div>
+    <h2>Komodo Dragon Encounter</h2>
+    <p class="subtitle">Adams's gift was making you feel what it's like to be in the presence of something ancient.<br>
+    Click to step closer. The text appears as you advance. Your heartrate will climb.</p>
+  </div>
+
+  <div id="komodo-scene">
+    <div id="komodo-hud">
+      <span>Distance: <span id="komodo-dist">30</span>m</span>
+      <span>Heartrate: <span class="heartbeat-bar"><span class="heartbeat-fill" id="komodo-hr" style="width:30%"></span></span></span>
+    </div>
+    <div id="komodo-text"></div>
+  </div>
+  <div id="komodo-controls">
+    <button class="btn primary" id="komodo-step" onclick="komodoStep()">Step closer</button>
+    <button class="btn" onclick="resetKomodo()" style="margin-left:.5rem">Reset</button>
+  </div>
+</section>
+
+<!-- 5. OBSERVATIONAL LENS -->
+<section id="lens">
+  <div class="section-header">
+    <div class="section-num">V. The Superpower</div>
+    <h2>Adams's Observational Lens</h2>
+    <p class="subtitle">His real gift was noticing things. The same scene, seen by a normal person and by Adams.<br>
+    Toggle between views. Notice what he noticed that you didn't.</p>
+  </div>
+  <div id="lens-scenes"></div>
+</section>
+
+<!-- 6. AYE-AYE FINGER -->
+<section id="ayeaye">
+  <div class="section-header">
+    <div class="section-num">VI. The Finger</div>
+    <h2>The Aye-Aye's Finger</h2>
+    <p class="subtitle">The aye-aye has a skeletal middle finger — a long, bony twig — that it taps on branches to find grubs by echolocation.<br>
+    Tap the branches. Listen. Extract. Experience evolution's beautiful weirdness.</p>
+  </div>
+
+  <div id="ayeaye-game">
+    <div id="ayeaye-hud">
+      <span>Grubs found: <span id="ayeaye-score">0</span>/5</span>
+      <span id="ayeaye-phase">Tap a branch to listen...</span>
+    </div>
+    <div id="ayeaye-finger">🖐️</div>
+  </div>
+  <div id="ayeaye-msg"></div>
+  <div id="ayeaye-controls">
+    <button class="btn" onclick="resetAyeAye()">New branches</button>
+  </div>
+</section>
+
+<!-- 7. CONSERVATION IMPACT -->
+<section id="impact">
+  <div class="section-header">
+    <div class="section-num">VII. The Ledger</div>
+    <h2>Conservation Impact</h2>
+    <p class="subtitle">What changed because of this book? Some species were saved — partly because Adams made people care.<br>
+    Others were lost despite everything. Click each to read the story.</p>
+  </div>
+  <div class="impact-grid" id="impact-grid"></div>
+  <div class="quote" style="margin-top:2rem">
+    "The world would be a poorer, darker, lonelier place without them."
+    <cite>— Douglas Adams, Last Chance to See, 1990</cite>
+  </div>
+</section>
+
+<footer>
+  <p class="adams-final">
+    Adams died in 2001. He never learned that the baiji was declared functionally extinct in 2006.
+    He never saw the kakapo population climb past 200. He would have found both facts — the tragedy and the hope —
+    equally astonishing, and would have written about them better than anyone.
+  </p>
+  <p>Built as an interactive companion to <em>Last Chance to See</em> by Douglas Adams & Mark Carwardine (1990).</p>
+  <p style="margin-top:.3rem;font-size:.8rem">V2 · Data approximate and sourced from IUCN, DOC NZ, WWF, and conservation records.</p>
+</footer>
+
+<script>
+// ============================================
+// 1. SPECIES STATUS TRACKER
+// ============================================
+const trackerData = [
+  {
+    name:'Aye-Aye', latin:'Daubentonia madagascariensis',
+    timeline:[
+      {year:'1990',pop:'~1,000?',note:'Adams visited. Population unknown, feared very low.',cls:'flat'},
+      {year:'2000',pop:'~1,000–2,000',note:'More widespread than thought, but habitat shrinking.',cls:'flat'},
+      {year:'2012',pop:'Endangered',note:'IUCN upgraded threat level. Deforestation accelerating.',cls:'down'},
+      {year:'2025',pop:'Endangered',note:'Still threatened. Superstition (locals kill on sight) + habitat loss.',cls:'down',now:true}
+    ],
+    tag1:'tag-vu', tag1text:'1990: Uncertain',
+    tag2:'tag-en', tag2text:'2025: Endangered',
+    adams:'"I was a monkey looking at a lemur." Adams realised that by flying from New York to Madagascar, he was making a time journey backward through twig technology to the world from which we had originally ousted the lemurs.',
+    verdict:'mixed', verdictText:'Still here, still threatened. The aye-aye turned out to be less rare than feared — but its forest is still burning. Adams\'s chapter remains the most widely-read thing ever written about this animal.'
+  },
+  {
+    name:'Komodo Dragon', latin:'Varanus komodoensis',
+    timeline:[
+      {year:'1990',pop:'~5,000–8,000',note:'Adams visited. Tourist spectacle with goats on hooks.',cls:'flat'},
+      {year:'2000',pop:'~4,000–5,000',note:'National park established. Goat shows ended.',cls:'flat'},
+      {year:'2012',pop:'~3,000',note:'Vulnerable status. Habitat shrinking, prey declining.',cls:'down'},
+      {year:'2021',pop:'~3,000',note:'Reclassified Endangered by IUCN. Climate change threat.',cls:'down',now:true}
+    ],
+    tag1:'tag-vu', tag1text:'1990: Vulnerable',
+    tag2:'tag-en', tag2text:'2025: Endangered',
+    adams:'"It opened its eyes and had a look at me. I rocketed backwards with a yell of astonishment." Adams found that the tourist infrastructure had reduced this ancient predator to a show you could be "bored with."',
+    verdict:'mixed', verdictText:'Upgraded to Endangered in 2021. Sea level rise threatens low-lying habitat. The dragons are still there. The bandstand is gone. The goats are gone. But the sea is rising.'
+  },
+  {
+    name:'Kakapo', latin:'Strigops habroptilus',
+    timeline:[
+      {year:'1990',pop:'~40',note:'Adams visited Fiordland. The bird "that has forgotten it has forgotten how to fly."',cls:'down'},
+      {year:'2000',pop:'62',note:'Intensive management on predator-free islands begins to work.',cls:'up'},
+      {year:'2019',pop:'213',note:'Record breeding season. Every bird individually named and monitored.',cls:'up'},
+      {year:'2025',pop:'~252',note:'Population growing. Still critically endangered — one disease could end it.',cls:'up',now:true}
+    ],
+    tag1:'tag-cr', tag1text:'1990: ~40 alive',
+    tag2:'tag-ok', tag2text:'2025: ~252 alive',
+    adams:'"Sadly, however, it seems that not only has the kakapo forgotten how to fly, but it has also forgotten that it has forgotten how to fly." A seriously worried kakapo runs up a tree and jumps out, whereupon it flies like a brick.',
+    verdict:'hope', verdictText:'The great success story. From 40 to 252. Every single bird has a name. Adams\'s chapter — the funniest thing he ever wrote about conservation — made the kakapo famous. Fame helps. It\'s still one disease away from oblivion, but it\'s climbing.'
+  },
+  {
+    name:'Baiji', latin:'Lipotes vexillifer',
+    timeline:[
+      {year:'1990',pop:'~200',note:'Adams heard them. Faintly. Through the engine noise.',cls:'down'},
+      {year:'2000',pop:'~13',note:'Rapid decline. The Yangtze is now the world\'s busiest waterway.',cls:'down'},
+      {year:'2006',pop:'0 found',note:'Extensive survey found none. Declared functionally extinct.',cls:'down'},
+      {year:'2025',pop:'Functionally extinct',note:'Gone. The first dolphin species driven to extinction by humans.',cls:'gone',now:true,extinct:true}
+    ],
+    tag1:'tag-en', tag1text:'1990: ~200',
+    tag2:'tag-ex', tag2text:'2025: Extinct',
+    adams:'"I tried to imagine what it would be like to be a blind man trying to live in a discotheque." The river got noisier. The pings got weaker. Eventually: silence.',
+    verdict:'loss', verdictText:'Gone. The first cetacean driven to extinction in modern times. Adams heard them in 1990. By 2006, a six-week expedition with the best equipment in the world found nothing. The river is still there. The noise is still there. The dolphins are not.'
+  },
+  {
+    name:'Northern White Rhino', latin:'Ceratotherium simum cottoni',
+    timeline:[
+      {year:'1990',pop:'~22',note:'Adams crept within 25 yards. Armed guards already necessary.',cls:'down'},
+      {year:'2000',pop:'~30',note:'Brief recovery in Garamba. Then civil war.',cls:'flat'},
+      {year:'2018',pop:'2',note:'Last male, Sudan, died March 2018. Two females remain.',cls:'down'},
+      {year:'2025',pop:'2 ♀',note:'Najin and Fatu. IVF attempts ongoing. Subspecies functionally extinct.',cls:'down',now:true}
+    ],
+    tag1:'tag-cr', tag1text:'1990: ~22',
+    tag2:'tag-ex', tag2text:'2025: 2 ♀ left',
+    adams:'"So the difference between life or death for one of the rarest and most magnificent animals in the world is actually about twelve dollars." The poacher gets $12 for a horn. It sells for thousands as a Yemeni dagger handle. Fashion. Costume jewellery.',
+    verdict:'loss', verdictText:'Functionally extinct. Two females remain. Scientists are attempting IVF with preserved genetic material. The $12 equation Adams described — a poacher\'s pittance vs. a species — played out exactly as he feared. The armed guards weren\'t enough.'
+  },
+  {
+    name:'Mountain Gorilla', latin:'Gorilla beringei beringei',
+    timeline:[
+      {year:'1990',pop:'~280',note:'Adams sat 18 inches from a silverback. "The gorilla\'s gaze."',cls:'down'},
+      {year:'2000',pop:'~350',note:'Surviving through civil wars in DRC and Rwanda.',cls:'up'},
+      {year:'2018',pop:'~1,000',note:'Downlisted from Critically Endangered to Endangered.',cls:'up'},
+      {year:'2025',pop:'~1,063',note:'One of conservation\'s genuine successes. Tourism revenue protects them.',cls:'up',now:true}
+    ],
+    tag1:'tag-cr', tag1text:'1990: ~280',
+    tag2:'tag-en', tag2text:'2025: ~1,063',
+    adams:'The gorilla reached out and touched first the paper and then the top of his biro. "Not to take it away from me. Just to see what it was." Maybe it is not that they have yet to gain a language. It is that we have lost one.',
+    verdict:'hope', verdictText:'From 280 to over 1,000. Tourism — people paying to have the experience Adams described — now generates enough revenue that gorillas are worth more alive than dead. Adams\'s passage about the gorilla\'s gaze became one of the most quoted pieces of nature writing in English. The words helped.'
+  },
+  {
+    name:'Rodrigues Fruit Bat', latin:'Pteropus rodricensis',
+    timeline:[
+      {year:'1990',pop:'~350',note:'One cyclone away from extinction. Adams visited Mauritius.',cls:'down'},
+      {year:'2000',pop:'~4,000',note:'Captive breeding and habitat protection working.',cls:'up'},
+      {year:'2012',pop:'~5,000+',note:'Downlisted to Endangered. Forest restoration ongoing.',cls:'up'},
+      {year:'2025',pop:'Endangered but stable',note:'Population viable. Still island-dependent and cyclone-vulnerable.',cls:'up',now:true}
+    ],
+    tag1:'tag-cr', tag1text:'1990: ~350',
+    tag2:'tag-en', tag2text:'2025: Stable',
+    adams:'Carl Jones was sent to Mauritius to close down the conservation project. It was hopeless — just one breeding pair of kestrels. He refused. There are now hundreds of kestrels. "I suppose I have to admit that I\'ve been a complete failure."',
+    verdict:'hope', verdictText:'Another success. The Mauritius conservation story — Jones\'s stubborn refusal to accept hopelessness — is one of the great models. The fruit bat, the kestrel, the pink pigeon: all pulled back. Adams\'s chapter made Mauritius a conservation symbol.'
+  }
+];
+
+(function renderTracker(){
+  const grid = document.getElementById('tracker-grid');
+  trackerData.forEach((sp, i) => {
+    const card = document.createElement('div');
+    card.className = 'tracker-card';
+    card.onclick = () => card.classList.toggle('open');
+    card.innerHTML = `
+      <div class="tracker-top">
+        <div>
+          <div class="tracker-name">${sp.name}</div>
+          <div class="tracker-latin">${sp.latin}</div>
+        </div>
+        <div class="tracker-tags">
+          <span class="tag ${sp.tag1}">${sp.tag1text}</span>
+          <span class="tracker-arrow">→</span>
+          <span class="tag ${sp.tag2}">${sp.tag2text}</span>
+        </div>
+      </div>
+      <div class="tracker-detail">
+        <div class="tracker-timeline" style="position:relative">
+          <div class="tl-line"></div>
+          ${sp.timeline.map(t => `
+            <div class="tl-point${t.now?' now':''}${t.extinct?' extinct':''}">
+              <div class="tl-year">${t.year}</div>
+              <div class="tl-pop ${t.cls}">${t.pop}</div>
+              <div class="tl-note">${t.note}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="tracker-adams">${sp.adams}</div>
+        <div class="tracker-verdict verdict-${sp.verdict}">${sp.verdictText}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+})();
+
+// ============================================
+// 2. BAIJI RIVER
+// ============================================
+let baijiYear = 0; // 0=1990, 1=2000, 2=2006
+const baijiYears = [
+  {year:'1990',noise:8,dolphinChance:.6,status:'~200 remaining. Sonar still works — barely.',msg:'You hear it. A faint click-stream in the murk. Something is alive down there.'},
+  {year:'2000',noise:45,dolphinChance:.15,status:'~13 remaining. The river screams with engines.',msg:'Was that... ? No. Engine noise. Try again. The clicks are so faint now.'},
+  {year:'2006',noise:90,dolphinChance:0,status:'Functionally extinct. Six weeks of searching found nothing.',msg:''},
+];
+let baijiPings = 0;
+let baijiFinalShown = false;
+
+function initBaiji(){
+  baijiYear = 0; baijiFinalShown = false; baijiPings = 0;
+  updateBaijiUI();
+  document.getElementById('baiji-message').style.opacity = '0';
+  document.getElementById('baiji-advance').disabled = false;
+  document.getElementById('baiji-ping-count').textContent = '';
+}
+
+function updateBaijiUI(){
+  const d = baijiYears[baijiYear];
+  document.getElementById('baiji-year-display').textContent = d.year;
+  document.getElementById('baiji-status').textContent = d.status;
+  document.getElementById('baiji-noise-fill').style.width = d.noise + '%';
+  // Darken water with noise
+  document.getElementById('baiji-water').style.background =
+    `linear-gradient(180deg,rgba(${20+baijiYear*30},${50-baijiYear*15},${60-baijiYear*20},.${3+baijiYear}) 0%,rgba(${10+baijiYear*20},${25-baijiYear*8},${30-baijiYear*10},.${6+baijiYear}) 100%)`;
+}
+
+document.getElementById('baiji-scene').addEventListener('click', function(e){
+  const rect = this.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Sonar ring
+  const ring = document.createElement('div');
+  ring.className = 'sonar-ring';
+  ring.style.left = (x-15)+'px'; ring.style.top = (y-15)+'px';
+  ring.style.width = '30px'; ring.style.height = '30px';
+  const d = baijiYears[baijiYear];
+  ring.style.borderColor = `rgba(61,214,200,${Math.max(.05, .3 - baijiYear*.12)})`;
+  this.appendChild(ring);
+  setTimeout(()=>ring.remove(), 3000);
+
+  baijiPings++;
+
+  // Add boat noise visuals for later years
+  if(baijiYear > 0){
+    for(let i=0;i<baijiYear*2;i++){
+      setTimeout(()=>{
+        const noise = document.createElement('div');
+        noise.className = 'boat-noise';
+        noise.style.left = Math.random()*90+'%';
+        noise.style.top = (40+Math.random()*50)+'%';
+        this.appendChild(noise);
+        setTimeout(()=>noise.remove(), 500);
+      }, Math.random()*1000);
+    }
+  }
+
+  // Dolphin echo?
+  if(Math.random() < d.dolphinChance){
+    setTimeout(()=>{
+      const echo = document.createElement('div');
+      echo.className = 'dolphin-echo';
+      echo.style.left = (x + (Math.random()*100-50))+'px';
+      echo.style.top = (y + (Math.random()*60-30))+'px';
+      this.appendChild(echo);
+      setTimeout(()=>echo.remove(), 2000);
+    }, 500+Math.random()*1000);
+  }
+
+  // Message
+  if(baijiYear === 2 && !baijiFinalShown){
+    baijiFinalShown = true;
+    showBaijiMsg('Silence. You send ping after ping into the murk. Nothing comes back. Nothing will ever come back.', true);
+  } else if(d.msg && Math.random() < .3){
+    showBaijiMsg(d.msg);
+  }
+
+  document.getElementById('baiji-ping-count').textContent = `Pings sent: ${baijiPings}` + (baijiYear===2 ? ' · Echoes received: 0' : '');
+});
+
+function showBaijiMsg(text, permanent){
+  const el = document.getElementById('baiji-message');
+  el.textContent = text;
+  el.style.opacity = '1';
+  if(!permanent) setTimeout(()=>{ el.style.opacity = '0'; }, 4000);
+}
+
+function advanceBaijiYear(){
+  if(baijiYear >= 2) return;
+  baijiYear++;
+  updateBaijiUI();
+  if(baijiYear === 2){
+    document.getElementById('baiji-advance').disabled = true;
+    setTimeout(()=>{
+      showBaijiMsg('2006. A six-week expedition with the best equipment in the world searched the entire Yangtze. They found nothing. The baiji is gone.', true);
+    }, 1500);
+  }
+}
+
+function resetBaiji(){ initBaiji(); }
+initBaiji();
+
+// ============================================
+// 3. KAKAPO MATING SIMULATOR
+// ============================================
+let kakapoRunning = false;
+let kakapoInterval = null;
+let kakapoMale, kakapoFemale;
+let kakapoBoomCount = 0, kakapoAttempts = 0, kakapoSuccess = false;
+let kakapoSeason = 0;
+
+function startKakapo(){
+  if(kakapoRunning) return;
+  kakapoRunning = true;
+  kakapoSuccess = false;
+  kakapoBoomCount = 0;
+  kakapoAttempts = 0;
+  kakapoSeason++;
+
+  const game = document.getElementById('kakapo-game');
+  game.innerHTML = `<div id="kakapo-hud"><span>Season ${kakapoSeason}</span><span id="kk-attempts">Booms: 0</span></div>`;
+
+  // Place male (he booms from a bowl on a hilltop — INTO the hill, wrong direction)
+  kakapoMale = document.createElement('div');
+  kakapoMale.className = 'kakapo-sprite';
+  kakapoMale.textContent = '🦜';
+  kakapoMale.style.left = '30%'; kakapoMale.style.top = '60%';
+  kakapoMale.title = 'Click to boom!';
+  game.appendChild(kakapoMale);
+
+  // Female starts far away and confused
+  kakapoFemale = document.createElement('div');
+  kakapoFemale.className = 'kakapo-sprite';
+  kakapoFemale.textContent = '🦜';
+  kakapoFemale.style.left = '75%'; kakapoFemale.style.top = '25%';
+  kakapoFemale.style.filter = 'hue-rotate(40deg)';
+  game.appendChild(kakapoFemale);
+
+  addKakapoLog('🌿 Mating season begins. The male starts booming. The boom is so low-frequency the female can\'t tell where it\'s coming from.', 'event');
+  addKakapoLog('💡 Click the male 🦜 to boom. Try to attract the female.', 'event');
+
+  kakapoMale.onclick = doBoom;
+  document.getElementById('kakapo-start').textContent = 'Booming...';
+  document.getElementById('kakapo-start').disabled = true;
+
+  // Random events timer
+  kakapoInterval = setInterval(kakapoRandomEvent, 4000);
+}
+
+function doBoom(){
+  if(!kakapoRunning || kakapoSuccess) return;
+  kakapoBoomCount++;
+  document.getElementById('kk-attempts').textContent = `Booms: ${kakapoBoomCount}`;
+
+  // Visual boom
+  const game = document.getElementById('kakapo-game');
+  const boom = document.createElement('div');
+  boom.className = 'kakapo-boom';
+  boom.textContent = 'BOOM';
+  boom.style.left = (parseInt(kakapoMale.style.left)-5) + '%';
+  boom.style.top = (parseInt(kakapoMale.style.top)-5) + '%';
+  game.appendChild(boom);
+  setTimeout(()=>boom.remove(), 3000);
+
+  // Female moves — but WRONG direction most of the time (can't locate the sound)
+  const femX = parseFloat(kakapoFemale.style.left);
+  const femY = parseFloat(kakapoFemale.style.top);
+  const maleX = parseFloat(kakapoMale.style.left);
+  const maleY = parseFloat(kakapoMale.style.top);
+
+  // 85% chance she goes wrong way
+  if(Math.random() < 0.85){
+    const wrongX = femX + (Math.random()*20 - 10);
+    const wrongY = femY + (Math.random()*20 - 10);
+    kakapoFemale.style.left = Math.max(5,Math.min(85,wrongX)) + '%';
+    kakapoFemale.style.top = Math.max(10,Math.min(85,wrongY)) + '%';
+
+    const wrongMsgs = [
+      'Female wanders in wrong direction. The boom is too low to locate.',
+      'Female looks confused. Heads toward a rock.',
+      '"Where ARE you?" She walks the other way.',
+      'Female pauses. Considers. Walks into a bush.',
+      'Female hears the boom. Goes exactly 180° wrong.',
+      'The sound bounces off the bowl. Female heads uphill. Away.',
+    ];
+    addKakapoLog('❌ ' + wrongMsgs[Math.floor(Math.random()*wrongMsgs.length)], 'fail');
+  } else {
+    // She moves slightly toward male
+    const dx = (maleX - femX) * 0.25;
+    const dy = (maleY - femY) * 0.25;
+    kakapoFemale.style.left = (femX + dx) + '%';
+    kakapoFemale.style.top = (femY + dy) + '%';
+    addKakapoLog('✓ Female moves vaguely in the right direction!', 'success');
+
+    // Check proximity
+    const dist = Math.sqrt(Math.pow(femX+dx-maleX,2) + Math.pow(femY+dy-maleY,2));
+    if(dist < 8){
+      kakapoMating();
+    }
+  }
+}
+
+function kakapoRandomEvent(){
+  if(!kakapoRunning || kakapoSuccess) return;
+  const r = Math.random();
+  const game = document.getElementById('kakapo-game');
+
+  if(r < 0.15){
+    // Stoat appears
+    const stoat = document.createElement('div');
+    stoat.className = 'stoat-sprite';
+    stoat.textContent = '🦦';
+    stoat.style.top = (60+Math.random()*30)+'%';
+    stoat.style.left = '-20px';
+    game.appendChild(stoat);
+    setTimeout(()=>stoat.remove(), 3000);
+    addKakapoLog('🦦 A stoat passes through. If there were an egg, it would be gone.', 'fail');
+  } else if(r < 0.25){
+    // Male tries to mate with wrong thing
+    const things = ['a bush','a hat someone left behind','a moss-covered rock','the ground','nothing in particular'];
+    const thing = things[Math.floor(Math.random()*things.length)];
+    addKakapoLog(`🦜 Male attempts to mate with ${thing}. This is not productive.`, 'fail');
+  } else if(r < 0.35){
+    // Female gets distracted
+    addKakapoLog('🦜 Female finds a rimu fruit. Eating now. Mating can wait.', 'fail');
+  } else if(r < 0.42){
+    // Male falls out of tree
+    addKakapoLog('🦜 Male runs up a tree and jumps out. Plummets like a brick. He is fine. His dignity is not.', 'fail');
+  } else if(r < 0.48){
+    addKakapoLog('🌙 Three months of booming. Seven hours a night. The male has lost a third of his body weight.', 'event');
+  }
+}
+
+function kakapoMating(){
+  kakapoSuccess = true;
+  kakapoRunning = false;
+  clearInterval(kakapoInterval);
+
+  addKakapoLog('💚 They found each other! After ' + kakapoBoomCount + ' booms!', 'success');
+
+  setTimeout(()=>{
+    if(Math.random() < 0.7){
+      addKakapoLog('🥚 She lays a single egg.', 'event');
+      setTimeout(()=>{
+        if(Math.random() < 0.65){
+          addKakapoLog('🦦 A stoat eats the egg. This is the kakapo\'s life.', 'fail');
+          addKakapoLog('📊 Net population change this season: 0. Try again in 3-4 years.', 'fail');
+        } else {
+          addKakapoLog('🐣 The chick survives! Population: +1. This took years. One bird.', 'success');
+          addKakapoLog('📊 "And that is why there are only 252 kakapos in the world."', 'event');
+        }
+        document.getElementById('kakapo-start').textContent = 'Try another season';
+        document.getElementById('kakapo-start').disabled = false;
+      }, 2000);
+    } else {
+      addKakapoLog('🦜 ...she decides she\'s not in the mood. Walks away. See you in 4 years.', 'fail');
+      document.getElementById('kakapo-start').textContent = 'Try another season';
+      document.getElementById('kakapo-start').disabled = false;
+    }
+  }, 1500);
+}
+
+function addKakapoLog(text, cls){
+  const log = document.getElementById('kakapo-log');
+  const line = document.createElement('div');
+  line.className = cls || '';
+  line.textContent = text;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetKakapo(){
+  kakapoRunning = false;
+  clearInterval(kakapoInterval);
+  kakapoSeason = 0;
+  document.getElementById('kakapo-game').innerHTML = '<div style="color:var(--text3);text-align:center;padding:40% 1rem 0;font-style:italic">Press "Start Mating Season" to begin.<br>Good luck. The kakapo certainly needs it.</div>';
+  document.getElementById('kakapo-log').innerHTML = '';
+  document.getElementById('kakapo-start').textContent = 'Start Mating Season';
+  document.getElementById('kakapo-start').disabled = false;
+}
+resetKakapo();
+
+// ============================================
+// 4. KOMODO DRAGON ENCOUNTER
+// ============================================
+const komodoPassages = [
+  {text:'The path is narrow. Tall grass on both sides, higher than your head. You can\'t see more than a few feet.', hr:30, dist:30},
+  {text:'You hear something. A slow, heavy rustling in the grass to your left. It stops when you stop.', hr:40, dist:25},
+  {text:'The guide whispers: "They can smell you from five kilometres." You are aware that you have been sweating profusely.', hr:50, dist:20},
+  {text:'A gap in the grass. Lying on the ground — a small stuffed dragon. Maybe four feet long. You go closer to look.', hr:45, dist:15},
+  {text:'It opens its eyes.', hr:75, dist:12, tense:true},
+  {text:'You rocket backwards. A yell escapes you. From somewhere behind, an American girl calls out: "Done the dragons. Bored with them."', hr:65, dist:15, shock:true},
+  {text:'It rises. Slowly. With the unhurried confidence of something that has been the largest predator on its island for three million years.', hr:70, dist:12, tense:true},
+  {text:'Its tongue — yellow, forked, a foot long — tastes the air between you. Not aggressive. Worse: indifferent. You are food it hasn\'t decided to eat yet.', hr:80, dist:10, tense:true},
+  {text:'The eye is what gets you. Almost the same size as yours. Old. Older than your entire species. It watches you with the patience of deep time.', hr:85, dist:8, tense:true},
+  {text:'The guide says, quietly: "Three hundred and fifty breeding females. One forest fire." You look at the dragon. The dragon does not look worried. It has no concept of fire. Or numbers. Or last chances.', hr:70, dist:8},
+  {text:'You back away. Slowly. The grass closes behind you. The dragon watches you go with exactly the same expression it had when you arrived: none at all.', hr:55, dist:15},
+  {text:'Adams wrote: "The great thing about being the only species that makes a distinction between right and wrong is that we can make up the rules for ourselves as we go along." The dragon doesn\'t make distinctions. It just is. It has been just-is for longer than we\'ve existed.', hr:40, dist:30},
+];
+let komodoStep_ = -1;
+
+function komodoStep(){
+  komodoStep_++;
+  if(komodoStep_ >= komodoPassages.length){
+    document.getElementById('komodo-step').disabled = true;
+    document.getElementById('komodo-step').textContent = 'You\'ve left the grass.';
+    return;
+  }
+  const p = komodoPassages[komodoStep_];
+  const container = document.getElementById('komodo-text');
+
+  const para = document.createElement('p');
+  para.style.marginBottom = '1rem';
+  const words = p.text.split(' ');
+  words.forEach((w, i) => {
+    const span = document.createElement('span');
+    span.className = 'word' + (p.tense ? ' tense' : '') + (p.shock ? ' shock' : '');
+    span.textContent = w + ' ';
+    para.appendChild(span);
+    setTimeout(() => span.classList.add('visible'), i * 60);
+  });
+  container.appendChild(para);
+
+  // Update HUD
+  document.getElementById('komodo-dist').textContent = p.dist;
+  document.getElementById('komodo-hr').style.width = p.hr + '%';
+
+  // Auto-scroll
+  container.scrollTop = container.scrollHeight;
+
+  if(komodoStep_ === komodoPassages.length - 1){
+    document.getElementById('komodo-step').textContent = 'Step back';
+  }
+}
+
+function resetKomodo(){
+  komodoStep_ = -1;
+  document.getElementById('komodo-text').innerHTML = '';
+  document.getElementById('komodo-step').disabled = false;
+  document.getElementById('komodo-step').textContent = 'Step closer';
+  document.getElementById('komodo-dist').textContent = '30';
+  document.getElementById('komodo-hr').style.width = '30%';
+}
+
+// ============================================
+// 5. OBSERVATIONAL LENS
+// ============================================
+const lensScenes = [
+  {
+    title: 'Arriving at the Airport',
+    normal: 'You arrive at the airport. It\'s crowded and hot. The flight is delayed. You wait in a plastic chair. Eventually you board. The food is bad.',
+    adams: 'The airport is a <span class="highlight">model of the systems that make extinction possible</span>. Nobody designed this to work. It <em>evolved</em> — by a process of accretion, each new rule added to solve the problem created by the previous rule. <span class="highlight">The ticket says "confirmed" but confirmed doesn\'t mean confirmed — it\'s merely something they write on tickets because it saves a lot of bother.</span> The whole system runs on the principle that if you make the process sufficiently unpleasant, most people will give up. <span class="invisible">This is also how species go extinct: not by one dramatic event, but by a thousand small surrenders nobody notices.</span>',
+    reveals: 'A normal person sees: bad airport. Adams sees: <span class="highlight">the airport AS a model of how institutions kill things through indifference</span>. He connects the micro-frustration of a delayed flight to the macro-horror of extinction — both caused by systems that evolved to serve themselves, not their purpose. The invisible connection is what makes Adams Adams.'
+  },
+  {
+    title: 'Looking at a Komodo Dragon',
+    normal: 'There\'s a large lizard. It\'s about three metres long. It has rough skin and a long tongue. It looks dangerous. You take a photo.',
+    adams: 'The eye is what gets you. It\'s <span class="highlight">almost the same size as yours</span>. And it looks at you with a slow, considered blink that seems to be <span class="highlight">running on a different clock</span>. Not hostile. Not friendly. <span class="highlight">Something much more unsettling than either: completely indifferent.</span> You are a warm object in its field of vision. It has not yet decided if you are food. <span class="invisible">You realize with a start that this is what it feels like to not be at the top of the food chain — a sensation most humans haven\'t experienced in a hundred thousand years.</span>',
+    reveals: 'Normal: physical description. Adams: <span class="highlight">the subjective experience of being looked at by something that doesn\'t recognize your specialness</span>. He notices the SIZE of the eye (almost human), the SPEED of the blink (different time), and the QUALITY of the gaze (indifference, not hostility). Then the invisible insight: this encounter reverses a hundred thousand years of human supremacy in ten seconds.'
+  },
+  {
+    title: 'Meeting a Mountain Gorilla',
+    normal: 'We found a mountain gorilla in a clearing. It was large, with silver-grey fur on its back. It seemed calm. We observed it for about twenty minutes and then left.',
+    adams: 'A kind of humming mental paralysis grips you. <span class="highlight">All sorts of wild and vertiginous feelings well up into your brain, that you seem to have no connection with and no name for</span> — perhaps because it is thousands or millions of years since such feelings were last aroused. He shifted himself away from me — <span class="highlight">just about six inches — as if I had sat slightly too close to him on a sofa.</span> The most perfectly judged social gesture I had ever seen. <span class="invisible">He was sending me signals to which I did not know how to respond. We had the language once. We lost it.</span>',
+    reveals: 'Normal: factual observation. Adams: <span class="highlight">the gorilla\'s six-inch shift as a "social gesture"</span> — recognizing it as communication, not mere movement. He notices feelings he has "no name for" and dates them to evolutionary deep time. The sofa analogy makes you FEEL the gorilla\'s personhood in a way that "it seemed calm" never could. The invisible layer: we lost a language.'
+  }
+];
+
+(function renderLens(){
+  const container = document.getElementById('lens-scenes');
+  lensScenes.forEach((scene, i) => {
+    const div = document.createElement('div');
+    div.className = 'lens-scene';
+    div.innerHTML = `
+      <h3 style="margin-bottom:.5rem">${scene.title}</h3>
+      <div class="lens-tabs">
+        <div class="lens-tab active" onclick="switchLens(${i},'normal',this)">👤 Normal Person</div>
+        <div class="lens-tab" onclick="switchLens(${i},'adams',this)">✍️ Adams</div>
+        <div class="lens-tab" onclick="switchLens(${i},'reveals',this)">💡 What He Noticed</div>
+      </div>
+      <div class="lens-content" id="lens-${i}">
+        <div class="lens-label">What a normal person sees</div>
+        ${scene.normal}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+})();
+
+function switchLens(i, view, el){
+  const scene = lensScenes[i];
+  const content = document.getElementById('lens-'+i);
+  el.parentElement.querySelectorAll('.lens-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const labels = {normal:'What a normal person sees',adams:'What Douglas Adams sees',reveals:'The invisible layer'};
+  content.innerHTML = `<div class="lens-label">${labels[view]}</div>${scene[view]}`;
+}
+
+// ============================================
+// 6. AYE-AYE FINGER
+// ============================================
+let ayeayeScore = 0;
+let ayeayeListening = null;
+let ayeayeBranches = [];
+
+function initAyeAye(){
+  ayeayeScore = 0;
+  ayeayeListening = null;
+  document.getElementById('ayeaye-score').textContent = '0';
+  document.getElementById('ayeaye-phase').textContent = 'Tap a branch to listen...';
+  document.getElementById('ayeaye-msg').innerHTML = '<span style="color:var(--text3);font-style:italic">The aye-aye taps with its skeletal middle finger — up to 8 times per second — and listens for the hollow echo of a grub chamber. Then it gnaws through the bark and extracts the grub with that same impossibly long finger.</span>';
+  document.getElementById('ayeaye-finger').style.opacity = '0';
+
+  const game = document.getElementById('ayeaye-game');
+  // Clear old branches
+  game.querySelectorAll('.branch,.grub-spot').forEach(e=>e.remove());
+  ayeayeBranches = [];
+
+  // Generate branches with grub spots
+  const branchDefs = [
+    {x:5,y:40,w:90,color:'#3a2a1a',angle:-2},
+    {x:10,y:55,w:70,color:'#2e2218',angle:3},
+    {x:20,y:70,w:65,color:'#35291c',angle:-1},
+    {x:0,y:30,w:50,color:'#2a2015',angle:5},
+    {x:45,y:20,w:50,color:'#332818',angle:-3},
+  ];
+
+  branchDefs.forEach((b,i) => {
+    const branch = document.createElement('div');
+    branch.className = 'branch';
+    branch.style.cssText = `left:${b.x}%;top:${b.y}%;width:${b.w}%;background:${b.color};transform:rotate(${b.angle}deg)`;
+    game.appendChild(branch);
+
+    // 1-2 grub spots per branch
+    const numGrubs = Math.random() < 0.4 ? 2 : 1;
+    for(let g=0;g<numGrubs && ayeayeBranches.length<5;g++){
+      const hasGrub = Math.random() < 0.5;
+      const spot = document.createElement('div');
+      const sx = b.x + 10 + Math.random()*(b.w-20);
+      const sy = b.y + Math.random()*6 - 3;
+      spot.className = 'grub-spot';
+      spot.style.left = sx+'%'; spot.style.top = sy+'%';
+      spot.dataset.hasGrub = hasGrub;
+      spot.dataset.found = 'false';
+      spot.onclick = (e) => { e.stopPropagation(); tapSpot(spot); };
+      game.appendChild(spot);
+      ayeayeBranches.push(spot);
+    }
+  });
+
+  // Ensure at least 5 spots with some grubs
+  while(ayeayeBranches.filter(s=>s.dataset.hasGrub==='true').length < 3){
+    const idx = Math.floor(Math.random()*ayeayeBranches.length);
+    ayeayeBranches[idx].dataset.hasGrub = 'true';
+  }
+}
+
+function tapSpot(spot){
+  if(spot.dataset.found === 'true') return;
+
+  // Show finger tapping animation
+  const finger = document.getElementById('ayeaye-finger');
+  finger.style.left = spot.style.left;
+  finger.style.top = (parseFloat(spot.style.top) - 8) + '%';
+  finger.style.opacity = '1';
+  setTimeout(()=>{ finger.style.opacity = '0'; }, 800);
+
+  spot.classList.add('listening');
+  document.getElementById('ayeaye-phase').textContent = 'Tapping... listening...';
+
+  setTimeout(()=>{
+    spot.classList.remove('listening');
+    if(spot.dataset.hasGrub === 'true'){
+      spot.classList.add('found');
+      spot.dataset.found = 'true';
+      ayeayeScore++;
+      document.getElementById('ayeaye-score').textContent = ayeayeScore;
+      document.getElementById('ayeaye-phase').textContent = 'Hollow echo! Grub found!';
+      document.getElementById('ayeaye-msg').innerHTML = `<span style="color:var(--accent)">🐛 Grub extracted! The finger goes in — impossibly thin, impossibly long — and hooks the larva out. ${ayeayeScore}/5 found.</span>` +
+        (ayeayeScore >= 3 ? '<br><span style="color:var(--gold);font-style:italic">"The aye-aye\'s finger is one of evolution\'s most specialized tools. No other primate has anything like it. It fills the niche that woodpeckers fill elsewhere — but with a finger instead of a beak. Evolution doesn\'t care about elegance. It cares about lunch."</span>' : '');
+    } else {
+      document.getElementById('ayeaye-phase').textContent = 'Solid wood. No grub here.';
+      document.getElementById('ayeaye-msg').innerHTML = '<span style="color:var(--text3)">Tap tap tap. Solid. The finger moves on, tapping 8 times per second, reading the density of wood like sonar reads water.</span>';
+      spot.style.borderColor = 'rgba(255,255,255,.1)';
+      spot.dataset.found = 'true';
+    }
+  }, 1000);
+}
+
+function resetAyeAye(){ initAyeAye(); }
+initAyeAye();
+
+// ============================================
+// 7. CONSERVATION IMPACT
+// ============================================
+const impactData = [
+  {
+    name:'Kakapo Recovery',species:'Strigops habroptilus',
+    then:40,now:252,max:300,color:'var(--accent)',
+    thenLabel:'~40 (1990)',nowLabel:'~252 (2025)',
+    story:'Adams\'s chapter made the kakapo the world\'s most famous endangered bird. New Zealand\'s Department of Conservation runs one of the most intensive species management programs on Earth — every bird named, GPS-tracked, supplementary-fed, and protected on predator-free islands. The 2019 breeding season produced 76 chicks. Adams died in 2001; he knew there were about 62. He would have been astonished and delighted by 252.'
+  },
+  {
+    name:'Mountain Gorilla Comeback',species:'Gorilla beringei beringei',
+    then:280,now:1063,max:1200,color:'var(--accent)',
+    thenLabel:'~280 (1990)',nowLabel:'~1,063 (2025)',
+    story:'Gorilla tourism — the direct descendant of the encounter Adams described — now generates over $20M annually for Rwanda alone. A gorilla trekking permit costs $1,500. The gorillas are literally worth more alive than dead. Adams\'s passage about the gorilla\'s gaze became one of the most-quoted pieces of nature writing in English, helping build the cultural value that makes conservation funding possible.'
+  },
+  {
+    name:'Mauritius: Carl Jones\'s Legacy',species:'Multiple species',
+    then:4,now:400,max:500,color:'var(--accent)',
+    thenLabel:'4 kestrels (1974)',nowLabel:'~400+ kestrels (2025)',
+    story:'Carl Jones — the man Adams profiled, who was sent to "close down" the Mauritius conservation project — refused to give up. His work saved the Mauritius kestrel, the pink pigeon, and the echo parakeet from extinction. He received the Indianapolis Prize in 2016. Adams\'s chapter in Last Chance to See made Jones\'s story globally known. "I suppose I have to admit that I\'ve been a complete failure."'
+  },
+  {
+    name:'The Baiji: Lost',species:'Lipotes vexillifer',
+    then:200,now:0,max:200,color:'var(--danger)',
+    thenLabel:'~200 (1990)',nowLabel:'0 (2006)',
+    story:'Adams heard them. Faintly, through the engine noise. Sixteen years later, a comprehensive survey found nothing. The baiji became the first dolphin species driven to extinction by human activity. The Yangtze is louder now than when Adams visited. His chapter remains the most widely-read account of an animal that no longer exists — a record of what we heard just before the silence.'
+  },
+  {
+    name:'Northern White Rhino: Almost Gone',species:'Ceratotherium simum cottoni',
+    then:22,now:2,max:30,color:'var(--danger)',
+    thenLabel:'~22 (1990)',nowLabel:'2 ♀ (2025)',
+    story:'Sudan, the last male, died on March 19, 2018. Two females — Najin and Fatu — remain at Ol Pejeta Conservancy in Kenya. Scientists have created embryos from preserved sperm and harvested eggs. The $12 equation Adams described played out exactly: the gap between what a horn is worth to a poacher and what a species is worth to the world was never bridged. IVF is the last hope.'
+  },
+  {
+    name:'Komodo Dragon: Newly Threatened',species:'Varanus komodoensis',
+    then:5000,now:3000,max:6000,color:'var(--warm)',
+    thenLabel:'~5,000 (1990)',nowLabel:'~3,000 (2025)',
+    story:'Reclassified from Vulnerable to Endangered in 2021. The goat-on-a-hook tourist spectacle Adams witnessed is gone. But sea level rise now threatens the low-lying islands. Climate models suggest significant habitat loss by 2050. The dragons survived 3 million years. They may not survive the next 50. The bandstand is gone but the sea is rising.'
+  },
+  {
+    name:'Adams\'s Broader Impact',species:'All of them',
+    then:0,now:1,max:1,color:'var(--gold)',
+    thenLabel:'1 book (1990)',nowLabel:'Millions of readers',
+    story:'Last Chance to See sold over a million copies. It was adapted into a BBC radio series and a 2009 TV series with Stephen Fry. It introduced the concept of conservation to an audience that would never have read a nature book — Adams\'s Hitchhiker\'s readers. It proved that humor could carry ecological truth further than earnestness. Mark Carwardine continued the work. The ripple effects are incalculable.',
+    hideBar: true
+  }
+];
+
+(function renderImpact(){
+  const grid = document.getElementById('impact-grid');
+  impactData.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'impact-card';
+    card.onclick = () => card.classList.toggle('open');
+    const pctThen = (item.then/item.max)*100;
+    const pctNow = (item.now/item.max)*100;
+    card.innerHTML = `
+      <h4>${item.name}</h4>
+      <div class="impact-species">${item.species}</div>
+      ${item.hideBar ? '' : `
+        <div class="impact-bar-wrap"><div class="impact-bar" style="width:0%;background:${item.color}" data-target="${pctNow}"></div></div>
+        <div class="impact-nums">
+          <span class="then">${item.thenLabel}</span>
+          <span class="now" style="color:${item.color}">${item.nowLabel}</span>
+        </div>
+      `}
+      <div class="impact-story">${item.story}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Animate bars on scroll
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.impact-bar').forEach(bar => {
+          setTimeout(()=>{ bar.style.width = bar.dataset.target + '%'; }, 300);
+        });
+      }
+    });
+  }, {threshold:.3});
+  obs.observe(grid);
+})();
+
+// ============================================
+// NAV HIGHLIGHT
+// ============================================
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a');
+const navObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if(link) link.classList.add('active');
+    }
+  });
+}, {threshold:.2, rootMargin:'-80px 0px -50% 0px'});
+sections.forEach(s => navObs.observe(s));
+</script>
+</body>
+</html>

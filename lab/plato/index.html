@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dialogues of Plato — An Interactive Experience</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#d4a843;--gold-dim:#8a6d2b;--bg:#0a0a0f;--bg2:#12121a;--text:#e8e4d9;
+  --text-dim:#9a9486;--accent:#c4915e;--cave-dark:#050508;--cave-fire:#ff6b35;
+  --sun:#ffd700;--shadow:rgba(0,0,0,.6);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;line-height:1.7;overflow-x:hidden}
+a{color:var(--gold)}
+::selection{background:var(--gold);color:var(--bg)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(212,168,67,.15);padding:0 1rem}
+nav ul{display:flex;gap:.25rem;list-style:none;overflow-x:auto;max-width:1200px;margin:0 auto;scrollbar-width:none}
+nav ul::-webkit-scrollbar{display:none}
+nav li a{display:block;padding:.75rem .6rem;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;white-space:nowrap;transition:color .3s}
+nav li a:hover,nav li a.active{color:var(--gold)}
+
+/* SECTIONS */
+section{min-height:100vh;padding:5rem 1.5rem 4rem;max-width:900px;margin:0 auto}
+h1{font-size:clamp(2rem,6vw,4rem);color:var(--gold);font-weight:400;letter-spacing:.04em;margin-bottom:1rem}
+h2{font-size:clamp(1.5rem,4vw,2.5rem);color:var(--gold);font-weight:400;margin-bottom:1.5rem}
+.subtitle{color:var(--text-dim);font-style:italic;font-size:1.1rem;margin-bottom:2rem}
+.quote-block{border-left:3px solid var(--gold-dim);padding:.75rem 1.25rem;margin:2rem 0;font-style:italic;color:var(--accent)}
+.quote-attr{text-align:right;color:var(--text-dim);font-size:.85rem;margin-top:.25rem}
+
+/* BUTTONS */
+.btn{display:inline-block;padding:.85rem 1.75rem;min-height:44px;min-width:44px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font-family:inherit;font-size:.95rem;cursor:pointer;transition:all .3s;border-radius:2px;text-decoration:none}
+.btn:hover{background:var(--gold);color:var(--bg)}
+.btn-row{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.5rem 0}
+
+/* HERO */
+#hero{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100vh;position:relative}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(212,168,67,.06) 0%,transparent 70%)}
+.hero-icon{font-size:5rem;margin-bottom:1rem;opacity:.7}
+#hero h1{font-size:clamp(2.5rem,7vw,5rem);line-height:1.15}
+.scroll-hint{position:absolute;bottom:2rem;animation:bob 2s ease-in-out infinite;color:var(--text-dim);font-size:1.5rem}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* SOCRATIC DIALOGUE */
+#dialogue-box{background:var(--bg2);border:1px solid rgba(212,168,67,.2);border-radius:4px;padding:1.5rem;margin:1.5rem 0;min-height:200px}
+.dialogue-line{margin:.75rem 0;padding:.5rem;border-radius:4px;animation:fadeUp .4s ease}
+.dialogue-line.socrates{border-left:3px solid var(--gold);padding-left:1rem}
+.dialogue-line.user{border-left:3px solid var(--accent);padding-left:1rem;background:rgba(196,145,94,.05)}
+.dialogue-line .speaker{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:.15rem}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* CAVE */
+#cave-scene{position:relative;width:100%;height:60vh;min-height:350px;border-radius:4px;overflow:hidden;margin:2rem 0;cursor:pointer;touch-action:pan-y}
+#cave-canvas{width:100%;height:100%;display:block}
+.cave-instructions{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);color:var(--text-dim);font-size:.85rem;text-align:center;pointer-events:none;transition:opacity 1s}
+.cave-label{position:absolute;top:1rem;left:1rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.15em;color:var(--gold);opacity:.8}
+
+/* DIVIDED LINE */
+.line-container{display:flex;flex-direction:column;gap:0;margin:2rem 0}
+.line-level{padding:1.25rem;border-left:4px solid var(--gold-dim);cursor:pointer;transition:all .4s;min-height:44px}
+.line-level:hover,.line-level.active{background:rgba(212,168,67,.08);border-left-color:var(--gold)}
+.line-level h3{color:var(--gold);font-size:1rem;font-weight:400;margin-bottom:.25rem}
+.line-level p{color:var(--text-dim);font-size:.9rem;max-height:0;overflow:hidden;transition:max-height .5s,opacity .4s;opacity:0}
+.line-level.active p{max-height:200px;opacity:1}
+.line-arrow{text-align:center;color:var(--gold-dim);font-size:1.2rem;padding:.25rem}
+
+/* FORMS */
+.forms-demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:2rem 0}
+.form-card{background:var(--bg2);border:1px solid rgba(212,168,67,.15);padding:1.5rem 1rem;text-align:center;border-radius:4px;cursor:pointer;transition:all .5s;min-height:44px}
+.form-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.form-card .particular{font-size:2rem;margin-bottom:.5rem;filter:blur(0);transition:filter .5s}
+.form-card.revealed .particular{filter:blur(3px);opacity:.4}
+.form-card .form-name{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);opacity:0;transition:opacity .5s;margin-top:.5rem}
+.form-card.revealed .form-name{opacity:1}
+
+/* VIRTUE QUIZ */
+.virtue-scenario{background:var(--bg2);border:1px solid rgba(212,168,67,.15);padding:1.5rem;border-radius:4px;margin:1.5rem 0}
+.virtue-scenario p{margin-bottom:1rem}
+
+/* IRONY METER */
+.irony-bar{width:100%;height:24px;background:var(--bg2);border:1px solid rgba(212,168,67,.2);border-radius:12px;overflow:hidden;margin:1rem 0}
+.irony-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));width:0%;transition:width 1s ease;border-radius:12px}
+.irony-quotes{margin:1rem 0}
+.irony-quote{padding:.75rem;margin:.5rem 0;border-radius:4px;cursor:pointer;transition:background .3s;min-height:44px;display:flex;align-items:center}
+.irony-quote:hover{background:rgba(212,168,67,.08)}
+
+/* LADDER */
+.ladder{display:flex;flex-direction:column;gap:0;margin:2rem 0}
+.ladder-rung{padding:1rem 1.25rem;border:1px solid rgba(212,168,67,.1);cursor:pointer;transition:all .5s;min-height:44px;opacity:.3}
+.ladder-rung.reached{opacity:1;border-color:var(--gold-dim);background:rgba(212,168,67,.04)}
+.ladder-rung.current{opacity:1;border-color:var(--gold);background:rgba(212,168,67,.1);box-shadow:0 0 20px rgba(212,168,67,.1)}
+.ladder-rung h3{font-size:.95rem;color:var(--gold)}
+.ladder-rung p{font-size:.85rem;color:var(--text-dim);margin-top:.25rem}
+
+/* FOOTER */
+footer{text-align:center;padding:3rem 1.5rem;color:var(--text-dim);font-style:italic;border-top:1px solid rgba(212,168,67,.1)}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  section{padding:4.5rem 1rem 3rem}
+  nav li a{padding:.7rem .45rem;font-size:.65rem}
+  #cave-scene{height:45vh;min-height:280px}
+  .forms-demo{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<nav>
+<ul>
+  <li><a href="#hero">Plato</a></li>
+  <li><a href="#socratic">Socratic Method</a></li>
+  <li><a href="#cave">The Cave</a></li>
+  <li><a href="#line">Divided Line</a></li>
+  <li><a href="#forms">Forms</a></li>
+  <li><a href="#irony">Irony</a></li>
+  <li><a href="#ladder">Love</a></li>
+  <li><a href="#examined">Examined Life</a></li>
+</ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-icon">🏛️</div>
+  <h1>The Dialogues of Plato</h1>
+  <p class="subtitle">An Interactive Journey Through the Foundation of Western Thought</p>
+  <p style="max-width:500px;text-align:center;margin:1.5rem auto;color:var(--text-dim)">Athens, 5th century BC. A stonemason's son wanders the agora, asking questions that will haunt humanity for 2,400 years. His name is Socrates. He wrote nothing. He changed everything.</p>
+  <a href="#socratic" class="btn" style="margin-top:1.5rem">Enter the Dialogue ↓</a>
+  <div class="scroll-hint">↓</div>
+</section>
+
+<!-- 1. SOCRATIC METHOD -->
+<section id="socratic">
+  <h2>I. The Socratic Method</h2>
+  <div class="quote-block">
+    "I know that I know nothing."
+    <div class="quote-attr">— Socrates, in Plato's Apology</div>
+  </div>
+  <p>Socrates didn't lecture. He <em>questioned</em>. He'd approach someone who claimed to be wise, ask them to define something basic — justice, courage, piety — then methodically reveal that they couldn't. This wasn't cruelty. It was philosophy's first tool: <strong>elenchus</strong>, cross-examination.</p>
+  <p style="margin-top:1rem">Now it's your turn. Socrates wants to talk to <em>you</em>.</p>
+
+  <div id="dialogue-box">
+    <div class="dialogue-line socrates">
+      <div class="speaker">Socrates</div>
+      <div>Greetings, friend. You seem like someone who thinks carefully about things. Tell me — what is <strong>justice</strong>? Surely you, living in a society with laws and courts, must have some idea.</div>
+    </div>
+  </div>
+  <div class="btn-row" id="socratic-choices">
+    <button class="btn" onclick="socraticRespond(0)">Justice is following the law</button>
+    <button class="btn" onclick="socraticRespond(1)">Justice is giving people what they deserve</button>
+    <button class="btn" onclick="socraticRespond(2)">Justice is fairness — treating everyone equally</button>
+  </div>
+</section>
+
+<!-- 2. THE CAVE -->
+<section id="cave">
+  <h2>II. The Allegory of the Cave</h2>
+  <div class="quote-block">
+    "Allegory of the cave" — Republic, Book VII
+    <div class="quote-attr">— Plato</div>
+  </div>
+  <p>Imagine prisoners chained since birth in a dark cave. Behind them burns a fire, and between the fire and the prisoners, people carry objects whose shadows dance on the cave wall. The prisoners think the shadows are reality — it's all they've ever known.</p>
+  <p style="margin-top:1rem"><strong>Drag or click</strong> to journey from darkness to light.</p>
+
+  <div id="cave-scene">
+    <canvas id="cave-canvas"></canvas>
+    <div class="cave-label" id="cave-label">THE CAVE — CHAINED</div>
+    <div class="cave-instructions" id="cave-inst">← drag or tap to move toward the light →</div>
+  </div>
+  <p id="cave-text" style="margin-top:1rem;color:var(--text-dim);min-height:3rem;transition:opacity .5s">You sit in darkness. Shadows flicker on the wall before you. This is all you have ever known. This is "reality."</p>
+</section>
+
+<!-- 3. DIVIDED LINE -->
+<section id="line">
+  <h2>III. The Divided Line</h2>
+  <div class="quote-block">
+    "There are four states of mind corresponding to four segments of the line: understanding, reasoning, belief, and imagination."
+    <div class="quote-attr">— Republic, Book VI</div>
+  </div>
+  <p>Plato divides all knowledge into four levels. Click each to explore — and notice: most of what we call "knowledge" barely reaches the second rung.</p>
+
+  <div class="line-container">
+    <div class="line-level" onclick="toggleLine(this,3)" data-level="3">
+      <h3>IV. Noesis — Understanding / Dialectic</h3>
+      <p>Direct apprehension of the Forms through pure reason. The philosopher grasps the Form of the Good itself — the "sun" that illuminates all other knowledge. No images, no assumptions — only truth grasped by the mind alone. This is what Socrates spent his life pursuing.</p>
+    </div>
+    <div class="line-arrow">↑</div>
+    <div class="line-level" onclick="toggleLine(this,2)" data-level="2">
+      <h3>III. Dianoia — Reasoning / Mathematics</h3>
+      <p>Mathematical and logical reasoning. We use diagrams and hypotheses, but we're still working with abstractions. A mathematician draws a triangle but reasons about Triangle itself. Close to truth, but still relies on unexamined assumptions.</p>
+    </div>
+    <div class="line-arrow">↑</div>
+    <div class="line-level" onclick="toggleLine(this,1)" data-level="1">
+      <h3>II. Pistis — Belief / Physical Objects</h3>
+      <p>Knowledge of the physical world through the senses. You see a beautiful sunset, a just act, a brave soldier. These are real things — but they change, decay, and contradict. This is where most people live: the world of opinion.</p>
+    </div>
+    <div class="line-arrow">↑</div>
+    <div class="line-level active" onclick="toggleLine(this,0)" data-level="0">
+      <h3>I. Eikasia — Imagination / Shadows</h3>
+      <p>The lowest form: shadows, reflections, images, illusions. Think of it as mistaking a photograph for the person, a slogan for understanding, a social media post for reality. The prisoners in the Cave live here — watching shadows and calling them real.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. FORMS -->
+<section id="forms">
+  <h2>IV. The Theory of Forms</h2>
+  <div class="quote-block">
+    "The objects of knowledge are not the visible things, but the invisible realities of which visible things are the shadows."
+    <div class="quote-attr">— Republic</div>
+  </div>
+  <p>Behind every imperfect particular — every crooked circle, every flawed act of justice — lies a perfect, eternal <em>Form</em>. Click each to see past the particular to the Form behind it.</p>
+
+  <div class="forms-demo" id="forms-grid">
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">⭕</div>
+      <div>A drawn circle</div>
+      <div class="form-name">The Form of Circularity — perfect, without width or wobble</div>
+    </div>
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">🌹</div>
+      <div>A red rose</div>
+      <div class="form-name">The Form of Beauty — that which all beautiful things participate in</div>
+    </div>
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">⚖️</div>
+      <div>A court verdict</div>
+      <div class="form-name">The Form of Justice — perfect justice, never fully realized</div>
+    </div>
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">🔢</div>
+      <div>The number 3</div>
+      <div class="form-name">The Form of Threeness — the essence every triple partakes in</div>
+    </div>
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">🪑</div>
+      <div>A wooden chair</div>
+      <div class="form-name">The Form of Chair — the ideal "chairness" the carpenter imitates</div>
+    </div>
+    <div class="form-card" onclick="revealForm(this)">
+      <div class="particular">🤝</div>
+      <div>A kind act</div>
+      <div class="form-name">The Form of the Good — the highest Form, source of all others</div>
+    </div>
+  </div>
+  <p style="color:var(--text-dim);font-size:.9rem;margin-top:1rem" id="forms-counter">0 of 6 Forms revealed. The particulars fade; the Forms endure.</p>
+</section>
+
+<!-- 5. SOCRATIC IRONY -->
+<section id="irony">
+  <h2>V. Socratic Irony</h2>
+  <div class="quote-block">
+    "I am wiser than this man; for neither of us really knows anything, but he thinks he knows when he does not, while I, not knowing, do not think I know."
+    <div class="quote-attr">— Apology</div>
+  </div>
+  <p>Socrates' signature move: pretend to be ignorant, flatter your opponent's "wisdom," then watch them tie themselves in knots. How ironic is each quote? Rate them — the meter reveals the truth.</p>
+
+  <div class="irony-bar"><div class="irony-fill" id="irony-fill"></div></div>
+  <div id="irony-level" style="text-align:center;color:var(--gold);font-size:.85rem">Irony Level: 0%</div>
+
+  <div class="irony-quotes">
+    <div class="irony-quote" onclick="rateIrony(this,90)" data-scored="0">
+      <span>🎭</span>&nbsp;&nbsp;"You, Euthyphro, who are so much wiser than I, surely <em>you</em> can tell me what piety is." <small style="color:var(--text-dim);margin-left:auto">— Euthyphro</small>
+    </div>
+    <div class="irony-quote" onclick="rateIrony(this,70)" data-scored="0">
+      <span>🎭</span>&nbsp;&nbsp;"Allegiance! I only want to learn. If Protagoras is willing to teach me, who am I to refuse the greatest mind of our age?" <small style="color:var(--text-dim);margin-left:auto">— Protagoras</small>
+    </div>
+    <div class="irony-quote" onclick="rateIrony(this,95)" data-scored="0">
+      <span>🎭</span>&nbsp;&nbsp;"I am the wisest of the Greeks, for I alone know that I know nothing." <small style="color:var(--text-dim);margin-left:auto">— Apology</small>
+    </div>
+    <div class="irony-quote" onclick="rateIrony(this,60)" data-scored="0">
+      <span>🎭</span>&nbsp;&nbsp;"Allegiance to the laws of Athens has always been my nature — I would never presume to question them..." <small style="color:var(--text-dim);margin-left:auto">— Crito</small>
+    </div>
+    <div class="irony-quote" onclick="rateIrony(this,85)" data-scored="0">
+      <span>🎭</span>&nbsp;&nbsp;"Please, Thrasymachus, do not be angry with me. If I err in my reasoning, I assure you I err involuntarily." <small style="color:var(--text-dim);margin-left:auto">— Republic</small>
+    </div>
+  </div>
+</section>
+
+<!-- 6. LADDER OF LOVE -->
+<section id="ladder">
+  <h2>VI. The Ladder of Love</h2>
+  <div class="quote-block">
+    "He whom love touches does not walk in darkness."
+    <div class="quote-attr">— Symposium</div>
+  </div>
+  <p>In the <em>Symposium</em>, the priestess Diotima teaches Socrates that Love (Eros) is a ladder. Begin with love of <strong>one</strong> beautiful body, and if your soul is worthy, ascend rung by rung until you glimpse absolute Beauty itself. Click each rung to ascend.</p>
+
+  <div class="ladder" id="love-ladder">
+    <div class="ladder-rung reached current" onclick="climbLadder(0)">
+      <h3>1. One Beautiful Body</h3>
+      <p>You fall in love with a particular person's beauty. This is where every love story begins.</p>
+    </div>
+    <div class="ladder-rung" onclick="climbLadder(1)">
+      <h3>2. All Beautiful Bodies</h3>
+      <p>You realize the beauty in one person exists in many. You love Beauty wherever you find it — why be enslaved to one form?</p>
+    </div>
+    <div class="ladder-rung" onclick="climbLadder(2)">
+      <h3>3. Beauty of the Soul</h3>
+      <p>Physical beauty fades. You discover that a beautiful soul — character, virtue, mind — is more beautiful than any body.</p>
+    </div>
+    <div class="ladder-rung" onclick="climbLadder(3)">
+      <h3>4. Beauty in Knowledge & Laws</h3>
+      <p>You see beauty in ideas, in well-ordered cities, in mathematics, in the structure of reality itself.</p>
+    </div>
+    <div class="ladder-rung" onclick="climbLadder(4)">
+      <h3>5. The Form of Beauty Itself</h3>
+      <p>The summit. Absolute Beauty — eternal, perfect, unmixed. Not a face or an idea, but Beauty itself, "pure and clear and unalloyed." You see what everything beautiful was always pointing toward.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. THE EXAMINED LIFE -->
+<section id="examined">
+  <h2>VII. The Examined Life</h2>
+  <div class="quote-block">
+    "The unexamined life is not worth living."
+    <div class="quote-attr">— Apology, 38a</div>
+  </div>
+  <p>At his trial, facing death, Socrates refused to stop philosophizing. The jury offered him a deal: stop asking questions and live. He refused. He chose death over an unexamined life.</p>
+  <p style="margin-top:1rem">What does it mean to examine your life? Socrates would start here:</p>
+
+  <div class="virtue-scenario" id="examined-box">
+    <p id="exam-question" style="font-size:1.1rem"><strong>What do you believe is the most important thing in life?</strong></p>
+    <div class="btn-row" id="exam-choices">
+      <button class="btn" onclick="examineLife(0)">Happiness</button>
+      <button class="btn" onclick="examineLife(1)">Knowledge</button>
+      <button class="btn" onclick="examineLife(2)">Virtue / Being Good</button>
+      <button class="btn" onclick="examineLife(3)">Freedom</button>
+    </div>
+  </div>
+
+  <div style="margin-top:3rem;text-align:center;padding:2rem;border:1px solid rgba(212,168,67,.15);border-radius:4px">
+    <p style="font-size:1.2rem;color:var(--gold);margin-bottom:1rem">The Oracle's Challenge</p>
+    <p style="color:var(--text-dim)">The Oracle at Delphi said no one was wiser than Socrates. He spent his life trying to prove it wrong — and in doing so, proved it right. Wisdom begins with knowing what you don't know.</p>
+    <p style="margin-top:1.5rem;font-size:1.3rem;color:var(--gold)">γνῶθι σεαυτόν</p>
+    <p style="color:var(--text-dim);font-size:.9rem">Know Thyself — inscribed at the Temple of Apollo at Delphi</p>
+  </div>
+</section>
+
+<footer>
+  <p>"The myth of the cave" — Plato, Republic VII</p>
+  <p style="margin-top:.5rem;font-size:.85rem">An interactive exploration of the Dialogues of Plato</p>
+</footer>
+
+<script>
+// NAV HIGHLIGHT
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// 1. SOCRATIC DIALOGUE
+const dialogueTree = [
+  // Response 0: Justice = following the law
+  [
+    { s: "Interesting! So justice is simply obeying the law. But tell me — were the laws of Nazi Germany just? Those who helped Jews broke the law. Were they unjust?", choices: [
+      { text: "No — sometimes laws are unjust", next: "common1" },
+      { text: "They were technically unjust, but morally right", next: "common2" }
+    ]},
+  ],
+  // Response 1: Justice = giving what's deserved
+  [
+    { s: "Ah, giving each person their due! A fine answer — Polemarchus said the same thing in the Republic. But tell me: if a friend lends you a weapon while sane, and asks for it back while mad, do they deserve to have it returned?", choices: [
+      { text: "No — giving someone a weapon to harm themselves isn't just", next: "common1" },
+      { text: "Yes — it's theirs by right", next: "common3" }
+    ]},
+  ],
+  // Response 2: Justice = fairness/equality
+  [
+    { s: "Treating everyone equally — a noble thought! But consider: should a doctor give the same medicine to every patient? Should a teacher give the same grade to every student? Is perfect equality always fair?", choices: [
+      { text: "No — sometimes equality ignores important differences", next: "common1" },
+      { text: "True equality means equal treatment given equal circumstances", next: "common2" }
+    ]},
+  ],
+];
+
+const commonBranches = {
+  common1: { s: "Now you see the difficulty! Your original definition has a gap. You knew what justice <em>felt like</em>, but when we examined it carefully, it slipped through your fingers. Welcome to philosophy, friend. This is exactly what happened to every person Socrates questioned — and he did it with love, not malice. The point was never to humiliate, but to awaken.", choices: null },
+  common2: { s: "But if justice is something beyond the law, beyond mere equality — then what IS it? You've moved from a simple answer to a harder question. That's progress! Socrates called himself a 'midwife of ideas' — he helped others give birth to truths they didn't know they carried. Your confusion is the beginning of wisdom.", choices: null },
+  common3: { s: "But surely you don't believe justice requires us to cause harm? If 'giving what is deserved' can lead to harm, then perhaps justice is something deeper than simple desert. Every definition of justice, when pressed, reveals its limits. This is the Socratic method: not answers, but better questions.", choices: null },
+};
+
+let dialogueStep = 0;
+function socraticRespond(choice) {
+  const box = document.getElementById('dialogue-box');
+  const choicesEl = document.getElementById('socratic-choices');
+  const btnText = choicesEl.children[choice].textContent;
+
+  // Add user response
+  box.innerHTML += `<div class="dialogue-line user"><div class="speaker">You</div><div>${btnText}</div></div>`;
+
+  const branch = dialogueTree[choice][0];
+  setTimeout(() => {
+    box.innerHTML += `<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div>${branch.s}</div></div>`;
+    if (branch.choices) {
+      choicesEl.innerHTML = '';
+      branch.choices.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = c.text;
+        btn.onclick = () => socraticFollowup(c.next, c.text);
+        choicesEl.appendChild(btn);
+      });
+    } else {
+      choicesEl.innerHTML = '';
+    }
+    box.scrollTop = box.scrollHeight;
+  }, 600);
+}
+
+function socraticFollowup(key, userText) {
+  const box = document.getElementById('dialogue-box');
+  const choicesEl = document.getElementById('socratic-choices');
+  box.innerHTML += `<div class="dialogue-line user"><div class="speaker">You</div><div>${userText}</div></div>`;
+  const branch = commonBranches[key];
+  setTimeout(() => {
+    box.innerHTML += `<div class="dialogue-line socrates"><div class="speaker">Socrates</div><div>${branch.s}</div></div>`;
+    choicesEl.innerHTML = '';
+    box.scrollTop = box.scrollHeight;
+  }, 600);
+}
+
+// 2. CAVE ALLEGORY
+const caveCanvas = document.getElementById('cave-canvas');
+const caveCtx = caveCanvas.getContext('2d');
+let caveProgress = 0; // 0 = cave, 1 = outside
+let caveDragging = false;
+let caveLastX = 0;
+
+function resizeCave() {
+  const rect = caveCanvas.parentElement.getBoundingClientRect();
+  caveCanvas.width = rect.width * (window.devicePixelRatio || 1);
+  caveCanvas.height = rect.height * (window.devicePixelRatio || 1);
+  caveCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  drawCave();
+}
+
+const caveTexts = [
+  "You sit in darkness. Shadows flicker on the wall before you. This is all you have ever known. This is \"reality.\"",
+  "Something compels you to turn. The shadows grow faint. You sense a source of light behind you.",
+  "A fire! The shadows were cast by objects paraded before this flame. What you thought was real was merely projection.",
+  "You stumble toward the mouth of the cave. The light is blinding, painful. You want to turn back.",
+  "Your eyes adjust. You see trees, rivers, the sky — real things, not shadows. The world is vast beyond imagination.",
+  "You look up at the sun itself — the source of all light, all life, all truth. Plato's Form of the Good."
+];
+
+function drawCave() {
+  const w = caveCanvas.width / (window.devicePixelRatio || 1);
+  const h = caveCanvas.height / (window.devicePixelRatio || 1);
+  const p = caveProgress;
+
+  // Background gradient: cave dark → outside bright
+  const bg = caveCtx.createLinearGradient(0, 0, 0, h);
+  if (p < 0.3) {
+    bg.addColorStop(0, '#050508');
+    bg.addColorStop(1, '#0a0a12');
+  } else if (p < 0.6) {
+    const t = (p - 0.3) / 0.3;
+    bg.addColorStop(0, lerpColor('#050508', '#1a1520', t));
+    bg.addColorStop(1, lerpColor('#0a0a12', '#2a1a10', t));
+  } else {
+    const t = (p - 0.6) / 0.4;
+    bg.addColorStop(0, lerpColor('#1a1520', '#87CEEB', t));
+    bg.addColorStop(1, lerpColor('#2a1a10', '#228B22', t));
+  }
+  caveCtx.fillStyle = bg;
+  caveCtx.fillRect(0, 0, w, h);
+
+  if (p < 0.2) {
+    // Shadows on cave wall
+    drawShadows(w, h, p);
+  } else if (p < 0.4) {
+    // Fire visible
+    drawFire(w, h, p);
+  } else if (p < 0.65) {
+    // Cave mouth
+    drawCaveMouth(w, h, p);
+  } else if (p < 0.85) {
+    // Outside world
+    drawOutside(w, h, p);
+  } else {
+    // Sun
+    drawSun(w, h, p);
+  }
+
+  // Update text
+  const idx = Math.min(5, Math.floor(p * 6));
+  document.getElementById('cave-text').textContent = caveTexts[idx];
+  document.getElementById('cave-label').textContent = ['THE CAVE — CHAINED','THE CAVE — TURNING','THE FIRE','THE ASCENT','THE WORLD','THE SUN — THE FORM OF THE GOOD'][idx];
+  document.getElementById('cave-inst').style.opacity = p < 0.05 ? 1 : 0;
+}
+
+function drawShadows(w, h, p) {
+  const time = Date.now() / 1000;
+  // Flickering fire glow from behind
+  const glow = caveCtx.createRadialGradient(w/2, h, 0, w/2, h, h*0.6);
+  glow.addColorStop(0, 'rgba(255,107,53,0.08)');
+  glow.addColorStop(1, 'transparent');
+  caveCtx.fillStyle = glow;
+  caveCtx.fillRect(0, 0, w, h);
+
+  // Shadow figures on wall
+  caveCtx.fillStyle = 'rgba(20,15,10,0.7)';
+  for (let i = 0; i < 4; i++) {
+    const x = w * 0.15 + i * w * 0.2;
+    const sway = Math.sin(time + i * 1.5) * 8;
+    const sh = h * 0.25 + Math.sin(time * 0.7 + i) * 10;
+    // Simple shadow figure
+    caveCtx.beginPath();
+    caveCtx.ellipse(x + sway, h * 0.35, 15, 12, 0, 0, Math.PI * 2);
+    caveCtx.fill();
+    caveCtx.fillRect(x + sway - 6, h * 0.35 + 8, 12, sh);
+  }
+
+  // Chain hint
+  caveCtx.strokeStyle = 'rgba(100,80,60,0.3)';
+  caveCtx.lineWidth = 2;
+  caveCtx.beginPath();
+  caveCtx.moveTo(w*0.1, h*0.7);
+  caveCtx.lineTo(w*0.9, h*0.7);
+  caveCtx.stroke();
+}
+
+function drawFire(w, h, p) {
+  const t = (p - 0.2) / 0.2;
+  // Fire
+  const glow = caveCtx.createRadialGradient(w/2, h*0.6, 0, w/2, h*0.6, w*0.4);
+  glow.addColorStop(0, `rgba(255,107,53,${0.3*t})`);
+  glow.addColorStop(0.5, `rgba(255,165,0,${0.15*t})`);
+  glow.addColorStop(1, 'transparent');
+  caveCtx.fillStyle = glow;
+  caveCtx.fillRect(0, 0, w, h);
+
+  // Flame shapes
+  const time = Date.now()/800;
+  for(let i=0;i<5;i++){
+    caveCtx.fillStyle = `rgba(255,${100+i*30},0,${0.4*t})`;
+    const fx = w/2 + Math.sin(time+i)*20 - 30 + i*15;
+    const fy = h*0.55 - Math.abs(Math.sin(time*1.3+i*0.7))*30;
+    caveCtx.beginPath();
+    caveCtx.ellipse(fx,fy,8,20+Math.sin(time+i)*8,0,0,Math.PI*2);
+    caveCtx.fill();
+  }
+}
+
+function drawCaveMouth(w, h, p) {
+  const t = (p - 0.4) / 0.25;
+  // Cave opening — bright ellipse
+  const cx = w/2, cy = h*0.4;
+  const rx = w*0.15 + t*w*0.35, ry = h*0.15 + t*h*0.35;
+  const glow = caveCtx.createRadialGradient(cx,cy,0,cx,cy,Math.max(rx,ry));
+  glow.addColorStop(0, `rgba(255,250,220,${0.6+t*0.4})`);
+  glow.addColorStop(0.6, `rgba(255,220,150,${0.2+t*0.2})`);
+  glow.addColorStop(1, 'transparent');
+  caveCtx.fillStyle = glow;
+  caveCtx.fillRect(0, 0, w, h);
+}
+
+function drawOutside(w, h, p) {
+  const t = (p - 0.65) / 0.2;
+  // Sky
+  caveCtx.fillStyle = `rgba(135,206,235,${t})`;
+  caveCtx.fillRect(0,0,w,h*0.6);
+  // Ground
+  caveCtx.fillStyle = `rgba(34,139,34,${t*0.7})`;
+  caveCtx.fillRect(0,h*0.6,w,h*0.4);
+  // Trees
+  for(let i=0;i<5;i++){
+    const tx = w*0.1+i*w*0.2;
+    caveCtx.fillStyle = `rgba(101,67,33,${t})`;
+    caveCtx.fillRect(tx-4,h*0.4,8,h*0.2);
+    caveCtx.fillStyle = `rgba(34,100,34,${t})`;
+    caveCtx.beginPath();
+    caveCtx.arc(tx,h*0.38,25,0,Math.PI*2);
+    caveCtx.fill();
+  }
+}
+
+function drawSun(w, h, p) {
+  const t = (p - 0.85) / 0.15;
+  // Bright sky
+  caveCtx.fillStyle = '#87CEEB';
+  caveCtx.fillRect(0,0,w,h*0.6);
+  caveCtx.fillStyle = '#228B22';
+  caveCtx.fillRect(0,h*0.6,w,h*0.4);
+  // Sun
+  const glow = caveCtx.createRadialGradient(w/2,h*0.2,0,w/2,h*0.2,w*0.4);
+  glow.addColorStop(0,`rgba(255,215,0,${0.5+t*0.5})`);
+  glow.addColorStop(0.3,`rgba(255,235,100,${0.3*t})`);
+  glow.addColorStop(1,'transparent');
+  caveCtx.fillStyle = glow;
+  caveCtx.fillRect(0,0,w,h);
+  caveCtx.fillStyle = `rgba(255,215,0,${t})`;
+  caveCtx.beginPath();
+  caveCtx.arc(w/2,h*0.2,30+t*20,0,Math.PI*2);
+  caveCtx.fill();
+  // Text overlay
+  if(t>0.5){
+    caveCtx.fillStyle = `rgba(0,0,0,${(t-0.5)*0.6})`;
+    caveCtx.font = `${Math.floor(14+t*6)}px Georgia`;
+    caveCtx.textAlign = 'center';
+    caveCtx.fillText('τὸ ἀγαθόν — The Form of the Good',w/2,h*0.85);
+  }
+}
+
+function lerpColor(a, b, t) {
+  const pa = parseColor(a), pb = parseColor(b);
+  const r = Math.round(pa[0]+(pb[0]-pa[0])*t);
+  const g = Math.round(pa[1]+(pb[1]-pa[1])*t);
+  const bl = Math.round(pa[2]+(pb[2]-pa[2])*t);
+  return `rgb(${r},${g},${bl})`;
+}
+function parseColor(hex) {
+  hex = hex.replace('#','');
+  return [parseInt(hex.substr(0,2),16),parseInt(hex.substr(2,2),16),parseInt(hex.substr(4,2),16)];
+}
+
+// Cave interaction
+const caveEl = document.getElementById('cave-scene');
+caveEl.addEventListener('pointerdown', e => { caveDragging = true; caveLastX = e.clientX; });
+window.addEventListener('pointermove', e => {
+  if (!caveDragging) return;
+  const dx = e.clientX - caveLastX;
+  caveLastX = e.clientX;
+  caveProgress = Math.max(0, Math.min(1, caveProgress + dx * 0.003));
+  drawCave();
+});
+window.addEventListener('pointerup', () => { caveDragging = false; });
+// Tap to advance
+caveEl.addEventListener('click', e => {
+  if (Math.abs(e.clientX - caveLastX) < 5) {
+    caveProgress = Math.min(1, caveProgress + 0.12);
+    drawCave();
+  }
+});
+window.addEventListener('resize', resizeCave);
+resizeCave();
+
+// Animate cave shadows
+let caveAnim;
+function animCave(){caveAnim=requestAnimationFrame(animCave);if(caveProgress<0.25)drawCave();}
+animCave();
+
+// 3. DIVIDED LINE
+function toggleLine(el, level) {
+  document.querySelectorAll('.line-level').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// 4. FORMS
+let formsRevealed = 0;
+function revealForm(el) {
+  if (!el.classList.contains('revealed')) {
+    el.classList.add('revealed');
+    formsRevealed++;
+    document.getElementById('forms-counter').textContent = `${formsRevealed} of 6 Forms revealed. ${formsRevealed===6?'Now you see beyond the shadows.':'The particulars fade; the Forms endure.'}`;
+  }
+}
+
+// 5. IRONY
+let ironyTotal = 0, ironyCount = 0;
+function rateIrony(el, score) {
+  if (el.dataset.scored === '1') return;
+  el.dataset.scored = '1';
+  el.style.background = 'rgba(212,168,67,0.08)';
+  ironyCount++;
+  ironyTotal += score;
+  const avg = ironyTotal / ironyCount;
+  document.getElementById('irony-fill').style.width = avg + '%';
+  const labels = ['Sincere','Slightly Wry','Politely Devastating','Maximum Irony','Pure Socrates'];
+  const label = labels[Math.min(4, Math.floor(avg / 20))];
+  document.getElementById('irony-level').textContent = `Irony Level: ${Math.round(avg)}% — ${label}`;
+}
+
+// 6. LADDER OF LOVE
+let ladderLevel = 0;
+function climbLadder(level) {
+  if (level > ladderLevel + 1) return;
+  ladderLevel = level;
+  document.querySelectorAll('.ladder-rung').forEach((r, i) => {
+    r.classList.remove('reached', 'current');
+    if (i < level) r.classList.add('reached');
+    if (i === level) r.classList.add('reached', 'current');
+  });
+}
+
+// 7. EXAMINED LIFE
+const examTree = {
+  happiness: [
+    { q: "And is the happiness of a tyrant — who has everything he desires but lives in constant fear — true happiness?", choices: [
+      { text: "No — happiness requires inner peace", response: "Then happiness is not mere pleasure or getting what you want. It requires something more — perhaps virtue, perhaps knowledge. You've just moved beyond your first answer. That <em>is</em> the examined life." },
+      { text: "A tyrant isn't truly happy", response: "Exactly what Socrates argued in the Republic! The tyrant is the <em>least</em> happy person — enslaved by their own appetites. True happiness, Plato argues, comes from the harmony of the soul, with reason in command. You knew this already — the question helped you see it." }
+    ]}
+  ],
+  knowledge: [
+    { q: "But can knowledge make a person miserable? The more you know about injustice in the world, the more you suffer. Is knowledge still the most important thing?", choices: [
+      { text: "Yes — even painful knowledge is better than ignorance", response: "You sound like Socrates himself. He chose death over ignorance — at his trial, he said 'the unexamined life is not worth living.' Even painful truth is preferable to comfortable illusion. You've just chosen to leave the Cave." },
+      { text: "Maybe wisdom is knowing what's worth knowing", response: "A subtle and very Platonic answer! In the Republic, Plato distinguishes many kinds of knowledge and puts dialectic — the knowledge of what is truly real — at the top. Not all knowledge is equal. You've begun to examine your own answer. Socrates would be pleased." }
+    ]}
+  ],
+  virtue: [
+    { q: "But what IS virtue? Can you define it without going in circles? Meno tried — and failed. Is courage a virtue? What about the 'courage' of a criminal?", choices: [
+      { text: "Virtue needs wisdom to guide it", response: "Now you've arrived where Socrates wanted you: virtue <em>is</em> knowledge. Courage without wisdom is recklessness. Justice without understanding is mere conformity. Every virtue, fully examined, turns out to require knowing what is truly good. This is Plato's deepest insight." },
+      { text: "I can't define it precisely, but I know it when I see it", response: "That's exactly what Meno said! And Socrates replied: if you can't define virtue, how do you recognize it? You're relying on <em>opinion</em>, not knowledge. But here's the beautiful part — recognizing that you can't define what you thought you understood? That's the beginning of wisdom. Welcome to philosophy." }
+    ]}
+  ],
+  freedom: [
+    { q: "Freedom from what? From laws? From other people? From your own desires? A person enslaved by addiction is 'free' from rules but hardly free at all...", choices: [
+      { text: "True freedom is self-mastery", response: "The Platonic answer! In the Republic, Plato argues that the just person is free because reason governs their soul, not appetite or passion. The tyrant looks free but is enslaved by desire. True freedom = the soul in harmony, with reason at the helm." },
+      { text: "Freedom to think and question", response: "And THAT is exactly what Socrates died for. Athens offered him freedom — if he'd stop asking questions. He refused. The freedom to examine life, to question assumptions, to pursue truth — that was worth more than life itself. You chose well." }
+    ]}
+  ]
+};
+
+const examKeys = ['happiness','knowledge','virtue','freedom'];
+function examineLife(choice) {
+  const key = examKeys[choice];
+  const tree = examTree[key][0];
+  const box = document.getElementById('examined-box');
+  document.getElementById('exam-question').innerHTML = `<strong>Socrates:</strong> ${tree.q}`;
+  const choicesEl = document.getElementById('exam-choices');
+  choicesEl.innerHTML = '';
+  tree.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      document.getElementById('exam-question').innerHTML = `<strong>Socrates:</strong> ${c.response}`;
+      choicesEl.innerHTML = '<p style="color:var(--text-dim);font-style:italic;margin-top:1rem">The dialogue never truly ends. Every answer opens a new question. That is the examined life.</p>';
+    };
+    choicesEl.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>

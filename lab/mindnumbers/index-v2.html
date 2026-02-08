@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Mind for Numbers v2 — Brain Gym</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121e;--accent:#6c5ce7;--accent2:#00cec9;--accent3:#fd79a8;--text:#e0e0e8;--dim:#777;--radius:14px;--glow:0 0 20px rgba(108,92,231,0.12)}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative}
+.hero::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(108,92,231,0.1),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:pulse 6s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.3)}}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;position:relative}
+.hero .subtitle{font-size:clamp(.9rem,2vw,1.15rem);color:var(--dim);max-width:550px;margin-bottom:2rem}
+.hero .author{font-size:.8rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem}
+.scroll-hint{position:absolute;bottom:2rem;animation:bob 2s ease-in-out infinite;font-size:1.3rem;opacity:.4}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+nav.toc{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:1.5rem}
+nav.toc a{padding:.4rem .8rem;border-radius:8px;font-size:.8rem;color:var(--accent);text-decoration:none;background:rgba(108,92,231,0.08);border:1px solid rgba(108,92,231,0.15);transition:all .2s}
+nav.toc a:hover{background:rgba(108,92,231,0.2)}
+section{max-width:800px;margin:0 auto;padding:3rem 1.5rem}
+.stag{font-size:.7rem;text-transform:uppercase;letter-spacing:3px;color:var(--accent);margin-bottom:.4rem}
+.stitle{font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;margin-bottom:.4rem}
+.quote{border-left:3px solid var(--accent);padding:.7rem 1rem;margin:1.2rem 0;background:rgba(108,92,231,0.05);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:#a0a0b8;font-size:.9rem}
+.quote cite{display:block;margin-top:.3rem;font-style:normal;font-size:.75rem;color:var(--dim)}
+p.desc{color:#99a;margin:.8rem 0 1.2rem;font-size:.9rem}
+.card{background:var(--card);border-radius:var(--radius);padding:1.5rem;margin:1.2rem 0;box-shadow:var(--glow);border:1px solid rgba(255,255,255,0.03)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.6rem 1.2rem;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;touch-action:manipulation;user-select:none}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#5a4bd4}
+.btn-s{background:rgba(108,92,231,0.12);color:var(--accent);border:1px solid rgba(108,92,231,0.25)}.btn-s:hover{background:rgba(108,92,231,0.2)}
+.btn-a2{background:var(--accent2);color:#000}.btn-a3{background:var(--accent3);color:#000}
+.btn-group{display:flex;gap:.6rem;flex-wrap:wrap;margin:.8rem 0}
+.divider{width:50px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;margin:3.5rem auto}
+footer{text-align:center;padding:2rem 1rem;color:var(--dim);font-size:.75rem}
+@media(max-width:600px){section{padding:2rem 1rem}.card{padding:1rem}}
+
+/* ======= FOCUSED/DIFFUSE ======= */
+#fd-canvas{width:100%;height:400px;background:#08080f;border-radius:var(--radius);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.04);cursor:crosshair}
+.fd-node{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;transition:all 1s ease;cursor:pointer;text-align:center;line-height:1.1}
+.fd-edge{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s}
+.fd-mode-label{position:absolute;top:.8rem;left:50%;transform:translateX(-50%);font-size:.75rem;font-weight:700;padding:.3rem .8rem;border-radius:8px;z-index:5;transition:all .5s}
+.fd-hint{position:absolute;bottom:.8rem;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--dim);z-index:5;text-align:center;max-width:90%}
+.fd-solution{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1rem;font-weight:700;color:var(--accent2);opacity:0;transition:opacity .8s;z-index:5;text-align:center;pointer-events:none}
+
+/* ======= CHUNKING ======= */
+.ck-facts{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:.8rem 0;min-height:120px;position:relative}
+.ck-fact{padding:.4rem .7rem;border-radius:8px;font-size:.75rem;cursor:grab;transition:all .4s;border:2px solid transparent;user-select:none;white-space:nowrap}
+.ck-fact.loose{background:rgba(108,92,231,0.1);color:var(--accent);border-color:rgba(108,92,231,0.2)}
+.ck-fact.selected{border-color:var(--accent2);background:rgba(0,206,201,0.15);color:var(--accent2)}
+.ck-fact.chunked{background:rgba(0,206,201,0.2);border-color:var(--accent2);color:var(--accent2);font-weight:700}
+.ck-fact.super{background:var(--accent2);color:#000;font-weight:700}
+.ck-tree{margin-top:1rem;text-align:center;font-size:.8rem;color:var(--dim);min-height:2em}
+
+/* ======= WORKING MEMORY ======= */
+.wm-slots{display:flex;gap:.6rem;justify-content:center;margin:1rem 0;flex-wrap:wrap}
+.wm-slot{width:70px;height:70px;border-radius:12px;border:2px dashed rgba(108,92,231,0.3);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;transition:all .4s;position:relative;background:rgba(108,92,231,0.04)}
+.wm-slot.filled{border-style:solid;border-color:var(--accent);background:rgba(108,92,231,0.12);color:var(--accent)}
+.wm-slot.overflow{border-color:var(--accent3);background:rgba(253,121,168,0.12);animation:shake .5s}
+.wm-slot.chunked-slot{border-color:var(--accent2);background:rgba(0,206,201,0.12);color:var(--accent2);font-size:.7rem;text-align:center;line-height:1.1}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.wm-queue{display:flex;gap:.4rem;justify-content:center;margin:.8rem 0;flex-wrap:wrap}
+.wm-task{padding:.3rem .6rem;border-radius:6px;font-size:.7rem;background:rgba(255,255,255,0.06);color:var(--dim);transition:all .3s}
+.wm-task.next{background:var(--accent);color:#fff;animation:pulseTask 1s infinite}
+@keyframes pulseTask{0%,100%{opacity:1}50%{opacity:.7}}
+.wm-dropped{color:var(--accent3);font-size:.85rem;text-align:center;min-height:1.5em;margin-top:.5rem}
+
+/* ======= EINSTELLUNG ======= */
+.ein-board{max-width:400px;margin:1rem auto;position:relative}
+.ein-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.ein-c{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .3s;border:2px solid transparent;min-height:36px}
+.ein-c.wall{background:#1a1a2e;color:transparent;cursor:default}
+.ein-c.path{background:#1a1a30;color:#555}
+.ein-c.start{background:rgba(108,92,231,0.3);color:var(--accent)}
+.ein-c.end{background:rgba(0,206,201,0.3);color:var(--accent2)}
+.ein-c.visited{background:rgba(253,121,168,0.2);border-color:var(--accent3)}
+.ein-c.correct-path{background:rgba(0,206,201,0.25);border-color:var(--accent2)}
+.ein-c.blocked{background:rgba(253,121,168,0.15)}
+.ein-neural{margin-top:.8rem;font-size:.8rem;color:var(--dim);text-align:center;min-height:3em}
+.ein-neural strong{color:var(--accent3)}
+
+/* ======= POMODORO ======= */
+.pomo-ring{width:200px;height:200px;margin:1rem auto;position:relative}
+.pomo-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.pomo-ring .bg{fill:none;stroke:#1a1a2e;stroke-width:8}
+.pomo-ring .fg{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s,stroke .5s}
+.pomo-ring .fg.brk{stroke:var(--accent2)}
+.pomo-time{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;font-weight:800;font-family:'Courier New',monospace}
+.pomo-time.brk{color:var(--accent2)}
+.pomo-status{text-align:center;font-size:.85rem;color:var(--dim);margin:.8rem 0;min-height:2.5em}
+.pomo-diffuse{background:rgba(0,206,201,0.08);border:1px solid rgba(0,206,201,0.15);border-radius:var(--radius);padding:1rem;margin-top:.8rem;display:none}
+.pomo-diffuse.show{display:block}
+.pomo-diffuse h4{color:var(--accent2);font-size:.85rem;margin-bottom:.5rem}
+.pomo-diffuse p{font-size:.8rem;color:#99a}
+.pomo-thought{margin:.4rem 0;padding:.3rem .6rem;border-radius:6px;background:rgba(0,206,201,0.06);font-size:.75rem;color:var(--accent2);opacity:0;transform:translateY(10px);transition:all .8s}
+.pomo-thought.show{opacity:1;transform:translateY(0)}
+
+/* ======= PROCRASTINATION ======= */
+.proc-loop{display:flex;align-items:center;justify-content:center;gap:.3rem;flex-wrap:wrap;margin:1rem 0}
+.proc-node{padding:.6rem 1rem;border-radius:10px;font-size:.8rem;font-weight:700;text-align:center;transition:all .5s;cursor:pointer;min-width:80px;position:relative}
+.proc-node.active{transform:scale(1.1);box-shadow:0 0 20px rgba(108,92,231,0.3)}
+.proc-arrow{font-size:1.2rem;color:var(--dim)}
+.proc-cue{background:rgba(253,121,168,0.15);color:var(--accent3);border:1px solid rgba(253,121,168,0.3)}
+.proc-routine{background:rgba(108,92,231,0.15);color:var(--accent);border:1px solid rgba(108,92,231,0.3)}
+.proc-reward{background:rgba(0,206,201,0.15);color:var(--accent2);border:1px solid rgba(0,206,201,0.3)}
+.proc-belief{background:rgba(255,200,50,0.15);color:#f0c040;border:1px solid rgba(255,200,50,0.3)}
+.proc-input{width:100%;background:#1a1a2e;border:1px solid rgba(108,92,231,0.2);border-radius:8px;padding:.5rem .8rem;color:var(--text);font-size:.85rem;outline:none;margin-top:.5rem;font-family:inherit}
+.proc-input:focus{border-color:var(--accent)}
+.proc-swap{margin-top:1rem;padding:1rem;border-radius:var(--radius);background:rgba(0,206,201,0.06);border:1px solid rgba(0,206,201,0.1)}
+.proc-swap h4{color:var(--accent2);font-size:.85rem;margin-bottom:.5rem}
+
+/* ======= INTERLEAVING ======= */
+.il-problem{background:#1a1a2e;border-radius:var(--radius);padding:1.2rem;text-align:center;margin:.8rem 0;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.il-problem .type-tag{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:.5rem;padding:.2rem .5rem;border-radius:4px}
+.il-problem .question{font-size:1.1rem;font-weight:700;margin-bottom:.8rem}
+.il-opts{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+.il-opt{padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;border:1px solid rgba(108,92,231,0.2);background:rgba(108,92,231,0.06);transition:all .2s;min-height:40px}
+.il-opt:hover{border-color:rgba(108,92,231,0.5)}
+.il-opt.right{border-color:var(--accent2);background:rgba(0,206,201,0.15);color:var(--accent2)}
+.il-opt.wrong{border-color:var(--accent3);background:rgba(253,121,168,0.1);color:var(--accent3)}
+.il-score-bar{display:flex;gap:1.5rem;justify-content:center;margin:1rem 0;font-size:.85rem}
+.il-score-bar div{text-align:center}
+.il-score-bar .num{font-size:1.5rem;font-weight:800}
+.il-progress{display:flex;gap:3px;justify-content:center;margin:.5rem 0}
+.il-pip{width:8px;height:8px;border-radius:50%;background:#333}
+.il-pip.done-right{background:var(--accent2)}
+.il-pip.done-wrong{background:var(--accent3)}
+.il-pip.current{background:var(--accent);animation:pulseTask 1s infinite}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="author">Barbara Oakley</div>
+  <h1>A Mind for Numbers</h1>
+  <p class="subtitle">Seven interactive experiments exploring how your brain really learns. Not just reading — doing.</p>
+  <nav class="toc">
+    <a href="#s1">Focused/Diffuse</a>
+    <a href="#s2">Chunking</a>
+    <a href="#s3">Working Memory</a>
+    <a href="#s4">Einstellung</a>
+    <a href="#s5">Pomodoro</a>
+    <a href="#s6">Procrastination</a>
+    <a href="#s7">Interleaving</a>
+  </nav>
+  <p class="scroll-hint">↓</p>
+</div>
+
+<!-- ============ 1. FOCUSED / DIFFUSE ============ -->
+<section id="s1">
+  <div class="stag">01 — Focused vs. Diffuse</div>
+  <h2 class="stitle">Toggle Your Thinking Mode</h2>
+  <div class="quote">"The harder you push your brain to come up with something creative, the less creative your ideas will be."<cite>— Shaun Wassell</cite></div>
+  <p class="desc">A real problem: find the connection between two distant concepts. In <strong>focused mode</strong>, you see details clearly but only nearby nodes. Switch to <strong>diffuse mode</strong>: the view zooms out, distant connections appear, and the solution path lights up.</p>
+  <div class="card">
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-p" id="fd-btn" onclick="fdToggle()">🔬 Focused Mode</button>
+      <button class="btn btn-s" onclick="fdNewProblem()">New Problem</button>
+    </div>
+    <div id="fd-canvas">
+      <div class="fd-mode-label" id="fd-label" style="background:rgba(108,92,231,0.2);color:var(--accent)">FOCUSED</div>
+      <div class="fd-hint" id="fd-hint">Connect the highlighted start → end. Click nodes to trace a path.</div>
+      <div class="fd-solution" id="fd-solution"></div>
+    </div>
+    <p id="fd-msg" style="text-align:center;margin-top:.6rem;font-size:.85rem;min-height:1.5em;color:var(--accent2)"></p>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 2. CHUNKING VISUALIZER ============ -->
+<section id="s2">
+  <div class="stag">02 — Chunking</div>
+  <h2 class="stitle">Build a Chunk Hierarchy</h2>
+  <div class="quote">"Mathematics is amazingly compressible: you may struggle a long time, step by step… But once you truly understand it, there is often a tremendous mental compression."<cite>— William Thurston, Fields Medal winner</cite></div>
+  <p class="desc">Start with 20 scattered facts. Click to select 3–4 related ones, then press "Chunk" to merge them. Then chunk the chunks. Watch a hierarchy emerge until one master chunk holds everything.</p>
+  <div class="card">
+    <div class="ck-facts" id="ck-facts"></div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-p" id="ck-merge" onclick="ckMerge()">Chunk Selected</button>
+      <button class="btn btn-s" onclick="ckReset()">Reset</button>
+    </div>
+    <div class="ck-tree" id="ck-tree"></div>
+    <p id="ck-msg" style="text-align:center;font-size:.85rem;min-height:1.5em;color:var(--accent2);margin-top:.3rem"></p>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 3. WORKING MEMORY ARENA ============ -->
+<section id="s3">
+  <div class="stag">03 — Working Memory</div>
+  <h2 class="stitle">Feel the 4-Slot Limit</h2>
+  <div class="quote">"Your working memory holds only about four chunks of information."<cite>— Barbara Oakley</cite></div>
+  <p class="desc">Tasks arrive. You have 4 slots. When a 5th task arrives, something <strong>drops</strong>. Feel the limit. Then discover how chunking expands your capacity — two items become one chunk, freeing a slot.</p>
+  <div class="card">
+    <div class="wm-slots" id="wm-slots"></div>
+    <div class="wm-dropped" id="wm-dropped"></div>
+    <div style="text-align:center;margin:.5rem 0;font-size:.8rem;color:var(--dim)" id="wm-info">Tasks processed: <span id="wm-count">0</span> | Dropped: <span id="wm-drop-count">0</span></div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-p" id="wm-go" onclick="wmGo()">▶ Start Tasks</button>
+      <button class="btn btn-a2" id="wm-chunk-btn" onclick="wmChunkMode()" style="display:none">🧩 Enable Chunking</button>
+      <button class="btn btn-s" onclick="wmReset()">Reset</button>
+    </div>
+    <p id="wm-msg" style="text-align:center;font-size:.85rem;min-height:1.5em;color:var(--accent2);margin-top:.5rem"></p>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 4. EINSTELLUNG BREAKER ============ -->
+<section id="s4">
+  <div class="stag">04 — Einstellung</div>
+  <h2 class="stitle">Break the Mental Rut</h2>
+  <div class="quote">"An idea you already have in mind prevents a better idea or solution from being found."<cite>— Barbara Oakley</cite></div>
+  <p class="desc">Find a path from <span style="color:var(--accent)">S</span> to <span style="color:var(--accent2)">E</span>. The obvious route is a dead end. Your brain will try it anyway — that's Einstellung. When you're stuck, hit diffuse mode to reveal the real path.</p>
+  <div class="card">
+    <div class="ein-board">
+      <div class="ein-grid" id="ein-grid"></div>
+    </div>
+    <div class="ein-neural" id="ein-neural">Click cells to trace a path from S to E.</div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-s" onclick="einClear()">Clear Path</button>
+      <button class="btn btn-a2" id="ein-diffuse" onclick="einDiffuse()" style="display:none">🧘 Diffuse Mode — Step Back</button>
+      <button class="btn btn-s" onclick="einNew()">New Maze</button>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 5. POMODORO ============ -->
+<section id="s5">
+  <div class="stag">05 — Pomodoro</div>
+  <h2 class="stitle">Focus → Break → Insight</h2>
+  <div class="quote">"The dread of doing a task uses up more time and energy than doing the task itself."<cite>— Rita Emmett</cite></div>
+  <p class="desc">A real working Pomodoro timer. 25 minutes focus, 5 minute break. During the break, watch diffuse-mode thoughts emerge — your brain is secretly working on the problem.</p>
+  <div class="card">
+    <div class="pomo-ring" id="pomo-ring">
+      <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" id="pomo-fg" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="0"/></svg>
+      <div class="pomo-time" id="pomo-time">25:00</div>
+    </div>
+    <div class="pomo-status" id="pomo-status">Focus on <em>process</em>, not product. Just start.</div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-p" id="pomo-btn" onclick="pomoToggle()">Start Focus 🍅</button>
+      <button class="btn btn-s" onclick="pomoReset()">Reset</button>
+      <button class="btn btn-s" onclick="pomoSkip()">Skip →</button>
+    </div>
+    <div style="text-align:center;margin-top:.5rem"><label style="font-size:.75rem;color:var(--dim);cursor:pointer"><input type="checkbox" id="pomo-demo" checked style="margin-right:.3rem">Demo mode (1 min / 15 sec)</label></div>
+    <div class="pomo-diffuse" id="pomo-diffuse">
+      <h4>🌊 Diffuse Mode Active</h4>
+      <p>Your brain is making connections in the background…</p>
+      <div id="pomo-thoughts"></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 6. PROCRASTINATION LOOP ============ -->
+<section id="s6">
+  <div class="stag">06 — Procrastination</div>
+  <h2 class="stitle">Rewire the Habit Loop</h2>
+  <div class="quote">"Procrastination is triggered by pain anticipation — the pain centers light up when you think about doing math, but the pain disappears once you actually start."<cite>— Barbara Oakley</cite></div>
+  <p class="desc">Visualize the habit loop: <strong>Cue → Routine → Reward → Belief</strong>. Identify your procrastination cues. Swap the routine. Keep the reward. This is Oakley's habit-change framework.</p>
+  <div class="card">
+    <div class="proc-loop" id="proc-loop">
+      <div class="proc-node proc-cue" data-step="cue" onclick="procFocus('cue')">🔔 Cue</div>
+      <span class="proc-arrow">→</span>
+      <div class="proc-node proc-routine" data-step="routine" onclick="procFocus('routine')">🔄 Routine</div>
+      <span class="proc-arrow">→</span>
+      <div class="proc-node proc-reward" data-step="reward" onclick="procFocus('reward')">🎁 Reward</div>
+      <span class="proc-arrow">→</span>
+      <div class="proc-node proc-belief" data-step="belief" onclick="procFocus('belief')">💭 Belief</div>
+    </div>
+    <div id="proc-detail" style="margin-top:1rem"></div>
+    <div class="btn-group" style="justify-content:center;margin-top:1rem">
+      <button class="btn btn-p" onclick="procAnimate()">▶ Animate Loop</button>
+      <button class="btn btn-a2" onclick="procSwap()">🔧 Swap the Routine</button>
+    </div>
+    <div class="proc-swap" id="proc-swap" style="display:none">
+      <h4>🔧 The Fix: Change the Routine, Keep the Reward</h4>
+      <div style="margin:.8rem 0">
+        <div style="font-size:.8rem;color:var(--dim);margin-bottom:.3rem">Your procrastination cue:</div>
+        <input class="proc-input" id="proc-cue-in" placeholder='e.g. "I open my laptop and see a hard problem set"'>
+      </div>
+      <div style="margin:.8rem 0">
+        <div style="font-size:.8rem;color:var(--dim);margin-bottom:.3rem">Old routine (procrastination):</div>
+        <input class="proc-input" id="proc-old-in" placeholder='e.g. "Check social media for 40 minutes"'>
+      </div>
+      <div style="margin:.8rem 0">
+        <div style="font-size:.8rem;color:var(--dim);margin-bottom:.3rem">NEW routine (replacement):</div>
+        <input class="proc-input" id="proc-new-in" placeholder='e.g. "Start a 25-min Pomodoro on the easiest part"'>
+      </div>
+      <div style="margin:.8rem 0">
+        <div style="font-size:.8rem;color:var(--dim);margin-bottom:.3rem">Reward (keep this!):</div>
+        <input class="proc-input" id="proc-reward-in" placeholder='e.g. "10 min guilt-free YouTube + snack"'>
+      </div>
+      <button class="btn btn-a2" onclick="procVisualize()" style="margin-top:.5rem">Visualize My New Loop</button>
+      <div id="proc-viz" style="margin-top:.8rem;min-height:1em"></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ============ 7. INTERLEAVING TRAINER ============ -->
+<section id="s7">
+  <div class="stag">07 — Interleaving</div>
+  <h2 class="stitle">Blocked vs. Interleaved Practice</h2>
+  <div class="quote">"Interleaving — mixing problem types — beats overlearning. It feels harder, but produces better discrimination."<cite>— Barbara Oakley</cite></div>
+  <p class="desc">Practice 3 problem types: <strong style="color:var(--accent)">Arithmetic</strong>, <strong style="color:var(--accent2)">Geometry</strong>, <strong style="color:var(--accent3)">Algebra</strong>. Try <em>blocked</em> first (all same type), then <em>interleaved</em> (random mix). Compare your scores.</p>
+  <div class="card">
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-p" id="il-blocked" onclick="ilStart('blocked')">Blocked Practice</button>
+      <button class="btn btn-a2" id="il-interleaved" onclick="ilStart('interleaved')">Interleaved Practice</button>
+    </div>
+    <div class="il-progress" id="il-progress"></div>
+    <div class="il-problem" id="il-problem" style="display:none"></div>
+    <div class="il-score-bar" id="il-scores" style="display:none">
+      <div>Blocked<br><span class="num" id="il-b-score" style="color:var(--accent)">—</span></div>
+      <div>Interleaved<br><span class="num" id="il-i-score" style="color:var(--accent2)">—</span></div>
+    </div>
+    <p id="il-msg" style="text-align:center;font-size:.85rem;min-height:1.5em;color:var(--accent2);margin-top:.5rem"></p>
+  </div>
+</section>
+
+<footer>
+  <p>Based on <em>A Mind for Numbers</em> by Barbara Oakley, Ph.D.</p>
+  <p style="margin-top:.3rem">"Lady Luck favors the one who tries."</p>
+</footer>
+
+<script>
+// ===========================
+// 1. FOCUSED / DIFFUSE TOGGLE
+// ===========================
+const fdState = { mode:'focused', nodes:[], edges:[], startIdx:0, endIdx:0, path:[], userPath:[], solved:false };
+const fdConcepts = [
+  'Neurons','Synapses','Sleep','Chunks','Recall','Habits','Focus','Relax',
+  'Practice','Memory','Patterns','Insight','Diffuse','Exercise','Dreams',
+  'Analogies','Metaphors','Context','Transfer','Creativity'
+];
+
+function fdInit(){
+  const c=document.getElementById('fd-canvas');
+  // clear old nodes/edges
+  c.querySelectorAll('.fd-node,.fd-edge').forEach(e=>e.remove());
+  document.getElementById('fd-solution').style.opacity='0';
+  document.getElementById('fd-msg').textContent='';
+  fdState.solved=false;fdState.userPath=[];
+  const W=c.clientWidth,H=c.clientHeight;
+  const n=12;
+  fdState.nodes=[];
+  // place nodes in a roughly circular + random layout
+  for(let i=0;i<n;i++){
+    const angle=(i/n)*Math.PI*2;
+    const r=Math.min(W,H)*0.32;
+    const jx=(Math.random()-0.5)*60, jy=(Math.random()-0.5)*60;
+    const x=W/2+Math.cos(angle)*r+jx;
+    const y=H/2+Math.sin(angle)*r+jy;
+    fdState.nodes.push({x:Math.max(30,Math.min(W-30,x)),y:Math.max(30,Math.min(H-50,y)),label:fdConcepts[i%fdConcepts.length]});
+  }
+  // create edges (sparse graph)
+  fdState.edges=[];
+  for(let i=0;i<n;i++){
+    // connect to 2-3 neighbors
+    const count=2+Math.floor(Math.random()*2);
+    for(let c=0;c<count;c++){
+      let j=(i+1+Math.floor(Math.random()*(n-2)))%n;
+      if(j===i) j=(i+1)%n;
+      if(!fdState.edges.find(e=>(e[0]===i&&e[1]===j)||(e[0]===j&&e[1]===i))){
+        fdState.edges.push([i,j]);
+      }
+    }
+  }
+  // pick start and end that are far apart
+  fdState.startIdx=0;
+  fdState.endIdx=Math.floor(n/2);
+  // find shortest path via BFS
+  const adj=Array.from({length:n},()=>[]);
+  fdState.edges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const visited=Array(n).fill(false);
+  const prev=Array(n).fill(-1);
+  const queue=[fdState.startIdx];
+  visited[fdState.startIdx]=true;
+  while(queue.length){
+    const cur=queue.shift();
+    if(cur===fdState.endIdx) break;
+    for(const nb of adj[cur]){
+      if(!visited[nb]){visited[nb]=true;prev[nb]=cur;queue.push(nb);}
+    }
+  }
+  fdState.path=[];
+  let cur=fdState.endIdx;
+  while(cur!==-1){fdState.path.unshift(cur);cur=prev[cur];}
+  
+  fdRender();
+}
+
+function fdRender(){
+  const c=document.getElementById('fd-canvas');
+  c.querySelectorAll('.fd-node,.fd-edge').forEach(e=>e.remove());
+  const W=c.clientWidth,H=c.clientHeight;
+  const isFocused=fdState.mode==='focused';
+  const nodes=fdState.nodes;
+  // Draw edges
+  fdState.edges.forEach(([a,b])=>{
+    const na=nodes[a],nb=nodes[b];
+    // In focused mode: only show edges connected to start or neighbors of start
+    const nearStart=a===fdState.startIdx||b===fdState.startIdx;
+    const nearPath=fdState.userPath.includes(a)||fdState.userPath.includes(b);
+    const onSolutionPath=fdState.path.includes(a)&&fdState.path.includes(b)&&Math.abs(fdState.path.indexOf(a)-fdState.path.indexOf(b))===1;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('fd-edge');
+    svg.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px;pointer-events:none;`;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',na.x);line.setAttribute('y1',na.y);
+    line.setAttribute('x2',nb.x);line.setAttribute('y2',nb.y);
+    if(!isFocused&&onSolutionPath){
+      line.setAttribute('stroke','rgba(0,206,201,0.7)');line.setAttribute('stroke-width','3');
+    } else {
+      line.setAttribute('stroke','rgba(108,92,231,0.15)');line.setAttribute('stroke-width','1');
+    }
+    svg.appendChild(line);
+    if(isFocused){
+      svg.style.opacity=(nearStart||nearPath)?'1':'0.15';
+    } else {
+      svg.style.opacity='1';
+    }
+    c.appendChild(svg);
+  });
+  // Draw nodes
+  nodes.forEach((nd,i)=>{
+    const el=document.createElement('div');
+    el.className='fd-node';
+    const size=isFocused?40:36;
+    let bg='rgba(108,92,231,0.15)';let col='var(--accent)';let border='1px solid rgba(108,92,231,0.3)';
+    if(i===fdState.startIdx){bg='rgba(108,92,231,0.4)';col='#fff';border='2px solid var(--accent)';}
+    if(i===fdState.endIdx){bg='rgba(0,206,201,0.4)';col='#fff';border='2px solid var(--accent2)';}
+    if(fdState.userPath.includes(i)){bg='rgba(108,92,231,0.3)';border='2px solid var(--accent)';}
+    // In focused: dim distant nodes
+    let opacity='1';
+    if(isFocused){
+      const nearStart=i===fdState.startIdx;
+      const nearUser=fdState.userPath.includes(i);
+      const adj=fdState.edges.filter(e=>e[0]===fdState.startIdx||e[1]===fdState.startIdx).map(e=>e[0]===fdState.startIdx?e[1]:e[0]);
+      const lastUser=fdState.userPath.length?fdState.userPath[fdState.userPath.length-1]:fdState.startIdx;
+      const adjLast=fdState.edges.filter(e=>e[0]===lastUser||e[1]===lastUser).map(e=>e[0]===lastUser?e[1]:e[0]);
+      if(!nearStart&&!nearUser&&!adj.includes(i)&&!adjLast.includes(i)) opacity='0.15';
+    }
+    el.style.cssText=`left:${nd.x-size/2}px;top:${nd.y-size/2}px;width:${size}px;height:${size}px;background:${bg};color:${col};border:${border};opacity:${opacity};font-size:.55rem;padding:2px;`;
+    el.textContent=nd.label;
+    el.onclick=()=>fdClickNode(i);
+    c.appendChild(el);
+  });
+  // Update label
+  const lbl=document.getElementById('fd-label');
+  if(isFocused){lbl.textContent='FOCUSED';lbl.style.background='rgba(108,92,231,0.2)';lbl.style.color='var(--accent)';}
+  else{lbl.textContent='DIFFUSE';lbl.style.background='rgba(0,206,201,0.2)';lbl.style.color='var(--accent2)';}
+}
+
+function fdClickNode(i){
+  if(fdState.solved) return;
+  const last=fdState.userPath.length?fdState.userPath[fdState.userPath.length-1]:fdState.startIdx;
+  if(i===last) return;
+  // check if connected
+  const connected=fdState.edges.some(e=>(e[0]===last&&e[1]===i)||(e[0]===i&&e[1]===last));
+  if(!connected){document.getElementById('fd-msg').textContent='Not connected! Click an adjacent node.';return;}
+  fdState.userPath.push(i);
+  document.getElementById('fd-msg').textContent='';
+  if(i===fdState.endIdx){
+    fdState.solved=true;
+    document.getElementById('fd-msg').textContent='🎉 Path found! You connected the concepts.';
+    document.getElementById('fd-solution').textContent='';
+  }
+  fdRender();
+}
+
+function fdToggle(){
+  fdState.mode=fdState.mode==='focused'?'diffuse':'focused';
+  const btn=document.getElementById('fd-btn');
+  if(fdState.mode==='focused'){btn.textContent='🔬 Focused Mode';btn.className='btn btn-p';}
+  else{btn.textContent='🌊 Diffuse Mode';btn.className='btn btn-a2';}
+  if(fdState.mode==='diffuse'&&!fdState.solved){
+    document.getElementById('fd-solution').style.opacity='1';
+    document.getElementById('fd-solution').textContent='💡 Solution path highlighted in teal';
+    document.getElementById('fd-hint').textContent='Diffuse mode reveals distant connections. The solution was there all along.';
+  } else {
+    document.getElementById('fd-solution').style.opacity='0';
+    document.getElementById('fd-hint').textContent='Connect the highlighted start → end. Click nodes to trace a path.';
+  }
+  fdRender();
+}
+
+function fdNewProblem(){fdState.mode='focused';document.getElementById('fd-btn').textContent='🔬 Focused Mode';document.getElementById('fd-btn').className='btn btn-p';document.getElementById('fd-hint').textContent='Connect the highlighted start → end. Click nodes to trace a path.';fdInit();}
+
+// ===========================
+// 2. CHUNKING VISUALIZER
+// ===========================
+const ckFacts = [
+  {t:'F=ma',g:'Newton'},{t:'a=Δv/Δt',g:'Newton'},{t:'p=mv',g:'Newton'},{t:'W=Fd',g:'Newton'},
+  {t:'V=IR',g:'Circuits'},{t:'P=IV',g:'Circuits'},{t:'R=ρL/A',g:'Circuits'},{t:'Q=CV',g:'Circuits'},
+  {t:'E=mc²',g:'Relativity'},{t:'E=hf',g:'Relativity'},{t:'λ=h/p',g:'Relativity'},{t:'Δx·Δp≥ħ/2',g:'Relativity'},
+  {t:'sin²+cos²=1',g:'Trig'},{t:'tanθ=sinθ/cosθ',g:'Trig'},{t:'sin2θ=2sinθcosθ',g:'Trig'},{t:'eiθ=cosθ+isinθ',g:'Trig'},
+  {t:'∫x^n dx',g:'Calculus'},{t:'d/dx(eˣ)=eˣ',g:'Calculus'},{t:'∑1/n²=π²/6',g:'Calculus'},{t:'lim(sinx/x)=1',g:'Calculus'}
+];
+const ckGroups=['Newton','Circuits','Relativity','Trig','Calculus'];
+const ckColors={Newton:'#6c5ce7',Circuits:'#00cec9',Relativity:'#fd79a8',Trig:'#f0c040',Calculus:'#a29bfe'};
+let ckItems=[];// {text,group,level,selected,id}
+let ckIdCounter=0;
+let ckSelected=new Set();
+let ckMergeCount=0;
+
+function ckReset(){
+  ckItems=[];ckIdCounter=0;ckSelected=new Set();ckMergeCount=0;
+  // shuffle facts
+  const shuffled=[...ckFacts];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  shuffled.forEach(f=>{ckItems.push({text:f.t,group:f.g,level:0,selected:false,id:ckIdCounter++});});
+  ckRender();
+  document.getElementById('ck-msg').textContent='';
+  document.getElementById('ck-tree').textContent='20 individual facts → select 3-4 related ones, then chunk them.';
+}
+
+function ckRender(){
+  const c=document.getElementById('ck-facts');
+  c.innerHTML='';
+  ckItems.forEach(item=>{
+    const el=document.createElement('div');
+    let cls='ck-fact';
+    if(item.level===0) cls+=' loose';
+    else if(item.level>=2) cls+=' super';
+    else cls+=' chunked';
+    if(ckSelected.has(item.id)) cls+=' selected';
+    el.className=cls;
+    el.textContent=item.text;
+    if(item.level>0){
+      el.style.borderColor=ckColors[item.group]||'var(--accent2)';
+      if(item.level>=2) el.style.background=ckColors[item.group]||'var(--accent2)';
+    }
+    el.onclick=()=>{
+      if(ckSelected.has(item.id)) ckSelected.delete(item.id);
+      else ckSelected.add(item.id);
+      ckRender();
+    };
+    c.appendChild(el);
+  });
+}
+
+function ckMerge(){
+  if(ckSelected.size<2||ckSelected.size>5){
+    document.getElementById('ck-msg').textContent='Select 2-5 items to chunk together.';return;
+  }
+  const sel=[...ckSelected].map(id=>ckItems.find(i=>i.id===id)).filter(Boolean);
+  // Check if same group (for level 0 items) or allow any for higher levels
+  const allSameGroup=sel.every(s=>s.group===sel[0].group);
+  const maxLevel=Math.max(...sel.map(s=>s.level));
+  if(maxLevel===0&&!allSameGroup){
+    document.getElementById('ck-msg').textContent='💡 Those aren\'t related! Try grouping items from the same topic.';return;
+  }
+  // Merge: remove selected, add one merged item
+  const newLevel=maxLevel+1;
+  const label=newLevel===1?sel[0].group:(newLevel===2?'Master: '+sel.map(s=>s.text).join('+'):'🧠 Everything');
+  const newGroup=allSameGroup?sel[0].group:'Master';
+  ckItems=ckItems.filter(i=>!ckSelected.has(i.id));
+  ckItems.push({text:label,group:newGroup,level:newLevel,id:ckIdCounter++});
+  ckSelected=new Set();
+  ckMergeCount++;
+  ckRender();
+  const remaining=ckItems.length;
+  if(remaining===1){
+    document.getElementById('ck-msg').textContent='🏆 One master chunk holds everything! This is how experts think.';
+    document.getElementById('ck-tree').textContent='20 facts → chunks → super-chunks → 1 master chunk. Expert-level compression.';
+  } else {
+    document.getElementById('ck-msg').textContent=`✅ Chunk formed! ${remaining} items remaining. ${remaining<=5?'Now chunk the chunks!':''}`;
+    document.getElementById('ck-tree').textContent=`Level: ${remaining>10?'Individual facts':''}${remaining<=10&&remaining>5?'Chunks forming...':''}${remaining<=5?'Super-chunks! Merge them into one master chunk.':''}`;
+  }
+}
+
+// ===========================
+// 3. WORKING MEMORY ARENA
+// ===========================
+const wmTasks=['2+3','7×4','∫xdx','sin30°','15%tip','√144','log₂8','d/dx(x³)','5!','3²+4²','∑1..10','π×r²','½mv²','PV=nRT','F=kx','E=½kx²'];
+let wmSlots=[null,null,null,null];
+let wmTaskQueue=[];
+let wmRunning=false;
+let wmInterval=null;
+let wmDropped=0;
+let wmProcessed=0;
+let wmChunking=false;
+
+function wmRender(){
+  const c=document.getElementById('wm-slots');
+  c.innerHTML='';
+  const slotCount=wmChunking?6:4; // chunking gives perceived extra slots
+  for(let i=0;i<4;i++){
+    const el=document.createElement('div');
+    el.className='wm-slot'+(wmSlots[i]?' filled':'');
+    if(wmSlots[i]&&wmSlots[i].chunked) el.classList.add('chunked-slot');
+    el.textContent=wmSlots[i]?wmSlots[i].text:'';
+    el.onclick=()=>{if(wmSlots[i]){wmSlots[i]=null;wmProcessed++;document.getElementById('wm-count').textContent=wmProcessed;wmRender();}};
+    c.appendChild(el);
+  }
+}
+
+function wmGo(){
+  if(wmRunning) return;
+  wmRunning=true;
+  wmDropped=0;wmProcessed=0;
+  document.getElementById('wm-drop-count').textContent='0';
+  document.getElementById('wm-count').textContent='0';
+  document.getElementById('wm-dropped').textContent='';
+  document.getElementById('wm-msg').textContent='Click filled slots to process them and make room!';
+  // shuffle tasks
+  wmTaskQueue=[...wmTasks];
+  for(let i=wmTaskQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wmTaskQueue[i],wmTaskQueue[j]]=[wmTaskQueue[j],wmTaskQueue[i]];}
+  
+  let idx=0;
+  wmInterval=setInterval(()=>{
+    if(idx>=wmTaskQueue.length){
+      clearInterval(wmInterval);wmRunning=false;
+      document.getElementById('wm-msg').textContent=`Done! Processed: ${wmProcessed}, Dropped: ${wmDropped}. ${wmDropped>3?'You felt the 4-slot limit!':''}`;
+      if(!wmChunking&&wmDropped>0) document.getElementById('wm-chunk-btn').style.display='';
+      return;
+    }
+    const task=wmTaskQueue[idx++];
+    // try to find empty slot
+    let placed=false;
+    if(wmChunking){
+      // try to merge two items into one chunk
+      const filled=wmSlots.map((s,i)=>s?i:-1).filter(i=>i>=0);
+      if(filled.length>=4&&filled.length>0){
+        // auto-chunk two items into one
+        const a=filled[0],b=filled[1];
+        wmSlots[a]={text:wmSlots[a].text+' & '+wmSlots[b].text,chunked:true};
+        wmSlots[b]=null;
+        document.getElementById('wm-msg').textContent='🧩 Two items chunked into one! Slot freed.';
+      }
+    }
+    for(let i=0;i<4;i++){
+      if(!wmSlots[i]){wmSlots[i]={text:task};placed=true;break;}
+    }
+    if(!placed){
+      // overflow! drop random
+      const ri=Math.floor(Math.random()*4);
+      const dropped=wmSlots[ri].text;
+      wmSlots[ri]={text:task};
+      wmDropped++;
+      document.getElementById('wm-drop-count').textContent=wmDropped;
+      document.getElementById('wm-dropped').textContent=`💥 Dropped "${dropped}" — no room! (${wmDropped} dropped)`;
+      // flash
+      wmRender();
+      const slots=document.getElementById('wm-slots').children;
+      slots[ri].classList.add('overflow');
+      setTimeout(()=>{if(slots[ri])slots[ri].classList.remove('overflow');},600);
+      return;
+    }
+    wmRender();
+  },1800);
+  wmRender();
+}
+
+function wmChunkMode(){
+  wmChunking=true;
+  document.getElementById('wm-chunk-btn').style.display='none';
+  document.getElementById('wm-msg').textContent='🧩 Chunking enabled! Items will auto-merge when slots are full. Try again!';
+  wmSlots=[null,null,null,null];
+  wmRender();
+  wmRunning=false;
+  clearInterval(wmInterval);
+}
+
+function wmReset(){
+  clearInterval(wmInterval);wmRunning=false;wmChunking=false;
+  wmSlots=[null,null,null,null];wmDropped=0;wmProcessed=0;
+  document.getElementById('wm-drop-count').textContent='0';
+  document.getElementById('wm-count').textContent='0';
+  document.getElementById('wm-dropped').textContent='';
+  document.getElementById('wm-msg').textContent='';
+  document.getElementById('wm-chunk-btn').style.display='none';
+  wmRender();
+}
+
+// ===========================
+// 4. EINSTELLUNG BREAKER
+// ===========================
+const EIN_W=6, EIN_H=6;
+let einGrid=[];// 0=wall, 1=path, 2=start, 3=end
+let einVisited=[];
+let einAttempts=0;
+let einShowDiffuse=false;
+let einCorrectPath=[];
+let einDecoyPath=[];
+
+function einNew(){
+  einGrid=[];einVisited=[];einAttempts=0;einShowDiffuse=false;
+  document.getElementById('ein-diffuse').style.display='none';
+  // Create a maze where the obvious path is a dead end
+  // Simple grid: mostly walls with two paths
+  for(let r=0;r<EIN_H;r++){
+    einGrid[r]=[];
+    for(let c=0;c<EIN_W;c++) einGrid[r][c]=0;
+  }
+  // Start top-left, end bottom-right
+  einGrid[0][0]=2; einGrid[EIN_H-1][EIN_W-1]=3;
+  
+  // Decoy path: goes right along top then down (hits dead end before reaching goal)
+  einDecoyPath=[];
+  for(let c=1;c<EIN_W-1;c++){einGrid[0][c]=1;einDecoyPath.push([0,c]);}
+  einGrid[0][EIN_W-1]=1;einDecoyPath.push([0,EIN_W-1]);
+  einGrid[1][EIN_W-1]=1;einDecoyPath.push([1,EIN_W-1]);
+  einGrid[2][EIN_W-1]=1;einDecoyPath.push([2,EIN_W-1]);
+  // Dead end: wall at row 3
+  
+  // Real path: goes down-left then across bottom
+  einCorrectPath=[];
+  einGrid[1][0]=1;einCorrectPath.push([1,0]);
+  einGrid[2][0]=1;einCorrectPath.push([2,0]);
+  einGrid[3][0]=1;einCorrectPath.push([3,0]);
+  einGrid[3][1]=1;einCorrectPath.push([3,1]);
+  einGrid[3][2]=1;einCorrectPath.push([3,2]);
+  einGrid[4][2]=1;einCorrectPath.push([4,2]);
+  einGrid[5][2]=1;einCorrectPath.push([5,2]);
+  einGrid[5][3]=1;einCorrectPath.push([5,3]);
+  einGrid[5][4]=1;einCorrectPath.push([5,4]);
+  einGrid[5][5]=3; // end is already set
+  einCorrectPath.push([5,5]);
+  
+  // Add a couple red herring branches
+  einGrid[1][1]=1;einGrid[1][2]=1;
+  einGrid[4][0]=1;
+  
+  einRender();
+  document.getElementById('ein-neural').textContent='Click cells to trace a path from S to E. The obvious route might not work…';
+}
+
+function einRender(){
+  const g=document.getElementById('ein-grid');
+  g.innerHTML='';
+  for(let r=0;r<EIN_H;r++){
+    for(let c=0;c<EIN_W;c++){
+      const el=document.createElement('div');
+      el.className='ein-c';
+      const v=einGrid[r][c];
+      if(v===0) el.classList.add('wall');
+      else if(v===2){el.classList.add('start');el.textContent='S';}
+      else if(v===3){el.classList.add('end');el.textContent='E';}
+      else el.classList.add('path');
+      if(einVisited.find(p=>p[0]===r&&p[1]===c)) el.classList.add('visited');
+      if(einShowDiffuse&&einCorrectPath.find(p=>p[0]===r&&p[1]===c)) el.classList.add('correct-path');
+      el.onclick=()=>einClick(r,c);
+      g.appendChild(el);
+    }
+  }
+}
+
+function einClick(r,c){
+  if(einGrid[r][c]===0) return;
+  if(einShowDiffuse) return;
+  // Check adjacency to last visited or start
+  const last=einVisited.length?einVisited[einVisited.length-1]:[0,0];
+  const dr=Math.abs(r-last[0]),dc=Math.abs(c-last[1]);
+  if(dr+dc!==1){
+    document.getElementById('ein-neural').textContent='Click an adjacent cell to continue your path.';
+    return;
+  }
+  einVisited.push([r,c]);
+  einAttempts++;
+  
+  // Check if reached end
+  if(einGrid[r][c]===3){
+    document.getElementById('ein-neural').innerHTML='🎉 <strong style="color:var(--accent2)">You found the path!</strong> '+
+      (einAttempts>10?'It took some exploration — Einstellung tried to trap you on the obvious route.':'Nice shortcut!');
+    einRender();return;
+  }
+  
+  // Check if stuck (no unvisited adjacent paths)
+  const adj=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+  const canGo=adj.filter(([ar,ac])=>ar>=0&&ar<EIN_H&&ac>=0&&ac<EIN_W&&einGrid[ar][ac]!==0&&!einVisited.find(p=>p[0]===ar&&p[1]===ac));
+  if(canGo.length===0){
+    document.getElementById('ein-neural').innerHTML='<strong>Dead end!</strong> Your existing approach blocked the solution — that\'s <strong>Einstellung</strong>. The neural pathway you followed felt right, but led nowhere.';
+    document.getElementById('ein-diffuse').style.display='';
+  }
+  einRender();
+}
+
+function einClear(){
+  einVisited=[];einShowDiffuse=false;
+  document.getElementById('ein-diffuse').style.display='none';
+  document.getElementById('ein-neural').textContent='Click cells to trace a path from S to E.';
+  einRender();
+}
+
+function einDiffuse(){
+  einShowDiffuse=true;
+  einVisited=[];
+  document.getElementById('ein-neural').innerHTML='🧘 <strong style="color:var(--accent2)">Diffuse mode activated.</strong> Stepping back reveals the hidden path (teal). Your focused mode was trapped in the obvious top route. The real solution goes a completely different direction.';
+  einRender();
+}
+
+// ===========================
+// 5. POMODORO TIMER
+// ===========================
+let pomoState={running:false,seconds:0,total:0,isBreak:false,interval:null};
+
+function pomoGetTimes(){
+  const demo=document.getElementById('pomo-demo').checked;
+  return demo?{focus:60,brk:15}:{focus:25*60,brk:5*60};
+}
+
+function pomoUpdateDisplay(){
+  const m=Math.floor(pomoState.seconds/60);
+  const s=pomoState.seconds%60;
+  document.getElementById('pomo-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  const pct=pomoState.total>0?((pomoState.total-pomoState.seconds)/pomoState.total):0;
+  const circ=283;
+  document.getElementById('pomo-fg').style.strokeDashoffset=circ-(circ*pct);
+  const fg=document.getElementById('pomo-fg');
+  const timeEl=document.getElementById('pomo-time');
+  if(pomoState.isBreak){fg.classList.add('brk');timeEl.classList.add('brk');}
+  else{fg.classList.remove('brk');timeEl.classList.remove('brk');}
+}
+
+function pomoToggle(){
+  if(pomoState.running){
+    clearInterval(pomoState.interval);
+    pomoState.running=false;
+    document.getElementById('pomo-btn').textContent='Resume 🍅';
+  } else {
+    if(pomoState.seconds===0){
+      const t=pomoGetTimes();
+      pomoState.seconds=t.focus;pomoState.total=t.focus;pomoState.isBreak=false;
+      document.getElementById('pomo-diffuse').classList.remove('show');
+      document.getElementById('pomo-thoughts').innerHTML='';
+    }
+    pomoState.running=true;
+    document.getElementById('pomo-btn').textContent='Pause ⏸';
+    document.getElementById('pomo-status').textContent=pomoState.isBreak?'🌊 Break time. Your brain is making connections…':'🍅 Focus! No distractions. Process over product.';
+    pomoState.interval=setInterval(pomoTick,1000);
+  }
+  pomoUpdateDisplay();
+}
+
+function pomoTick(){
+  pomoState.seconds--;
+  if(pomoState.seconds<=0){
+    clearInterval(pomoState.interval);pomoState.running=false;
+    if(!pomoState.isBreak){
+      // switch to break
+      const t=pomoGetTimes();
+      pomoState.isBreak=true;pomoState.seconds=t.brk;pomoState.total=t.brk;
+      document.getElementById('pomo-btn').textContent='Start Break 🌊';
+      document.getElementById('pomo-status').textContent='🎉 Focus session done! Take a break and let diffuse mode work.';
+      document.getElementById('pomo-diffuse').classList.add('show');
+      pomoShowThoughts();
+    } else {
+      // break done
+      pomoState.isBreak=false;pomoState.seconds=0;pomoState.total=0;
+      document.getElementById('pomo-btn').textContent='Start Focus 🍅';
+      document.getElementById('pomo-status').textContent='Break over! Your diffuse mode found some connections. Ready for another round.';
+      document.getElementById('pomo-diffuse').classList.remove('show');
+    }
+  }
+  // During break, show thoughts
+  if(pomoState.isBreak&&pomoState.running){
+    const elapsed=pomoState.total-pomoState.seconds;
+    if(elapsed%3===0) pomoShowThought();
+  }
+  pomoUpdateDisplay();
+}
+
+const diffuseThoughts=[
+  '💡 "Wait… what if the equation simplifies differently?"',
+  '🔗 "That pattern looks like something from chapter 3…"',
+  '🧩 "Oh! This connects to the concept I learned yesterday."',
+  '🌀 "The analogy with water flow makes it click now."',
+  '⚡ "I was overcomplicating it. The simple approach works."',
+  '🎯 "Now I see why the formula has that negative sign."',
+  '🔮 "This is just like the problem from last week, but reversed."',
+  '🧠 "My subconscious just connected two distant ideas…"'
+];
+let thoughtIdx=0;
+
+function pomoShowThoughts(){
+  thoughtIdx=0;
+  document.getElementById('pomo-thoughts').innerHTML='';
+  pomoShowThought();
+}
+
+function pomoShowThought(){
+  if(thoughtIdx>=diffuseThoughts.length) thoughtIdx=0;
+  const el=document.createElement('div');
+  el.className='pomo-thought';
+  el.textContent=diffuseThoughts[thoughtIdx++];
+  document.getElementById('pomo-thoughts').appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  // keep only last 4
+  const thoughts=document.getElementById('pomo-thoughts').children;
+  if(thoughts.length>4) thoughts[0].remove();
+}
+
+function pomoReset(){
+  clearInterval(pomoState.interval);
+  pomoState={running:false,seconds:0,total:0,isBreak:false,interval:null};
+  const t=pomoGetTimes();
+  pomoState.seconds=t.focus;pomoState.total=t.focus;
+  document.getElementById('pomo-btn').textContent='Start Focus 🍅';
+  document.getElementById('pomo-status').textContent='Focus on <em>process</em>, not product. Just start.';
+  document.getElementById('pomo-diffuse').classList.remove('show');
+  document.getElementById('pomo-thoughts').innerHTML='';
+  pomoUpdateDisplay();
+}
+
+function pomoSkip(){
+  if(!pomoState.running&&pomoState.seconds===0) return;
+  pomoState.seconds=1;
+}
+
+// ===========================
+// 6. PROCRASTINATION LOOP
+// ===========================
+let procAnimating=false;
+
+function procFocus(step){
+  document.querySelectorAll('.proc-node').forEach(n=>n.classList.remove('active'));
+  document.querySelector(`.proc-node[data-step="${step}"]`).classList.add('active');
+  const detail=document.getElementById('proc-detail');
+  const info={
+    cue:'<strong>🔔 Cue</strong> — The trigger that launches the habit. Could be: seeing your phone, a time of day, a feeling of boredom, or looking at a hard problem. <em>You can\'t avoid cues, but you can change your response.</em>',
+    routine:'<strong>🔄 Routine</strong> — The habitual response. For procrastinators: grab phone, check social media, make a snack — anything to avoid the discomfort. <em>This is the only part you need to change.</em>',
+    reward:'<strong>🎁 Reward</strong> — The payoff that reinforces the habit. Dopamine hit from scrolling, relief from avoiding hard work. <em>Keep the reward! Just change how you earn it.</em>',
+    belief:'<strong>💭 Belief</strong> — The underlying story: "I\'m just not a math person" or "I work better under pressure." <em>Surround yourself with people who believe otherwise. Community changes belief.</em>'
+  };
+  detail.innerHTML=`<div style="font-size:.85rem;color:#aab;padding:.8rem;background:rgba(108,92,231,0.05);border-radius:10px">${info[step]}</div>`;
+}
+
+function procAnimate(){
+  if(procAnimating) return;
+  procAnimating=true;
+  const steps=['cue','routine','reward','belief'];
+  let i=0;
+  const iv=setInterval(()=>{
+    procFocus(steps[i%4]);
+    i++;
+    if(i>=12){clearInterval(iv);procAnimating=false;}
+  },600);
+}
+
+function procSwap(){
+  document.getElementById('proc-swap').style.display='block';
+  document.getElementById('proc-swap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function procVisualize(){
+  const cue=document.getElementById('proc-cue-in').value||'Your cue';
+  const oldR=document.getElementById('proc-old-in').value||'Old routine';
+  const newR=document.getElementById('proc-new-in').value||'New routine';
+  const reward=document.getElementById('proc-reward-in').value||'Your reward';
+  document.getElementById('proc-viz').innerHTML=`
+    <div style="padding:1rem;background:rgba(0,206,201,0.08);border-radius:10px;font-size:.85rem">
+      <div style="margin-bottom:.5rem"><strong>Your Rewired Loop:</strong></div>
+      <div style="display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;justify-content:center">
+        <span style="padding:.3rem .6rem;border-radius:6px;background:rgba(253,121,168,0.15);color:var(--accent3)">🔔 ${cue}</span>
+        <span style="color:var(--dim)">→</span>
+        <span style="padding:.3rem .6rem;border-radius:6px;background:rgba(253,121,168,0.1);color:var(--accent3);text-decoration:line-through;opacity:.5">❌ ${oldR}</span>
+        <span style="color:var(--dim)">→</span>
+        <span style="padding:.3rem .6rem;border-radius:6px;background:rgba(0,206,201,0.2);color:var(--accent2)">✅ ${newR}</span>
+        <span style="color:var(--dim)">→</span>
+        <span style="padding:.3rem .6rem;border-radius:6px;background:rgba(0,206,201,0.15);color:var(--accent2)">🎁 ${reward}</span>
+      </div>
+      <div style="margin-top:.8rem;color:var(--dim);font-size:.8rem">Same cue, same reward — different routine. That's how you beat procrastination.</div>
+    </div>`;
+}
+
+// ===========================
+// 7. INTERLEAVING TRAINER
+// ===========================
+// Three problem types: Arithmetic, Geometry, Algebra
+function ilMakeProblems(){
+  const probs=[];
+  // Arithmetic (type A)
+  for(let i=0;i<6;i++){
+    const a=10+Math.floor(Math.random()*40);
+    const b=2+Math.floor(Math.random()*12);
+    const op=Math.random()>0.5?'×':'÷';
+    if(op==='×'){
+      const ans=a*b;
+      const wrong=[ans+b,ans-a,a+b].filter(x=>x!==ans&&x>0);
+      probs.push({type:'Arithmetic',color:'var(--accent)',q:`${a} ${op} ${b} = ?`,answer:ans,opts:shuffle([ans,...wrong.slice(0,2)])});
+    } else {
+      const product=a*b;
+      const wrong=[a+1,a-1,b].filter(x=>x!==a&&x>0);
+      probs.push({type:'Arithmetic',color:'var(--accent)',q:`${product} ÷ ${b} = ?`,answer:a,opts:shuffle([a,...wrong.slice(0,2)])});
+    }
+  }
+  // Geometry (type B) — area/perimeter
+  for(let i=0;i<6;i++){
+    const shape=Math.random()>0.5?'circle':'triangle';
+    if(shape==='circle'){
+      const r=2+Math.floor(Math.random()*8);
+      const area=Math.round(Math.PI*r*r*10)/10;
+      const wrong=[Math.round(2*Math.PI*r*10)/10, Math.round(r*r*10)/10, Math.round(Math.PI*r*10)/10];
+      probs.push({type:'Geometry',color:'var(--accent2)',q:`Area of circle, r=${r}?`,answer:area,opts:shuffle([area,...wrong.slice(0,2)])});
+    } else {
+      const base=3+Math.floor(Math.random()*10);
+      const h=3+Math.floor(Math.random()*10);
+      const area=Math.round(0.5*base*h*10)/10;
+      const wrong=[base*h, base+h, Math.round(base*h/3*10)/10];
+      probs.push({type:'Geometry',color:'var(--accent2)',q:`Area of triangle, b=${base}, h=${h}?`,answer:area,opts:shuffle([area,...wrong.slice(0,2)])});
+    }
+  }
+  // Algebra (type C) — solve for x
+  for(let i=0;i<6;i++){
+    const x=1+Math.floor(Math.random()*10);
+    const a=2+Math.floor(Math.random()*5);
+    const b=Math.floor(Math.random()*20);
+    const result=a*x+b;
+    const wrong=[x+1,x-1,x+a].filter(v=>v!==x&&v>0);
+    probs.push({type:'Algebra',color:'var(--accent3)',q:`${a}x + ${b} = ${result}. x = ?`,answer:x,opts:shuffle([x,...wrong.slice(0,2)])});
+  }
+  return probs;
+}
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+let ilState={mode:'',problems:[],idx:0,correct:0,total:0,scores:{blocked:null,interleaved:null},answered:false};
+
+function ilStart(mode){
+  const allProbs=ilMakeProblems();
+  let problems;
+  if(mode==='blocked'){
+    // All arithmetic, then geometry, then algebra
+    problems=[...allProbs.filter(p=>p.type==='Arithmetic').slice(0,4),...allProbs.filter(p=>p.type==='Geometry').slice(0,4),...allProbs.filter(p=>p.type==='Algebra').slice(0,4)];
+  } else {
+    // Interleaved: pick 4 of each, shuffle
+    problems=shuffle([...allProbs.filter(p=>p.type==='Arithmetic').slice(0,4),...allProbs.filter(p=>p.type==='Geometry').slice(0,4),...allProbs.filter(p=>p.type==='Algebra').slice(0,4)]);
+  }
+  ilState={mode,problems,idx:0,correct:0,total:problems.length,scores:ilState.scores,results:[],answered:false};
+  document.getElementById('il-problem').style.display='flex';
+  document.getElementById('il-scores').style.display='flex';
+  document.getElementById('il-msg').textContent=mode==='blocked'?'Blocked: all same type in a row. Feels easy…':'Interleaved: random mix. Feels harder, but builds better discrimination.';
+  ilRender();
+}
+
+function ilRender(){
+  if(ilState.idx>=ilState.total){
+    // done
+    const pct=Math.round(ilState.correct/ilState.total*100);
+    ilState.scores[ilState.mode]=pct;
+    document.getElementById(ilState.mode==='blocked'?'il-b-score':'il-i-score').textContent=pct+'%';
+    document.getElementById('il-problem').innerHTML=`<div style="font-size:1.2rem;font-weight:700">Round complete: ${pct}%</div>`;
+    if(ilState.scores.blocked!==null&&ilState.scores.interleaved!==null){
+      const diff=ilState.scores.interleaved-ilState.scores.blocked;
+      document.getElementById('il-msg').textContent=diff>=0?
+        `Interleaving scored ${diff>0?diff+'% higher':'the same'} — and built stronger discrimination between problem types!`:
+        `Blocked scored ${-diff}% higher this time — but research shows interleaving produces better long-term retention and transfer.`;
+    } else {
+      document.getElementById('il-msg').textContent=`Now try ${ilState.mode==='blocked'?'interleaved':'blocked'} to compare!`;
+    }
+    // progress pips
+    ilRenderProgress();
+    return;
+  }
+  const p=ilState.problems[ilState.idx];
+  ilState.answered=false;
+  document.getElementById('il-problem').innerHTML=`
+    <div class="type-tag" style="background:${p.color}22;color:${p.color}">${p.type}</div>
+    <div class="question">${p.q}</div>
+    <div class="il-opts">${p.opts.map((o,i)=>`<div class="il-opt" id="ilo${i}" onclick="ilAnswer(${i})">${o}</div>`).join('')}</div>`;
+  ilRenderProgress();
+}
+
+function ilRenderProgress(){
+  const c=document.getElementById('il-progress');
+  c.innerHTML='';
+  for(let i=0;i<ilState.total;i++){
+    const pip=document.createElement('div');
+    pip.className='il-pip';
+    if(i<ilState.idx){pip.classList.add(ilState.results[i]?'done-right':'done-wrong');}
+    if(i===ilState.idx&&ilState.idx<ilState.total) pip.classList.add('current');
+    c.appendChild(pip);
+  }
+}
+
+function ilAnswer(i){
+  if(ilState.answered) return;
+  ilState.answered=true;
+  const p=ilState.problems[ilState.idx];
+  const correct=p.opts[i]===p.answer;
+  if(correct){ilState.correct++;ilState.results.push(true);}else{ilState.results.push(false);}
+  // highlight
+  p.opts.forEach((o,j)=>{
+    const el=document.getElementById('ilo'+j);
+    if(o===p.answer) el.classList.add('right');
+    else if(j===i) el.classList.add('wrong');
+    el.style.pointerEvents='none';
+  });
+  setTimeout(()=>{ilState.idx++;ilRender();},800);
+}
+
+// ===========================
+// INIT
+// ===========================
+document.addEventListener('DOMContentLoaded',()=>{
+  fdInit();
+  ckReset();
+  wmRender();
+  einNew();
+  pomoReset();
+  // Init procrastination with cue focused
+  procFocus('cue');
+  // Interleaving: show scores
+  document.getElementById('il-b-score').textContent='—';
+  document.getElementById('il-i-score').textContent='—';
+});
+
+// Responsive re-init for focused/diffuse
+let fdResize;
+window.addEventListener('resize',()=>{clearTimeout(fdResize);fdResize=setTimeout(fdInit,400);});
+</script>
+</body>
+</html>

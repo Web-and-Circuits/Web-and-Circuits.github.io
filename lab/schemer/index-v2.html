@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Little Schemer — Interactive v2</title>
+<style>
+:root{--bg:#0a0e14;--bg2:#111820;--bg3:#1a2230;--fg:#c8d6e5;--fg2:#8899aa;--accent:#00d4aa;--accent2:#00a888;--red:#ff6b6b;--yellow:#ffd93d;--orange:#ff9f43;--pink:#ff6b9d;--blue:#5b9bd5;--border:#1e2d3d;--green:#6bcb77}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:'Menlo','Consolas','Monaco',monospace;line-height:1.6;overflow-x:hidden}
+.container{max-width:960px;margin:0 auto;padding:1rem}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit}
+
+/* Header */
+.header{text-align:center;padding:2.5rem 1rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:0}
+.header h1{font-size:1.8rem;color:var(--accent)}
+.header .sub{color:var(--fg2);font-size:.85rem}
+.header .stars{color:var(--yellow);font-size:1.3rem;letter-spacing:2px;margin:.3rem 0}
+
+/* Nav */
+nav{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;padding:.6rem 0;position:sticky;top:0;background:var(--bg);z-index:100;border-bottom:1px solid var(--border)}
+nav button{background:var(--bg3);border:1px solid var(--border);color:var(--fg);padding:.35rem .7rem;border-radius:4px;font-size:.75rem;transition:all .2s;white-space:nowrap}
+nav button:hover,nav button.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+/* Sections */
+.section{display:none;animation:fadeIn .3s;padding-top:1rem}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section h2{color:var(--accent);margin-bottom:.75rem;font-size:1.3rem}
+.section h3{color:var(--yellow);margin:1rem 0 .5rem;font-size:1rem}
+.desc{color:var(--fg2);margin-bottom:1rem;font-size:.9rem}
+
+/* REPL */
+.repl-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.75rem}
+.repl-bar{background:var(--bg3);padding:.4rem .8rem;color:var(--accent);font-size:.8rem;display:flex;justify-content:space-between;align-items:center}
+.repl-bar .hint{color:var(--fg2);font-size:.7rem}
+.repl-out{height:280px;overflow-y:auto;padding:.75rem;font-size:.85rem;scroll-behavior:smooth}
+.repl-out .p{color:var(--accent)}.repl-out .r{color:var(--yellow)}.repl-out .e{color:var(--red)}.repl-out .i{color:var(--fg2);font-style:italic}.repl-out .step{color:var(--blue);font-size:.8rem;padding-left:1rem}
+.repl-row{display:flex;border-top:1px solid var(--border)}
+.repl-row span{padding:.6rem;color:var(--accent);user-select:none}
+.repl-row input{flex:1;background:var(--bg3);border:none;color:var(--fg);padding:.6rem .4rem;font-size:.85rem;outline:none}
+.examples{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+.examples button{background:var(--bg2);border:1px solid var(--border);color:var(--accent);padding:.25rem .6rem;border-radius:4px;font-size:.75rem}
+.examples button:hover{border-color:var(--accent);background:var(--bg3)}
+
+/* Stack viz */
+.stack-frame{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;margin-bottom:.3rem;font-size:.85rem;transition:all .3s}
+.stack-frame.active{border-color:var(--accent);box-shadow:0 0 8px rgba(0,212,170,.25)}
+.stack-frame.unwinding{border-color:var(--yellow);box-shadow:0 0 8px rgba(255,217,61,.2)}
+.stack-frame .fn-name{color:var(--accent);font-weight:bold}
+.stack-frame .args{color:var(--fg2);font-size:.8rem}
+.stack-frame .result{color:var(--yellow);font-weight:bold}
+.viz-controls{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.viz-controls input,.viz-controls select{background:var(--bg3);border:1px solid var(--border);color:var(--fg);padding:.4rem .6rem;border-radius:4px;font-size:.85rem}
+.viz-controls select{min-width:120px}
+.btn{background:var(--accent);color:var(--bg);border:none;padding:.4rem .8rem;border-radius:4px;font-weight:bold;font-size:.85rem}
+.btn:hover{background:var(--accent2)}
+.btn-sm{padding:.3rem .6rem;font-size:.8rem}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent);color:var(--bg)}
+
+/* Commandments */
+.cmd-challenge{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.cmd-challenge .num{color:var(--accent);font-weight:bold;font-size:1.1rem}
+.cmd-challenge .title{color:var(--fg);margin:.3rem 0}
+.cmd-challenge .task{color:var(--orange);font-size:.85rem;margin:.5rem 0}
+.cmd-editor{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--fg);padding:.6rem;font-family:inherit;font-size:.85rem;resize:vertical;min-height:80px;outline:none}
+.cmd-editor:focus{border-color:var(--accent)}
+.cmd-result{margin-top:.5rem;padding:.5rem;border-radius:4px;font-size:.85rem}
+.cmd-result.pass{background:rgba(107,203,119,.1);border:1px solid var(--green);color:var(--green)}
+.cmd-result.fail{background:rgba(255,107,107,.1);border:1px solid var(--red);color:var(--red)}
+.cmd-result.info{background:rgba(0,212,170,.05);border:1px solid var(--border);color:var(--fg2)}
+
+/* Cons playground */
+.cons-area{display:flex;gap:1rem;flex-wrap:wrap}
+.cons-input-area{flex:1;min-width:250px}
+.cons-diagram{flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;min-height:200px;overflow:auto}
+.cons-cell{display:inline-flex;border:2px solid var(--accent);border-radius:4px;margin:.3rem;vertical-align:middle}
+.cons-cell .car-part,.cons-cell .cdr-part{padding:.3rem .6rem;font-size:.85rem;min-width:30px;text-align:center}
+.cons-cell .car-part{border-right:1px solid var(--accent);color:var(--yellow)}
+.cons-cell .cdr-part{color:var(--fg)}
+.cons-null{color:var(--red);font-size:.8rem;display:inline-block;padding:.3rem;vertical-align:middle}
+.cons-arrow{color:var(--accent);vertical-align:middle;margin:0 .2rem}
+
+/* Y Combinator */
+.y-step{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:1rem;overflow:hidden;transition:border-color .3s}
+.y-step.active{border-color:var(--accent)}
+.y-step-header{padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.y-step-header .num{color:var(--accent);font-weight:bold}
+.y-step-body{padding:0 1rem 1rem;display:none}
+.y-step.active .y-step-body{display:block}
+pre{background:var(--bg3);padding:.75rem;border-radius:6px;overflow-x:auto;font-size:.83rem;line-height:1.5;margin:.5rem 0}
+code{background:var(--bg3);padding:.1rem .35rem;border-radius:3px;color:var(--accent);font-size:.85rem}
+
+/* Metacircular */
+.eval-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem}
+.eval-trace{margin-top:.75rem}
+.eval-node{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:.4rem .7rem;margin:.2rem 0;font-size:.83rem;display:flex;align-items:center;gap:.5rem}
+.eval-node .tag{color:var(--accent);font-weight:bold;min-width:90px}
+.eval-node .expr{color:var(--fg)}
+.eval-node .arrow{color:var(--yellow)}
+.eval-node .result{color:var(--yellow)}
+.eval-node.highlight{border-color:var(--accent);box-shadow:0 0 6px rgba(0,212,170,.2)}
+.eval-indent{margin-left:1.5rem;border-left:1px solid var(--border);padding-left:.5rem}
+
+/* Laws quiz */
+.law-quiz{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem}
+.law-quiz .question{color:var(--fg);margin:.5rem 0}
+.law-quiz input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--fg);padding:.5rem;border-radius:4px;font-size:.85rem;outline:none;margin:.3rem 0}
+.law-quiz input[type=text]:focus{border-color:var(--accent)}
+.law-quiz .feedback{margin-top:.4rem;font-size:.85rem;min-height:1.2em}
+.law-quiz .feedback.correct{color:var(--green)}
+.law-quiz .feedback.wrong{color:var(--red)}
+.law-score{background:var(--bg2);border:1px solid var(--accent);border-radius:8px;padding:.75rem 1rem;text-align:center;color:var(--accent);font-size:1rem;margin-bottom:1rem}
+
+@media(max-width:600px){
+  .header h1{font-size:1.3rem}
+  nav button{font-size:.65rem;padding:.25rem .4rem}
+  .repl-out{height:200px}
+  .cons-area{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>🐚 The Little Schemer — Interactive</h1>
+  <div class="sub">Friedman & Felleisen · v2 · type code, see results</div>
+  <div class="stars">★★★★★</div>
+</div>
+
+<nav id="nav"></nav>
+
+<div id="sec-repl" class="section active">
+  <h2>🐚 Live Scheme REPL</h2>
+  <p class="desc">A real S-expression evaluator. Type expressions, see step-by-step evaluation. Supports <code>car</code>, <code>cdr</code>, <code>cons</code>, <code>null?</code>, <code>eq?</code>, <code>atom?</code>, <code>lambda</code>, <code>define</code>, <code>cond</code>, and more.</p>
+  <div class="repl-box">
+    <div class="repl-bar"><span>little-schemer v2</span><span class="hint">Toggle step-by-step: <label><input type="checkbox" id="step-toggle" checked> show steps</label></span></div>
+    <div class="repl-out" id="repl-out"></div>
+    <div class="repl-row"><span>λ&gt;</span><input type="text" id="repl-in" placeholder="(car '(peanut butter jelly))" autofocus></div>
+  </div>
+  <div class="examples" id="repl-examples"></div>
+</div>
+
+<div id="sec-recursion" class="section">
+  <h2>🔄 Recursion Visualizer</h2>
+  <p class="desc">Watch the call stack grow and unwind. Pick a function or define your own, then trace it.</p>
+  <div class="viz-controls">
+    <select id="viz-fn">
+      <option value="member?">member?</option>
+      <option value="lat?">lat?</option>
+      <option value="rember">rember</option>
+      <option value="length">length</option>
+      <option value="firsts">firsts</option>
+    </select>
+    <input type="text" id="viz-args" value="'butter '(peanut butter and jelly)" placeholder="arguments" style="flex:1;min-width:180px">
+    <button class="btn" onclick="vizRun()">▶ Run</button>
+    <button class="btn btn-outline" onclick="vizStep()">⏭ Step</button>
+    <button class="btn btn-outline" onclick="vizReset()">⏮ Reset</button>
+  </div>
+  <div id="viz-stack"></div>
+  <div id="viz-result" style="margin-top:.5rem;color:var(--yellow);font-size:.9rem"></div>
+</div>
+
+<div id="sec-commandments" class="section">
+  <h2>📜 The Ten Commandments</h2>
+  <p class="desc">Each commandment shows <strong>broken code</strong>. Fix it to make the tests pass. No peeking — learn by debugging.</p>
+  <div id="cmd-list"></div>
+</div>
+
+<div id="sec-cons" class="section">
+  <h2>🧱 cons/car/cdr Playground</h2>
+  <p class="desc">Type a list expression and see the box-and-pointer diagram. Or build lists with cons, then apply car/cdr.</p>
+  <div class="cons-area">
+    <div class="cons-input-area">
+      <div class="repl-box">
+        <div class="repl-bar"><span>cons builder</span></div>
+        <div class="repl-out" id="cons-out" style="height:150px"></div>
+        <div class="repl-row"><span>λ&gt;</span><input type="text" id="cons-in" placeholder="(cons 'a (cons 'b '()))"></div>
+      </div>
+      <div class="examples">
+        <button onclick="consRun(`'(a b c)`)">'(a b c)</button>
+        <button onclick="consRun(`(cons 'a '(b c))`)">cons 'a '(b c)</button>
+        <button onclick="consRun(`(cons '(a) '(b c))`)">cons '(a) '(b c)</button>
+        <button onclick="consRun(`(car '(a b c))`)">car '(a b c)</button>
+        <button onclick="consRun(`(cdr '(a b c))`)">cdr '(a b c)</button>
+        <button onclick="consRun(`(car (cdr '(a b c)))`)">cadr</button>
+        <button onclick="consRun(`'((a b) (c d) (e f))')`)">nested</button>
+      </div>
+    </div>
+    <div class="cons-diagram" id="cons-diagram">
+      <div style="color:var(--fg2);text-align:center;padding:2rem">Type an expression to see its structure</div>
+    </div>
+  </div>
+</div>
+
+<div id="sec-ycomb" class="section">
+  <h2>🧬 Y Combinator Derivation</h2>
+  <p class="desc">Step through the derivation from Chapter 9. Each step transforms the code — click to advance, try expressions in the REPL at each stage.</p>
+  <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+    <button class="btn btn-outline btn-sm" onclick="yPrev()">← Prev</button>
+    <button class="btn btn-sm" onclick="yNext()">Next →</button>
+    <span id="y-counter" style="color:var(--fg2);font-size:.85rem;padding:.3rem"></span>
+  </div>
+  <div id="y-steps"></div>
+</div>
+
+<div id="sec-meta" class="section">
+  <h2>🪞 Metacircular Evaluator</h2>
+  <p class="desc">Feed an expression into the Chapter 10 evaluator. Watch eval and apply ping-pong as the expression is interpreted.</p>
+  <div class="eval-box">
+    <div class="repl-row" style="border:1px solid var(--border);border-radius:4px">
+      <span>λ&gt;</span>
+      <input type="text" id="meta-in" placeholder="(car '(a b c))" style="background:var(--bg3);border:none;color:var(--fg);padding:.6rem .4rem;flex:1;font-size:.85rem;outline:none">
+      <button class="btn btn-sm" onclick="metaEval()" style="margin:.3rem">Eval</button>
+    </div>
+    <div class="examples" style="margin-top:.5rem">
+      <button onclick="metaRun(`42`)">42</button>
+      <button onclick="metaRun(`(quote (a b))`)">quote</button>
+      <button onclick="metaRun(`(car (quote (a b c)))`)">car</button>
+      <button onclick="metaRun(`(cdr (quote (1 2 3)))`)">cdr</button>
+      <button onclick="metaRun(`(cons (quote a) (quote (b c)))`)">cons</button>
+      <button onclick="metaRun(`(null? (quote ()))`)">null?</button>
+      <button onclick="metaRun(`(eq? (quote x) (quote x))`)">eq?</button>
+      <button onclick="metaRun(`((lambda (x) (add1 x)) 41)`)">lambda</button>
+      <button onclick="metaRun(`(cond ((null? (quote (a))) (quote yes)) (else (quote no)))`)">cond</button>
+    </div>
+  </div>
+  <div id="meta-trace"></div>
+</div>
+
+<div id="sec-laws" class="section">
+  <h2>⚖️ The Laws of car, cdr, and cons</h2>
+  <p class="desc">Given an expression, predict what it evaluates to. Type your answer, then check. No multiple choice — you must <em>know</em>.</p>
+  <div class="law-score" id="law-score">Score: 0 / 0</div>
+  <div id="law-quizzes"></div>
+  <button class="btn" onclick="newLawQuiz()" style="margin-top:.5rem">🔄 New Questions</button>
+</div>
+
+</div><!-- container -->
+
+<script>
+// ==================== SCHEME INTERPRETER ====================
+function tokenize(s){const t=[];let i=0;while(i<s.length){if(s[i]===';'){while(i<s.length&&s[i]!=='\n')i++;continue}if(/\s/.test(s[i])){i++;continue}if(s[i]==='('||s[i]===')'){t.push(s[i++]);continue}if(s[i]==="'"){t.push("'");i++;continue}let tk='';while(i<s.length&&!/[\s()]/.test(s[i]))tk+=s[i++];t.push(tk)}return t}
+function parse(src){const tokens=tokenize(src);let pos=0;function peek(){return tokens[pos]}function next(){return tokens[pos++]}function parseExpr(){const t=next();if(t===undefined)throw'Unexpected end of input';if(t==='('){const l=[];while(peek()!==')'){ if(peek()===undefined)throw'Missing )';l.push(parseExpr())}next();return l}if(t===')')throw'Unexpected )';if(t==="'")return['quote',parseExpr()];if(t==='#t')return true;if(t==='#f')return false;const n=Number(t);if(!isNaN(n)&&t!=='')return n;return t}const exprs=[];while(pos<tokens.length)exprs.push(parseExpr());return exprs}
+function s2s(v){if(v===true)return'#t';if(v===false)return'#f';if(v===null||v===undefined)return'()';if(typeof v==='number'||typeof v==='string')return String(v);if(Array.isArray(v)){if(v.length===0)return'()';return'('+v.map(s2s).join(' ')+')'}if(typeof v==='function')return'#<procedure>';return String(v)}
+
+const G={};
+function mkEnv(p){return Object.create(p)}
+function initG(){
+  G['car']=(a)=>{if(!Array.isArray(a[0])||a[0].length===0)throw'car: not a non-empty list';return a[0][0]};
+  G['cdr']=(a)=>{if(!Array.isArray(a[0])||a[0].length===0)throw'cdr: not a non-empty list';return a[0].slice(1)};
+  G['cons']=(a)=>{if(!Array.isArray(a[1]))throw'cons: second arg must be a list';return[a[0],...a[1]]};
+  G['null?']=(a)=>Array.isArray(a[0])&&a[0].length===0;
+  G['atom?']=(a)=>typeof a[0]==='string'||typeof a[0]==='number'||typeof a[0]==='boolean';
+  G['eq?']=(a)=>a[0]===a[1];
+  G['number?']=(a)=>typeof a[0]==='number';
+  G['zero?']=(a)=>a[0]===0;
+  G['add1']=(a)=>a[0]+1;
+  G['sub1']=(a)=>a[0]-1;
+  G['+']=(a)=>a.reduce((x,y)=>x+y,0);
+  G['-']=(a)=>a.length===1?-a[0]:a.reduce((x,y)=>x-y);
+  G['*']=(a)=>a.reduce((x,y)=>x*y,1);
+  G['=']=(a)=>a[0]===a[1];
+  G['>']=(a)=>a[0]>a[1];
+  G['<']=(a)=>a[0]<a[1];
+  G['list']=(a)=>[...a];
+  G['not']=(a)=>a[0]===false;
+  G['even?']=(a)=>a[0]%2===0;
+  G['odd?']=(a)=>a[0]%2!==0;
+  G['pair?']=(a)=>Array.isArray(a[0])&&a[0].length>=2;
+  G['else']=true;
+}
+initG();
+
+let evalSteps=[];
+let stepEnabled=true;
+
+function sEval(expr,env,depth){
+  if(depth===undefined)depth=0;
+  if(depth>500)throw'Maximum recursion depth exceeded';
+  if(typeof expr==='number'||typeof expr==='boolean')return expr;
+  if(typeof expr==='string'){
+    if(expr in env)return env[expr];
+    if(expr in G)return G[expr];
+    throw`Undefined: ${expr}`;
+  }
+  if(!Array.isArray(expr))throw`Cannot eval: ${expr}`;
+  if(expr.length===0)return[];
+  const head=expr[0];
+  if(head==='quote'){if(stepEnabled)evalSteps.push(`  quote → ${s2s(expr[1])}`);return expr[1]}
+  if(head==='if'){
+    const test=sEval(expr[1],env,depth+1);
+    if(stepEnabled)evalSteps.push(`  if test = ${s2s(test)}`);
+    return test!==false?sEval(expr[2],env,depth+1):sEval(expr[3],env,depth+1);
+  }
+  if(head==='cond'){
+    for(let i=1;i<expr.length;i++){
+      const c=expr[i];
+      const test=sEval(c[0],env,depth+1);
+      if(test!==false){
+        if(stepEnabled)evalSteps.push(`  cond clause ${i}: ${s2s(c[0])} → ${s2s(test)}, taking this branch`);
+        return sEval(c[1],env,depth+1);
+      }
+    }
+    throw'cond: no matching clause';
+  }
+  if(head==='and'){let r=true;for(let i=1;i<expr.length;i++){r=sEval(expr[i],env,depth+1);if(r===false)return false}return r}
+  if(head==='or'){for(let i=1;i<expr.length;i++){const v=sEval(expr[i],env,depth+1);if(v!==false)return v}return false}
+  if(head==='define'){const val=sEval(expr[2],env,depth+1);G[expr[1]]=val;return`; defined ${expr[1]}`}
+  if(head==='lambda'){
+    const params=expr[1],body=expr.length>3?['begin',...expr.slice(2)]:expr[2];
+    const closure=mkEnv(env);
+    const fn=(args)=>{const local=mkEnv(closure);for(let i=0;i<params.length;i++)local[params[i]]=args[i];return sEval(body,local,depth+1)};
+    fn._isLambda=true;fn._params=params;fn._body=body;return fn;
+  }
+  if(head==='let'){const local=mkEnv(env);for(const[k,v]of expr[1])local[k]=sEval(v,env,depth+1);return sEval(expr[2],local,depth+1)}
+  if(head==='begin'){let r;for(let i=1;i<expr.length;i++)r=sEval(expr[i],env,depth+1);return r}
+  // Application
+  const fn=sEval(head,env,depth+1);
+  const args=expr.slice(1).map(a=>sEval(a,env,depth+1));
+  if(stepEnabled){
+    const fnName=typeof head==='string'?head:'λ';
+    evalSteps.push(`  (${fnName} ${args.map(s2s).join(' ')})`)
+  }
+  if(typeof fn==='function')return fn._isLambda?fn(args):fn(args);
+  throw`Not a function: ${s2s(head)}`;
+}
+
+// ==================== REPL ====================
+const replOut=()=>document.getElementById('repl-out');
+const replIn=()=>document.getElementById('repl-in');
+function addLine(el,text,cls){const d=document.createElement('div');d.className=cls;d.textContent=text;el.appendChild(d);el.scrollTop=el.scrollHeight}
+function replRun(src){
+  if(!src.trim())return;
+  const out=replOut();
+  replIn().value='';
+  addLine(out,`λ> ${src}`,'p');
+  try{
+    evalSteps=[];stepEnabled=document.getElementById('step-toggle').checked;
+    const exprs=parse(src);
+    for(const expr of exprs){
+      const result=sEval(expr,mkEnv(G));
+      if(stepEnabled&&evalSteps.length>0)for(const s of evalSteps)addLine(out,s,'step');
+      evalSteps=[];
+      const rs=typeof result==='string'&&result.startsWith(';')?result:s2s(result);
+      addLine(out,`→ ${rs}`,'r');
+    }
+  }catch(e){addLine(out,`Error: ${e}`,'e')}
+}
+function setupRepl(){
+  replIn().addEventListener('keydown',e=>{if(e.key==='Enter')replRun(replIn().value)});
+  addLine(replOut(),'; Welcome to The Little Schemer REPL v2','i');
+  addLine(replOut(),'; Type S-expressions. Step-by-step evaluation shown.','i');
+  addLine(replOut(),'; 🥜 Try: (car \'(peanut butter and jelly))','i');
+  const examples=[
+    ["(car '(a b c))","car"],["(cdr '(a b c))","cdr"],["(cons 'a '(b c))","cons"],
+    ["(null? '())","null?"],["(atom? 'spaghetti)","atom?"],["(eq? 'pizza 'pizza)","eq?"],
+    ["((lambda (x) (+ x 1)) 41)","λ apply"],
+    ["(define lat? (lambda (l) (cond ((null? l) #t) ((atom? (car l)) (lat? (cdr l))) (else #f))))","def lat?"],
+    ["(lat? '(peanut butter jelly))","lat? test"],
+    ["(define rember (lambda (a lat) (cond ((null? lat) '()) ((eq? a (car lat)) (cdr lat)) (else (cons (car lat) (rember a (cdr lat)))))))","def rember"],
+    ["(rember 'and '(peanut butter and jelly))","rember test"],
+  ];
+  const container=document.getElementById('repl-examples');
+  examples.forEach(([code,label])=>{
+    const b=document.createElement('button');b.textContent=label;b.onclick=()=>replRun(code);container.appendChild(b);
+  });
+}
+
+// ==================== RECURSION VISUALIZER ====================
+// Pre-define standard functions for tracing
+const vizFunctions={
+  'member?':{params:['a','lat'],body:'(cond ((null? lat) #f) ((eq? (car lat) a) #t) (else (member? a (cdr lat))))'},
+  'lat?':{params:['l'],body:'(cond ((null? l) #t) ((atom? (car l)) (lat? (cdr l))) (else #f))'},
+  'rember':{params:['a','lat'],body:'(cond ((null? lat) (quote ())) ((eq? a (car lat)) (cdr lat)) (else (cons (car lat) (rember a (cdr lat)))))'},
+  'length':{params:['l'],body:'(cond ((null? l) 0) (else (+ 1 (length (cdr l)))))'},
+  'firsts':{params:['l'],body:'(cond ((null? l) (quote ())) (else (cons (car (car l)) (firsts (cdr l)))))'},
+};
+
+let vizFrames=[],vizPos=-1,vizDone=false;
+
+function vizRun(){
+  const fn=document.getElementById('viz-fn').value;
+  const argsStr=document.getElementById('viz-args').value;
+  // Ensure function is defined
+  const vf=vizFunctions[fn];
+  if(vf){
+    try{sEval(parse(`(define ${fn} (lambda (${vf.params.join(' ')}) ${vf.body}))`)[0],mkEnv(G))}catch(e){}
+  }
+  // Trace by instrumenting
+  vizFrames=[];vizPos=-1;vizDone=false;
+  const origStepEnabled=stepEnabled;stepEnabled=false;
+  traceCall(fn,argsStr);
+  stepEnabled=origStepEnabled;
+  vizPos=vizFrames.length;
+  renderViz();
+}
+
+function traceCall(fnName,argsStr){
+  try{
+    // Parse and eval args
+    const fullExpr=`(${fnName} ${argsStr})`;
+    // Use a tracing evaluator
+    vizFrames=[];
+    tracingEval(fnName,argsStr);
+  }catch(e){
+    document.getElementById('viz-result').textContent=`Error: ${e}`;
+  }
+}
+
+function tracingEval(fnName,argsStr){
+  // Build trace by actually running and recording
+  const src=`(${fnName} ${argsStr})`;
+  let callDepth=0;
+  const maxCalls=50;
+  const origFn=G[fnName];
+  const frames=[];
+
+  // Wrapper
+  const traced=function(args){
+    if(frames.length>=maxCalls){throw'Too many calls (>50). Is this infinite?'}
+    const frame={fn:fnName,args:args.map(s2s),depth:callDepth,result:null};
+    frames.push(frame);
+    callDepth++;
+    try{
+      const r=origFn(args);
+      frame.result=s2s(r);
+      callDepth--;
+      return r;
+    }catch(e){
+      callDepth--;
+      throw e;
+    }
+  };
+  traced._isLambda=true;
+
+  G[fnName]=traced;
+  try{
+    const exprs=parse(src);
+    const result=sEval(exprs[0],mkEnv(G));
+    document.getElementById('viz-result').textContent=`Result: ${s2s(result)}`;
+  }catch(e){
+    document.getElementById('viz-result').textContent=`${e}`;
+  }
+  G[fnName]=origFn;
+  vizFrames=frames;
+}
+
+function vizStep(){
+  if(vizFrames.length===0)vizRun();
+  if(vizPos<vizFrames.length)vizPos++;
+  renderViz();
+}
+function vizReset(){vizPos=0;renderViz()}
+
+function renderViz(){
+  const el=document.getElementById('viz-stack');
+  el.innerHTML='';
+  vizFrames.forEach((f,i)=>{
+    const div=document.createElement('div');
+    div.className='stack-frame'+(i===vizPos-1?' active':'');
+    div.style.marginLeft=(f.depth*1.2)+'rem';
+    if(i>=vizPos){div.style.opacity='0.2'}
+    const res=f.result!==null&&i<vizPos?` <span class="result">→ ${f.result}</span>`:'';
+    div.innerHTML=`<span class="fn-name">${f.fn}</span> <span class="args">(${f.args.join(', ')})</span>${res}`;
+    el.appendChild(div);
+  });
+}
+
+// ==================== TEN COMMANDMENTS (INTERACTIVE) ====================
+const cmdChallenges=[
+  {num:1,title:'Always ask null? as the first question',
+   broken:`(define lat?\n  (lambda (l)\n    (cond\n      ((atom? (car l)) (lat? (cdr l)))\n      (else #f))))`,
+   test:`(lat? '())`,expected:'#t',
+   hint:'What happens when l is empty? There is no car of an empty list!'},
+  {num:2,title:'Use cons to build lists',
+   broken:`(define add-to-end\n  (lambda (a l)\n    (cond\n      ((null? l) a)\n      (else (cons (car l) (add-to-end a (cdr l)))))))`,
+   test:`(add-to-end 'd '(a b c))`,expected:'(a b c d)',
+   hint:'The base case should return a list, not an atom. How do you make a one-element list with cons?'},
+  {num:3,title:'cons the first element onto the natural recursion',
+   broken:`(define double\n  (lambda (l)\n    (cond\n      ((null? l) '())\n      (else (double (cdr l))))))`,
+   test:`(double '(1 2 3))`,expected:'(2 4 6)',
+   hint:'You need to cons the transformed (car l) onto the recursion on (cdr l).'},
+  {num:4,title:'Always change at least one argument while recurring',
+   broken:`(define count\n  (lambda (a l)\n    (cond\n      ((null? l) 0)\n      ((eq? (car l) a) (+ 1 (count a l)))\n      (else (count a (cdr l))))))`,
+   test:`(count 'a '(a b a))`,expected:'2',
+   hint:'In the eq? branch, what list are you recurring on? It should get smaller!'},
+  {num:5,title:'Use 0 for the terminating line when building with +',
+   broken:`(define length\n  (lambda (l)\n    (cond\n      ((null? l) 1)\n      (else (+ 1 (length (cdr l)))))))`,
+   test:`(length '(a b c))`,expected:'3',
+   hint:'What should the length of the empty list be? 0 is the identity for +.'},
+  {num:6,title:'Use 1 for the terminating line when building with ×',
+   broken:`(define product\n  (lambda (tup)\n    (cond\n      ((null? tup) 0)\n      (else (* (car tup) (product (cdr tup)))))))`,
+   test:`(product '(2 3 4))`,expected:'24',
+   hint:'0 × anything = 0. That poisons the whole computation. What is the identity for ×?'},
+  {num:7,title:'Recur on the subparts that are of the same nature',
+   broken:`(define count*\n  (lambda (a l)\n    (cond\n      ((null? l) 0)\n      ((atom? (car l))\n       (cond\n         ((eq? (car l) a) (+ 1 (count* a (cdr l))))\n         (else (count* a (cdr l)))))\n      (else (count* a (cdr l))))))`,
+   test:`(count* 'x '(x (x x) x))`,expected:'4',
+   hint:'When (car l) is a list, you need to recur into it AND into (cdr l).'},
+  {num:8,title:'Use help functions to abstract from representations',
+   broken:`(define value\n  (lambda (e)\n    (cond\n      ((atom? e) e)\n      ((eq? (car (cdr e)) '+) (+ (value (car e)) (value (car (cdr (cdr e))))))\n      ((eq? (car (cdr e)) '*) (* (value (car e)) (value (car (cdr (cdr e)))))))))`,
+   test:`(value '(2 + 3))`,expected:'5',
+   hint:'Define helpers: operator, 1st-sub-exp, 2nd-sub-exp. Then value becomes readable and representation-independent.'},
+  {num:9,title:'Abstract common patterns with a new function',
+   broken:`;; rember+ removes first match\n(define rember+\n  (lambda (a l)\n    (cond\n      ((null? l) '())\n      ((eq? (car l) a) (cdr l))\n      (else (cons (car l) (rember+ a (cdr l)))))))\n;; This works. But can you write rember-f\n;; that takes a comparison function?`,
+   test:`((rember-f eq?) 'b '(a b c))`,expected:'(a c)',
+   hint:'rember-f should take a test function and return a new function that does the removing.'},
+  {num:10,title:'Build functions to collect values with continuations',
+   broken:`(define multirember\n  (lambda (a lat)\n    (cond\n      ((null? lat) '())\n      ((eq? (car lat) a) (multirember a (cdr lat)))\n      (else (cons (car lat) (multirember a (cdr lat)))))))\n;; Works but only returns one thing.\n;; Write multirember&co that collects\n;; BOTH removed AND kept items.`,
+   test:`(multirember&co 'a '(a b a c) list)`,expected:'((b c) (a a))',
+   hint:'Use a collector (continuation). The collector receives two lists: items kept and items removed.'},
+];
+
+function initCmds(){
+  const container=document.getElementById('cmd-list');
+  cmdChallenges.forEach((c,idx)=>{
+    const div=document.createElement('div');
+    div.className='cmd-challenge';
+    div.innerHTML=`
+      <div class="num">#${c.num}</div>
+      <div class="title">${c.title}</div>
+      <div class="task">Fix the code so that <code>${c.test}</code> returns <code>${c.expected}</code></div>
+      <textarea class="cmd-editor" id="cmd-editor-${idx}" spellcheck="false">${c.broken}</textarea>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="cmdTest(${idx})">▶ Test</button>
+        <button class="btn btn-outline btn-sm" onclick="cmdHint(${idx})">💡 Hint</button>
+        <button class="btn btn-outline btn-sm" onclick="cmdReset(${idx})">↺ Reset</button>
+      </div>
+      <div class="cmd-result info" id="cmd-result-${idx}"></div>`;
+    container.appendChild(div);
+  });
+}
+
+function cmdTest(idx){
+  const c=cmdChallenges[idx];
+  const code=document.getElementById(`cmd-editor-${idx}`).value;
+  const el=document.getElementById(`cmd-result-${idx}`);
+  try{
+    stepEnabled=false;
+    // Reset relevant definitions
+    const exprs=parse(code);
+    for(const expr of exprs)sEval(expr,mkEnv(G));
+    const testExprs=parse(c.test);
+    let result;
+    for(const expr of testExprs)result=sEval(expr,mkEnv(G));
+    const rs=s2s(result);
+    if(rs===c.expected){
+      el.className='cmd-result pass';
+      el.textContent=`✓ ${c.test} → ${rs} — Correct!`;
+    }else{
+      el.className='cmd-result fail';
+      el.textContent=`✗ ${c.test} → ${rs} (expected ${c.expected})`;
+    }
+  }catch(e){
+    el.className='cmd-result fail';
+    el.textContent=`✗ Error: ${e}`;
+  }
+  stepEnabled=true;
+}
+function cmdHint(idx){
+  const el=document.getElementById(`cmd-result-${idx}`);
+  el.className='cmd-result info';
+  el.textContent=`💡 ${cmdChallenges[idx].hint}`;
+}
+function cmdReset(idx){
+  document.getElementById(`cmd-editor-${idx}`).value=cmdChallenges[idx].broken;
+  document.getElementById(`cmd-result-${idx}`).className='cmd-result info';
+  document.getElementById(`cmd-result-${idx}`).textContent='';
+}
+
+// ==================== CONS PLAYGROUND ====================
+function consRun(src){
+  const out=document.getElementById('cons-out');
+  const inp=document.getElementById('cons-in');
+  if(!src)src=inp.value;
+  inp.value='';
+  addLine(out,`λ> ${src}`,'p');
+  try{
+    stepEnabled=false;
+    const exprs=parse(src);
+    let result;
+    for(const expr of exprs)result=sEval(expr,mkEnv(G));
+    addLine(out,`→ ${s2s(result)}`,'r');
+    renderConsCell(result);
+    stepEnabled=true;
+  }catch(e){addLine(out,`Error: ${e}`,'e');stepEnabled=true}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cons-in').addEventListener('keydown',e=>{if(e.key==='Enter')consRun()});
+});
+
+function renderConsCell(val){
+  const el=document.getElementById('cons-diagram');
+  el.innerHTML='<div style="color:var(--fg2);font-size:.8rem;margin-bottom:.5rem">Box-and-pointer diagram:</div>';
+  el.appendChild(buildCellDOM(val));
+}
+
+function buildCellDOM(val){
+  if(val===null||val===undefined||(Array.isArray(val)&&val.length===0)){
+    const sp=document.createElement('span');sp.className='cons-null';sp.textContent='∅ null';return sp;
+  }
+  if(!Array.isArray(val)){
+    const sp=document.createElement('span');sp.style.cssText='color:var(--yellow);padding:.3rem;font-size:.85rem';sp.textContent=s2s(val);return sp;
+  }
+  const wrapper=document.createElement('div');wrapper.style.display='inline-block';
+  // Build chain
+  let current=val;
+  let i=0;
+  while(Array.isArray(current)&&current.length>0&&i<20){
+    const cell=document.createElement('span');cell.className='cons-cell';
+    const carDiv=document.createElement('span');carDiv.className='car-part';
+    const cdrDiv=document.createElement('span');cdrDiv.className='cdr-part';
+    if(Array.isArray(current[0])&&current[0].length>0){
+      carDiv.textContent='•';
+      carDiv.style.cursor='pointer';
+      carDiv.title='nested list';
+      // Add nested below
+      const nested=document.createElement('div');
+      nested.style.cssText='margin-left:1rem;margin-top:.2rem';
+      nested.appendChild(document.createTextNode('↓ '));
+      nested.appendChild(buildCellDOM(current[0]));
+      cell.appendChild(carDiv);
+      cdrDiv.textContent=current.length>2?'→':'→';
+      cell.appendChild(cdrDiv);
+      wrapper.appendChild(cell);
+      wrapper.appendChild(nested);
+    }else{
+      carDiv.textContent=s2s(current[0]);
+      cell.appendChild(carDiv);
+      cdrDiv.textContent=current.length>1?'→':'∅';
+      cell.appendChild(cdrDiv);
+      wrapper.appendChild(cell);
+    }
+    if(current.length>1){
+      const arrow=document.createElement('span');arrow.className='cons-arrow';arrow.textContent='→';
+      wrapper.appendChild(arrow);
+    }
+    current=current.slice(1);
+    i++;
+  }
+  if(Array.isArray(current)&&current.length===0){
+    const n=document.createElement('span');n.className='cons-null';n.textContent='∅';
+    wrapper.appendChild(n);
+  }
+  return wrapper;
+}
+
+// ==================== Y COMBINATOR ====================
+const ySteps=[
+  {title:'The Problem: length needs its own name',
+   code:`(define length\n  (lambda (l)\n    (cond\n      ((null? l) 0)\n      (else (+ 1 (length (cdr l)))))))\n\n; length calls itself by name.\n; But what if we can't use define?\n; Can we have recursion without names?`,
+   note:'This works. But it relies on define to give the function a name it can call. What if we strip that away?'},
+  {title:'length₀ — handles only empty lists',
+   code:`; No define. Just a raw lambda.\n; This "length" only handles '():\n\n(lambda (l)\n  (cond\n    ((null? l) 0)\n    (else (+ 1 (eternity (cdr l))))))\n\n; eternity = (lambda (x) (eternity x))\n; If the list isn't empty, we're stuck.`,
+   note:'We replaced the recursive call with eternity (infinite loop). This function works for length 0 only.'},
+  {title:'length≤1 — nest another copy inside',
+   code:`(lambda (l)\n  (cond\n    ((null? l) 0)\n    (else (+ 1\n      ((lambda (l)      ; another copy!\n         (cond\n           ((null? l) 0)\n           (else (+ 1 (eternity (cdr l))))))\n       (cdr l))))))`,
+   note:'Now it handles 0 or 1 elements. But we had to paste the whole function inside itself. length≤2 would need three copies...'},
+  {title:'The pattern: abstract out the repetition',
+   code:`; What if we pass "the next length" as a parameter?\n\n(define mk-length\n  (lambda (length)     ; ← takes a function\n    (lambda (l)\n      (cond\n        ((null? l) 0)\n        (else (+ 1 (length (cdr l))))))))\n\n; (mk-length eternity)       = length₀\n; (mk-length (mk-length eternity)) = length≤1\n; (mk-length (mk-length (mk-length eternity))) = length≤2`,
+   note:'mk-length is a function factory. Give it any "length" and it handles one more element. But we still need infinitely many calls...'},
+  {title:'Self-application: mk-length meets mk-length',
+   code:`((lambda (mk-length)\n   (mk-length mk-length))    ; pass itself to itself!\n (lambda (mk-length)\n   (lambda (l)\n     (cond\n       ((null? l) 0)\n       (else (+ 1\n         ((mk-length mk-length)  ; generate next on demand\n          (cdr l))))))))`,
+   note:'The breakthrough! Instead of pre-building infinite copies, we generate each one on demand by passing mk-length to itself. This actually works for ALL lists!'},
+  {title:'Extract the self-application',
+   code:`((lambda (mk-length)\n   (mk-length mk-length))\n (lambda (mk-length)\n   ((lambda (length)           ; ← looks like our original!\n      (lambda (l)\n        (cond\n          ((null? l) 0)\n          (else (+ 1 (length (cdr l)))))))\n    (lambda (x)                ; ← delays (mk-length mk-length)\n      ((mk-length mk-length) x)))))`,
+   note:'We factored out the self-application. The inner lambda now looks exactly like our original mk-length from step 3! The machinery is separating from the logic.'},
+  {title:'🎆 The Y Combinator',
+   code:`(define Y\n  (lambda (le)\n    ((lambda (f) (f f))\n     (lambda (f)\n       (le (lambda (x) ((f f) x)))))))\n\n; Now we can write:\n(define length\n  (Y (lambda (length)\n       (lambda (l)\n         (cond\n           ((null? l) 0)\n           (else (+ 1 (length (cdr l)))))))))`,
+   note:'Y takes any "almost-recursive" function and makes it truly recursive. No define needed for the recursion itself. Recursion from thin air. The applicative-order fixed-point combinator.'},
+];
+
+let yPos=0;
+function initY(){
+  renderY();
+}
+function yNext(){if(yPos<ySteps.length-1){yPos++;renderY()}}
+function yPrev(){if(yPos>0){yPos--;renderY()}}
+function renderY(){
+  const container=document.getElementById('y-steps');
+  container.innerHTML='';
+  document.getElementById('y-counter').textContent=`Step ${yPos+1} of ${ySteps.length}`;
+  ySteps.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='y-step'+(i===yPos?' active':'');
+    div.innerHTML=`
+      <div class="y-step-header" onclick="yPos=${i};renderY()">
+        <span class="num">${i<ySteps.length-1?'Step '+i:'🎆 Final'}</span>
+        <span style="color:var(--fg2);font-size:.8rem">${s.title}</span>
+      </div>
+      <div class="y-step-body">
+        <pre>${s.code}</pre>
+        <p style="color:var(--fg2);margin-top:.5rem;font-size:.85rem">${s.note}</p>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+// ==================== METACIRCULAR EVALUATOR ====================
+function metaRun(src){document.getElementById('meta-in').value=src;metaEval()}
+
+function metaEval(){
+  const src=document.getElementById('meta-in').value.trim();
+  if(!src)return;
+  const traceEl=document.getElementById('meta-trace');
+  traceEl.innerHTML='';
+  try{
+    const expr=parse(src)[0];
+    const trace=[];
+    metaInterpret(expr,[],trace,0);
+    // Render trace
+    trace.forEach(t=>{
+      const div=document.createElement('div');
+      div.className='eval-node'+(t.highlight?' highlight':'');
+      div.style.marginLeft=(t.depth*1.2)+'rem';
+      div.innerHTML=`<span class="tag">${t.action}</span><span class="expr">${t.expr}</span>${t.result?'<span class="arrow"> → </span><span class="result">'+t.result+'</span>':''}`;
+      traceEl.appendChild(div);
+    });
+  }catch(e){
+    traceEl.innerHTML=`<div style="color:var(--red)">Error: ${e}</div>`;
+  }
+}
+
+function metaInterpret(expr,table,trace,depth){
+  if(depth>30)throw'Too deep';
+  // Classify
+  if(typeof expr==='number'){
+    trace.push({action:'*const',expr:s2s(expr),result:s2s(expr),depth,highlight:false});
+    return expr;
+  }
+  if(typeof expr==='boolean'){
+    trace.push({action:'*const',expr:s2s(expr),result:s2s(expr),depth,highlight:false});
+    return expr;
+  }
+  if(typeof expr==='string'){
+    // Identifier or primitive
+    if(['car','cdr','cons','null?','atom?','eq?','add1','sub1','number?','zero?','+','-','*'].includes(expr)){
+      trace.push({action:'*const',expr:expr,result:`(primitive ${expr})`,depth,highlight:false});
+      return{type:'primitive',name:expr};
+    }
+    // Look up in table
+    for(const frame of table){
+      const idx=frame.formals.indexOf(expr);
+      if(idx!==-1){
+        trace.push({action:'*identifier',expr:expr,result:s2s(frame.values[idx]),depth,highlight:false});
+        return frame.values[idx];
+      }
+    }
+    trace.push({action:'*identifier',expr:expr,result:'?',depth,highlight:false});
+    throw`Unbound: ${expr}`;
+  }
+  if(!Array.isArray(expr))throw`Bad expr: ${expr}`;
+  const head=expr[0];
+  if(head==='quote'){
+    trace.push({action:'*quote',expr:s2s(expr),result:s2s(expr[1]),depth,highlight:false});
+    return expr[1];
+  }
+  if(head==='cond'){
+    trace.push({action:'*cond',expr:`(cond ...)`,result:'',depth,highlight:true});
+    for(let i=1;i<expr.length;i++){
+      const question=expr[i][0];
+      const answer=expr[i][1];
+      const qVal=metaInterpret(question,table,trace,depth+1);
+      if(qVal!==false&&qVal!=='else'||question==='else'||qVal===true){
+        const aVal=metaInterpret(answer,table,trace,depth+1);
+        trace[trace.length-1].result=s2s(aVal);
+        return aVal;
+      }
+    }
+    throw'cond: no true question';
+  }
+  if(head==='lambda'){
+    const closure={type:'non-primitive',table:[...table],formals:expr[1],body:expr[2]};
+    trace.push({action:'*lambda',expr:`(lambda (${expr[1].join(' ')}) ...)`,result:'#<closure>',depth,highlight:false});
+    return closure;
+  }
+  // Application!
+  trace.push({action:'*application',expr:s2s(expr),result:'',depth,highlight:true});
+  const fn=metaInterpret(head,table,trace,depth+1);
+  // evlis — evaluate all arguments
+  const vals=expr.slice(1).map(a=>metaInterpret(a,table,trace,depth+1));
+  // Apply
+  if(fn&&fn.type==='primitive'){
+    trace.push({action:'apply-prim',expr:`${fn.name}(${vals.map(s2s).join(', ')})`,result:'',depth:depth+1,highlight:false});
+    const r=G[fn.name](vals);
+    trace[trace.length-1].result=s2s(r);
+    // Update the *application trace
+    const appTrace=trace.find((t,i)=>t.action==='*application'&&t.depth===depth&&!t.result);
+    if(appTrace)appTrace.result=s2s(r);
+    return r;
+  }
+  if(fn&&fn.type==='non-primitive'){
+    trace.push({action:'apply-closure',expr:`bind (${fn.formals.join(' ')}) = (${vals.map(s2s).join(' ')})`,result:'',depth:depth+1,highlight:true});
+    const newTable=[{formals:fn.formals,values:vals},...fn.table];
+    const r=metaInterpret(fn.body,newTable,trace,depth+2);
+    trace[trace.length-1].result=s2s(r);
+    // Update the *application trace
+    for(let i=trace.length-1;i>=0;i--){
+      if(trace[i].action==='*application'&&trace[i].depth===depth&&!trace[i].result){trace[i].result=s2s(r);break}
+    }
+    return r;
+  }
+  throw`Not a function: ${s2s(fn)}`;
+}
+
+// ==================== LAWS QUIZ ====================
+let lawScore={correct:0,total:0};
+let currentQuizzes=[];
+
+function generateQuiz(){
+  const atoms=['a','b','c','x','y','z','peanut','butter','jelly','pizza','spaghetti'];
+  const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+  const randAtoms=(n)=>{const r=[];for(let i=0;i<n;i++)r.push(pick(atoms));return r};
+  const quizzes=[];
+
+  // car quizzes
+  for(let i=0;i<3;i++){
+    const lst=randAtoms(2+Math.floor(Math.random()*3));
+    quizzes.push({expr:`(car '(${lst.join(' ')}))`,answer:lst[0],law:'The Law of Car: car gets the first element of a non-empty list.'});
+  }
+  // cdr quizzes
+  for(let i=0;i<3;i++){
+    const lst=randAtoms(2+Math.floor(Math.random()*3));
+    const rest=lst.slice(1);
+    quizzes.push({expr:`(cdr '(${lst.join(' ')}))`,answer:`(${rest.join(' ')})`,law:'The Law of Cdr: cdr gets everything after the first element.'});
+  }
+  // cons quizzes
+  for(let i=0;i<2;i++){
+    const a=pick(atoms);
+    const lst=randAtoms(1+Math.floor(Math.random()*3));
+    quizzes.push({expr:`(cons '${a} '(${lst.join(' ')}))`,answer:`(${a} ${lst.join(' ')})`,law:'The Law of Cons: cons adds an element to the front of a list.'});
+  }
+  // Nested
+  {
+    const lst=randAtoms(3);
+    quizzes.push({expr:`(car (cdr '(${lst.join(' ')})))`,answer:lst[1],law:'Composition: (car (cdr l)) gets the second element.'});
+  }
+  {
+    const a=pick(atoms);const b=pick(atoms);
+    quizzes.push({expr:`(car (cons '${a} '(${b})))`,answer:a,law:'The Law of Car/Cons: (car (cons a l)) = a, always.'});
+  }
+  // null?
+  quizzes.push({expr:`(null? '())`,answer:'#t',law:'null? is true only for the empty list.'});
+  quizzes.push({expr:`(null? '(${pick(atoms)}))`,answer:'#f',law:'null? is false for non-empty lists.'});
+
+  // Shuffle
+  for(let i=quizzes.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[quizzes[i],quizzes[j]]=[quizzes[j],quizzes[i]]}
+  return quizzes.slice(0,8);
+}
+
+function newLawQuiz(){
+  lawScore={correct:0,total:0};
+  currentQuizzes=generateQuiz();
+  renderLawQuizzes();
+  updateLawScore();
+}
+
+function renderLawQuizzes(){
+  const container=document.getElementById('law-quizzes');
+  container.innerHTML='';
+  currentQuizzes.forEach((q,i)=>{
+    const div=document.createElement('div');
+    div.className='law-quiz';
+    div.innerHTML=`
+      <div class="question"><code>${q.expr}</code> = ?</div>
+      <input type="text" id="law-input-${i}" placeholder="Type your answer..." onkeydown="if(event.key==='Enter')checkLaw(${i})">
+      <button class="btn btn-sm" onclick="checkLaw(${i})" style="margin-top:.3rem">Check</button>
+      <div class="feedback" id="law-fb-${i}"></div>`;
+    container.appendChild(div);
+  });
+}
+
+function checkLaw(idx){
+  const q=currentQuizzes[idx];
+  const input=document.getElementById(`law-input-${idx}`);
+  const fb=document.getElementById(`law-fb-${idx}`);
+  const userAns=input.value.trim().replace(/\s+/g,' ');
+  const correct=q.answer.replace(/\s+/g,' ');
+
+  if(fb.classList.contains('correct')||fb.classList.contains('wrong'))return; // already answered
+
+  lawScore.total++;
+  if(userAns===correct){
+    fb.className='feedback correct';
+    fb.textContent=`✓ Correct! ${q.law}`;
+    lawScore.correct++;
+  }else{
+    fb.className='feedback wrong';
+    fb.textContent=`✗ Answer: ${correct}. ${q.law}`;
+  }
+  updateLawScore();
+}
+
+function updateLawScore(){
+  document.getElementById('law-score').textContent=`Score: ${lawScore.correct} / ${lawScore.total}${lawScore.total>0?` (${Math.round(lawScore.correct/lawScore.total*100)}%)`:''}`;
+}
+
+// ==================== NAVIGATION ====================
+const sections=[
+  {id:'repl',label:'🐚 REPL'},
+  {id:'recursion',label:'🔄 Recursion'},
+  {id:'commandments',label:'📜 Commandments'},
+  {id:'cons',label:'🧱 cons/car/cdr'},
+  {id:'ycomb',label:'🧬 Y Combinator'},
+  {id:'meta',label:'🪞 Metacircular'},
+  {id:'laws',label:'⚖️ Laws'},
+];
+
+function initNav(){
+  const nav=document.getElementById('nav');
+  sections.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.textContent=s.label;
+    if(i===0)b.classList.add('active');
+    b.onclick=()=>{
+      document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+      document.getElementById('sec-'+s.id).classList.add('active');
+      nav.querySelectorAll('button').forEach(btn=>btn.classList.remove('active'));
+      b.classList.add('active');
+    };
+    nav.appendChild(b);
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded',()=>{
+  initNav();
+  setupRepl();
+  initCmds();
+  initY();
+  newLawQuiz();
+  // Set up viz defaults
+  document.getElementById('viz-fn').addEventListener('change',function(){
+    const defaults={'member?':"'butter '(peanut butter and jelly)",'lat?':"'(a b c)",'rember':"'and '(peanut butter and jelly)",'length':"'(a b c d)",'firsts':"'((a b) (c d) (e f))"};
+    document.getElementById('viz-args').value=defaults[this.value]||'';
+  });
+});
+</script>
+</body>
+</html>

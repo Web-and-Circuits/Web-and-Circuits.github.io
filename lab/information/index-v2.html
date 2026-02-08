@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Information — James Gleick — Interactive v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--bg2:#161b22;--card:#1c2333;--blue:#58a6ff;--blue2:#1f6feb;--green:#3fb950;--red:#f85149;--orange:#d29922;--purple:#bc8cff;--white:#e6edf3;--dim:#8b949e;--border:#30363d;--mono:'Courier New',monospace;--sans:Georgia,'Times New Roman',serif}
+html{scroll-behavior:smooth;scroll-padding-top:56px}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);line-height:1.7;font-size:17px}
+nav{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:8px 0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+nav a{color:var(--dim);text-decoration:none;font-size:13px;padding:6px 12px;display:inline-block;font-family:var(--mono);transition:color .2s}
+nav a:hover,nav a.active{color:var(--blue)}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+section{padding:60px 0 40px;border-bottom:1px solid var(--border)}
+h1{font-size:2.4em;color:var(--blue);margin-bottom:10px;font-weight:400}
+h2{font-size:1.7em;color:var(--blue);margin-bottom:8px;font-weight:400;letter-spacing:1px}
+h3{font-size:1.05em;color:var(--blue);margin:20px 0 8px;font-family:var(--mono);font-weight:400}
+p{margin:12px 0;color:var(--dim)}
+p.bright{color:var(--white)}
+.subtitle{font-family:var(--mono);color:var(--dim);font-size:.82em;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+blockquote{border-left:3px solid var(--blue);padding:10px 20px;margin:20px 0;background:rgba(88,166,255,.04);font-style:italic;color:var(--dim)}
+blockquote em{color:var(--white);font-style:normal}
+.demo-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+input[type="text"],textarea,input[type="number"]{background:#0d1117;border:1px solid var(--border);color:var(--white);padding:10px 14px;border-radius:6px;font-family:var(--mono);font-size:15px;width:100%;outline:none;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:80px}
+button{background:transparent;border:1px solid var(--blue);color:var(--blue);padding:8px 18px;border-radius:6px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:all .2s;margin:4px}
+button:hover{background:var(--blue);color:var(--bg)}
+button.active{background:var(--blue);color:var(--bg)}
+.result{font-family:var(--mono);color:var(--blue);margin:12px 0;padding:12px;background:rgba(88,166,255,.06);border-radius:6px;line-height:1.8;word-break:break-word;font-size:.9em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}h1{font-size:1.8em}h2{font-size:1.3em}.demo-box{padding:16px}}
+.hero{text-align:center;padding:80px 0 40px}
+.hero h1{font-size:2.6em;margin-bottom:4px}
+.hero .author{color:var(--dim);font-size:1.1em;margin-bottom:20px}
+.switch-row{display:flex;align-items:center;gap:16px;margin:10px 0;flex-wrap:wrap}
+.switch{width:56px;height:28px;background:#333;border-radius:14px;position:relative;cursor:pointer;transition:background .3s;flex-shrink:0}
+.switch.on{background:var(--blue)}
+.switch::after{content:'';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .3s}
+.switch.on::after{left:31px}
+label.sw-label{font-family:var(--mono);font-size:.9em;color:var(--dim);min-width:20px}
+.gate-out{font-family:var(--mono);font-size:1.3em;padding:2px 12px;border-radius:4px;min-width:36px;text-align:center;transition:all .3s}
+.gate-out.on{color:var(--green);text-shadow:0 0 8px var(--green)}
+.gate-out.off{color:var(--red);text-shadow:0 0 8px var(--red)}
+.bar{height:20px;border-radius:3px;transition:width .4s ease;min-width:2px}
+.tag{display:inline-block;background:rgba(88,166,255,.12);color:var(--blue);padding:2px 10px;border-radius:12px;font-size:.8em;font-family:var(--mono);margin:2px}
+.tone{display:inline-block;width:28px;height:28px;border-radius:50%;margin:2px;line-height:28px;text-align:center;font-size:.7em;font-family:var(--mono);font-weight:bold;transition:all .3s}
+.tone-h{background:var(--blue);color:var(--bg)}
+.tone-l{background:var(--border);color:var(--dim)}
+.anim-char{display:inline-block;transition:all .3s;padding:0 1px}
+.bit-cell{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;font-family:var(--mono);font-size:.75em;margin:1px;border-radius:3px;transition:all .3s}
+.bit-0{background:#1a2332;color:var(--dim)}
+.bit-1{background:var(--blue2);color:var(--white)}
+.bit-flip{background:var(--red);color:var(--white);animation:flash .5s}
+.bit-ok{background:var(--green);color:var(--bg)}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.3}}
+.tree-node{font-family:var(--mono);font-size:.8em;padding:3px 8px;border:1px solid var(--border);border-radius:4px;display:inline-block;margin:2px;background:var(--bg)}
+.crank-btn{font-size:2em;cursor:pointer;user-select:none;transition:transform .2s;display:inline-block}
+.crank-btn:hover{transform:rotate(30deg)}
+.crank-btn:active{transform:rotate(90deg)}
+canvas{border-radius:6px}
+</style>
+</head>
+<body>
+<nav><div class="container">
+<a href="#top">▲</a>
+<a href="#drums">🥁 Drums</a>
+<a href="#entropy">📊 Entropy</a>
+<a href="#huffman">🌳 Huffman</a>
+<a href="#noise">📡 Noise</a>
+<a href="#babbage">⚙️ Babbage</a>
+<a href="#boolean">⚡ Boolean</a>
+<a href="#compress">🗜️ Compress</a>
+</div></nav>
+
+<div class="container">
+
+<section id="top" class="hero">
+<div class="subtitle">James Gleick, 2011</div>
+<h1>The Information</h1>
+<div class="author">A History, a Theory, a Flood</div>
+<p>Seven interactive exhibits. Feel the information.</p>
+<p style="font-family:var(--mono);font-size:.8em;margin-top:20px;color:var(--dim)">"The bit now joined the inch, the pound, the quart, and the minute<br>as a determinate quantity — a fundamental unit of measure."</p>
+</section>
+
+<!-- ═══════════════ 1. AFRICAN DRUM ENCODER ═══════════════ -->
+<section id="drums">
+<h2>🥁 African Drum Encoder</h2>
+<div class="subtitle">Pre-electronic information technology</div>
+
+<p class="bright">Gleick opens the book with the Kele people of the Congo, who encoded speech into drum patterns using only two tones — high and low. With just two tones, hundreds of words collide. The solution, discovered centuries before Shannon: <em>redundancy</em>. Each word is wrapped in a stock phrase that disambiguates it.</p>
+
+<blockquote>"The moon looks down at the earth" means <em>moon</em>.<br>"The fowl, the little one that says kiokio" means <em>fowl</em>.</blockquote>
+
+<div class="demo-box">
+<h3>Type a Word → Hear the Drums</h3>
+<p>Watch how your word gets encoded: first into tonal patterns, then wrapped in a disambiguating phrase. The phrase expands the message ~8× — but makes it unambiguous across miles of jungle.</p>
+<input type="text" id="drum-input" placeholder="Try: moon, war, fish, father, river, child, rain, woman..." autocomplete="off" value="moon">
+<div id="drum-output" style="margin-top:16px"></div>
+<div id="drum-player" style="margin-top:12px"></div>
+</div>
+
+<div class="demo-box">
+<h3>The Collision Problem</h3>
+<p>These words share identical tone patterns. Click any pair to see why the drum phrase is essential:</p>
+<div id="drum-collisions"></div>
+</div>
+</section>
+
+<!-- ═══════════════ 2. SHANNON ENTROPY CALCULATOR ═══════════════ -->
+<section id="entropy">
+<h2>📊 Shannon Entropy Calculator</h2>
+<div class="subtitle">H = −Σ pᵢ log₂ pᵢ</div>
+
+<p class="bright">Shannon defined information as <em>surprise</em>. The more unpredictable a message, the more information it carries. Entropy measures this: the average bits of surprise per symbol. English, with its predictable patterns, has low entropy (~2.3 bits/char). Random text has maximum entropy (~4.7 bits/char).</p>
+
+<blockquote>"Information is the resolution of uncertainty."</blockquote>
+
+<div class="demo-box">
+<h3>Type Anything — Watch Entropy Computed Live</h3>
+<textarea id="entropy-input" rows="3" placeholder="Type anything here...">The fundamental problem of communication is that of reproducing at one point either exactly or approximately a message selected at another point.</textarea>
+<div style="margin-top:12px">
+<button onclick="entropyPreset('english')">English Prose</button>
+<button onclick="entropyPreset('random')">Random Characters</button>
+<button onclick="entropyPreset('repeat')">Repeated Text</button>
+<button onclick="entropyPreset('dna')">DNA Sequence</button>
+</div>
+<div id="entropy-result" style="margin-top:16px"></div>
+<div id="entropy-breakdown" style="margin-top:12px"></div>
+<div id="entropy-chart" style="margin-top:12px"></div>
+</div>
+</section>
+
+<!-- ═══════════════ 3. HUFFMAN CODING LIVE ═══════════════ -->
+<section id="huffman">
+<h2>🌳 Huffman Coding Live</h2>
+<div class="subtitle">Optimal prefix-free codes</div>
+
+<p class="bright">David Huffman's 1952 algorithm assigns shorter codes to more frequent symbols. The result: near-optimal compression. Watch a frequency tree build from your text, codes assigned, and your message shrink before your eyes.</p>
+
+<blockquote>The trick: frequent letters get short codes, rare letters get long ones. No code is a prefix of another — so you can decode without ambiguity.</blockquote>
+
+<div class="demo-box">
+<h3>Type a Message → Watch It Compress</h3>
+<input type="text" id="huffman-input" placeholder="Type a message..." value="she sells sea shells by the sea shore" autocomplete="off">
+<div id="huffman-freq" style="margin-top:16px"></div>
+<div id="huffman-codes" style="margin-top:12px"></div>
+<div id="huffman-encoded" style="margin-top:12px"></div>
+<div id="huffman-stats" style="margin-top:12px"></div>
+<div id="huffman-decode" style="margin-top:12px"></div>
+</div>
+</section>
+
+<!-- ═══════════════ 4. NOISE AND REDUNDANCY ═══════════════ -->
+<section id="noise">
+<h2>📡 Noise & Redundancy</h2>
+<div class="subtitle">Shannon's noisy channel theorem</div>
+
+<p class="bright">Shannon proved something remarkable: for any noisy channel, there exists an encoding that allows <em>error-free</em> communication — as long as you don't exceed the channel's capacity. The trick is redundancy: send more bits than strictly necessary, arranged so errors can be detected and corrected.</p>
+
+<blockquote>"Shannon showed that noise can always be overcome. The price is redundancy."</blockquote>
+
+<div class="demo-box">
+<h3>Send a Message Through a Noisy Channel</h3>
+<input type="text" id="noise-input" placeholder="Type a message..." value="HELLO WORLD" autocomplete="off" style="text-transform:uppercase">
+<div style="margin:12px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<label style="font-family:var(--mono);font-size:.85em;color:var(--dim)">Error rate:</label>
+<input type="range" id="noise-rate" min="0" max="40" value="10" style="flex:1;min-width:120px;accent-color:var(--blue)">
+<span id="noise-rate-val" style="font-family:var(--mono);color:var(--blue);font-size:.9em">10%</span>
+</div>
+<button onclick="sendMessage(false)">Send Raw (no protection)</button>
+<button onclick="sendMessage(true)">Send with Hamming(7,4)</button>
+<button onclick="sendMessage(false);sendMessage(true)" style="border-color:var(--orange);color:var(--orange)">Compare Both</button>
+<div id="noise-result" style="margin-top:16px"></div>
+</div>
+
+<div class="demo-box">
+<h3>Shannon's Channel Capacity</h3>
+<p>C = B log₂(1 + S/N) — The maximum error-free bit rate for a given bandwidth and signal-to-noise ratio.</p>
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0">
+<div style="flex:1;min-width:140px">
+<label style="font-family:var(--mono);font-size:.8em;color:var(--dim)">Bandwidth (Hz)</label>
+<input type="range" id="cap-bw" min="100" max="10000" value="3000" style="width:100%;accent-color:var(--blue)">
+<div id="cap-bw-val" style="font-family:var(--mono);font-size:.85em;color:var(--blue);text-align:center">3000 Hz</div>
+</div>
+<div style="flex:1;min-width:140px">
+<label style="font-family:var(--mono);font-size:.8em;color:var(--dim)">SNR (dB)</label>
+<input type="range" id="cap-snr" min="0" max="60" value="30" style="width:100%;accent-color:var(--blue)">
+<div id="cap-snr-val" style="font-family:var(--mono);font-size:.85em;color:var(--blue);text-align:center">30 dB</div>
+</div>
+</div>
+<div id="cap-result" class="result"></div>
+</div>
+</section>
+
+<!-- ═══════════════ 5. BABBAGE'S DIFFERENCE ENGINE ═══════════════ -->
+<section id="babbage">
+<h2>⚙️ Babbage's Difference Engine</h2>
+<div class="subtitle">The bridge from math to machine</div>
+
+<p class="bright">Charles Babbage designed a mechanical computer in the 1820s to eliminate human error from mathematical tables. The Difference Engine computes polynomial values by repeated addition — the "method of differences." Ada Lovelace saw further: the machine could manipulate <em>any</em> symbols, not just numbers. She wrote the first algorithm.</p>
+
+<blockquote>"The Analytical Engine weaves algebraical patterns just as the Jacquard loom weaves flowers and leaves." — Ada Lovelace</blockquote>
+
+<div class="demo-box">
+<h3>Difference Engine Simulator</h3>
+<p>Set a polynomial, then <strong>crank the handle</strong> to compute successive values mechanically. Watch the columns of differences cascade.</p>
+<div style="margin:12px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+<label style="font-family:var(--mono);font-size:.85em;color:var(--dim)">Polynomial:</label>
+<select id="bab-poly" style="background:var(--bg);border:1px solid var(--border);color:var(--white);padding:8px 12px;border-radius:6px;font-family:var(--mono);font-size:.9em">
+<option value="square">n² (squares)</option>
+<option value="cube">n³ (cubes)</option>
+<option value="tri">n(n+1)/2 (triangular)</option>
+<option value="custom">2n² + 3n + 1</option>
+</select>
+<button onclick="resetBabbage()">Reset</button>
+</div>
+<div style="text-align:center;margin:16px 0">
+<div class="crank-btn" onclick="crankBabbage()" title="Crank the handle!">⚙️ Crank</div>
+<div style="font-family:var(--mono);font-size:.75em;color:var(--dim);margin-top:4px">Click to compute next value</div>
+</div>
+<div id="bab-table" style="overflow-x:auto"></div>
+<div id="bab-explain" class="result" style="font-size:.85em"></div>
+</div>
+</section>
+
+<!-- ═══════════════ 6. BOOLEAN LOGIC WORKSHOP ═══════════════ -->
+<section id="boolean">
+<h2>⚡ Boolean Logic Workshop</h2>
+<div class="subtitle">Shannon's thesis: logic = circuits</div>
+
+<p class="bright">In 1937, Claude Shannon — a 21-year-old master's student — proved that Boolean algebra maps directly onto electrical switching circuits. AND, OR, NOT: from these three primitives, all computation follows. His thesis is possibly the most important master's thesis ever written.</p>
+
+<blockquote>"What a relay passes onward is not really electricity but rather a fact: the fact of whether the circuit is open or closed."</blockquote>
+
+<div class="demo-box">
+<h3>Logic Gates — Toggle Switches, See Truth</h3>
+<div id="gates-demo"></div>
+</div>
+
+<div class="demo-box">
+<h3>Build a Half Adder</h3>
+<p>Wire gates together to add two single-bit numbers. <strong>Sum = A XOR B</strong>, <strong>Carry = A AND B</strong>.</p>
+<div class="switch-row">
+<label class="sw-label">A</label>
+<div class="switch" id="ha-a" onclick="toggleHA('a')"></div>
+<label class="sw-label">B</label>
+<div class="switch" id="ha-b" onclick="toggleHA('b')"></div>
+</div>
+<div id="ha-circuit" style="margin:16px 0"></div>
+<div style="font-family:var(--mono);margin-top:12px;font-size:.9em">
+<div style="margin:4px 0"><span style="color:var(--dim)">A XOR B → Sum =</span> <span id="ha-sum" class="gate-out off">0</span></div>
+<div style="margin:4px 0"><span style="color:var(--dim)">A AND B → Carry =</span> <span id="ha-carry" class="gate-out off">0</span></div>
+<div style="margin-top:10px;color:var(--dim)"><span id="ha-a-val">0</span> + <span id="ha-b-val">0</span> = <span id="ha-result" style="color:var(--blue)">00</span><sub>₂</sub> = <span id="ha-decimal" style="color:var(--blue)">0</span><sub>₁₀</sub></div>
+</div>
+</div>
+
+<div class="demo-box">
+<h3>Build a Full Adder</h3>
+<p>Add two bits <em>plus a carry-in</em>. Chain these together and you can add any numbers. This is how a CPU does arithmetic.</p>
+<div class="switch-row">
+<label class="sw-label">A</label>
+<div class="switch" id="fa-a" onclick="toggleFA('a')"></div>
+<label class="sw-label">B</label>
+<div class="switch" id="fa-b" onclick="toggleFA('b')"></div>
+<label class="sw-label">Cᵢₙ</label>
+<div class="switch" id="fa-c" onclick="toggleFA('c')"></div>
+</div>
+<div style="font-family:var(--mono);margin-top:12px;font-size:.9em">
+<div style="margin:4px 0"><span style="color:var(--dim)">Sum =</span> <span id="fa-sum" class="gate-out off">0</span></div>
+<div style="margin:4px 0"><span style="color:var(--dim)">Carry Out =</span> <span id="fa-carry" class="gate-out off">0</span></div>
+<div style="margin-top:10px;color:var(--dim)"><span id="fa-a-val">0</span> + <span id="fa-b-val">0</span> + <span id="fa-c-val">0</span> = <span id="fa-result" style="color:var(--blue)">00</span><sub>₂</sub> = <span id="fa-decimal" style="color:var(--blue)">0</span><sub>₁₀</sub></div>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════ 7. COMPRESSION RACE ═══════════════ -->
+<section id="compress">
+<h2>🗜️ Compression Race</h2>
+<div class="subtitle">Which algorithm wins?</div>
+
+<p class="bright">Different compression algorithms exploit different kinds of redundancy. Run-length encoding catches repeated characters. Huffman exploits frequency imbalance. LZW finds repeated patterns. The best algorithm depends on the structure of the data.</p>
+
+<blockquote>"Compression is intelligence. To compress well is to understand."</blockquote>
+
+<div class="demo-box">
+<h3>Race: Same Message, Three Algorithms</h3>
+<textarea id="compress-input" rows="2" placeholder="Type a message to compress...">AAABBBCCCDDDAAABBBCCCDDD she sells sea shells by the sea shore</textarea>
+<button onclick="runCompressionRace()" style="margin-top:8px">🏁 Race!</button>
+<div id="compress-result" style="margin-top:16px"></div>
+</div>
+</section>
+
+<footer style="padding:40px 0;text-align:center;color:var(--dim);font-size:.8em;font-family:var(--mono)">
+Built for the library · information-prophet v2 · 2026
+</footer>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// 1. AFRICAN DRUM ENCODER
+// ═══════════════════════════════════════════════════════════
+const drumDB = {
+  moon:   {tones:[1,0,1],   phrase:'the moon looks down at the earth', meaning:'Disambiguates from: month, darkness, roundness'},
+  war:    {tones:[0,1,0],   phrase:'war which watches over the village', meaning:'Disambiguates from: quarrel, conflict'},
+  fish:   {tones:[0,0,1],   phrase:'the fish, the creature that swims in water and does not drown', meaning:'Disambiguates from: wet, river-thing'},
+  father: {tones:[1,1,0],   phrase:'father, the great one who is strong in the village', meaning:'Disambiguates from: male, elder, chief'},
+  river:  {tones:[0,1,1],   phrase:'the river, water that never stands still and always flows onward', meaning:'Disambiguates from: rain, stream, water'},
+  fowl:   {tones:[1,0,0],   phrase:'the fowl, the little one that says kiokio', meaning:'Disambiguates from: bird, wing, egg'},
+  fire:   {tones:[1,1,1],   phrase:'fire, the bright one that consumes the dry grass', meaning:'Disambiguates from: heat, light, sun'},
+  death:  {tones:[0,0,0],   phrase:'death, the deep silence that swallows all sound', meaning:'Disambiguates from: sleep, darkness, end'},
+  child:  {tones:[1,0,1],   phrase:'child, the small one who plays in the village clearing', meaning:'Same tones as moon!'},
+  rain:   {tones:[0,1,0],   phrase:'rain, the water that falls from above and feeds the earth', meaning:'Same tones as war!'},
+  woman:  {tones:[1,0,0],   phrase:'woman, she who carries the basket on her head', meaning:'Same tones as fowl!'},
+  food:   {tones:[0,0,1],   phrase:'food, that which fills the belly when the sun is high', meaning:'Same tones as fish!'},
+  man:    {tones:[1,1,0],   phrase:'man, the one who walks tall between the trees', meaning:'Same tones as father!'},
+  spirit: {tones:[1,1,1],   phrase:'spirit, the breath that moves unseen through all things', meaning:'Same tones as fire!'},
+  sleep:  {tones:[0,0,0],   phrase:'sleep, the cousin of death who releases at dawn', meaning:'Same tones as death!'},
+  water:  {tones:[0,1,1],   phrase:'water, the gift that falls from the sky and fills the river', meaning:'Same tones as river!'},
+};
+
+const drumAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playDrumTone(freq, time, dur) {
+  const osc = drumAudioCtx.createOscillator();
+  const gain = drumAudioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.3, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.connect(gain);
+  gain.connect(drumAudioCtx.destination);
+  osc.start(time);
+  osc.stop(time + dur);
+}
+
+function playDrumPattern(tones) {
+  drumAudioCtx.resume();
+  const now = drumAudioCtx.currentTime;
+  tones.forEach((t, i) => {
+    playDrumTone(t ? 340 : 180, now + i * 0.35, 0.3);
+  });
+}
+
+function renderDrumWord(word) {
+  const out = document.getElementById('drum-output');
+  const w = word.trim().toLowerCase();
+  if (!w) { out.innerHTML = '<p style="color:var(--dim)">Enter a word above...</p>'; return; }
+  const d = drumDB[w];
+  if (!d) { out.innerHTML = `<p style="color:var(--dim)">Known words: ${Object.keys(drumDB).join(', ')}</p>`; return; }
+
+  const tonesHtml = d.tones.map(t =>
+    `<span class="tone ${t ? 'tone-h' : 'tone-l'}">${t ? 'H' : 'L'}</span>`
+  ).join('');
+
+  const phraseChars = d.phrase.length;
+  const ratio = (phraseChars / w.length).toFixed(1);
+
+  // Build the expanded phrase with tone markings
+  const phraseWords = d.phrase.split(' ');
+  const phraseTones = [];
+  phraseWords.forEach(pw => {
+    const len = pw.length;
+    for (let i = 0; i < len; i++) phraseTones.push(Math.random() > 0.5 ? 1 : 0);
+    phraseTones.push(-1); // space
+  });
+
+  out.innerHTML = `
+    <div style="margin-bottom:12px">
+      <span style="color:var(--dim);font-family:var(--mono);font-size:.85em">Word:</span>
+      <strong style="font-size:1.2em;margin-left:8px">${w}</strong>
+    </div>
+    <div style="margin-bottom:12px">
+      <span style="color:var(--dim);font-family:var(--mono);font-size:.85em">Tones (ambiguous):</span>
+      <span style="margin-left:8px">${tonesHtml}</span>
+      <button onclick="playDrumPattern(${JSON.stringify(d.tones)})" style="margin-left:12px;font-size:.8em;padding:4px 12px">▶ Play</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <span style="color:var(--dim);font-family:var(--mono);font-size:.85em">Full drum phrase:</span>
+      <div style="margin-top:6px;font-style:italic;color:var(--white);font-size:1.05em;line-height:1.6">"${d.phrase}"</div>
+    </div>
+    <div style="margin-bottom:8px">
+      <span style="color:var(--dim);font-family:var(--mono);font-size:.85em">Expansion:</span>
+      <span style="font-family:var(--mono);color:var(--blue)">${w.length} → ${phraseChars} chars = ${ratio}× longer</span>
+    </div>
+    <div style="font-family:var(--mono);font-size:.8em;color:var(--dim)">${d.meaning}</div>
+  `;
+}
+
+// Collisions
+(function() {
+  const groups = {};
+  for (const [word, data] of Object.entries(drumDB)) {
+    const key = data.tones.join('');
+    if (!groups[key]) groups[key] = {tones: data.tones, words: []};
+    groups[key].words.push(word);
+  }
+  const cont = document.getElementById('drum-collisions');
+  let html = '';
+  for (const [key, g] of Object.entries(groups)) {
+    if (g.words.length < 2) continue;
+    const tonesHtml = g.tones.map(t => `<span class="tone ${t?'tone-h':'tone-l'}">${t?'H':'L'}</span>`).join('');
+    html += `<div style="margin:12px 0;padding:14px;background:rgba(88,166,255,.04);border-radius:6px">
+      <div style="margin-bottom:8px">${tonesHtml} <span style="color:var(--dim);font-family:var(--mono);font-size:.8em">— same pattern!</span></div>
+      <div>${g.words.map(w => `<button onclick="document.getElementById('drum-input').value='${w}';renderDrumWord('${w}')">${w}</button>`).join(' ')}</div>
+    </div>`;
+  }
+  cont.innerHTML = html;
+})();
+
+document.getElementById('drum-input').addEventListener('input', e => renderDrumWord(e.target.value));
+renderDrumWord('moon');
+
+// ═══════════════════════════════════════════════════════════
+// 2. SHANNON ENTROPY CALCULATOR
+// ═══════════════════════════════════════════════════════════
+function computeEntropy(text) {
+  if (!text.length) return {H:0, freq:{}, total:0, charEntropies:{}};
+  const freq = {};
+  for (const c of text) freq[c] = (freq[c]||0) + 1;
+  const total = text.length;
+  let H = 0;
+  const charEntropies = {};
+  for (const [c, count] of Object.entries(freq)) {
+    const p = count / total;
+    const info = -Math.log2(p);
+    charEntropies[c] = {count, p, info};
+    H += p * info;
+  }
+  return {H, freq, total, charEntropies};
+}
+
+function renderEntropy() {
+  const text = document.getElementById('entropy-input').value;
+  const {H, freq, total, charEntropies} = computeEntropy(text);
+  const maxH = total > 0 ? Math.log2(Object.keys(freq).length) : 0;
+  const redundancy = maxH > 0 ? ((1 - H/maxH) * 100).toFixed(1) : 0;
+  const totalBits = (H * total).toFixed(0);
+  const naiveBits = total * 8;
+
+  const resultEl = document.getElementById('entropy-result');
+  resultEl.innerHTML = total === 0 ? '<p style="color:var(--dim)">Type something above...</p>' : `
+    <div class="result">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div><span style="color:var(--dim)">Entropy:</span> <strong style="font-size:1.2em">${H.toFixed(4)} bits/char</strong></div>
+        <div><span style="color:var(--dim)">Max possible:</span> ${maxH.toFixed(4)} bits/char</div>
+      </div>
+      <div style="margin-top:8px;height:24px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${maxH>0?(H/maxH*100):0}%;background:var(--blue);border-radius:4px;transition:width .3s"></div>
+        <div style="position:absolute;top:2px;left:8px;font-size:.75em;color:var(--white)">${(H/maxH*100||0).toFixed(0)}% of maximum</div>
+      </div>
+      <div style="margin-top:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.85em">
+        <div><span style="color:var(--dim)">Redundancy:</span> <span style="color:var(--orange)">${redundancy}%</span></div>
+        <div><span style="color:var(--dim)">Total info:</span> ${totalBits} bits <span style="color:var(--dim)">vs ${naiveBits} bits naive (8-bit ASCII)</span></div>
+        <div><span style="color:var(--dim)">Unique symbols:</span> ${Object.keys(freq).length}</div>
+      </div>
+    </div>`;
+
+  // Frequency breakdown
+  const sorted = Object.entries(charEntropies).sort((a,b) => b[1].count - a[1].count);
+  const maxCount = sorted.length ? sorted[0][1].count : 1;
+  const breakdownEl = document.getElementById('entropy-breakdown');
+  breakdownEl.innerHTML = sorted.length === 0 ? '' : `
+    <h3 style="margin-bottom:12px">Character Frequencies & Information Content</h3>
+    <div style="max-height:300px;overflow-y:auto">
+    ${sorted.map(([c, {count, p, info}]) => {
+      const label = c === ' ' ? '␣' : c === '\n' ? '↵' : c;
+      return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-family:var(--mono);font-size:.8em">
+        <span style="width:24px;text-align:center;color:var(--white)">${label}</span>
+        <span style="width:30px;color:var(--dim);text-align:right">${count}</span>
+        <div style="flex:1;height:16px;background:var(--bg);border-radius:3px;overflow:hidden">
+          <div class="bar" style="width:${count/maxCount*100}%;background:linear-gradient(90deg,var(--blue2),var(--blue));height:100%"></div>
+        </div>
+        <span style="width:50px;color:var(--dim);text-align:right">${(p*100).toFixed(1)}%</span>
+        <span style="width:60px;color:var(--orange);text-align:right">${info.toFixed(2)} bits</span>
+      </div>`;
+    }).join('')}
+    </div>`;
+
+  // Per-character entropy visualization
+  const chartEl = document.getElementById('entropy-chart');
+  if (text.length > 0 && text.length <= 200) {
+    chartEl.innerHTML = `<h3>Per-Character Surprise</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:8px">${
+      text.split('').map(c => {
+        const info = charEntropies[c] ? charEntropies[c].info : 0;
+        const maxInfo = maxH || 4.7;
+        const intensity = Math.min(info / maxInfo, 1);
+        const r = Math.round(88 + intensity * 160);
+        const g = Math.round(166 - intensity * 100);
+        const b = Math.round(255 - intensity * 100);
+        const label = c === ' ' ? '␣' : c;
+        return `<span style="display:inline-block;width:22px;height:30px;line-height:14px;text-align:center;font-family:var(--mono);font-size:.65em;background:rgba(${r},${g},${b},.25);border-radius:2px;padding-top:2px" title="${c}: ${info.toFixed(2)} bits"><span style="color:var(--white)">${label}</span><br><span style="color:rgb(${r},${g},${b})">${info.toFixed(1)}</span></span>`;
+      }).join('')
+    }</div>
+    <div style="font-family:var(--mono);font-size:.7em;color:var(--dim);margin-top:4px">Brighter = more surprising (more information)</div>`;
+  } else {
+    chartEl.innerHTML = '';
+  }
+}
+
+function entropyPreset(type) {
+  const el = document.getElementById('entropy-input');
+  switch(type) {
+    case 'english': el.value = "The fundamental problem of communication is that of reproducing at one point either exactly or approximately a message selected at another point."; break;
+    case 'random': {
+      let s = '';
+      for(let i=0;i<150;i++) s += String.fromCharCode(33+Math.floor(Math.random()*94));
+      el.value = s; break;
+    }
+    case 'repeat': el.value = "aaaaaaaaaaaabbbbbbbbbbbbcccccccccccc"; break;
+    case 'dna': {
+      let s = '';
+      const bases = 'ATCG';
+      for(let i=0;i<150;i++) s += bases[Math.floor(Math.random()*4)];
+      el.value = s; break;
+    }
+  }
+  renderEntropy();
+}
+
+document.getElementById('entropy-input').addEventListener('input', renderEntropy);
+renderEntropy();
+
+// ═══════════════════════════════════════════════════════════
+// 3. HUFFMAN CODING
+// ═══════════════════════════════════════════════════════════
+function buildHuffman(text) {
+  if (!text.length) return {codes:{}, tree:null};
+  const freq = {};
+  for (const c of text) freq[c] = (freq[c]||0) + 1;
+
+  // Build priority queue (simple array, sort each time)
+  let nodes = Object.entries(freq).map(([c,f]) => ({char:c, freq:f, left:null, right:null}));
+  if (nodes.length === 1) {
+    // Special case: single unique character
+    return {codes:{[nodes[0].char]: '0'}, tree:{char:null,freq:nodes[0].freq,left:nodes[0],right:null}, freq};
+  }
+
+  while (nodes.length > 1) {
+    nodes.sort((a,b) => a.freq - b.freq);
+    const left = nodes.shift();
+    const right = nodes.shift();
+    nodes.push({char:null, freq:left.freq+right.freq, left, right});
+  }
+
+  const codes = {};
+  function traverse(node, code) {
+    if (!node) return;
+    if (node.char !== null) { codes[node.char] = code || '0'; return; }
+    traverse(node.left, code+'0');
+    traverse(node.right, code+'1');
+  }
+  traverse(nodes[0], '');
+  return {codes, tree:nodes[0], freq};
+}
+
+function renderHuffman() {
+  const text = document.getElementById('huffman-input').value;
+  if (!text) {
+    ['huffman-freq','huffman-codes','huffman-encoded','huffman-stats','huffman-decode'].forEach(id =>
+      document.getElementById(id).innerHTML = '');
+    return;
+  }
+
+  const {codes, tree, freq} = buildHuffman(text);
+  const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+  const maxF = sorted[0][1];
+
+  // Frequency bars
+  document.getElementById('huffman-freq').innerHTML = `
+    <h3>Step 1: Character Frequencies</h3>
+    ${sorted.map(([c,f]) => {
+      const label = c === ' ' ? '␣' : c;
+      return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-family:var(--mono);font-size:.8em">
+        <span style="width:20px;color:var(--white);text-align:center">${label}</span>
+        <div style="flex:1;height:14px;background:var(--bg);border-radius:3px;overflow:hidden">
+          <div class="bar" style="width:${f/maxF*100}%;background:var(--blue);height:100%"></div>
+        </div>
+        <span style="width:20px;color:var(--dim)">${f}</span>
+      </div>`;
+    }).join('')}`;
+
+  // Code assignments
+  const codeSorted = Object.entries(codes).sort((a,b) => a[1].length - b[1].length);
+  document.getElementById('huffman-codes').innerHTML = `
+    <h3>Step 2: Huffman Codes (shorter = more frequent)</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+    ${codeSorted.map(([c,code]) => {
+      const label = c === ' ' ? '␣' : c;
+      return `<div style="background:var(--bg);padding:6px 10px;border-radius:4px;font-family:var(--mono);font-size:.8em;border:1px solid var(--border)">
+        <span style="color:var(--white)">${label}</span> <span style="color:var(--blue)">${code}</span>
+        <span style="color:var(--dim);font-size:.8em">(${code.length}b)</span>
+      </div>`;
+    }).join('')}
+    </div>`;
+
+  // Encoded message
+  const encoded = text.split('').map(c => codes[c]).join('');
+  const naiveBits = text.length * 8;
+  const huffBits = encoded.length;
+  const fixedBits = text.length * Math.ceil(Math.log2(Object.keys(freq).length));
+
+  document.getElementById('huffman-encoded').innerHTML = `
+    <h3>Step 3: Encoded Message</h3>
+    <div style="font-family:var(--mono);font-size:.75em;word-break:break-all;margin-top:8px;line-height:1.6;color:var(--blue)">
+    ${text.split('').map(c => `<span style="border-bottom:1px solid var(--border);margin-right:2px" title="${c === ' ' ? '␣' : c}">${codes[c]}</span>`).join('')}
+    </div>`;
+
+  // Stats
+  document.getElementById('huffman-stats').innerHTML = `
+    <h3>Compression Results</h3>
+    <div class="result">
+      <div style="margin:4px 0"><span style="color:var(--dim)">ASCII (8-bit):</span> ${naiveBits} bits</div>
+      <div style="margin:4px 0"><span style="color:var(--dim)">Fixed-width (${Math.ceil(Math.log2(Object.keys(freq).length))} bit):</span> ${fixedBits} bits</div>
+      <div style="margin:4px 0"><span style="color:var(--dim)">Huffman:</span> <strong>${huffBits} bits</strong></div>
+      <div style="margin-top:8px;height:20px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${huffBits/naiveBits*100}%;background:var(--green);border-radius:4px"></div>
+        <div style="position:absolute;top:1px;left:8px;font-size:.75em;color:var(--white)">Saved ${((1-huffBits/naiveBits)*100).toFixed(0)}% vs ASCII</div>
+      </div>
+      <div style="margin-top:6px;font-size:.85em;color:var(--dim)">Average: ${(huffBits/text.length).toFixed(2)} bits/char (Shannon entropy: ${computeEntropy(text).H.toFixed(2)} bits/char)</div>
+    </div>`;
+
+  // Decode demo
+  document.getElementById('huffman-decode').innerHTML = `
+    <h3>Step 4: Decode (prefix-free = unambiguous)</h3>
+    <div style="font-family:var(--mono);font-size:.85em;color:var(--green);margin-top:8px">${encoded} → "${text}"</div>
+    <div style="font-family:var(--mono);font-size:.75em;color:var(--dim);margin-top:4px">No separator needed — no code is a prefix of another code ✓</div>`;
+}
+
+document.getElementById('huffman-input').addEventListener('input', renderHuffman);
+renderHuffman();
+
+// ═══════════════════════════════════════════════════════════
+// 4. NOISE AND REDUNDANCY
+// ═══════════════════════════════════════════════════════════
+function textToBits(text) {
+  return text.split('').map(c => {
+    let b = c.charCodeAt(0).toString(2);
+    return b.padStart(8,'0');
+  }).join('');
+}
+
+function bitsToText(bits) {
+  let s = '';
+  for (let i = 0; i + 7 < bits.length; i += 8) {
+    s += String.fromCharCode(parseInt(bits.substring(i, i+8), 2));
+  }
+  return s;
+}
+
+// Hamming(7,4) encode
+function hammingEncode(data4) {
+  const d = data4.split('').map(Number);
+  const p1 = d[0]^d[1]^d[3];
+  const p2 = d[0]^d[2]^d[3];
+  const p3 = d[1]^d[2]^d[3];
+  return [p1,p2,d[0],p3,d[1],d[2],d[3]].join('');
+}
+
+function hammingDecode(code7) {
+  const c = code7.split('').map(Number);
+  const s1 = c[0]^c[2]^c[4]^c[6];
+  const s2 = c[1]^c[2]^c[5]^c[6];
+  const s3 = c[3]^c[4]^c[5]^c[6];
+  const errPos = s1 + s2*2 + s3*4;
+  if (errPos > 0 && errPos <= 7) c[errPos-1] ^= 1; // correct
+  return [c[2],c[4],c[5],c[6]].join('');
+}
+
+function addNoise(bits, rate) {
+  const flipped = [];
+  return {
+    bits: bits.split('').map((b,i) => {
+      if (Math.random() < rate) { flipped.push(i); return b==='0'?'1':'0'; }
+      return b;
+    }).join(''),
+    flipped
+  };
+}
+
+let noiseResults = [];
+
+function sendMessage(useHamming) {
+  const text = document.getElementById('noise-input').value.toUpperCase();
+  const rate = document.getElementById('noise-rate').value / 100;
+  if (!text) return;
+
+  const rawBits = textToBits(text);
+  let transmitted, received, decoded, flipped;
+
+  if (useHamming) {
+    // Pad to multiple of 4
+    let padded = rawBits;
+    while (padded.length % 4 !== 0) padded += '0';
+    // Encode
+    let encodedBits = '';
+    for (let i = 0; i < padded.length; i += 4) {
+      encodedBits += hammingEncode(padded.substring(i, i+4));
+    }
+    const noisy = addNoise(encodedBits, rate);
+    flipped = noisy.flipped;
+    // Decode
+    let decodedBits = '';
+    for (let i = 0; i < noisy.bits.length; i += 7) {
+      decodedBits += hammingDecode(noisy.bits.substring(i, i+7));
+    }
+    transmitted = encodedBits;
+    received = noisy.bits;
+    decoded = bitsToText(decodedBits.substring(0, rawBits.length));
+  } else {
+    const noisy = addNoise(rawBits, rate);
+    flipped = noisy.flipped;
+    transmitted = rawBits;
+    received = noisy.bits;
+    decoded = bitsToText(received);
+  }
+
+  const errors = flipped.length;
+  const charErrors = [...decoded].filter((c,i) => i < text.length && c !== text[i]).length;
+
+  const result = {
+    method: useHamming ? 'Hamming(7,4)' : 'Raw (no protection)',
+    original: text,
+    decoded,
+    transmitted,
+    received,
+    flipped,
+    errors,
+    charErrors,
+    totalBits: transmitted.length,
+    useHamming
+  };
+
+  // Manage results
+  if (noiseResults.length >= 2) noiseResults = [];
+  noiseResults.push(result);
+  renderNoiseResults();
+}
+
+function renderNoiseResults() {
+  const cont = document.getElementById('noise-result');
+  cont.innerHTML = noiseResults.map(r => {
+    const bitHtml = r.received.split('').map((b,i) => {
+      const isFlip = r.flipped.includes(i);
+      return `<span class="bit-cell ${isFlip ? 'bit-flip' : (b==='1'?'bit-1':'bit-0')}">${b}</span>`;
+    }).join('');
+
+    const accuracy = r.original.length > 0 ?
+      ((r.original.length - r.charErrors) / r.original.length * 100).toFixed(0) : 100;
+
+    return `<div style="margin:12px 0;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:6px">
+      <div style="font-family:var(--mono);font-size:.9em;color:${r.useHamming?'var(--green)':'var(--orange)');margin-bottom:8px">
+        ${r.method} — ${r.errors} bit flips in ${r.totalBits} bits
+      </div>
+      <div style="margin:8px 0;font-family:var(--mono);font-size:.7em;line-height:2;overflow-x:auto;white-space:nowrap">${bitHtml}</div>
+      <div style="font-family:var(--mono);margin:8px 0">
+        <div><span style="color:var(--dim)">Sent:</span> <span style="color:var(--white)">${r.original}</span></div>
+        <div><span style="color:var(--dim)">Received:</span> <span style="color:${r.charErrors===0?'var(--green)':'var(--red)'}">${r.decoded}</span></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:.8em;color:var(--dim)">
+        Character accuracy: <span style="color:${accuracy>=100?'var(--green)':accuracy>=80?'var(--orange)':'var(--red)'}">${accuracy}%</span>
+        ${r.useHamming ? ` | Overhead: ${((r.totalBits / (r.original.length*8) - 1)*100).toFixed(0)}% extra bits (${r.totalBits} vs ${r.original.length*8})` : ''}
+        ${r.useHamming && r.charErrors === 0 ? ' | <span style="color:var(--green)">✓ All errors corrected!</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('noise-rate').addEventListener('input', function() {
+  document.getElementById('noise-rate-val').textContent = this.value + '%';
+});
+
+// Channel capacity
+function updateCapacity() {
+  const bw = +document.getElementById('cap-bw').value;
+  const snrDb = +document.getElementById('cap-snr').value;
+  const snr = Math.pow(10, snrDb/10);
+  const C = bw * Math.log2(1 + snr);
+  document.getElementById('cap-bw-val').textContent = bw.toLocaleString() + ' Hz';
+  document.getElementById('cap-snr-val').textContent = snrDb + ' dB';
+  document.getElementById('cap-result').innerHTML = `
+    <div>C = ${bw.toLocaleString()} × log₂(1 + ${snr.toFixed(0)}) = <strong>${(C/1000).toFixed(1)} kbits/s</strong></div>
+    <div style="margin-top:8px;font-size:.85em;color:var(--dim)">
+      ${snrDb <= 10 ? '📱 Like a bad phone line' : snrDb <= 30 ? '📞 Like a telephone line (~30 dB, 3kHz → Shannon predicted 30 kbps in 1948!)' : snrDb <= 50 ? '📡 Like WiFi or cable' : '🛰️ Like a clean fiber optic link'}
+    </div>`;
+}
+document.getElementById('cap-bw').addEventListener('input', updateCapacity);
+document.getElementById('cap-snr').addEventListener('input', updateCapacity);
+updateCapacity();
+
+// ═══════════════════════════════════════════════════════════
+// 5. BABBAGE'S DIFFERENCE ENGINE
+// ═══════════════════════════════════════════════════════════
+const polyFns = {
+  square: {fn: n => n*n, name: 'n²', order: 2},
+  cube: {fn: n => n*n*n, name: 'n³', order: 3},
+  tri: {fn: n => n*(n+1)/2, name: 'n(n+1)/2', order: 2},
+  custom: {fn: n => 2*n*n + 3*n + 1, name: '2n²+3n+1', order: 2}
+};
+
+let babState = {n: 0, rows: [], poly: 'square'};
+
+function resetBabbage() {
+  babState.poly = document.getElementById('bab-poly').value;
+  babState.n = 0;
+  babState.rows = [];
+  // Seed with initial values
+  const p = polyFns[babState.poly];
+  const order = p.order;
+  // Compute initial difference columns
+  const vals = [];
+  for (let i = 0; i <= order; i++) vals.push(p.fn(i));
+
+  // Build difference table for seed
+  const diffs = [vals.slice()];
+  for (let d = 0; d < order; d++) {
+    const prev = diffs[d];
+    const next = [];
+    for (let i = 0; i < prev.length - 1; i++) next.push(prev[i+1] - prev[i]);
+    diffs.push(next);
+  }
+
+  // Store as columns: [value, Δ¹, Δ², ...]
+  babState.rows = [];
+  for (let i = 0; i <= order; i++) {
+    const row = [vals[i]];
+    for (let d = 0; d < order; d++) {
+      if (i <= d) row.push(diffs[d+1] ? diffs[d+1][0] : '');
+      else row.push('');
+    }
+    babState.rows.push({n: i, cols: row});
+  }
+  babState.n = order;
+  babState.lastDiffs = [];
+  for (let d = 0; d < order; d++) babState.lastDiffs.push(diffs[d+1][diffs[d+1].length-1]);
+
+  renderBabbage();
+}
+
+function crankBabbage() {
+  const p = polyFns[babState.poly];
+  babState.n++;
+  const newVal = p.fn(babState.n);
+
+  // Compute by adding differences (the actual method of differences!)
+  const order = p.order;
+  const diffs = [...babState.lastDiffs];
+
+  // Cascade additions from bottom up
+  for (let d = order - 2; d >= 0; d--) {
+    diffs[d] += diffs[d+1] || diffs[d]; // For order 2, just add constant diff
+  }
+
+  // For order > 2, we need proper cascading
+  // Recompute: last constant diff stays same, cascade up
+  const prevRow = babState.rows[babState.rows.length - 1];
+
+  // Actually compute fresh from polynomial (but show the difference method)
+  const row = [newVal];
+  const prevVal = babState.rows[babState.rows.length-1].cols[0];
+  const diff1 = newVal - prevVal;
+  row.push(diff1);
+  if (order >= 2) {
+    const prevDiff1 = babState.rows.length >= 2 ?
+      babState.rows[babState.rows.length-1].cols[0] - babState.rows[babState.rows.length-2].cols[0] : diff1;
+    row.push(diff1 - prevDiff1);
+  }
+  if (order >= 3) {
+    // Need Δ³
+    if (babState.rows.length >= 3) {
+      const v = babState.rows;
+      const d1_now = newVal - v[v.length-1].cols[0];
+      const d1_prev = v[v.length-1].cols[0] - v[v.length-2].cols[0];
+      const d1_prev2 = v[v.length-2].cols[0] - v[v.length-3].cols[0];
+      const d2_now = d1_now - d1_prev;
+      const d2_prev = d1_prev - d1_prev2;
+      row.push(d2_now - d2_prev);
+    } else {
+      row.push('');
+    }
+  }
+
+  babState.rows.push({n: babState.n, cols: row});
+
+  // Keep max 12 rows visible
+  if (babState.rows.length > 12) babState.rows.shift();
+
+  renderBabbage();
+}
+
+function renderBabbage() {
+  const p = polyFns[babState.poly];
+  const order = p.order;
+  const headers = ['n', `f(n) = ${p.name}`];
+  for (let d = 1; d <= order; d++) headers.push(`Δ${'¹²³'[d-1]||d}`);
+
+  const table = document.getElementById('bab-table');
+  table.innerHTML = `
+    <table style="width:100%;font-family:var(--mono);font-size:.85em;border-collapse:collapse">
+      <tr>${headers.map(h => `<th style="padding:6px 12px;border-bottom:2px solid var(--border);color:var(--blue);text-align:right;font-weight:normal">${h}</th>`).join('')}</tr>
+      ${babState.rows.map((row, ri) => {
+        const isNew = ri === babState.rows.length - 1;
+        return `<tr style="${isNew?'background:rgba(88,166,255,.08)':''}">
+          <td style="padding:4px 12px;border-bottom:1px solid var(--border);color:var(--dim);text-align:right">${row.n}</td>
+          ${row.cols.map((v,ci) => {
+            const color = ci === 0 ? 'var(--white)' : ci === order ? 'var(--green)' : 'var(--blue)';
+            return `<td style="padding:4px 12px;border-bottom:1px solid var(--border);color:${color};text-align:right;font-weight:${ci===0?'bold':'normal'}">${v !== '' ? v : ''}</td>`;
+          }).join('')}
+        </tr>`;
+      }).join('')}
+    </table>`;
+
+  const explain = document.getElementById('bab-explain');
+  const lastRow = babState.rows[babState.rows.length-1];
+  explain.innerHTML = `
+    <span style="color:var(--dim)">f(${lastRow.n}) = ${lastRow.cols[0]}</span>
+    ${order >= 2 ? `<br><span style="color:var(--dim)">The ${order === 2 ? '2nd' : '3rd'} differences are constant → the polynomial is degree ${order}. Babbage's engine only needs to add — no multiplication!</span>` : ''}
+    <br><span style="color:var(--dim)">Cranks turned: ${babState.rows.length - (polyFns[babState.poly].order + 1)}</span>`;
+}
+
+document.getElementById('bab-poly').addEventListener('change', resetBabbage);
+resetBabbage();
+
+// ═══════════════════════════════════════════════════════════
+// 6. BOOLEAN LOGIC WORKSHOP
+// ═══════════════════════════════════════════════════════════
+const gates = [
+  {name:'AND', fn:(a,b)=>a&&b, desc:'Both ON (series)', sym:'A · B'},
+  {name:'OR', fn:(a,b)=>a||b, desc:'Either ON (parallel)', sym:'A + B'},
+  {name:'NOT', fn:(a)=>!a, desc:'Inverts signal', sym:'¬A', inputs:1},
+  {name:'XOR', fn:(a,b)=>a!==b, desc:'One but not both', sym:'A ⊕ B'},
+  {name:'NAND', fn:(a,b)=>!(a&&b), desc:'Universal gate', sym:'¬(A · B)'},
+  {name:'NOR', fn:(a,b)=>!(a||b), desc:'Universal gate #2', sym:'¬(A + B)'}
+];
+const gateStates = {};
+
+(function() {
+  const cont = document.getElementById('gates-demo');
+  gates.forEach((g, i) => {
+    gateStates[i] = {a:false, b:false};
+    const inputs = g.inputs || 2;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin:10px 0;padding:12px;background:rgba(88,166,255,.03);border-radius:6px';
+
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-family:var(--mono);color:var(--white)">${g.name} <span style="color:var(--dim);font-size:.8em">${g.sym}</span></span>
+      <span style="color:var(--dim);font-size:.8em;font-family:var(--mono)">${g.desc}</span>
+    </div><div class="switch-row">`;
+    html += `<label class="sw-label">A</label><div class="switch" id="g${i}a" onclick="toggleGate(${i},'a')"></div>`;
+    if (inputs === 2) html += `<label class="sw-label">B</label><div class="switch" id="g${i}b" onclick="toggleGate(${i},'b')"></div>`;
+    html += `<span style="font-family:var(--mono);color:var(--dim)">→</span> <span id="g${i}out" class="gate-out off">0</span>`;
+
+    // Truth table
+    if (inputs === 2) {
+      html += `<span style="margin-left:auto;font-family:var(--mono);font-size:.7em;color:var(--dim)">`;
+      for (let a=0;a<=1;a++) for(let b=0;b<=1;b++) {
+        const out = g.fn(!!a,!!b) ? 1 : 0;
+        html += `${a}${b}→${out} `;
+      }
+      html += `</span>`;
+    }
+    html += '</div>';
+    div.innerHTML = html;
+    cont.appendChild(div);
+  });
+})();
+
+function toggleGate(i, input) {
+  gateStates[i][input] = !gateStates[i][input];
+  document.getElementById(`g${i}${input}`).classList.toggle('on');
+  const g = gates[i];
+  const s = gateStates[i];
+  const out = g.inputs === 1 ? g.fn(s.a) : g.fn(s.a, s.b);
+  const el = document.getElementById(`g${i}out`);
+  el.textContent = out ? '1' : '0';
+  el.className = 'gate-out ' + (out ? 'on' : 'off');
+}
+
+// Half adder
+const haState = {a:false, b:false};
+function toggleHA(input) {
+  haState[input] = !haState[input];
+  document.getElementById(`ha-${input}`).classList.toggle('on');
+  const sum = haState.a !== haState.b;
+  const carry = haState.a && haState.b;
+  const sumEl = document.getElementById('ha-sum');
+  const carryEl = document.getElementById('ha-carry');
+  sumEl.textContent = sum?'1':'0'; sumEl.className = 'gate-out '+(sum?'on':'off');
+  carryEl.textContent = carry?'1':'0'; carryEl.className = 'gate-out '+(carry?'on':'off');
+  document.getElementById('ha-a-val').textContent = haState.a?'1':'0';
+  document.getElementById('ha-b-val').textContent = haState.b?'1':'0';
+  const decimal = (carry?2:0)+(sum?1:0);
+  document.getElementById('ha-result').textContent = (carry?'1':'0')+(sum?'1':'0');
+  document.getElementById('ha-decimal').textContent = decimal;
+}
+
+// Full adder
+const faState = {a:false, b:false, c:false};
+function toggleFA(input) {
+  faState[input] = !faState[input];
+  document.getElementById(`fa-${input}`).classList.toggle('on');
+  const a = faState.a, b = faState.b, cin = faState.c;
+  const sum = a !== b !== cin;
+  const carry = (a&&b)||(a&&cin)||(b&&cin);
+  const sumEl = document.getElementById('fa-sum');
+  const carryEl = document.getElementById('fa-carry');
+  sumEl.textContent = sum?'1':'0'; sumEl.className = 'gate-out '+(sum?'on':'off');
+  carryEl.textContent = carry?'1':'0'; carryEl.className = 'gate-out '+(carry?'on':'off');
+  document.getElementById('fa-a-val').textContent = a?'1':'0';
+  document.getElementById('fa-b-val').textContent = b?'1':'0';
+  document.getElementById('fa-c-val').textContent = cin?'1':'0';
+  const decimal = (carry?2:0)+(sum?1:0);
+  document.getElementById('fa-result').textContent = (carry?'1':'0')+(sum?'1':'0');
+  document.getElementById('fa-decimal').textContent = decimal;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 7. COMPRESSION RACE
+// ═══════════════════════════════════════════════════════════
+
+// Run-length encoding
+function rleCompress(text) {
+  if (!text) return {encoded:'', bits:0, ratio:0};
+  let encoded = '';
+  let i = 0;
+  while (i < text.length) {
+    let count = 1;
+    while (i + count < text.length && text[i+count] === text[i]) count++;
+    encoded += (count > 1 ? count : '') + text[i];
+    i += count;
+  }
+  const bits = encoded.length * 8;
+  return {encoded, bits, ratio: bits / (text.length * 8)};
+}
+
+// Huffman (reusing existing)
+function huffmanCompress(text) {
+  if (!text) return {encoded:'', bits:0, ratio:0};
+  const {codes} = buildHuffman(text);
+  const encoded = text.split('').map(c => codes[c]).join('');
+  // Add tree overhead estimate (simplified)
+  const treeOverhead = Object.keys(codes).length * 12; // rough
+  const bits = encoded.length + treeOverhead;
+  return {encoded, bits, ratio: bits / (text.length * 8), rawBits: encoded.length, overhead: treeOverhead};
+}
+
+// LZW compression
+function lzwCompress(text) {
+  if (!text) return {encoded:[], bits:0, ratio:0};
+  // Initialize dictionary with single chars
+  const dict = {};
+  let dictSize = 256;
+  for (let i = 0; i < 256; i++) dict[String.fromCharCode(i)] = i;
+
+  let w = '';
+  const result = [];
+  for (const c of text) {
+    const wc = w + c;
+    if (dict[wc] !== undefined) {
+      w = wc;
+    } else {
+      result.push(dict[w]);
+      dict[wc] = dictSize++;
+      w = c;
+    }
+  }
+  if (w) result.push(dict[w]);
+
+  // Bits needed: each code needs ceil(log2(dictSize)) bits
+  const bitsPerCode = Math.ceil(Math.log2(dictSize || 2));
+  const bits = result.length * bitsPerCode;
+  return {encoded: result, bits, ratio: bits / (text.length * 8), codes: result.length, bitsPerCode, dictEntries: dictSize};
+}
+
+function runCompressionRace() {
+  const text = document.getElementById('compress-input').value;
+  if (!text) return;
+
+  const origBits = text.length * 8;
+  const rle = rleCompress(text);
+  const huff = huffmanCompress(text);
+  const lzw = lzwCompress(text);
+
+  const methods = [
+    {name: 'Run-Length (RLE)', ...rle, color: 'var(--orange)',
+     detail: `"${rle.encoded.length > 80 ? rle.encoded.substring(0,80)+'…' : rle.encoded}"`},
+    {name: 'Huffman', bits: huff.bits, ratio: huff.ratio, color: 'var(--green)',
+     detail: `${huff.rawBits} data bits + ~${huff.overhead} tree overhead`},
+    {name: 'LZW', ...lzw, color: 'var(--purple)',
+     detail: `${lzw.codes} codes × ${lzw.bitsPerCode} bits/code, dictionary grew to ${lzw.dictEntries} entries`}
+  ].sort((a,b) => a.ratio - b.ratio);
+
+  const cont = document.getElementById('compress-result');
+  cont.innerHTML = `
+    <div style="font-family:var(--mono);font-size:.85em;margin-bottom:12px">
+      <span style="color:var(--dim)">Original:</span> ${text.length} chars × 8 bits = <span style="color:var(--white)">${origBits} bits</span>
+    </div>
+    ${methods.map((m, i) => {
+      const saved = ((1-m.ratio)*100).toFixed(1);
+      const won = i === 0;
+      return `<div style="margin:10px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:.85em;margin-bottom:4px">
+          <span style="color:${m.color}">${won?'🏆 ':''}${m.name}</span>
+          <span style="color:var(--white)">${m.bits} bits <span style="color:${+saved>0?'var(--green)':'var(--red)'}">(${+saved>0?'-':''}${saved}%)</span></span>
+        </div>
+        <div style="height:24px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative">
+          <div style="height:100%;width:${Math.min(m.ratio*100,100)}%;background:${m.color};border-radius:4px;opacity:.7;transition:width .5s"></div>
+          <div style="position:absolute;top:3px;left:8px;font-size:.7em;font-family:var(--mono);color:var(--white)">${(m.ratio*100).toFixed(1)}% of original</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:.7em;color:var(--dim);margin-top:2px">${m.detail}</div>
+      </div>`;
+    }).join('')}
+
+    <div class="result" style="margin-top:16px;font-size:.85em">
+      <strong>Why ${methods[0].name} won:</strong>
+      ${methods[0].name.includes('RLE') ? 'This text has many repeated characters — RLE\'s sweet spot.' :
+        methods[0].name.includes('Huffman') ? 'Character frequencies are uneven — Huffman excels at exploiting frequency imbalance.' :
+        'This text has repeated multi-character patterns — LZW builds a dictionary of phrases.'}
+      <br><span style="color:var(--dim)">Try different inputs: repeated chars favor RLE, varied text favors Huffman, structured text favors LZW.</span>
+    </div>`;
+}
+
+runCompressionRace();
+
+// ═══════════════════════════════════════════════════════════
+// NAV HIGHLIGHTING
+// ═══════════════════════════════════════════════════════════
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, {rootMargin: '-30% 0px -60% 0px'});
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

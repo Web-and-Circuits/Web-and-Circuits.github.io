@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Psycho-Cybernetics v2 — Cybernetic Systems Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;
+--text:#e0ddd8;--dim:#8a8780;--accent:#4fc3f7;--accent2:#7c4dff;
+--success:#66bb6a;--fail:#ef5350;--warm:#ffb74d;
+--radius:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(79,195,247,.08) 0%,transparent 70%),radial-gradient(ellipse at 30% 80%,rgba(124,77,255,.06) 0%,transparent 50%)}
+.hero h1{font-size:clamp(2rem,5vw,4rem);font-weight:200;position:relative;z-index:1}
+.hero h1 span{font-weight:700;color:var(--accent)}
+.hero .sub{font-size:clamp(.95rem,2.5vw,1.2rem);color:var(--dim);max-width:600px;margin:1.5rem auto 2rem;position:relative;z-index:1}
+.hero .quote{font-style:italic;color:var(--dim);font-size:.9rem;max-width:500px;margin-top:1rem;position:relative;z-index:1;border-left:2px solid var(--accent2);padding-left:1rem;text-align:left}
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);padding:.6rem 1rem;display:flex;gap:.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav a{color:var(--dim);text-decoration:none;font-size:.75rem;padding:.4rem .7rem;border-radius:20px;white-space:nowrap;border:1px solid transparent;transition:all .2s}
+nav a:hover,nav a.active{color:var(--accent);border-color:var(--accent);background:rgba(79,195,247,.08)}
+section{padding:3rem 1.5rem;max-width:900px;margin:0 auto}
+.section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:.5rem}
+h2{font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:300;margin-bottom:.8rem}
+h2 strong{font-weight:700}
+.quote-block{border-left:3px solid var(--accent2);padding:.7rem 1rem;margin:1.2rem 0;background:rgba(124,77,255,.06);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:var(--dim);font-size:.9rem}
+.card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:1.5rem;margin:1.5rem 0}
+p+p{margin-top:.8rem}
+canvas{border-radius:var(--radius);display:block;width:100%;background:#000;touch-action:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.6rem 1.2rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.12);background:var(--bg3);color:var(--text);cursor:pointer;font-size:.85rem;min-height:44px;min-width:44px;transition:all .2s;user-select:none;font-family:inherit}
+.btn:hover,.btn:active{background:rgba(79,195,247,.12);border-color:var(--accent)}
+.btn.active{background:rgba(79,195,247,.18);border-color:var(--accent);color:var(--accent)}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
+.slider-row{display:flex;align-items:center;gap:.75rem;margin:.5rem 0;flex-wrap:wrap}
+.slider-row label{font-size:.8rem;color:var(--dim);min-width:80px}
+.slider-row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.slider-row .val{font-size:.8rem;color:var(--accent);min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+textarea,input[type=text]{width:100%;padding:.7rem;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:var(--bg3);color:var(--text);font-size:.9rem;font-family:inherit;margin:.5rem 0}
+textarea{resize:vertical;min-height:50px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--accent)}
+.fade-in{opacity:0;transform:translateY(20px);transition:all .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.status-bar{font-size:.8rem;color:var(--dim);text-align:center;min-height:1.5em;margin:.5rem 0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}section{padding:2rem 1rem}}
+/* Scar detector */
+.belief-item{display:flex;align-items:center;gap:.5rem;padding:.6rem;background:var(--bg3);border-radius:8px;margin:.4rem 0;border:1px solid rgba(255,255,255,.06)}
+.belief-item .belief-text{flex:1;font-size:.85rem}
+.belief-item .belief-score{display:flex;gap:2px}
+.belief-item .belief-score button{width:28px;height:28px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--dim);border-radius:4px;cursor:pointer;font-size:.7rem;transition:all .2s}
+.belief-item .belief-score button.active-pos{background:rgba(102,187,106,.2);border-color:var(--success);color:var(--success)}
+.belief-item .belief-score button.active-neg{background:rgba(239,83,80,.2);border-color:var(--fail);color:var(--fail)}
+.belief-item .belief-score button.active-mid{background:rgba(255,183,77,.2);border-color:var(--warm);color:var(--warm)}
+.belief-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;margin-left:.5rem}
+.tag-scar{background:rgba(239,83,80,.15);color:var(--fail);border:1px solid rgba(239,83,80,.3)}
+.tag-real{background:rgba(102,187,106,.15);color:var(--success);border:1px solid rgba(102,187,106,.3)}
+.tag-unclear{background:rgba(255,183,77,.15);color:var(--warm);border:1px solid rgba(255,183,77,.3)}
+/* Pattern recognizer */
+.day-col{background:var(--bg3);border-radius:8px;padding:.75rem;border:1px solid rgba(255,255,255,.06)}
+.day-col h4{font-size:.8rem;color:var(--accent);margin-bottom:.4rem}
+.entry-list{min-height:40px}
+.entry-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:.7rem;margin:2px;cursor:pointer}
+.entry-chip.win{background:rgba(102,187,106,.12);color:var(--success);border:1px solid rgba(102,187,106,.2)}
+.entry-chip.loss{background:rgba(239,83,80,.12);color:var(--fail);border:1px solid rgba(239,83,80,.2)}
+.entry-chip .x{opacity:.5;font-size:.6rem}
+.entry-chip:hover .x{opacity:1}
+.mini-input{display:flex;gap:4px;margin-top:.3rem}
+.mini-input input{flex:1;padding:4px 6px;font-size:.75rem;border-radius:4px;border:1px solid rgba(255,255,255,.08);background:var(--bg2);color:var(--text);font-family:inherit}
+.mini-input button{padding:4px 8px;font-size:.7rem;border-radius:4px;border:1px solid rgba(255,255,255,.1);background:var(--bg2);color:var(--success);cursor:pointer}
+.mini-input button:last-child{color:var(--fail)}
+.pattern-result{background:var(--bg2);border-radius:var(--radius);padding:1.5rem;margin:1rem 0;border:1px solid rgba(255,255,255,.06);text-align:center}
+/* Thermostat v2 */
+.thermo-canvas-wrap{position:relative;width:100%;max-width:600px;margin:0 auto}
+/* Rehearsal room */
+.rehearsal-overlay{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;transition:all 1s}
+.rehearsal-overlay.dimmed{background:#020204}
+.rehearsal-overlay .r-text{font-size:1.1rem;max-width:450px;transition:opacity .8s;line-height:1.7}
+.rehearsal-overlay .r-timer{font-size:2.5rem;font-weight:200;color:var(--accent);margin:.5rem 0;font-variant-numeric:tabular-nums}
+.rehearsal-overlay .r-phase{font-size:.8rem;color:var(--dim);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.1em}
+.breathe-ring{width:100px;height:100px;border-radius:50%;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--accent);margin:1rem auto;transition:transform 4s ease-in-out,opacity 4s ease-in-out}
+footer{text-align:center;padding:3rem 1.5rem;color:var(--dim);font-size:.8rem;border-top:1px solid rgba(255,255,255,.06);margin-top:2rem}
+.scroll-hint{position:relative;z-index:1;margin-top:2rem;animation:bob 2s ease-in-out infinite;color:var(--dim);font-size:.85rem}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<h1>Your Brain Is a <span>Cybernetic System</span></h1>
+<p class="sub">Seven interactive laboratories based on <em>Psycho-Cybernetics</em> by Maxwell Maltz. Not flashcards. Real systems you can watch, tune, and feel.</p>
+<div class="quote">"All servo-mechanisms achieve a goal by negative feedback, or by going forward, making mistakes, and immediately correcting course."</div>
+<div class="scroll-hint">↓ Scroll to begin</div>
+</div>
+
+<nav id="main-nav">
+<a href="#torpedo">🎯 Torpedo</a>
+<a href="#thermostat">🌡️ Thermostat</a>
+<a href="#rehearsal">🧠 Rehearsal</a>
+<a href="#feedback">⚙️ Feedback Lab</a>
+<a href="#scars">🔍 Scars</a>
+<a href="#rational">🔓 Rational</a>
+<a href="#patterns">📊 Patterns</a>
+</nav>
+
+<!-- ═══════ 1. TORPEDO GUIDANCE SIM ═══════ -->
+<section id="torpedo" class="fade-in">
+<div class="section-label">01 — Torpedo Guidance Simulator</div>
+<h2>Watch the <strong>Servo-Mechanism</strong> Seek Its Target</h2>
+<p>Maltz's core metaphor: your brain works like a guided torpedo. It doesn't travel in a straight line — it overshoots, detects the error, corrects, undershoots, corrects again. This zigzag IS the path. Add wind and current to see how the mechanism adapts to disturbance.</p>
+<div class="quote-block">"Do not be afraid of making mistakes, or of temporary failures. All servo-mechanisms achieve a goal by negative feedback."</div>
+
+<div class="card">
+<canvas id="torpedoCanvas" height="400"></canvas>
+<div class="btn-row">
+<button class="btn" onclick="launchTorpedo()">🚀 Launch Torpedo</button>
+<button class="btn" onclick="resetTorpedo()">↺ Reset</button>
+<button class="btn" id="torpDragHint" style="border-color:var(--warm);color:var(--warm);pointer-events:none;font-size:.75rem">↕ Drag target to move it</button>
+</div>
+<div class="slider-row">
+<label>Wind Force</label>
+<input type="range" id="windSlider" min="-5" max="5" step="0.5" value="0" oninput="torpWind=+this.value;this.nextElementSibling.textContent=this.value">
+<span class="val">0</span>
+</div>
+<div class="slider-row">
+<label>Current</label>
+<input type="range" id="currentSlider" min="-3" max="3" step="0.5" value="0" oninput="torpCurrent=+this.value;this.nextElementSibling.textContent=this.value">
+<span class="val">0</span>
+</div>
+<div class="slider-row">
+<label>Correction Gain</label>
+<input type="range" id="gainSlider" min="0.2" max="3" step="0.1" value="1" oninput="torpGain=+this.value;this.nextElementSibling.textContent=this.value">
+<span class="val">1</span>
+</div>
+<p class="status-bar" id="torpStatus">Set wind, current, and gain — then launch. Watch the zigzag path. This IS how your brain works.</p>
+</div>
+</section>
+
+<!-- ═══════ 2. SELF-IMAGE THERMOSTAT ═══════ -->
+<section id="thermostat" class="fade-in">
+<div class="section-label">02 — Self-Image Thermostat</div>
+<h2>Feel the <strong>Thermostat</strong> Pull You Back</h2>
+<p>Set your comfort zone. Then try to perform above it — watch internal resistance build and drag you back. Try below — watch discomfort push you up. The $5,000 salesman literally cannot earn $50,000 until the thermostat changes.</p>
+<div class="quote-block">"The self-image sets the boundaries of individual accomplishment. Expand the self-image and you expand the area of the possible."</div>
+
+<div class="card">
+<canvas id="thermoCanvas" height="350"></canvas>
+<div class="slider-row">
+<label>Self-Image</label>
+<input type="range" id="thermoSetpoint" min="10" max="90" value="50" oninput="thermoSet=+this.value;this.nextElementSibling.textContent=this.value+'%'">
+<span class="val">50%</span>
+</div>
+<div class="slider-row">
+<label>Performance Push</label>
+<input type="range" id="thermoPush" min="-40" max="40" value="0" oninput="thermoPushVal=+this.value;this.nextElementSibling.textContent=(this.value>0?'+':'')+this.value">
+<span class="val">0</span>
+</div>
+<div class="btn-row">
+<button class="btn" onclick="thermoRun()">▶ Run Simulation</button>
+<button class="btn" onclick="thermoReset()">↺ Reset</button>
+<button class="btn" onclick="thermoSet=80;document.getElementById('thermoSetpoint').value=80;document.querySelector('#thermoSetpoint+.val').textContent='80%';thermoRun()">🔥 Expand Self-Image</button>
+</div>
+<p class="status-bar" id="thermoStatus">Set your self-image (comfort zone), then push performance above or below it. Watch what happens.</p>
+</div>
+</section>
+
+<!-- ═══════ 3. MENTAL REHEARSAL ROOM ═══════ -->
+<section id="rehearsal" class="fade-in">
+<div class="section-label">03 — Mental Rehearsal Room</div>
+<h2>Your Nervous System <strong>Can't Tell the Difference</strong></h2>
+<p>Basketball players who only <em>imagined</em> free throws improved 23% — nearly matching 24% from physical practice. This room guides you through a timed visualization. The screen dims. You build the scene progressively. Your brain records it as experience.</p>
+<div class="quote-block">"Your nervous system cannot tell the difference between an imagined experience and a real experience."</div>
+
+<div class="card">
+<textarea id="rehearsalGoal" placeholder="What do you want to rehearse? (e.g., 'Giving a confident presentation to 50 people')" rows="2"></textarea>
+<div class="slider-row">
+<label>Duration</label>
+<input type="range" id="rehearsalTime" min="2" max="15" value="5" oninput="this.nextElementSibling.textContent=this.value+' min'">
+<span class="val">5 min</span>
+</div>
+<div class="btn-row">
+<button class="btn" onclick="startRehearsal()">🧠 Begin Session</button>
+<button class="btn" onclick="stopRehearsal()">⏹ End Early</button>
+</div>
+<div class="rehearsal-overlay" id="rehearsalRoom">
+<div class="r-phase" id="rPhase"></div>
+<div class="r-timer" id="rTimer"></div>
+<div class="breathe-ring" id="rBreath" style="display:none"></div>
+<div class="r-text" id="rText">Enter your scenario above and begin. The screen will dim. Follow the prompts. Build the scene in your mind with full sensory detail.</div>
+</div>
+</div>
+</section>
+
+<!-- ═══════ 4. FEEDBACK LOOP LAB ═══════ -->
+<section id="feedback" class="fade-in">
+<div class="section-label">04 — Feedback Loop Lab</div>
+<h2>Build Your Own <strong>Servo-Mechanism</strong></h2>
+<p>Every cybernetic system has the same parts: a goal, a sensor (feedback), an actuator (action), and a gain (how aggressively you correct). Wire yours up. Too much gain = wild oscillation. Too little = sluggish convergence. Find the sweet spot.</p>
+<div class="quote-block">"You supply the goal by thinking in terms of end results. Your automatic mechanism supplies the means whereby."</div>
+
+<div class="card">
+<canvas id="feedbackCanvas" height="300"></canvas>
+<div class="slider-row">
+<label>Goal Value</label>
+<input type="range" id="fbGoal" min="10" max="90" value="75" oninput="this.nextElementSibling.textContent=this.value">
+<span class="val">75</span>
+</div>
+<div class="slider-row">
+<label>Start Value</label>
+<input type="range" id="fbStart" min="0" max="100" value="20" oninput="this.nextElementSibling.textContent=this.value">
+<span class="val">20</span>
+</div>
+<div class="slider-row">
+<label>Gain (P)</label>
+<input type="range" id="fbGain" min="0.02" max="0.5" step="0.02" value="0.1" oninput="this.nextElementSibling.textContent=this.value">
+<span class="val">0.1</span>
+</div>
+<div class="slider-row">
+<label>Damping</label>
+<input type="range" id="fbDamp" min="0" max="0.95" step="0.05" value="0.7" oninput="this.nextElementSibling.textContent=this.value">
+<span class="val">0.7</span>
+</div>
+<div class="slider-row">
+<label>Noise</label>
+<input type="range" id="fbNoise" min="0" max="10" step="0.5" value="2" oninput="this.nextElementSibling.textContent=this.value">
+<span class="val">2</span>
+</div>
+<div class="btn-row">
+<button class="btn" onclick="runFeedback()">▶ Run Loop</button>
+<button class="btn" onclick="resetFeedback()">↺ Reset</button>
+<button class="btn" onclick="document.getElementById('fbGain').value=0.5;document.querySelector('#fbGain+.val').textContent='0.5';runFeedback()">💥 Max Gain (Overreact)</button>
+<button class="btn" onclick="document.getElementById('fbGain').value=0.02;document.querySelector('#fbGain+.val').textContent='0.02';runFeedback()">🐌 Min Gain (Passivity)</button>
+</div>
+<p class="status-bar" id="fbStatus">Gain = how hard you correct errors. High gain = overshoot & oscillation. Low gain = slow, never arriving. Find your balance.</p>
+</div>
+</section>
+
+<!-- ═══════ 5. SCAR TISSUE DETECTOR ═══════ -->
+<section id="scars" class="fade-in">
+<div class="section-label">05 — The Scar Tissue Detector</div>
+<h2>New Face, <strong>Same Self-Image?</strong></h2>
+<p>Maltz the plastic surgeon saw it repeatedly: some patients got new faces and new lives. Others got perfect surgery and remained miserable — their emotional scars ran deeper than skin. Rate your beliefs. Which are real assessments, and which are scar tissue from old wounds?</p>
+<div class="quote-block">"Emotional scars create a thick, hard, protective shell. The person hides behind a wall, afraid of being hurt again."</div>
+
+<div class="card">
+<p style="font-size:.85rem;color:var(--dim);margin-bottom:.75rem">Rate each belief: <strong style="color:var(--success)">True</strong> (matches evidence), <strong style="color:var(--warm)">Unsure</strong>, or <strong style="color:var(--fail)">Scar</strong> (old wound, not current reality).</p>
+<div id="scarBeliefs"></div>
+<div style="margin-top:.75rem">
+<input type="text" id="customBelief" placeholder="Add your own belief...">
+<button class="btn" onclick="addCustomBelief()" style="width:100%;margin-top:.3rem">+ Add Belief</button>
+</div>
+<div id="scarResult" class="status-bar" style="margin-top:1rem"></div>
+</div>
+</section>
+
+<!-- ═══════ 6. RATIONAL THERAPY TOOL ═══════ -->
+<section id="rational" class="fade-in">
+<div class="section-label">06 — Rational Therapy Tool</div>
+<h2><strong>Dehypnotize</strong> Yourself</h2>
+<p>You're hypnotized — not by a hypnotist, but by beliefs you've never questioned. Maltz's 4 questions dissolve false beliefs the way sunlight dissolves fog. Type any negative belief and walk through each question.</p>
+<div class="quote-block">"Within you right now is the power to do things you never dreamed possible. This power becomes available just as soon as you can change your beliefs."</div>
+
+<div class="card">
+<textarea id="rationalBelief" placeholder='Type a limiting belief, e.g., "I\'m not smart enough to do this"' rows="2"></textarea>
+<button class="btn" onclick="runRational()" style="width:100%">🔓 Challenge This Belief</button>
+<div id="rationalFlow" style="margin-top:1rem"></div>
+</div>
+</section>
+
+<!-- ═══════ 7. SUCCESS/FAILURE PATTERN RECOGNIZER ═══════ -->
+<section id="patterns" class="fade-in">
+<div class="section-label">07 — Success/Failure Pattern Recognizer</div>
+<h2>Which <strong>Mechanism</strong> Are You Running?</h2>
+<p>Track a week of small wins and frustrations. The system identifies your pattern: are you running Maltz's Success Mechanism (S-U-C-C-E-S-S) or his Failure Mechanism (F-A-I-L-U-R-E)? Same machine, different data.</p>
+<div class="quote-block">"Glance at negatives, but focus on positives. The driver looks at dashboard indicators, but keeps his eyes on the road ahead."</div>
+
+<div class="card">
+<div id="weekGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem"></div>
+<div class="pattern-result" id="patternResult" style="display:none"></div>
+<div class="btn-row">
+<button class="btn" onclick="analyzePatterns()">📊 Analyze My Pattern</button>
+<button class="btn" onclick="clearPatterns()">🗑 Clear All</button>
+</div>
+</div>
+</section>
+
+<!-- ═══════ CLOSING ═══════ -->
+<section class="fade-in" style="text-align:center;padding-bottom:2rem">
+<h2 style="font-weight:200">The Machine Is <strong>Already Running</strong></h2>
+<p style="max-width:550px;margin:1rem auto;color:var(--dim)">You don't need to build a new mind. You need to <em>retarget</em> the one you have. Set the goal. Trust the mechanism. Correct course when you drift. That zigzag path IS the way.</p>
+<div class="quote-block" style="max-width:500px;margin:1.5rem auto;text-align:left">"Develop a nostalgia for the future instead of for the past."<br><span style="color:var(--accent);font-style:normal;font-size:.8rem">— Maxwell Maltz</span></div>
+</section>
+
+<footer>
+<p>Based on <strong>Psycho-Cybernetics</strong> by Maxwell Maltz, MD (1960)</p>
+<p style="margin-top:.5rem">Interactive systems lab — not affiliated with the Psycho-Cybernetics Foundation</p>
+</footer>
+
+<script>
+// ─── Scroll observer ───
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+// Nav highlight
+const navLinks=document.querySelectorAll('#main-nav a');
+const sections=document.querySelectorAll('section[id]');
+const navObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}})},{threshold:.3});
+sections.forEach(s=>navObs.observe(s));
+
+// ═══════════════════════════════════════
+// 1. TORPEDO GUIDANCE SIM
+// ═══════════════════════════════════════
+const torpC=document.getElementById('torpedoCanvas');
+const torpCtx=torpC.getContext('2d');
+let torpWind=0,torpCurrent=0,torpGain=1;
+let torpTarget={x:0,y:0},torpState=null,torpAnim=null;
+let torpDragging=false;
+
+function sizeTorpCanvas(){
+torpC.width=torpC.clientWidth*devicePixelRatio;
+torpC.height=400*devicePixelRatio;
+torpCtx.scale(devicePixelRatio,devicePixelRatio);
+torpTarget={x:torpC.clientWidth-60,y:200};
+drawTorpStatic();
+}
+
+function drawTorpStatic(){
+const w=torpC.clientWidth,h=400;
+torpCtx.clearRect(0,0,w,h);
+// grid
+torpCtx.strokeStyle='rgba(255,255,255,.04)';
+torpCtx.lineWidth=1;
+for(let x=0;x<w;x+=40){torpCtx.beginPath();torpCtx.moveTo(x,0);torpCtx.lineTo(x,h);torpCtx.stroke()}
+for(let y=0;y<h;y+=40){torpCtx.beginPath();torpCtx.moveTo(0,y);torpCtx.lineTo(w,y);torpCtx.stroke()}
+// wind arrows
+if(torpWind!==0){
+torpCtx.save();torpCtx.globalAlpha=.3;torpCtx.strokeStyle='var(--warm)';torpCtx.lineWidth=1;
+for(let y=30;y<h;y+=60){
+const dx=torpWind*8;
+torpCtx.beginPath();torpCtx.moveTo(w/2-dx,y);torpCtx.lineTo(w/2+dx,y);torpCtx.stroke();
+torpCtx.beginPath();torpCtx.moveTo(w/2+dx,y);torpCtx.lineTo(w/2+dx-(Math.sign(dx)*6),y-4);torpCtx.stroke();
+torpCtx.beginPath();torpCtx.moveTo(w/2+dx,y);torpCtx.lineTo(w/2+dx-(Math.sign(dx)*6),y+4);torpCtx.stroke();
+}
+torpCtx.restore();
+}
+// target
+torpCtx.beginPath();torpCtx.arc(torpTarget.x,torpTarget.y,18,0,Math.PI*2);
+torpCtx.fillStyle='rgba(239,83,80,.15)';torpCtx.fill();
+torpCtx.strokeStyle='#ef5350';torpCtx.lineWidth=2;torpCtx.stroke();
+torpCtx.beginPath();torpCtx.arc(torpTarget.x,torpTarget.y,6,0,Math.PI*2);
+torpCtx.fillStyle='#ef5350';torpCtx.fill();
+// launcher
+torpCtx.fillStyle='rgba(79,195,247,.3)';
+torpCtx.fillRect(5,185,20,30);
+torpCtx.fillStyle='var(--accent)';
+torpCtx.font='11px system-ui';torpCtx.fillText('🚀',7,205);
+}
+
+// Drag target
+torpC.addEventListener('pointerdown',e=>{
+const r=torpC.getBoundingClientRect();
+const x=(e.clientX-r.left),y=(e.clientY-r.top);
+if(Math.hypot(x-torpTarget.x,y-torpTarget.y)<30){torpDragging=true;torpC.setPointerCapture(e.pointerId)}
+});
+torpC.addEventListener('pointermove',e=>{
+if(!torpDragging)return;
+const r=torpC.getBoundingClientRect();
+torpTarget.x=Math.max(100,Math.min(torpC.clientWidth-20,e.clientX-r.left));
+torpTarget.y=Math.max(20,Math.min(380,e.clientY-r.top));
+if(!torpState)drawTorpStatic();
+});
+torpC.addEventListener('pointerup',()=>torpDragging=false);
+
+function launchTorpedo(){
+if(torpAnim)cancelAnimationFrame(torpAnim);
+const w=torpC.clientWidth;
+torpState={x:30,y:200,vx:2,vy:0,trail:[],hit:false,t:0};
+const st=document.getElementById('torpStatus');
+st.textContent='Torpedo launched — watch it correct course...';
+function step(){
+if(!torpState)return;
+const s=torpState;
+const dx=torpTarget.x-s.x,dy=torpTarget.y-s.y;
+const dist=Math.hypot(dx,dy);
+if(dist<15&&!s.hit){
+s.hit=true;
+st.textContent='🎯 Target acquired! The zigzag path IS the path. Your brain works the same way.';
+st.style.color='var(--success)';
+}
+if(!s.hit){
+const angle=Math.atan2(dy,dx);
+const steer=torpGain*0.06;
+const desiredVx=Math.cos(angle)*2.5;
+const desiredVy=Math.sin(angle)*2.5;
+s.vx+=(desiredVx-s.vx)*steer+torpCurrent*0.015;
+s.vy+=(desiredVy-s.vy)*steer+torpWind*0.02;
+s.x+=s.vx;s.y+=s.vy;
+s.trail.push({x:s.x,y:s.y});
+if(s.trail.length>800)s.trail.shift();
+s.t++;
+if(s.t>2000){st.textContent='Torpedo lost — gain too low or disturbance too high. Adjust and retry.';st.style.color='var(--fail)';torpState=null;return}
+}
+// draw
+drawTorpStatic();
+// trail
+torpCtx.beginPath();
+s.trail.forEach((p,i)=>{
+if(i===0)torpCtx.moveTo(p.x,p.y);else torpCtx.lineTo(p.x,p.y)
+});
+torpCtx.strokeStyle='rgba(79,195,247,.5)';torpCtx.lineWidth=1.5;torpCtx.stroke();
+// torpedo head
+if(!s.hit){
+torpCtx.beginPath();torpCtx.arc(s.x,s.y,5,0,Math.PI*2);
+torpCtx.fillStyle='var(--accent)';torpCtx.fill();
+torpCtx.beginPath();torpCtx.arc(s.x,s.y,8,0,Math.PI*2);
+torpCtx.strokeStyle='rgba(79,195,247,.3)';torpCtx.lineWidth=1;torpCtx.stroke();
+}else{
+// hit effect
+torpCtx.beginPath();torpCtx.arc(torpTarget.x,torpTarget.y,20+Math.sin(Date.now()/200)*5,0,Math.PI*2);
+torpCtx.strokeStyle='var(--success)';torpCtx.lineWidth=2;torpCtx.stroke();
+}
+if(!s.hit)torpAnim=requestAnimationFrame(step);
+else{torpAnim=requestAnimationFrame(step);if(s.t++>200){cancelAnimationFrame(torpAnim);torpAnim=null}}
+}
+step();
+}
+
+function resetTorpedo(){
+if(torpAnim)cancelAnimationFrame(torpAnim);
+torpAnim=null;torpState=null;
+document.getElementById('torpStatus').textContent='Set wind, current, and gain — then launch. Watch the zigzag path.';
+document.getElementById('torpStatus').style.color='';
+drawTorpStatic();
+}
+
+// ═══════════════════════════════════════
+// 2. SELF-IMAGE THERMOSTAT
+// ═══════════════════════════════════════
+const thermC=document.getElementById('thermoCanvas');
+const thermCtx=thermC.getContext('2d');
+let thermoSet=50,thermoPushVal=0,thermoAnimData=null,thermoAnimId=null;
+
+function sizeThermCanvas(){
+thermC.width=thermC.clientWidth*devicePixelRatio;
+thermC.height=350*devicePixelRatio;
+thermCtx.scale(devicePixelRatio,devicePixelRatio);
+drawThermStatic();
+}
+
+function drawThermStatic(){
+const w=thermC.clientWidth,h=350;
+thermCtx.clearRect(0,0,w,h);
+// axes
+thermCtx.strokeStyle='rgba(255,255,255,.08)';thermCtx.lineWidth=1;
+thermCtx.beginPath();thermCtx.moveTo(50,20);thermCtx.lineTo(50,h-30);thermCtx.lineTo(w-20,h-30);thermCtx.stroke();
+// labels
+thermCtx.fillStyle='var(--dim)';thermCtx.font='11px system-ui';
+thermCtx.fillText('Performance',5,15);
+thermCtx.fillText('Time →',w-60,h-10);
+// setpoint line
+const sy=h-30-(thermoSet/100)*(h-60);
+thermCtx.setLineDash([5,5]);
+thermCtx.strokeStyle='var(--warm)';thermCtx.lineWidth=1.5;
+thermCtx.beginPath();thermCtx.moveTo(50,sy);thermCtx.lineTo(w-20,sy);thermCtx.stroke();
+thermCtx.setLineDash([]);
+thermCtx.fillStyle='var(--warm)';thermCtx.fillText('Self-Image: '+thermoSet+'%',55,sy-6);
+// comfort zone band
+thermCtx.fillStyle='rgba(255,183,77,.05)';
+thermCtx.fillRect(50,sy-25,w-70,50);
+}
+
+function thermoRun(){
+if(thermoAnimId)cancelAnimationFrame(thermoAnimId);
+const w=thermC.clientWidth,h=350;
+const target=thermoSet+thermoPushVal;
+let perf=thermoSet;
+let vel=0;
+const data=[];
+let t=0;
+const st=document.getElementById('thermoStatus');
+function step(){
+const err=perf-thermoSet;
+const resistance=-err*0.03;// thermostat pull-back
+const push=thermoPushVal*0.008;// external effort
+vel=(vel+resistance+push)*0.96;
+perf+=vel;
+perf=Math.max(0,Math.min(100,perf));
+data.push(perf);
+// draw
+drawThermStatic();
+// resistance arrows
+if(Math.abs(err)>3){
+const sy2=h-30-(perf/100)*(h-60);
+const setY=h-30-(thermoSet/100)*(h-60);
+thermCtx.strokeStyle=err>0?'rgba(239,83,80,.4)':'rgba(79,195,247,.4)';
+thermCtx.lineWidth=2;
+thermCtx.beginPath();thermCtx.moveTo(w-40,sy2);thermCtx.lineTo(w-40,setY);thermCtx.stroke();
+thermCtx.fillStyle=err>0?'var(--fail)':'var(--accent)';
+thermCtx.font='10px system-ui';
+thermCtx.fillText(err>0?'↓ Resistance':'↑ Discomfort',w-85,sy2+(setY-sy2)/2+4);
+}
+// performance line
+thermCtx.beginPath();
+data.forEach((v,i)=>{
+const px=50+i*(w-70)/300;
+const py=h-30-(v/100)*(h-60);
+if(i===0)thermCtx.moveTo(px,py);else thermCtx.lineTo(px,py);
+});
+thermCtx.strokeStyle='var(--accent)';thermCtx.lineWidth=2;thermCtx.stroke();
+t++;
+if(t<300){
+if(t===1){
+if(thermoPushVal>10)st.textContent='Pushing above comfort zone — feel the resistance pulling you back...';
+else if(thermoPushVal<-10)st.textContent='Dropping below comfort zone — discomfort pushes you back up...';
+else st.textContent='Performance hovering near the setpoint. The thermostat holds.';
+}
+thermoAnimId=requestAnimationFrame(step);
+}else{
+st.textContent=Math.abs(perf-thermoSet)<5?'Thermostat wins. Performance returned to the self-image level. To truly change — change the setpoint.':'The thermostat always pulls back. Change the self-image itself to change performance permanently.';
+thermoAnimId=null;
+}
+}
+perf=target;vel=thermoPushVal*0.1;
+step();
+}
+
+function thermoReset(){
+if(thermoAnimId)cancelAnimationFrame(thermoAnimId);
+thermoAnimId=null;
+document.getElementById('thermoStatus').textContent='Set your self-image (comfort zone), then push performance above or below it.';
+drawThermStatic();
+}
+
+// ═══════════════════════════════════════
+// 3. MENTAL REHEARSAL ROOM
+// ═══════════════════════════════════════
+let rehearsalTimer=null;
+const rehearsalPhases=[
+{phase:'SETTLE',text:'Close your eyes. Feel the weight of your body. Let tension drain from your shoulders, jaw, hands. You are entering your private theater.',dur:0.1,breath:true},
+{phase:'SET THE SCENE',text:'See the place where you will perform. What does it look like? What colors? What sounds? Build it in detail.',dur:0.2},
+{phase:'ADD YOURSELF',text:'Now place yourself in the scene. See yourself clearly. How are you standing? What are you wearing? Feel the ground beneath your feet.',dur:0.2},
+{phase:'FEEL SUCCESS',text:'Run the scenario. You are performing beautifully. Everything flows. Notice the feeling in your body — confidence, ease, joy. THIS is real to your nervous system.',dur:0.3},
+{phase:'SENSORY DETAIL',text:'Amplify every sense. The sound of applause, the warmth in your chest, the specific words you hear. The more vivid, the more your brain records it as genuine experience.',dur:0.15},
+{phase:'CARRY IT',text:'The rehearsal is complete. Open your eyes slowly. That feeling? It\'s stored. Your servo-mechanism has a new target image. Trust it.',dur:0.05}
+];
+
+function startRehearsal(){
+const goal=document.getElementById('rehearsalGoal').value.trim();
+if(!goal){document.getElementById('rText').textContent='Enter a scenario first.';return}
+const totalMin=+document.getElementById('rehearsalTime').value;
+const totalSec=totalMin*60;
+const room=document.getElementById('rehearsalRoom');
+room.classList.add('dimmed');
+let elapsed=0;
+let phaseIdx=0;
+let phaseStart=0;
+function getPhaseEnd(idx){
+let s=0;for(let i=0;i<=idx;i++)s+=rehearsalPhases[i].dur;
+return s*totalSec;
+}
+function update(){
+elapsed++;
+const pct=elapsed/totalSec;
+// find phase
+while(phaseIdx<rehearsalPhases.length-1&&elapsed>=getPhaseEnd(phaseIdx))phaseIdx++;
+const p=rehearsalPhases[phaseIdx];
+document.getElementById('rPhase').textContent=p.phase;
+document.getElementById('rText').textContent=phaseIdx===0?p.text.replace('your private theater','your private theater for: '+goal):p.text;
+const remain=totalSec-elapsed;
+const m=Math.floor(remain/60);const s=remain%60;
+document.getElementById('rTimer').textContent=m+':'+(s<10?'0':'')+s;
+// breath ring
+const ring=document.getElementById('rBreath');
+if(p.breath){
+ring.style.display='flex';
+const cycle=Math.sin(elapsed*Math.PI/4);
+ring.style.transform='scale('+(0.8+cycle*0.3)+')';
+ring.style.opacity=0.6+cycle*0.3;
+ring.textContent=cycle>0?'Breathe in...':'Breathe out...';
+}else{ring.style.display='none'}
+if(elapsed>=totalSec){
+clearInterval(rehearsalTimer);rehearsalTimer=null;
+document.getElementById('rPhase').textContent='SESSION COMPLETE';
+document.getElementById('rTimer').textContent='✨';
+document.getElementById('rText').textContent='Your nervous system just recorded a vivid success experience. It can\'t distinguish this from the real thing. Carry the feeling.';
+setTimeout(()=>room.classList.remove('dimmed'),3000);
+return;
+}
+}
+if(rehearsalTimer)clearInterval(rehearsalTimer);
+elapsed=0;phaseIdx=0;
+update();
+rehearsalTimer=setInterval(update,1000);
+}
+
+function stopRehearsal(){
+if(rehearsalTimer){clearInterval(rehearsalTimer);rehearsalTimer=null}
+const room=document.getElementById('rehearsalRoom');
+room.classList.remove('dimmed');
+document.getElementById('rPhase').textContent='';
+document.getElementById('rTimer').textContent='';
+document.getElementById('rText').textContent='Session ended. Return whenever you\'re ready.';
+document.getElementById('rBreath').style.display='none';
+}
+
+// ═══════════════════════════════════════
+// 4. FEEDBACK LOOP LAB
+// ═══════════════════════════════════════
+const fbC=document.getElementById('feedbackCanvas');
+const fbCtx=fbC.getContext('2d');
+let fbAnimId=null;
+
+function sizeFbCanvas(){
+fbC.width=fbC.clientWidth*devicePixelRatio;
+fbC.height=300*devicePixelRatio;
+fbCtx.scale(devicePixelRatio,devicePixelRatio);
+drawFbStatic();
+}
+
+function drawFbStatic(){
+const w=fbC.clientWidth,h=300;
+fbCtx.clearRect(0,0,w,h);
+fbCtx.strokeStyle='rgba(255,255,255,.08)';
+fbCtx.beginPath();fbCtx.moveTo(50,10);fbCtx.lineTo(50,h-30);fbCtx.lineTo(w-10,h-30);fbCtx.stroke();
+fbCtx.fillStyle='var(--dim)';fbCtx.font='10px system-ui';
+fbCtx.fillText('Value',8,15);fbCtx.fillText('Steps →',w-55,h-10);
+}
+
+function runFeedback(){
+if(fbAnimId)cancelAnimationFrame(fbAnimId);
+const goal=+document.getElementById('fbGoal').value;
+const start=+document.getElementById('fbStart').value;
+const gain=+document.getElementById('fbGain').value;
+const damp=+document.getElementById('fbDamp').value;
+const noise=+document.getElementById('fbNoise').value;
+const w=fbC.clientWidth,h=300;
+const data=[];
+let val=start,vel=0;
+const st=document.getElementById('fbStatus');
+let t=0;
+let overshot=false,settled=false;
+function step(){
+const err=goal-val;
+vel=(vel+err*gain)*damp;
+val+=vel+(Math.random()-0.5)*noise*0.5;
+data.push(val);
+if(!overshot&&((start<goal&&val>goal+2)||(start>goal&&val<goal-2))){overshot=true;st.textContent='Overshoot detected! The mechanism corrected too hard. Now it corrects back...'}
+if(!settled&&data.length>30&&Math.abs(val-goal)<2&&Math.abs(vel)<0.5){settled=true;st.textContent='✓ Converged! The system found the goal. This is smooth self-correction.';st.style.color='var(--success)'}
+// draw
+drawFbStatic();
+// goal line
+const gy=h-30-(goal/100)*(h-50);
+fbCtx.setLineDash([4,4]);fbCtx.strokeStyle='var(--success)';fbCtx.lineWidth=1;
+fbCtx.beginPath();fbCtx.moveTo(50,gy);fbCtx.lineTo(w-10,gy);fbCtx.stroke();
+fbCtx.setLineDash([]);
+fbCtx.fillStyle='var(--success)';fbCtx.font='10px system-ui';fbCtx.fillText('Goal: '+goal,55,gy-5);
+// data
+fbCtx.beginPath();
+data.forEach((v,i)=>{
+const px=50+i*(w-60)/300;
+const py=h-30-(v/100)*(h-50);
+if(i===0)fbCtx.moveTo(px,py);else fbCtx.lineTo(px,py);
+});
+fbCtx.strokeStyle='var(--accent)';fbCtx.lineWidth=2;fbCtx.stroke();
+t++;
+if(t<300)fbAnimId=requestAnimationFrame(step);
+else{fbAnimId=null;if(!settled){st.textContent=Math.abs(val-goal)>15?'System didn\'t converge. Adjust gain/damping and try again.':'Approaching goal but still oscillating. More damping might help.';st.style.color='var(--warm)'}}
+}
+st.textContent='Running feedback loop...';st.style.color='';
+step();
+}
+
+function resetFeedback(){
+if(fbAnimId)cancelAnimationFrame(fbAnimId);fbAnimId=null;
+document.getElementById('fbStatus').textContent='Gain = how hard you correct errors. High gain = overshoot. Low gain = never arriving.';
+document.getElementById('fbStatus').style.color='';
+drawFbStatic();
+}
+
+// ═══════════════════════════════════════
+// 5. SCAR TISSUE DETECTOR
+// ═══════════════════════════════════════
+const defaultBeliefs=[
+"I'm not attractive enough",
+"I don't deserve success",
+"People will reject the real me",
+"I'm not as smart as others think",
+"I always mess things up eventually",
+"I'm too old/young to change",
+"I need others' approval to feel okay",
+"My past mistakes define who I am"
+];
+let beliefs=[...defaultBeliefs];
+let beliefRatings={};
+
+function renderBeliefs(){
+const el=document.getElementById('scarBeliefs');
+el.innerHTML='';
+beliefs.forEach((b,i)=>{
+const item=document.createElement('div');item.className='belief-item';
+const rating=beliefRatings[b]||'';
+const tag=rating==='true'?'<span class="belief-tag tag-real">Reality</span>':rating==='scar'?'<span class="belief-tag tag-scar">Scar Tissue</span>':rating==='unsure'?'<span class="belief-tag tag-unclear">Examine</span>':'';
+item.innerHTML=`<span class="belief-text">${b}${tag}</span><div class="belief-score">
+<button onclick="rateBelief(${i},'true')" class="${rating==='true'?'active-pos':''}">✓</button>
+<button onclick="rateBelief(${i},'unsure')" class="${rating==='unsure'?'active-mid':''}">?</button>
+<button onclick="rateBelief(${i},'scar')" class="${rating==='scar'?'active-neg':''}">✗</button>
+</div>`;
+el.appendChild(item);
+});
+updateScarResult();
+}
+
+function rateBelief(i,val){beliefRatings[beliefs[i]]=val;renderBeliefs()}
+
+function addCustomBelief(){
+const input=document.getElementById('customBelief');
+const v=input.value.trim();
+if(!v)return;
+beliefs.push(v);input.value='';renderBeliefs();
+}
+
+function updateScarResult(){
+const el=document.getElementById('scarResult');
+const scars=Object.values(beliefRatings).filter(v=>v==='scar').length;
+const reals=Object.values(beliefRatings).filter(v=>v==='true').length;
+const unsure=Object.values(beliefRatings).filter(v=>v==='unsure').length;
+const total=scars+reals+unsure;
+if(total===0){el.textContent='';return}
+if(scars>reals)el.innerHTML=`<span style="color:var(--fail)">⚠ ${scars} scar(s) detected.</span> These beliefs are old wounds protecting you from pain that's already passed. Maltz's prescription: therapeutic forgiveness — not of others, but of the experiences themselves.`;
+else if(scars===0)el.innerHTML=`<span style="color:var(--success)">✓ No scar tissue detected.</span> Your beliefs appear grounded in current reality. Keep checking — scars hide well.`;
+else el.innerHTML=`${scars} scar(s), ${reals} reality-based, ${unsure} uncertain. Focus on the scars — they're the thermostat settings holding you back.`;
+}
+
+// ═══════════════════════════════════════
+// 6. RATIONAL THERAPY TOOL
+// ═══════════════════════════════════════
+function runRational(){
+const belief=document.getElementById('rationalBelief').value.trim();
+if(!belief)return;
+const el=document.getElementById('rationalFlow');
+const questions=[
+{q:'Is there any rational reason for this belief?',hint:'Separate facts from feelings. What actual, concrete evidence supports "'+belief+'"? Not opinions. Not feelings. Evidence.', icon:'🔬'},
+{q:'Could I be mistaken about this belief?',hint:'Have you ever seen someone in similar circumstances who proved this wrong? If even one person has, then this isn\'t universal truth — it\'s an assumption you adopted.', icon:'🤔'},
+{q:'Would I say this to someone I care about?',hint:'Imagine a friend told you: "'+belief+'". Would you agree with them? Or would you see they\'re being unfairly harsh on themselves? Give yourself the same compassion.', icon:'💛'},
+{q:'Is this conclusion based on a fact, or on a feeling?',hint:'Feelings aren\'t facts. "I feel stupid" ≠ "I am stupid." If this belief is feeling-based, you\'ve been hypnotized by it — and you can dehypnotize yourself right now by refusing to accept it as truth.', icon:'⚖️'}
+];
+let html=`<div style="padding:1rem;background:var(--bg3);border-radius:8px"><p style="color:var(--warm);font-weight:600;margin-bottom:1rem">Challenging: "${belief}"</p>`;
+questions.forEach((q,i)=>{
+html+=`<div style="padding:.8rem;border-left:2px solid var(--accent);margin:.6rem 0;padding-left:1rem">
+<strong style="font-size:.9rem;color:var(--accent)">${q.icon} ${i+1}. ${q.q}</strong>
+<p style="font-size:.85rem;color:var(--dim);margin:.4rem 0">${q.hint}</p>
+<textarea placeholder="Your answer..." rows="2" style="font-size:.8rem;margin-top:.3rem"></textarea>
+</div>`;
+});
+html+=`<div style="margin-top:1rem;padding:1rem;background:rgba(102,187,106,.08);border-radius:8px;text-align:center">
+<p style="color:var(--success);font-size:.9rem">🔓 If you answered honestly, you've already begun to dehypnotize yourself.</p>
+<p style="color:var(--dim);font-size:.8rem;margin-top:.3rem">"The important thing is that it does not matter <em>how</em> you got the idea. If you are firmly convinced it is true, it has the same power over you as a hypnotist's words. But once questioned — the spell begins to break."</p>
+</div></div>`;
+el.innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+// 7. SUCCESS/FAILURE PATTERN RECOGNIZER
+// ═══════════════════════════════════════
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let weekData={};
+DAYS.forEach(d=>weekData[d]={wins:[],losses:[]});
+
+// Load from localStorage
+try{const saved=JSON.parse(localStorage.getItem('psycho-patterns'));if(saved)weekData=saved}catch(e){}
+
+function savePatterns(){localStorage.setItem('psycho-patterns',JSON.stringify(weekData))}
+
+function renderWeek(){
+const grid=document.getElementById('weekGrid');
+grid.innerHTML='';
+DAYS.forEach(day=>{
+const col=document.createElement('div');col.className='day-col';
+let entries='';
+weekData[day].wins.forEach((w,i)=>entries+=`<span class="entry-chip win" onclick="removeEntry('${day}','wins',${i})">${w} <span class="x">×</span></span>`);
+weekData[day].losses.forEach((l,i)=>entries+=`<span class="entry-chip loss" onclick="removeEntry('${day}','losses',${i})">${l} <span class="x">×</span></span>`);
+col.innerHTML=`<h4>${day}</h4><div class="entry-list">${entries||'<span style="font-size:.7rem;color:var(--dim)">No entries</span>'}</div>
+<div class="mini-input"><input placeholder="Add..." id="inp-${day}">
+<button onclick="addEntry('${day}','wins')">+W</button>
+<button onclick="addEntry('${day}','losses')">+L</button></div>`;
+grid.appendChild(col);
+});
+}
+
+function addEntry(day,type){
+const inp=document.getElementById('inp-'+day);
+const v=inp.value.trim();if(!v)return;
+weekData[day][type].push(v);inp.value='';
+savePatterns();renderWeek();
+}
+
+function removeEntry(day,type,idx){
+weekData[day][type].splice(idx,1);
+savePatterns();renderWeek();
+}
+
+function clearPatterns(){
+DAYS.forEach(d=>weekData[d]={wins:[],losses:[]});
+savePatterns();renderWeek();
+document.getElementById('patternResult').style.display='none';
+}
+
+function analyzePatterns(){
+let totalWins=0,totalLosses=0;
+const winDays=[],lossDays=[];
+DAYS.forEach(d=>{
+const w=weekData[d].wins.length,l=weekData[d].losses.length;
+totalWins+=w;totalLosses+=l;
+if(w>l)winDays.push(d);else if(l>w)lossDays.push(d);
+});
+const el=document.getElementById('patternResult');
+el.style.display='block';
+if(totalWins+totalLosses===0){el.innerHTML='<p style="color:var(--dim)">Add some entries first. Track your week, then analyze.</p>';return}
+const ratio=totalWins/(totalWins+totalLosses);
+const successTraits=['Sense of direction','Understanding','Courage','Compassion','Esteem','Self-confidence','Self-acceptance'];
+const failureTraits=['Frustration','Aggressiveness','Insecurity','Loneliness','Uncertainty','Resentment','Emptiness'];
+let diagnosis,color,traits,letter;
+if(ratio>=0.65){
+diagnosis='You\'re running a <strong>Success Mechanism</strong>. Your creative mechanism is oriented toward goals. Keep feeding it positive data.';
+color='var(--success)';traits=successTraits;letter='SUCCESS';
+}else if(ratio<=0.35){
+diagnosis='Warning: <strong>Failure Mechanism</strong> detected. Your servo-mechanism is steering toward negative goals — not because you\'re broken, but because it\'s processing failure data. Change the input.';
+color='var(--fail)';traits=failureTraits;letter='FAILURE';
+}else{
+diagnosis='<strong>Mixed signals.</strong> Your mechanism is getting conflicting data. Tip the balance: one more daily win, one fewer worry loop. Small shifts compound.';
+color='var(--warm)';traits=successTraits;letter='S-U-C-C-E-S-S';
+}
+const bar=`<div style="width:100%;height:10px;background:var(--bg3);border-radius:5px;margin:1rem 0;overflow:hidden"><div style="width:${ratio*100}%;height:100%;background:linear-gradient(90deg,var(--fail),var(--warm),var(--success));border-radius:5px"></div></div>`;
+const traitList=traits.map((t,i)=>`<span style="color:${color};font-size:.8rem;margin:2px 6px"><strong>${letter[i]}</strong> — ${t}</span>`).join('');
+el.innerHTML=`<p style="font-size:1.1rem;color:${color};margin-bottom:.5rem">${totalWins}W / ${totalLosses}L</p>${bar}<p style="font-size:.9rem">${diagnosis}</p><div style="display:flex;flex-wrap:wrap;justify-content:center;margin-top:.75rem">${traitList}</div>`;
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function init(){
+sizeTorpCanvas();sizeThermCanvas();sizeFbCanvas();
+renderBeliefs();renderWeek();
+}
+window.addEventListener('resize',()=>{sizeTorpCanvas();sizeThermCanvas();sizeFbCanvas()});
+init();
+</script>
+</body>
+</html>
