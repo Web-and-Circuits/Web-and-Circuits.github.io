@@ -228,7 +228,7 @@ footer{text-align:center;padding:40px 20px;border-top:1px solid #21262d;color:va
 
 <script>
 // Initialize map
-const map = L.map('map',{scrollWheelZoom:false}).setView([34.9465,-81.0300],16);
+const map = L.map('map',{scrollWheelZoom:false}).setView([34.9406,-81.0095],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
   attribution:'Esri World Imagery',maxZoom:19
 }).addTo(map);
@@ -240,15 +240,35 @@ function makeIcon(color,size){
 const pulseIcon=L.divIcon({className:'',html:`<div style="width:16px;height:16px;background:#f5a623;border-radius:50%;border:2px solid #fff;animation:pulse 1.5s infinite;box-shadow:0 2px 8px rgba(245,166,35,.6)"></div>`,iconSize:[16,16],iconAnchor:[8,8]});
 
 // Sample tee pads (green)
-const tees=[[34.94750,-81.03100],[34.94680,-81.03200],[34.94580,-81.02900],[34.94500,-81.03050]];
-tees.forEach(c=>L.marker(c,{icon:makeIcon('#2ecc71',10)}).addTo(map).bindPopup('Tee Pad'));
-
-// Sample baskets (red)
-const baskets=[[34.94700,-81.02950],[34.94620,-81.03050],[34.94530,-81.02800],[34.94450,-81.02920]];
-baskets.forEach(c=>L.marker(c,{icon:makeIcon('#e74c3c',10)}).addTo(map).bindPopup('Basket'));
+// Real GPS from UDisc caddie book — USDGC Spectator Course, all 18 holes
+const holes=[
+  {n:1,t:[34.942642,-81.010449],b:[34.942266,-81.009912]},
+  {n:2,t:[34.942116,-81.009861],b:[34.941577,-81.010223]},
+  {n:3,t:[34.941122,-81.009907],b:[34.940489,-81.009757]},
+  {n:4,t:[34.940487,-81.010097],b:[34.940053,-81.009960]},
+  {n:5,t:[34.940084,-81.010195],b:[34.940537,-81.010555]},
+  {n:6,t:[34.940418,-81.010963],b:[34.940163,-81.011796]},
+  {n:7,t:[34.939906,-81.011366],b:[34.939766,-81.010388]},
+  {n:8,t:[34.939610,-81.010113],b:[34.938967,-81.009529]},
+  {n:9,t:[34.939188,-81.008435],b:[34.939338,-81.007719]},
+  {n:10,t:[34.938874,-81.008286],b:[34.938611,-81.009145]},
+  {n:11,t:[34.939491,-81.009508],b:[34.939577,-81.008630]},
+  {n:12,t:[34.939470,-81.008102],b:[34.940818,-81.007934]},
+  {n:13,t:[34.941051,-81.008398],b:[34.941772,-81.008476]},
+  {n:14,t:[34.941576,-81.008901],b:[34.941031,-81.008910]},
+  {n:15,t:[34.940999,-81.008223],b:[34.939889,-81.009381]},
+  {n:16,t:[34.940088,-81.009620],b:[34.940683,-81.009157]},
+  {n:17,t:[34.940717,-81.009536],b:[34.942550,-81.009323]},
+  {n:18,t:[34.942746,-81.009666],b:[34.942748,-81.010048]}
+];
+holes.forEach(h=>{
+  L.marker(h.t,{icon:makeIcon('#2ecc71',10)}).addTo(map).bindPopup('Hole '+h.n+' Tee');
+  L.marker(h.b,{icon:makeIcon('#e74c3c',10)}).addTo(map).bindPopup('Hole '+h.n+' Basket');
+  L.polyline([h.t,h.b],{color:'#fff',weight:1,opacity:0.25,dashArray:'4 6'}).addTo(map);
+});
 
 // Geo-located player (gold, pulsing)
-L.marker([34.94660,-81.03000],{icon:pulseIcon}).addTo(map).bindPopup('<strong>Geo-Located Player</strong><br>34.9466°N, 81.0300°W<br><em>Computed from broadcast frame</em>');
+L.marker([34.94220,-81.00945],{icon:pulseIcon}).addTo(map).bindPopup('<strong>Geo-Located Player</strong><br>34.9422°N, 81.0095°W<br><em>Paul McBeth — Hole 17 putting position</em>');
 </script>
 
 </body>
