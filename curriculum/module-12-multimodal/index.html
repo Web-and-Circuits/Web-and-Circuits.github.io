@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 12: Multimodal AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--card:#131829;--border:#1e2744;--text:#e0e6f0;--dim:#7a86a8;--accent:#4fc3f7;--accent2:#ab47bc;--accent3:#66bb6a;--gold:#ffd54f;--red:#ef5350;--orange:#ff9800}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+h1{font-size:2.2em;text-align:center;padding:40px 0 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.5em;color:var(--accent);margin:40px 0 15px;padding-top:20px;border-top:1px solid var(--border)}
+h3{font-size:1.15em;color:var(--gold);margin:25px 0 10px}
+.subtitle{text-align:center;color:var(--dim);margin-bottom:30px;font-size:1.05em}
+.back{display:inline-block;color:var(--accent);text-decoration:none;padding:15px 0;font-size:.95em}
+.back:hover{text-decoration:underline}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0}
+canvas{border-radius:8px;display:block;cursor:crosshair;touch-action:none}
+.canvas-wrap{position:relative;margin:10px 0}
+button{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:.95em;margin:4px}
+button:hover{opacity:.85}
+button.secondary{background:var(--border);color:var(--text)}
+.input-row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.input-row input,.input-row select{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:.95em}
+.result{background:var(--bg);border-left:3px solid var(--accent);padding:10px 15px;margin:10px 0;border-radius:0 6px 6px 0;font-family:'Courier New',monospace;font-size:.9em;white-space:pre-wrap;overflow-x:auto}
+.quote{border-left:3px solid var(--accent2);padding:10px 15px;margin:15px 0;font-style:italic;color:var(--dim);background:rgba(171,71,188,.05);border-radius:0 6px 6px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}h1{font-size:1.6em}}
+.emoji{font-size:1.3em;vertical-align:middle}
+a{color:var(--accent)}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin:8px 0;font-size:.85em;color:var(--dim)}
+.legend span::before{content:'●';margin-right:4px}
+.act-label{display:inline-block;padding:3px 12px;border-radius:4px;font-size:.75em;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.act1-label{background:rgba(79,195,247,.15);color:var(--accent)}
+.act2-label{background:rgba(255,213,79,.15);color:var(--gold)}
+.act3-label{background:rgba(171,71,188,.15);color:var(--accent2)}
+.sim-meter{height:24px;background:var(--bg);border-radius:12px;overflow:hidden;margin:8px 0}
+.sim-meter .fill{height:100%;border-radius:12px;transition:width .5s;display:flex;align-items:center;padding:0 10px;font-size:.8em;color:#fff;font-weight:600}
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-row label{min-width:120px;font-size:.9em;color:var(--dim)}
+.slider-row .val{min-width:40px;text-align:right;font-family:'Courier New',monospace;font-size:.9em}
+/* VLM builder */
+.vlm-tray{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;min-height:60px;padding:10px;background:var(--bg);border:1px dashed var(--border);border-radius:8px}
+.vlm-slot{display:flex;gap:4px;align-items:center;min-height:70px;padding:10px;background:var(--bg);border:2px dashed var(--border);border-radius:8px;margin:6px 0;justify-content:center;flex-wrap:wrap;transition:border-color .2s}
+.vlm-slot.over{border-color:var(--accent)}
+.vlm-slot.correct{border-color:var(--accent3);background:rgba(102,187,106,.05)}
+.vlm-block{padding:10px 16px;border-radius:8px;cursor:grab;font-size:.9em;font-weight:600;user-select:none;white-space:nowrap}
+.vlm-block:active{cursor:grabbing}
+.vlm-block[data-type=encoder]{background:rgba(79,195,247,.2);color:var(--accent);border:1px solid rgba(79,195,247,.3)}
+.vlm-block[data-type=projection]{background:rgba(255,213,79,.2);color:var(--gold);border:1px solid rgba(255,213,79,.3)}
+.vlm-block[data-type=llm]{background:rgba(171,71,188,.2);color:var(--accent2);border:1px solid rgba(171,71,188,.3)}
+.vlm-block[data-type=distractor]{background:rgba(239,83,80,.15);color:var(--red);border:1px solid rgba(239,83,80,.2)}
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">← Back to Curriculum</a>
+<h1>👁️ Multimodal AI</h1>
+<p class="subtitle">When models learn to see, hear, and connect it all</p>
+
+<!-- ═══════ ACT 1 ═══════ -->
+<span class="act-label act1-label">Act 1 — The Explorable</span>
+
+<h2>🧩 Vision Encoders: Patch Embedding</h2>
+<p>How does a Vision Transformer (ViT) turn an image into tokens? It chops the image into fixed-size patches (typically 16×16), flattens each patch into a vector, and projects it through a linear layer. Draw on the canvas below and watch it get sliced into patches.</p>
+<div class="card">
+ <div class="canvas-wrap">
+  <canvas id="patchCanvas" width="800" height="400"></canvas>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <button onclick="clearDrawing()">Clear</button>
+  <button onclick="showPatches()">Show Patches → Tokens</button>
+  <span style="font-size:.85em;color:var(--dim)">Draw something, then click to see patch embeddings</span>
+ </div>
+ <div id="patchResult" class="result">Draw on the left canvas, then click "Show Patches → Tokens" to see the ViT patch embedding process.</div>
+</div>
+
+<h3>How ViT Works</h3>
+<div class="card">
+ <p><b>1. Patch + Flatten:</b> A 224×224 image → 14×14 = <b>196 patches</b> of 16×16 pixels each. Each patch is flattened to a 768-dim vector (16×16×3 = 768).</p>
+ <p style="margin-top:8px"><b>2. Linear Projection:</b> Each flattened patch goes through a learned linear layer: <code>z = Wx + b</code>, mapping raw pixels to a meaningful embedding.</p>
+ <p style="margin-top:8px"><b>3. Position Embedding:</b> Add learned position embeddings so the model knows <em>where</em> each patch came from. Without this, the model sees a bag of patches.</p>
+ <p style="margin-top:8px"><b>4. [CLS] Token:</b> Prepend a learnable classification token. After the transformer layers, this token's output is used for the final image representation.</p>
+ <p style="margin-top:8px;color:var(--dim)">The result? An image becomes a <b>sequence of token embeddings</b> — exactly like text tokens to a language model. This is the key insight that makes vision transformers work.</p>
+</div>
+
+<h2>🔗 CLIP: Connecting Text & Images</h2>
+<p>CLIP learns a shared embedding space where text and images live together. Type descriptions below and see their cosine similarity to different image categories — computed using a simulated CLIP-like embedding.</p>
+<div class="card">
+ <div class="input-row">
+  <input id="clipText" placeholder="a golden retriever playing fetch" value="a golden retriever playing fetch">
+  <button onclick="computeCLIP()">Compute Similarities</button>
+ </div>
+ <div id="clipBars"></div>
+ <div id="clipResult" class="result">Type a description and click to see similarities to image categories.</div>
+</div>
+
+<h3>Contrastive Learning</h3>
+<div class="card">
+ <p>CLIP was trained on <b>400 million</b> image-text pairs from the internet. The training objective is beautifully simple:</p>
+ <p style="margin-top:10px">Given a batch of N image-text pairs, CLIP creates an N×N similarity matrix. The diagonal entries (correct pairs) should be high; off-diagonal entries (wrong pairs) should be low.</p>
+ <div class="canvas-wrap"><canvas id="contrastiveCanvas" width="800" height="300"></canvas></div>
+ <div class="legend"><span style="color:var(--accent3)">Correct pair (maximize)</span><span style="color:var(--red)">Wrong pair (minimize)</span></div>
+ <p style="margin-top:8px;color:var(--dim)">This symmetric cross-entropy loss trains both the image encoder and text encoder simultaneously. The result: any image and any text can be directly compared.</p>
+</div>
+
+<h2>🌊 Diffusion Models</h2>
+<p>Diffusion models learn to denoise. The forward process adds Gaussian noise step by step until the image is pure noise. The reverse process learns to undo each step. Use the slider to walk through the process.</p>
+<div class="card">
+ <div class="canvas-wrap"><canvas id="diffCanvas" width="800" height="320"></canvas></div>
+ <div class="slider-row">
+  <label>Timestep t:</label>
+  <input type="range" id="diffSlider" min="0" max="50" value="0" oninput="drawDiffusion()">
+  <span class="val" id="diffVal">0</span>
+ </div>
+ <div style="display:flex;gap:8px;margin:5px 0">
+  <button onclick="animateDiffForward()">▶ Forward (Add Noise)</button>
+  <button onclick="animateDiffReverse()">◀ Reverse (Denoise)</button>
+ </div>
+ <div id="diffResult" class="result">t=0: Original image. Drag the slider or click animate to see the forward/reverse diffusion process.</div>
+</div>
+
+<h3>Classifier-Free Guidance</h3>
+<div class="card">
+ <p>During training, the text prompt is randomly dropped (replaced with ∅) some percentage of the time. At inference:</p>
+ <p style="margin-top:8px;font-family:'Courier New',monospace;font-size:.9em;color:var(--gold)">
+  ε_guided = ε_uncond + w × (ε_cond − ε_uncond)
+ </p>
+ <p style="margin-top:8px">Where <b>w</b> is the guidance scale (typically 7–15). Higher w means the image follows the prompt more closely but may lose diversity. This is why Stable Diffusion's <code>--guidance-scale</code> parameter matters so much.</p>
+ <div class="slider-row">
+  <label>Guidance w:</label>
+  <input type="range" id="cfgSlider" min="1" max="20" value="7" step="0.5" oninput="drawCFG()">
+  <span class="val" id="cfgVal">7.0</span>
+ </div>
+ <div class="canvas-wrap"><canvas id="cfgCanvas" width="800" height="200"></canvas></div>
+</div>
+
+<!-- ═══════ ACT 2 ═══════ -->
+<span class="act-label act2-label">Act 2 — The Build</span>
+
+<h2>🏗️ Build-a-VLM</h2>
+<p>Vision-Language Models like LLaVA and GPT-4V combine a vision encoder, a projection layer, and an LLM. Drag the correct components into the pipeline slots in the right order. Watch out for distractors!</p>
+<div class="card">
+ <p style="font-size:.9em;color:var(--dim);margin-bottom:8px"><b>Component Tray</b> — drag from here:</p>
+ <div class="vlm-tray" id="vlmTray"></div>
+ <p style="font-size:.9em;color:var(--dim);margin:12px 0 8px"><b>Pipeline</b> — drop in order: Image → ??? → ??? → ??? → Text Output</p>
+ <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+  <span style="font-size:.9em">📷 Image →</span>
+  <div class="vlm-slot" id="vlmSlot0" data-idx="0"></div>
+  <span style="font-size:1.2em">→</span>
+  <div class="vlm-slot" id="vlmSlot1" data-idx="1"></div>
+  <span style="font-size:1.2em">→</span>
+  <div class="vlm-slot" id="vlmSlot2" data-idx="2"></div>
+  <span style="font-size:.9em">→ 💬 Text</span>
+ </div>
+ <button onclick="checkVLM()" style="margin-top:10px">Check Pipeline</button>
+ <button class="secondary" onclick="resetVLM()">Reset</button>
+ <div id="vlmResult" class="result">Drag components into the 3 pipeline slots, then click Check.</div>
+</div>
+
+<h3>VLM Architecture Patterns</h3>
+<div class="card">
+ <div class="grid2">
+  <div>
+   <p><b style="color:var(--accent)">LLaVA</b></p>
+   <p style="font-size:.9em">CLIP ViT-L → simple MLP projection → Vicuna/LLaMA. Visual tokens are concatenated with text tokens and fed to the LLM. Trained in two stages: (1) alignment pretraining, (2) instruction tuning.</p>
+  </div>
+  <div>
+   <p><b style="color:var(--accent2)">GPT-4V / GPT-4o</b></p>
+   <p style="font-size:.9em">Proprietary vision encoder → unknown projection → GPT-4. Likely uses a more sophisticated cross-attention mechanism. Natively handles multiple images, text interleaving, and spatial reasoning.</p>
+  </div>
+ </div>
+ <div class="grid2" style="margin-top:15px">
+  <div>
+   <p><b style="color:var(--accent3)">Flamingo / IDEFICS</b></p>
+   <p style="font-size:.9em">Vision encoder + Perceiver resampler (compresses visual tokens) + cross-attention layers interleaved into a frozen LLM. Excels at few-shot visual reasoning.</p>
+  </div>
+  <div>
+   <p><b style="color:var(--gold)">Gemini</b></p>
+   <p style="font-size:.9em">Natively multimodal from the ground up — trained jointly on text, images, audio, and video. Not a bolted-on vision encoder; the modalities are integrated at the architecture level.</p>
+  </div>
+ </div>
+</div>
+
+<!-- ═══════ ACT 3 ═══════ -->
+<span class="act-label act3-label">Act 3 — The Connection</span>
+
+<h2>📜 The Papers</h2>
+
+<h3>Paper #11: An Image is Worth 16x16 Words (Dosovitskiy et al., 2020)</h3>
+<div class="quote">"We show that reliance on CNNs is not necessary and a pure transformer applied directly to sequences of image patches can perform very well on image classification tasks."</div>
+<div class="card">
+ <p><b>Key insight:</b> Skip the convolutions. Just chop an image into patches, treat them like tokens, and run a standard transformer. At sufficient scale, ViT matches or beats the best CNNs — while being simpler and more scalable.</p>
+ <p style="margin-top:10px"><b>Why it matters:</b> ViT unified the architecture for vision and language. Once images and text are both "sequences of tokens to a transformer," combining them becomes natural. This paper is the foundation under every VLM.</p>
+ <p style="margin-top:8px;font-size:.85em;color:var(--dim)"><a href="https://arxiv.org/abs/2010.11929" target="_blank">arxiv.org/abs/2010.11929</a></p>
+</div>
+
+<h3>Paper #12: Denoising Diffusion Probabilistic Models (Ho et al., 2020)</h3>
+<div class="quote">"We present high quality image synthesis results using diffusion probabilistic models, a class of latent variable models inspired by considerations from nonequilibrium thermodynamics."</div>
+<div class="card">
+ <p><b>Key insight:</b> Image generation as iterative denoising. The forward process is fixed (just add Gaussian noise on a schedule). The model only needs to learn the reverse — predict the noise at each step. Simple loss: <code>||ε − ε_θ(x_t, t)||²</code></p>
+ <p style="margin-top:10px"><b>Why it matters:</b> This paper (along with Song et al.'s score-based work) launched the diffusion revolution that gave us DALL·E 2, Stable Diffusion, Midjourney, and Sora. GANs were dethroned practically overnight.</p>
+ <p style="margin-top:8px;font-size:.85em;color:var(--dim)"><a href="https://arxiv.org/abs/2006.11239" target="_blank">arxiv.org/abs/2006.11239</a></p>
+</div>
+
+<h2>🌌 The Convergence</h2>
+<div class="card" style="border-color:var(--gold)">
+ <p style="font-size:1.1em;text-align:center;color:var(--gold);font-weight:600">The Platonic Representation Hypothesis</p>
+ <p style="margin-top:12px">A remarkable observation: as models get bigger and train on more data, their internal representations <em>converge</em> — regardless of modality or training objective. A vision model trained on ImageNet and a language model trained on text develop similar internal geometries.</p>
+ <p style="margin-top:10px"><b>Why?</b> Both are modeling the same underlying reality. A dog is a dog whether you see it, read about it, or hear it bark. The statistical structure of the world imposes constraints, and large models converge to that shared structure.</p>
+ <p style="margin-top:10px"><b>Evidence:</b></p>
+ <p style="margin-top:5px">• CLIP embeddings align vision and language with <em>no architectural tricks</em> — just contrastive loss<br>
+ • LLMs develop spatial understanding from text alone (linear probes find world maps in GPT)<br>
+ • Translation between modalities becomes a simple linear transform at sufficient scale<br>
+ • Different model families (ViT, ResNet, DINO) converge to similar representations</p>
+ <p style="margin-top:12px;color:var(--dim)">This suggests we're not building separate "vision AI" and "language AI" — we're building models of reality that happen to be trained through different sensory channels. Multimodal AI isn't about duct-taping modalities together; it's about recognizing they were always describing the same thing.</p>
+ <p style="margin-top:8px;font-size:.85em;color:var(--dim)"><a href="https://arxiv.org/abs/2405.07987" target="_blank">Huh et al., "The Platonic Representation Hypothesis" (2024)</a></p>
+</div>
+
+<h2>🔮 Where It's Going</h2>
+<div class="card">
+ <p>🎬 <b>Video Understanding</b> — Models like Sora and Gemini process temporal sequences of frames. Video is just images + time, and time is just another dimension to a transformer.</p>
+ <p style="margin-top:10px">🎵 <b>Audio Integration</b> — Whisper embeds speech, CLAP does for audio what CLIP did for images. GPT-4o processes voice natively with emotional understanding.</p>
+ <p style="margin-top:10px">🤖 <b>Embodied AI</b> — Robots need to see, hear, and act. Multimodal models become the "brain" that connects perception to action (RT-2, PaLM-E).</p>
+ <p style="margin-top:10px">🧬 <b>Any-to-Any</b> — The end state: a single model that accepts and generates any combination of text, images, audio, video, and actions. We're closer than you think.</p>
+</div>
+
+<p style="text-align:center;padding:40px 0;color:var(--dim)">Module 12 · AI Beach Week 🏖️</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════
+const dpr=window.devicePixelRatio||1;
+function sizeCanvas(c,w,h){c.width=w*dpr;c.height=h*dpr;c.style.width=w+'px';c.style.height=h+'px';c.getContext('2d').setTransform(dpr,0,0,dpr,0,0)}
+function cpos(e,c){const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top}}
+
+// ═══════════════════════════════════════
+// PATCH EMBEDDING VISUALIZER
+// ═══════════════════════════════════════
+const PC=document.getElementById('patchCanvas'),px=PC.getContext('2d');
+const drawSize=256,patchSize=16,gridN=drawSize/patchSize; // 16 patches per side
+let drawing=false,drawPaths=[];
+function getDrawArea(){return{x:20,y:20,w:drawSize,h:drawSize}}
+function drawPatchUI(){
+ const w=PC.clientWidth,h=PC.clientHeight;
+ px.clearRect(0,0,w,h);
+ const d=getDrawArea();
+ // Drawing area bg
+ px.fillStyle='#1a1a2e';px.fillRect(d.x,d.y,d.w,d.h);
+ px.strokeStyle='var(--border)';px.lineWidth=1;px.strokeRect(d.x,d.y,d.w,d.h);
+ // Label
+ px.fillStyle='#7a86a8';px.font='12px sans-serif';px.textAlign='center';
+ px.fillText('Draw here (256×256)',d.x+d.w/2,d.y+d.h+18);
+ // Replay strokes
+ px.strokeStyle='#4fc3f7';px.lineWidth=3;px.lineCap='round';
+ drawPaths.forEach(path=>{
+  if(path.length<2)return;
+  px.beginPath();px.moveTo(path[0].x,path[0].y);
+  for(let i=1;i<path.length;i++)px.lineTo(path[i].x,path[i].y);
+  px.stroke();
+ });
+}
+function clearDrawing(){drawPaths=[];drawPatchUI();document.getElementById('patchResult').textContent='Draw on the left canvas, then click "Show Patches → Tokens" to see the ViT patch embedding process.'}
+
+PC.addEventListener('pointerdown',e=>{
+ const p=cpos(e,PC),d=getDrawArea();
+ if(p.x>=d.x&&p.x<=d.x+d.w&&p.y>=d.y&&p.y<=d.y+d.h){
+  drawing=true;drawPaths.push([p]);PC.setPointerCapture(e.pointerId);
+ }
+});
+PC.addEventListener('pointermove',e=>{
+ if(!drawing)return;const p=cpos(e,PC);
+ drawPaths[drawPaths.length-1].push(p);drawPatchUI();
+});
+PC.addEventListener('pointerup',()=>{drawing=false});
+
+function showPatches(){
+ drawPatchUI();
+ const d=getDrawArea();
+ const w=PC.clientWidth;
+ // Draw grid on the image
+ px.strokeStyle='rgba(255,213,79,.4)';px.lineWidth=1;
+ for(let i=0;i<=gridN;i++){
+  px.beginPath();px.moveTo(d.x+i*patchSize,d.y);px.lineTo(d.x+i*patchSize,d.y+d.h);px.stroke();
+  px.beginPath();px.moveTo(d.x,d.y+i*patchSize);px.lineTo(d.x+d.w,d.y+i*patchSize);px.stroke();
+ }
+ // Sample pixel data to compute patch "intensity"
+ const imgData=px.getImageData(d.x*dpr,d.y*dpr,d.w*dpr,d.h*dpr);
+ const patchVals=[];
+ const scale=dpr;
+ for(let py=0;py<gridN;py++){
+  for(let px2=0;px2<gridN;px2++){
+   let sum=0,cnt=0;
+   for(let dy=0;dy<patchSize*scale;dy++){
+    for(let dx=0;dx<patchSize*scale;dx++){
+     const ix=Math.floor(px2*patchSize*scale+dx);
+     const iy=Math.floor(py*patchSize*scale+dy);
+     const idx=(iy*d.w*scale+ix)*4;
+     sum+=imgData.data[idx]+imgData.data[idx+1]+imgData.data[idx+2];cnt+=3;
+    }
+   }
+   patchVals.push(sum/cnt/255);
+  }
+ }
+ // Draw flattened token sequence on the right
+ const tokenX=d.x+d.w+40,tokenY=d.y;
+ const tokenW=w-tokenX-20,tokenH=d.h;
+ px.fillStyle='#1a1a2e';px.fillRect(tokenX,tokenY,tokenW,tokenH);
+ px.strokeStyle='var(--border)';px.lineWidth=1;px.strokeRect(tokenX,tokenY,tokenW,tokenH);
+ px.fillStyle='#7a86a8';px.font='12px sans-serif';px.textAlign='center';
+ px.fillText('Token sequence (196 patches → 196 vectors)',tokenX+tokenW/2,tokenY+tokenH+18);
+ // Draw tokens as colored bars
+ const cols=14,rows=14;
+ const tw=Math.min(tokenW/cols,tokenH/rows)-2;
+ for(let i=0;i<patchVals.length;i++){
+  const col=i%cols,row=Math.floor(i/cols);
+  const x2=tokenX+4+col*(tw+2),y2=tokenY+4+row*(tw+2);
+  const v=patchVals[i];
+  const r=Math.floor(79+v*176),g=Math.floor(195-v*100),b=Math.floor(247-v*100);
+  px.fillStyle=`rgb(${r},${g},${b})`;
+  px.fillRect(x2,y2,tw,tw);
+ }
+ // Arrow
+ const arrowX=d.x+d.w+10,arrowY=d.y+d.h/2;
+ px.fillStyle='#ffd54f';px.font='20px sans-serif';px.textAlign='center';
+ px.fillText('→',arrowX+10,arrowY+6);
+ // Patch numbers on grid
+ px.font='8px monospace';px.fillStyle='rgba(255,213,79,.6)';px.textAlign='center';
+ for(let py=0;py<gridN;py++){
+  for(let px2=0;px2<gridN;px2++){
+   const idx=py*gridN+px2;
+   if(idx%4===0)px.fillText(idx,d.x+px2*patchSize+patchSize/2,d.y+py*patchSize+patchSize/2+3);
+  }
+ }
+ const active=patchVals.filter(v=>v>0.05).length;
+ document.getElementById('patchResult').textContent=`${gridN}×${gridN} = ${gridN*gridN} patches of ${patchSize}×${patchSize} pixels\nEach patch → flatten to ${patchSize*patchSize*3}-dim vector → linear projection → 768-dim embedding\n${active} patches contain drawing content, ${gridN*gridN-active} are ~empty\n+ 1 [CLS] token prepended → ${gridN*gridN+1} total tokens to the transformer`;
+}
+
+// ═══════════════════════════════════════
+// CLIP SIMILARITY DEMO
+// ═══════════════════════════════════════
+const clipCategories=[
+ {label:'🐕 Dog',keywords:['dog','puppy','canine','retriever','fetch','bark','pet','golden','labrador','paws']},
+ {label:'🐈 Cat',keywords:['cat','kitten','feline','meow','purr','whiskers','tabby','siamese']},
+ {label:'🚗 Car',keywords:['car','vehicle','drive','road','engine','wheel','sedan','sports','racing','ferrari']},
+ {label:'🌅 Sunset',keywords:['sunset','sunrise','sky','orange','horizon','evening','dawn','dusk','sun','golden hour']},
+ {label:'🏔️ Mountain',keywords:['mountain','peak','snow','climb','alpine','hiking','trail','summit','hill','ridge']},
+ {label:'🍕 Food',keywords:['food','eat','cook','meal','pizza','restaurant','delicious','plate','recipe','kitchen']},
+ {label:'🎵 Music',keywords:['music','song','guitar','piano','concert','band','melody','rhythm','sing','instrument']},
+ {label:'💻 Technology',keywords:['computer','code','software','programming','technology','digital','algorithm','data','ai','neural']}
+];
+function simCLIP(text,cat){
+ const words=text.toLowerCase().replace(/[^a-z ]/g,'').split(/\s+/);
+ let score=0;
+ words.forEach(w=>{
+  cat.keywords.forEach(kw=>{
+   if(w===kw)score+=1.0;
+   else if(w.includes(kw)||kw.includes(w))score+=0.5;
+   // Character overlap heuristic
+   else{let overlap=0;for(let c of w)if(kw.includes(c))overlap++;
+    if(overlap/Math.max(w.length,kw.length)>0.6)score+=0.15;}
+  });
+ });
+ return Math.min(score/Math.max(words.length,1),1.0);
+}
+function computeCLIP(){
+ const text=document.getElementById('clipText').value;
+ const scores=clipCategories.map(c=>({label:c.label,score:simCLIP(text,c)}));
+ scores.sort((a,b)=>b.score-a.score);
+ // Normalize for display
+ const max=Math.max(...scores.map(s=>s.score),0.01);
+ let html='';
+ scores.forEach(s=>{
+  const pct=Math.max(s.score/max*100,2);
+  const color=s.score===scores[0].score?'var(--accent3)':'var(--accent)';
+  html+=`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:.9em"><span>${s.label}</span><span style="font-family:monospace">${s.score.toFixed(3)}</span></div><div class="sim-meter"><div class="fill" style="width:${pct}%;background:${color}">${s.score>0?s.score.toFixed(2):''}</div></div></div>`;
+ });
+ document.getElementById('clipBars').innerHTML=html;
+ document.getElementById('clipResult').textContent=`Best match: ${scores[0].label} (similarity: ${scores[0].score.toFixed(3)})\n\nNote: This uses keyword matching to simulate CLIP. Real CLIP uses 512-dim learned embeddings from contrastive training on 400M image-text pairs.`;
+}
+
+// ═══════════════════════════════════════
+// CONTRASTIVE LEARNING MATRIX
+// ═══════════════════════════════════════
+const CX=document.getElementById('contrastiveCanvas'),cx2=CX.getContext('2d');
+function drawContrastive(){
+ const w=CX.clientWidth,h=CX.clientHeight;
+ cx2.clearRect(0,0,w,h);
+ const labels=['🐕 dog','🐈 cat','🚗 car','🌅 sunset'];
+ const n=labels.length,cellW=50,cellH=50;
+ const ox=(w-n*cellW)/2,oy=30;
+ // Column headers (images)
+ cx2.font='13px sans-serif';cx2.textAlign='center';cx2.fillStyle='var(--accent2)';
+ for(let i=0;i<n;i++)cx2.fillText(labels[i]+' 🖼️',ox+i*cellW+cellW/2,oy-8);
+ // Row headers (text)
+ cx2.textAlign='right';cx2.fillStyle='var(--accent)';
+ for(let i=0;i<n;i++)cx2.fillText(labels[i]+' 📝 ',ox-8,oy+i*cellH+cellH/2+4);
+ // Matrix cells
+ for(let r=0;r<n;r++){
+  for(let c=0;c<n;c++){
+   const isDiag=r===c;
+   const val=isDiag?(0.85+Math.random()*0.1):(Math.random()*0.15);
+   const x=ox+c*cellW,y=oy+r*cellH;
+   cx2.fillStyle=isDiag?'rgba(102,187,106,.3)':'rgba(239,83,80,.15)';
+   cx2.fillRect(x+2,y+2,cellW-4,cellH-4);
+   cx2.strokeStyle=isDiag?'var(--accent3)':'rgba(239,83,80,.3)';cx2.lineWidth=isDiag?2:1;
+   cx2.strokeRect(x+2,y+2,cellW-4,cellH-4);
+   cx2.fillStyle=isDiag?'#66bb6a':'#ef5350';cx2.font='bold 13px monospace';cx2.textAlign='center';
+   cx2.fillText(val.toFixed(2),x+cellW/2,y+cellH/2+5);
+  }
+ }
+ // Arrows and labels
+ const rx=ox+n*cellW+30,ry=oy+20;
+ cx2.font='12px sans-serif';cx2.textAlign='left';
+ cx2.fillStyle='var(--accent3)';cx2.fillText('← Diagonal: maximize (correct pairs)',rx,ry);
+ cx2.fillStyle='var(--red)';cx2.fillText('← Off-diagonal: minimize (wrong pairs)',rx,ry+22);
+ cx2.fillStyle='var(--dim)';cx2.fillText('Symmetric cross-entropy loss',rx,ry+50);
+ cx2.fillText('over N×N similarity matrix',rx,ry+68);
+}
+
+// ═══════════════════════════════════════
+// DIFFUSION DENOISING STEPPER
+// ═══════════════════════════════════════
+const DC=document.getElementById('diffCanvas'),dx=DC.getContext('2d');
+// Generate a simple "image" as colored blocks
+const imgW=14,imgH=14;
+let baseImage=[];
+function genBaseImage(){
+ baseImage=[];
+ // Draw a simple smiley
+ for(let y=0;y<imgH;y++){
+  for(let x=0;x<imgW;x++){
+   let r=40,g=80,b=180; // blue bg
+   const cx=7,cy=7,dist=Math.sqrt((x-cx)**2+(y-cy)**2);
+   if(dist<5){r=255;g=220;b=80} // yellow face
+   if(dist<5&&((x===5&&y===5)||(x===9&&y===5))){r=40;g=40;b=40} // eyes
+   if(dist<5&&y===8&&x>=5&&x<=9){r=40;g=40;b=40} // mouth
+   if(dist<5&&y===9&&(x===5||x===9)){r=40;g=40;b=40}
+   baseImage.push([r,g,b]);
+  }
+ }
+}
+genBaseImage();
+
+function noisyImage(t){
+ const alpha=1-t/50;
+ return baseImage.map(([r,g,b])=>[
+  Math.max(0,Math.min(255,r*alpha+(Math.random()*255)*(1-alpha))),
+  Math.max(0,Math.min(255,g*alpha+(Math.random()*255)*(1-alpha))),
+  Math.max(0,Math.min(255,b*alpha+(Math.random()*255)*(1-alpha)))
+ ]);
+}
+// Cache noise so reverse looks like actual denoising
+let noiseCache={};
+function noisyImageCached(t){
+ if(!noiseCache[t])noiseCache[t]=noisyImage(t);
+ return noiseCache[t];
+}
+function drawDiffusion(){
+ const t=parseInt(document.getElementById('diffSlider').value);
+ document.getElementById('diffVal').textContent=t;
+ const w=DC.clientWidth,h=DC.clientHeight;
+ dx.clearRect(0,0,w,h);
+ // Draw the image at current noise level
+ const img=noisyImageCached(t);
+ const cellW=Math.min(16,(w*0.3)/imgW);
+ const totalW=cellW*imgW,totalH=cellW*imgH;
+ // Draw at multiple stages
+ const stages=[0,10,25,40,50];
+ const stageW=cellW*imgW;
+ const gap=Math.max(10,(w-stages.length*stageW)/(stages.length+1));
+ stages.forEach((st,si)=>{
+  const sx=gap+si*(stageW+gap),sy=40;
+  const simg=noisyImageCached(st);
+  simg.forEach((c,i)=>{
+   const px2=i%imgW,py=Math.floor(i/imgW);
+   dx.fillStyle=`rgb(${Math.floor(c[0])},${Math.floor(c[1])},${Math.floor(c[2])})`;
+   dx.fillRect(sx+px2*cellW,sy+py*cellW,cellW,cellW);
+  });
+  dx.strokeStyle=st===t?'var(--gold)':'var(--border)';
+  dx.lineWidth=st===t?2:1;
+  dx.strokeRect(sx,sy,stageW,totalH);
+  dx.fillStyle=st===t?'var(--gold)':'var(--dim)';dx.font='11px sans-serif';dx.textAlign='center';
+  dx.fillText(`t=${st}`,sx+stageW/2,sy+totalH+16);
+  if(si<stages.length-1){
+   dx.fillStyle='#7a86a8';dx.font='16px sans-serif';
+   dx.fillText('→',sx+stageW+gap/2,sy+totalH/2);
+  }
+ });
+ // Labels
+ dx.fillStyle='var(--accent)';dx.font='13px sans-serif';dx.textAlign='left';
+ dx.fillText('Forward process: q(xₜ|xₜ₋₁) = add noise',10,h-20);
+ dx.textAlign='right';dx.fillStyle='var(--accent2)';
+ dx.fillText('Reverse process: p_θ(xₜ₋₁|xₜ) = learned denoising',w-10,h-20);
+ const desc=t===0?'Original image — no noise':t<15?`Light noise (t=${t}) — structure clearly visible`:t<30?`Medium noise (t=${t}) — features becoming obscured`:t<45?`Heavy noise (t=${t}) — mostly random`:` Pure noise (t=${t}) — original image is gone`;
+ document.getElementById('diffResult').textContent=desc+`\nNoise level: ${(t/50*100).toFixed(0)}% | Signal: ${((1-t/50)*100).toFixed(0)}%`;
+}
+let diffAnim=null;
+function animateDiffForward(){
+ clearInterval(diffAnim);noiseCache={};
+ const sl=document.getElementById('diffSlider');sl.value=0;
+ diffAnim=setInterval(()=>{
+  sl.value=parseInt(sl.value)+1;drawDiffusion();
+  if(parseInt(sl.value)>=50)clearInterval(diffAnim);
+ },80);
+}
+function animateDiffReverse(){
+ clearInterval(diffAnim);
+ // Pre-cache all frames from current state
+ const start=parseInt(document.getElementById('diffSlider').value)||50;
+ for(let t=start;t>=0;t--)noisyImageCached(t);
+ const sl=document.getElementById('diffSlider');sl.value=start;
+ diffAnim=setInterval(()=>{
+  sl.value=parseInt(sl.value)-1;drawDiffusion();
+  if(parseInt(sl.value)<=0)clearInterval(diffAnim);
+ },80);
+}
+
+// ═══════════════════════════════════════
+// CLASSIFIER-FREE GUIDANCE VIZ
+// ═══════════════════════════════════════
+const CFC=document.getElementById('cfgCanvas'),cfx=CFC.getContext('2d');
+function drawCFG(){
+ const wVal=parseFloat(document.getElementById('cfgSlider').value);
+ document.getElementById('cfgVal').textContent=wVal.toFixed(1);
+ const w=CFC.clientWidth,h=CFC.clientHeight;
+ cfx.clearRect(0,0,w,h);
+ // Show spectrum from underconditioned to overconditioned
+ const barY=40,barH=60,barW=w-80;
+ const barX=40;
+ // Gradient bar
+ const g=cfx.createLinearGradient(barX,0,barX+barW,0);
+ g.addColorStop(0,'#ef5350');g.addColorStop(0.15,'#ff9800');g.addColorStop(0.35,'#ffd54f');
+ g.addColorStop(0.5,'#66bb6a');g.addColorStop(0.7,'#4fc3f7');g.addColorStop(1,'#ab47bc');
+ cfx.fillStyle=g;cfx.fillRect(barX,barY,barW,barH);
+ cfx.strokeStyle='var(--border)';cfx.lineWidth=1;cfx.strokeRect(barX,barY,barW,barH);
+ // Labels
+ cfx.font='11px sans-serif';cfx.textAlign='center';
+ cfx.fillStyle='var(--dim)';
+ cfx.fillText('w=1: Ignores prompt',barX+barW*0.05,barY+barH+16);
+ cfx.fillText('w=7: Balanced',barX+barW*0.35,barY+barH+16);
+ cfx.fillText('w=15: Overly literal',barX+barW*0.7,barY+barH+16);
+ cfx.fillText('w=20: Saturated',barX+barW*0.95,barY+barH+16);
+ // Marker for current value
+ const markerX=barX+((wVal-1)/19)*barW;
+ cfx.beginPath();cfx.moveTo(markerX,barY-8);cfx.lineTo(markerX-6,barY-18);cfx.lineTo(markerX+6,barY-18);cfx.closePath();
+ cfx.fillStyle='#fff';cfx.fill();
+ cfx.fillStyle='#fff';cfx.font='bold 12px monospace';
+ cfx.fillText(`w=${wVal.toFixed(1)}`,markerX,barY-22);
+ // Description text
+ cfx.fillStyle='var(--text)';cfx.font='12px sans-serif';cfx.textAlign='left';
+ const quality=wVal<3?'Random/diverse, ignores prompt':wVal<6?'Creative but loosely following prompt':wVal<10?'Good balance of quality and prompt adherence':wVal<15?'Strong prompt adherence, less diversity':'Over-saturated, artifacts likely';
+ cfx.fillText(quality,barX,h-10);
+}
+
+// ═══════════════════════════════════════
+// BUILD-A-VLM DRAG & DROP
+// ═══════════════════════════════════════
+const vlmComponents=[
+ {id:'vit',label:'🔍 Vision Encoder (ViT)',type:'encoder',correct:0},
+ {id:'proj',label:'📐 Projection Layer (MLP)',type:'projection',correct:1},
+ {id:'llm',label:'🧠 Large Language Model',type:'llm',correct:2},
+ {id:'cnn',label:'🔲 CNN Backbone',type:'distractor',correct:-1},
+ {id:'gan',label:'🎨 GAN Discriminator',type:'distractor',correct:-1},
+ {id:'rnn',label:'🔄 Recurrent Network',type:'distractor',correct:-1}
+];
+let vlmSlots=[null,null,null];
+function initVLM(){
+ const tray=document.getElementById('vlmTray');
+ tray.innerHTML='';
+ // Shuffle
+ const shuffled=[...vlmComponents].sort(()=>Math.random()-0.5);
+ shuffled.forEach(c=>{
+  const el=document.createElement('div');
+  el.className='vlm-block';el.dataset.type=c.type;el.dataset.id=c.id;
+  el.draggable=true;el.textContent=c.label;
+  el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.id)});
+  tray.appendChild(el);
+ });
+ // Reset slots
+ vlmSlots=[null,null,null];
+ for(let i=0;i<3;i++){
+  const slot=document.getElementById('vlmSlot'+i);
+  slot.innerHTML='';slot.className='vlm-slot';
+  slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('over')});
+  slot.addEventListener('dragleave',()=>slot.classList.remove('over'));
+  slot.addEventListener('drop',e=>{
+   e.preventDefault();slot.classList.remove('over');
+   const id=e.dataTransfer.getData('text/plain');
+   const comp=vlmComponents.find(c=>c.id===id);
+   if(!comp)return;
+   // Remove from previous slot if any
+   for(let j=0;j<3;j++){
+    if(vlmSlots[j]===id){
+     vlmSlots[j]=null;
+     document.getElementById('vlmSlot'+j).innerHTML='';
+     document.getElementById('vlmSlot'+j).className='vlm-slot';
+    }
+   }
+   // Remove from tray
+   const trayEl=document.querySelector(`#vlmTray [data-id="${id}"]`);
+   if(trayEl)trayEl.remove();
+   // Place in slot
+   vlmSlots[parseInt(slot.dataset.idx)]=id;
+   slot.innerHTML='';
+   const block=document.createElement('div');
+   block.className='vlm-block';block.dataset.type=comp.type;block.dataset.id=comp.id;
+   block.draggable=true;block.textContent=comp.label;
+   block.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',comp.id)});
+   slot.appendChild(block);
+  });
+ }
+ document.getElementById('vlmResult').textContent='Drag components into the 3 pipeline slots, then click Check.';
+}
+function checkVLM(){
+ let correct=0;
+ for(let i=0;i<3;i++){
+  const slot=document.getElementById('vlmSlot'+i);
+  const comp=vlmComponents.find(c=>c.id===vlmSlots[i]);
+  if(comp&&comp.correct===i){
+   slot.className='vlm-slot correct';correct++;
+  }else{
+   slot.className='vlm-slot';
+   if(vlmSlots[i])slot.style.borderColor='var(--red)';
+  }
+ }
+ if(correct===3){
+  document.getElementById('vlmResult').textContent='✅ Perfect! The VLM pipeline:\n\n📷 Image → 🔍 Vision Encoder (ViT) → 📐 Projection Layer (MLP) → 🧠 LLM → 💬 Text\n\nThe vision encoder converts image patches to embeddings.\nThe projection layer maps visual tokens into the LLM\'s embedding space.\nThe LLM processes both visual and text tokens to generate responses.';
+ }else{
+  document.getElementById('vlmResult').textContent=`${correct}/3 correct. Hint: Think about data flow — raw pixels need encoding first, then the representations need to be translated into a space the language model understands.`;
+ }
+}
+function resetVLM(){initVLM()}
+
+// ═══════════════════════════════════════
+// RESIZE + INIT
+// ═══════════════════════════════════════
+function resizeAll(){
+ [PC,CX,DC,CFC].forEach(c=>{
+  const w=c.parentElement.clientWidth;
+  const h=parseInt(c.getAttribute('height'));
+  sizeCanvas(c,w,h);
+ });
+ drawPatchUI();drawContrastive();drawDiffusion();drawCFG();
+}
+window.addEventListener('resize',resizeAll);
+setTimeout(()=>{resizeAll();initVLM();computeCLIP()},50);
+</script>
+</body>
+</html>
