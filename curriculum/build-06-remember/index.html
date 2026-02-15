@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-06: Make It Remember</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#a855f7,#6b8aff,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:620px;margin:0 auto}
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise textarea{width:100%;min-height:200px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.85rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+h3{color:#8aaeff;margin:1.5rem 0 .75rem}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#a855f7;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+@media(max-width:600px){.hero h1{font-size:1.7rem}.phase{padding:1.25rem}.exercise textarea{min-height:140px;font-size:.82rem}}
+
+/* Arrow interactive demo */
+.arrow-demo{background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1.5rem;margin:1.25rem 0;text-align:center}
+.arrow-demo canvas{border:1px solid #2a2a3a;border-radius:8px;cursor:pointer;max-width:100%}
+.arrow-demo .score{font-size:1.4rem;font-weight:700;margin-top:.75rem;font-family:monospace}
+.arrow-demo .score-label{font-size:.85rem;color:#888}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Loading Pyodide…</p></div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 6 of 10</div>
+  <h1>🧠 Make It Remember</h1>
+  <div class="subtitle">Your bot forgets everything between conversations. Let's give it long-term memory — using the same trick that powers search engines.</div>
+</div>
+
+<div class="container">
+
+<div class="progress-text"><span id="progress-count">0</span> / 7 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2>🧱 Hit the Wall</h2>
+
+  <p>Monday: you tell your bot <em>"My favorite food is sushi."</em> It says <em>"Got it!"</em></p>
+  <p style="margin-top:.5rem">Tuesday: you ask <em>"What's my favorite food?"</em> It says <em>"I don't have that information."</em></p>
+
+  <p style="margin-top:1rem"><strong>It forgot.</strong> Every conversation starts from zero. The bot has no memory beyond the current chat session. It's like talking to someone who wakes up with amnesia every morning.</p>
+
+  <p style="margin-top:1rem">We sort of solved this in BUILD-03 with compaction — squeezing old messages into summaries. But that only works <em>within</em> a single conversation. Once the session ends, everything is gone.</p>
+
+  <p style="margin-top:1rem">What if the bot could <em>remember</em> things across conversations? Not by memorizing everything (that's impossible — you'd need to retrain the whole model), but by keeping a searchable notebook of important facts?</p>
+
+  <div class="insight" style="border-color:#5a2a1a;background:rgba(255,80,50,.1)">
+    <strong style="color:#ff6b4a">The idea is simpler than you think:</strong> Instead of making the model memorize your documents (expensive, slow), just… paste the relevant parts into the prompt. Search first, then ask.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- LEARN THE THEORY -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Learn the Theory</h2>
+
+  <h3>Word Addresses: Every Word Has a Location</h3>
+
+  <p>Imagine every word has a <strong>secret address</strong>, like GPS coordinates. Similar words live in the same neighborhood.</p>
+
+  <p style="margin-top:.75rem">"Dog" and "puppy" live on the same block. "Dog" and "refrigerator" live on opposite sides of town. "King" and "queen" live next door to each other.</p>
+
+  <p style="margin-top:.75rem">These addresses are called <strong>embeddings</strong> — they're just lists of numbers. In real models, each word gets a list of 768 or more numbers. But to understand the idea, let's use tiny 3-number addresses:</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-family:monospace;font-size:.92rem">
+    <div style="color:#888;margin-bottom:.5rem">Word addresses (3 numbers each):</div>
+    <div>&nbsp;&nbsp;<span style="color:#ffa502">king</span>&nbsp;&nbsp;&nbsp;= [4, 2, 1]&nbsp;&nbsp;<span style="color:#666">← royalty, male-ish, singular</span></div>
+    <div>&nbsp;&nbsp;<span style="color:#ffa502">queen</span>&nbsp;&nbsp;= [4, 3, 2]&nbsp;&nbsp;<span style="color:#666">← royalty, female-ish, singular</span></div>
+    <div>&nbsp;&nbsp;<span style="color:#ffa502">man</span>&nbsp;&nbsp;&nbsp;&nbsp;= [3, 1, 0]&nbsp;&nbsp;<span style="color:#666">← person, male-ish, common</span></div>
+    <div>&nbsp;&nbsp;<span style="color:#ffa502">woman</span>&nbsp;&nbsp;= [3, 2, 1]&nbsp;&nbsp;<span style="color:#666">← person, female-ish, common</span></div>
+  </div>
+
+  <p>Now here's the famous trick. What happens if we do <strong>king − man + woman</strong>?</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-family:monospace;font-size:.92rem">
+    <div>&nbsp;&nbsp;king − man + woman</div>
+    <div>&nbsp;&nbsp;= [4,2,1] − [3,1,0] + [3,2,1]</div>
+    <div>&nbsp;&nbsp;= [4−3+3, 2−1+2, 1−0+1]</div>
+    <div>&nbsp;&nbsp;= <span style="color:#4ecdc4;font-weight:700">[4, 3, 2]</span></div>
+    <div style="margin-top:.5rem">&nbsp;&nbsp;Nearest word to [4, 3, 2]? → <span style="color:#ffa502;font-weight:700">queen!</span> ✨</div>
+  </div>
+
+  <p>"Take king, subtract the male-ness, add female-ness → you get queen." The math on the <em>addresses</em> captures the meaning. This is what embeddings do — they turn meaning into numbers you can do math with.</p>
+
+  <h3>Measuring Similarity: Which Direction Are You Pointing?</h3>
+
+  <p>If two words have similar addresses, they're related. But how do we <em>measure</em> how similar two addresses are?</p>
+
+  <p style="margin-top:.75rem">Think of each address as an <strong>arrow</strong> pointing from the origin. Two arrows pointing the same direction = similar. Perpendicular = unrelated. Opposite = antonyms.</p>
+
+  <p style="margin-top:.75rem">We measure the angle between the arrows. If they point the same way, the angle is 0° and the similarity score is 1.0. If they're perpendicular, the angle is 90° and the score is 0. This measurement is called <strong>cosine similarity</strong> (because cosine of 0° = 1, cosine of 90° = 0).</p>
+
+  <p style="margin-top:.75rem">Try it yourself — drag the arrows:</p>
+
+  <!-- INTERACTIVE: Cosine similarity with two arrows -->
+  <div class="arrow-demo" id="arrow-demo">
+    <canvas id="arrow-canvas" width="300" height="300"></canvas>
+    <div class="score">Similarity: <span id="sim-score" style="color:#4ecdc4">1.00</span></div>
+    <div class="score-label">Drag the arrow tips to change the angle</div>
+  </div>
+
+  <script>
+  (function(){
+    const canvas=document.getElementById('arrow-canvas');
+    const ctx=canvas.getContext('2d');
+    const scoreEl=document.getElementById('sim-score');
+    const cx=150,cy=150,r=120;
+    let a1=0.3,a2=0.8; // angles in radians
+    let dragging=null;
+
+    function draw(){
+      ctx.clearRect(0,0,300,300);
+      // Background circle
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;ctx.stroke();
+      // Axes
+      ctx.strokeStyle='#1a1a2a';ctx.beginPath();ctx.moveTo(cx-r-10,cy);ctx.lineTo(cx+r+10,cy);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,cy-r-10);ctx.lineTo(cx,cy+r+10);ctx.stroke();
+
+      // Arrow 1 (cyan)
+      const x1=cx+Math.cos(a1)*r,y1=cy-Math.sin(a1)*r;
+      drawArrow(cx,cy,x1,y1,'#4ecdc4','A');
+      // Arrow 2 (orange)
+      const x2=cx+Math.cos(a2)*r,y2=cy-Math.sin(a2)*r;
+      drawArrow(cx,cy,x2,y2,'#ffa502','B');
+
+      // Angle arc
+      ctx.beginPath();
+      const arcR=40;
+      const startAngle=-a1,endAngle=-a2;
+      ctx.arc(cx,cy,arcR,Math.min(startAngle,endAngle),Math.max(startAngle,endAngle));
+      ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=2;ctx.stroke();
+
+      // Similarity
+      const sim=Math.cos(a1-a2);
+      scoreEl.textContent=sim.toFixed(2);
+      scoreEl.style.color=sim>0.7?'#4ecdc4':sim>0.3?'#ffa502':'#ff6b4a';
+      
+      // Angle label
+      const angleDeg=Math.abs((a1-a2)*180/Math.PI).toFixed(0);
+      ctx.fillStyle='#666';ctx.font='12px monospace';
+      ctx.fillText(angleDeg+'°',cx+arcR/2+5,cy-5);
+    }
+
+    function drawArrow(fx,fy,tx,ty,color,label){
+      ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(tx,ty);ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();
+      // Arrowhead
+      const angle=Math.atan2(ty-fy,tx-fx);
+      const hs=12;
+      ctx.beginPath();
+      ctx.moveTo(tx,ty);
+      ctx.lineTo(tx-hs*Math.cos(angle-0.4),ty-hs*Math.sin(angle-0.4));
+      ctx.lineTo(tx-hs*Math.cos(angle+0.4),ty-hs*Math.sin(angle+0.4));
+      ctx.closePath();ctx.fillStyle=color;ctx.fill();
+      // Dot at tip
+      ctx.beginPath();ctx.arc(tx,ty,6,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+      // Label
+      ctx.fillStyle=color;ctx.font='bold 14px sans-serif';
+      ctx.fillText(label,tx+(tx>cx?8:-16),ty+(ty>cy?18:-8));
+    }
+
+    function getAngle(e){
+      const rect=canvas.getBoundingClientRect();
+      const scaleX=300/rect.width;
+      const x=(e.clientX-rect.left)*scaleX-cx;
+      const y=-(((e.clientY||e.touches?.[0]?.clientY)-rect.top)*scaleX-cy);
+      return Math.atan2(y,x);
+    }
+
+    function dist(angle,e){
+      const rect=canvas.getBoundingClientRect();
+      const scaleX=300/rect.width;
+      const tx=cx+Math.cos(angle)*r,ty=cy-Math.sin(angle)*r;
+      const ex=(e.clientX-rect.left)*scaleX,ey=(e.clientY-rect.top)*scaleX;
+      return Math.sqrt((tx-ex)**2+(ty-ey)**2);
+    }
+
+    canvas.addEventListener('mousedown',e=>{
+      if(dist(a1,e)<25)dragging=1;
+      else if(dist(a2,e)<25)dragging=2;
+    });
+    canvas.addEventListener('mousemove',e=>{
+      if(!dragging)return;
+      const a=getAngle(e);
+      if(dragging===1)a1=a; else a2=a;
+      draw();
+    });
+    canvas.addEventListener('mouseup',()=>dragging=null);
+    canvas.addEventListener('mouseleave',()=>dragging=null);
+    // Touch support
+    canvas.addEventListener('touchstart',e=>{
+      e.preventDefault();
+      const t={clientX:e.touches[0].clientX,clientY:e.touches[0].clientY};
+      if(dist(a1,t)<35)dragging=1;
+      else if(dist(a2,t)<35)dragging=2;
+    },{passive:false});
+    canvas.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      if(!dragging)return;
+      const a=getAngle({clientX:e.touches[0].clientX,clientY:e.touches[0].clientY});
+      if(dragging===1)a1=a;else a2=a;
+      draw();
+    },{passive:false});
+    canvas.addEventListener('touchend',()=>dragging=null);
+
+    draw();
+  })();
+  </script>
+
+  <p style="margin-top:.5rem">When the arrows overlap: similarity ≈ 1.0 (same meaning). Perpendicular: ≈ 0 (unrelated). Opposite: ≈ -1.0 (opposite meaning).</p>
+
+  <h3>RAG: Search First, Then Ask</h3>
+
+  <p>Now for the big payoff. You have 500 pages of company documents. You want the bot to answer questions about them. You could:</p>
+
+  <ol style="margin:.5rem 0 0 1.5rem;color:#ccc">
+    <li><strong>Fine-tune</strong> the model on all 500 pages (expensive, slow, gets stale)</li>
+    <li><strong>Paste all 500 pages</strong> into the prompt (doesn't fit — way too many tokens)</li>
+    <li><strong>Search first, then paste the relevant parts</strong> ← this is the answer</li>
+  </ol>
+
+  <p style="margin-top:.75rem">Option 3 is called <strong>RAG: Retrieval-Augmented Generation</strong>. It sounds fancy but the idea is dead simple:</p>
+
+  <div class="insight">
+    <strong>RAG in plain English:</strong>
+    <ol style="margin:.5rem 0 0 1.5rem;color:#ccc">
+      <li>User asks: "What's our vacation policy?"</li>
+      <li>Search your documents for anything about "vacation policy"</li>
+      <li>Find the 3 most relevant paragraphs</li>
+      <li>Paste those paragraphs into the prompt</li>
+      <li>Ask the LLM: "Based on these documents, answer the question"</li>
+    </ol>
+    <p style="margin-top:.5rem">That's it. Instead of making the model memorize everything, just… search for the relevant parts and paste them in. The model reads them and answers.</p>
+  </div>
+
+  <p style="margin-top:1rem">The "search" step is where embeddings come in. You convert each document paragraph into an address (embedding). You convert the user's question into an address. Then you find the paragraphs whose addresses are closest to the question's address. Those are the relevant ones.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- BUILD THE SOLUTION -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2>🔨 Build the Solution</h2>
+  <p>Seven exercises. By the end, you've built a RAG system from scratch.</p>
+
+  <!-- Ex 1: Word addresses (embeddings) -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header">
+      <span class="ex-num">01</span>
+      <span class="ex-title">Word Addresses — Turning Meaning into Numbers</span>
+      <span class="ex-check" id="check-ex1">○</span>
+    </div>
+    <div class="ex-desc">Create simple word embeddings: each word gets a list of numbers. Similar words should have similar numbers.</div>
+    <textarea id="code-ex1">
+# Every word gets a "secret address" — a list of numbers.
+# Similar words live in the same neighborhood.
+#
+# In real models, these are 768+ numbers learned from billions of words.
+# We'll use tiny 3-number addresses to see the idea clearly.
+
+# Think of the 3 numbers as rough dimensions:
+# [royalty/status, femininity, commonness]
+
+word_addresses = {
+    "king":     [4, 1, 1],
+    "queen":    [4, 3, 2],
+    "man":      [2, 1, 0],
+    "woman":    [2, 3, 1],
+    "prince":   [3, 1, 1],
+    "princess": [3, 3, 2],
+    "boy":      [1, 1, 0],
+    "girl":     [1, 3, 1],
+}
+
+# Let's see who lives near who
+import math
+
+def distance(addr1, addr2):
+    """How far apart are two addresses? (Euclidean distance)"""
+    return math.sqrt(sum((a - b) ** 2 for a, b in zip(addr1, addr2)))
+
+def find_neighbors(word, top_n=3):
+    """Find the N closest words to a given word."""
+    addr = word_addresses[word]
+    distances = []
+    for other_word, other_addr in word_addresses.items():
+        if other_word == word:
+            continue
+        d = distance(addr, other_addr)
+        distances.append((d, other_word))
+    distances.sort()
+    return distances[:top_n]
+
+# Who's near who?
+print("=== Word Neighborhoods ===\n")
+for word in word_addresses:
+    neighbors = find_neighbors(word, top_n=2)
+    neighbor_str = ", ".join(f"{w} ({d:.1f})" for d, w in neighbors)
+    print(f"  {word:>10s}  {str(word_addresses[word]):>12s}  → nearest: {neighbor_str}")
+
+print("\n→ 'king' is nearest to 'prince' and 'queen'")
+print("  'boy' is nearest to 'girl' and 'man'")
+print("  Similar words have similar addresses. That's the whole idea!")
+
+# The famous analogy test
+print("\n\n=== The King − Man + Woman Test ===\n")
+king = word_addresses["king"]
+man = word_addresses["man"]
+woman = word_addresses["woman"]
+
+result = [king[i] - man[i] + woman[i] for i in range(3)]
+print(f"  king    = {king}")
+print(f"  man     = {man}")
+print(f"  woman   = {woman}")
+print(f"  king − man + woman = [{king[0]}-{man[0]}+{woman[0]}, {king[1]}-{man[1]}+{woman[1]}, {king[2]}-{man[2]}+{woman[2]}]")
+print(f"                     = {result}")
+
+# Find nearest word to the result
+best_word = None
+best_dist = float('inf')
+for word, addr in word_addresses.items():
+    if word in ["king", "man", "woman"]:
+        continue
+    d = distance(result, addr)
+    if d < best_dist:
+        best_dist = d
+        best_word = word
+
+print(f"\n  Nearest word to {result}? → {best_word}! (distance: {best_dist:.2f})")
+print(f"\n  king − man + woman = queen ✨")
+print(f"  'Take royalty, remove maleness, add femaleness → queen'")
+print(f"  The MATH on the addresses captures the MEANING.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Ex 2: Cosine similarity -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header">
+      <span class="ex-num">02</span>
+      <span class="ex-title">Cosine Similarity — Measuring How Similar Two Things Are</span>
+      <span class="ex-check" id="check-ex2">○</span>
+    </div>
+    <div class="ex-desc">Two arrows pointing the same direction = similar. Perpendicular = unrelated. Build the math and test it on word pairs.</div>
+    <textarea id="code-ex2">
+import math
+
+def cosine_similarity(a, b):
+    """How similar are two addresses?
+    
+    Think of each address as an arrow from the origin.
+    - Same direction → similarity = 1.0 (identical meaning)
+    - Perpendicular  → similarity = 0.0 (unrelated)
+    - Opposite       → similarity = -1.0 (opposite meaning)
+    
+    We measure the angle between the arrows.
+    cos(0°) = 1, cos(90°) = 0, cos(180°) = -1
+    """
+    # Dot product: how much do they point the same way?
+    dot = sum(x * y for x, y in zip(a, b))
+    
+    # Length of each arrow
+    len_a = math.sqrt(sum(x * x for x in a))
+    len_b = math.sqrt(sum(x * x for x in b))
+    
+    if len_a == 0 or len_b == 0:
+        return 0.0
+    
+    return dot / (len_a * len_b)
+
+# Word addresses (from Exercise 1, but with more words)
+words = {
+    "king":     [4, 1, 1],
+    "queen":    [4, 3, 2],
+    "man":      [2, 1, 0],
+    "woman":    [2, 3, 1],
+    "dog":      [0, 0, 3],
+    "puppy":    [0, 0, 4],
+    "cat":      [0, 1, 3],
+    "car":      [1, 0, 5],
+}
+
+# Test interesting pairs
+pairs = [
+    ("king", "queen",  "both royalty → should be high"),
+    ("dog", "puppy",   "very similar → should be high"),
+    ("dog", "cat",     "both animals → medium-high"),
+    ("king", "dog",    "unrelated → should be low"),
+    ("king", "car",    "unrelated → should be low"),
+    ("man", "woman",   "both people → medium"),
+]
+
+print("=== Cosine Similarity Between Word Pairs ===\n")
+print(f"{'Word A':>8s}  {'Word B':>8s}  {'Similarity':>10s}  {'Interpretation'}")
+print("-" * 65)
+
+for w1, w2, note in pairs:
+    sim = cosine_similarity(words[w1], words[w2])
+    bar = "█" * int(max(0, sim) * 20)
+    print(f"{w1:>8s}  {w2:>8s}  {sim:>10.3f}  {bar:>20s}  {note}")
+
+print("\n→ High similarity = similar meaning. Low = unrelated.")
+print("  This is how search works: find documents whose addresses")
+print("  point the same direction as the question's address.")
+
+# Show that cosine similarity is about DIRECTION not LENGTH
+print("\n\n=== Direction vs Length ===\n")
+a = [1, 0]
+b = [100, 0]  # Same direction, very different length
+c = [0, 1]    # Perpendicular
+
+print(f"  [1, 0] vs [100, 0] = {cosine_similarity(a, b):.3f}  ← same direction, different length = SIMILAR")
+print(f"  [1, 0] vs [0, 1]   = {cosine_similarity(a, c):.3f}  ← perpendicular = UNRELATED")
+print(f"\n  Cosine similarity cares about DIRECTION, not length.")
+print(f"  A long essay and a short summary about the same topic")
+print(f"  will have high similarity — they point the same way.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Ex 3: Embed sentences (bag of words) -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Sentence Addresses — From Words to Whole Paragraphs</span>
+      <span class="ex-check" id="check-ex3">○</span>
+    </div>
+    <div class="ex-desc">Words have addresses. But we need addresses for whole sentences and paragraphs. The simplest approach: average the word addresses together.</div>
+    <textarea id="code-ex3">
+import math
+
+# A bigger vocabulary with hand-crafted addresses
+# Real embeddings have 768+ dimensions. We use 5 for clarity.
+# Dimensions loosely represent: [nature, tech, food, emotion, action]
+VOCAB = {
+    "the": [0,0,0,0,0], "a": [0,0,0,0,0], "is": [0,0,0,0,0], "and": [0,0,0,0,0],
+    "dog": [3,0,0,1,1], "cat": [3,0,0,1,0], "pet": [3,0,0,2,0],
+    "computer": [0,4,0,0,1], "code": [0,4,0,0,2], "python": [0,4,0,0,2],
+    "pizza": [0,0,4,1,0], "sushi": [0,0,4,1,0], "restaurant": [0,0,3,1,0],
+    "happy": [0,0,0,4,0], "sad": [0,0,0,-3,0], "love": [1,0,0,4,0],
+    "run": [1,0,0,0,4], "walk": [1,0,0,0,3], "eat": [0,0,2,1,2],
+    "weather": [2,0,0,0,0], "sunny": [2,0,0,2,0], "rain": [2,0,0,-1,0],
+    "vacation": [2,0,1,3,1], "policy": [0,1,0,0,0], "company": [0,2,0,0,1],
+    "how": [0,0,0,0,0], "what": [0,0,0,0,0], "best": [0,0,0,2,0],
+    "i": [0,0,0,0,0], "my": [0,0,0,0,0], "favorite": [0,0,0,3,0],
+    "food": [0,0,4,1,0], "italian": [0,0,3,1,0],
+}
+
+def embed_sentence(text):
+    """Turn a sentence into an address by averaging its word addresses.
+    
+    Real models use transformers for this. We use simple averaging.
+    """
+    words = text.lower().split()
+    dim = 5
+    total = [0.0] * dim
+    count = 0
+    
+    for word in words:
+        # Strip punctuation
+        clean = word.strip(".,!?")
+        if clean in VOCAB:
+            for i in range(dim):
+                total[i] += VOCAB[clean][i]
+            count += 1
+    
+    if count == 0:
+        return [0.0] * dim
+    
+    return [t / count for t in total]
+
+def cosine_sim(a, b):
+    dot = sum(x*y for x,y in zip(a,b))
+    la = math.sqrt(sum(x*x for x in a))
+    lb = math.sqrt(sum(x*x for x in b))
+    if la == 0 or lb == 0: return 0.0
+    return dot / (la * lb)
+
+# Embed some sentences
+sentences = [
+    "I love my dog and cat",
+    "The best pet is a happy dog",
+    "Python code and computer",
+    "I love pizza and sushi",
+    "The weather is sunny",
+    "My favorite food is Italian",
+]
+
+print("=== Sentence Addresses ===\n")
+embeddings = {}
+for s in sentences:
+    emb = embed_sentence(s)
+    embeddings[s] = emb
+    emb_str = "[" + ", ".join(f"{x:.1f}" for x in emb) + "]"
+    print(f"  \"{s}\"")
+    print(f"    → {emb_str}\n")
+
+# Find similar sentences
+query = "What food should I eat?"
+query_emb = embed_sentence(query)
+print(f"Query: \"{query}\"")
+print(f"  Address: [{', '.join(f'{x:.1f}' for x in query_emb)}]\n")
+
+print("Similarity to each sentence:")
+results = []
+for s, emb in embeddings.items():
+    sim = cosine_sim(query_emb, emb)
+    results.append((sim, s))
+results.sort(reverse=True)
+
+for sim, s in results:
+    bar = "█" * int(max(0, sim) * 20)
+    print(f"  {sim:.3f} {bar:>20s}  \"{s}\"")
+
+print(f"\n→ The food-related sentences scored highest!")
+print(f"  This is exactly how RAG finds relevant documents.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Ex 4: Build a vector store -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header">
+      <span class="ex-num">04</span>
+      <span class="ex-title">Build a Vector Store — A Searchable Notebook</span>
+      <span class="ex-check" id="check-ex4">○</span>
+    </div>
+    <div class="ex-desc">Store document chunks with their addresses. When a question comes in, find the chunks with the most similar addresses.</div>
+    <textarea id="code-ex4">
+import math
+
+# Simplified embedding (same as Ex 3)
+VOCAB = {
+    "the": [0,0,0,0,0], "a": [0,0,0,0,0], "is": [0,0,0,0,0], "and": [0,0,0,0,0],
+    "our": [0,0,0,0,0], "we": [0,0,0,0,0], "for": [0,0,0,0,0], "to": [0,0,0,0,0],
+    "of": [0,0,0,0,0], "in": [0,0,0,0,0], "are": [0,0,0,0,0], "all": [0,0,0,0,0],
+    "vacation": [2,0,1,3,1], "policy": [0,1,0,0,0], "days": [0,0,0,0,1],
+    "company": [0,2,0,0,1], "remote": [0,3,0,1,1], "work": [0,2,0,0,3],
+    "office": [0,2,0,0,1], "home": [1,0,0,2,0],
+    "sick": [0,0,0,-2,0], "leave": [0,0,0,0,2], "health": [1,0,0,1,0],
+    "salary": [0,1,0,0,0], "pay": [0,1,0,0,0], "bonus": [0,1,0,2,0],
+    "annual": [0,0,0,0,0], "review": [0,1,0,0,1], "performance": [0,1,0,0,2],
+    "meeting": [0,1,0,0,2], "team": [0,1,0,1,1], "monday": [0,0,0,0,0],
+    "pizza": [0,0,4,1,0], "lunch": [0,0,3,1,0], "friday": [0,0,0,1,0],
+    "employees": [0,2,0,0,1], "get": [0,0,0,0,1], "every": [0,0,0,0,0],
+    "how": [0,0,0,0,0], "many": [0,0,0,0,0], "do": [0,0,0,0,1],
+    "what": [0,0,0,0,0], "when": [0,0,0,0,0], "can": [0,0,0,0,1],
+    "from": [0,0,0,0,0], "per": [0,0,0,0,0], "year": [0,0,0,0,0],
+}
+
+def embed(text):
+    words = text.lower().split()
+    dim = 5; total = [0.0]*dim; count = 0
+    for w in words:
+        clean = w.strip(".,!?")
+        if clean in VOCAB:
+            for i in range(dim): total[i] += VOCAB[clean][i]
+            count += 1
+    if count == 0: return [0.0]*dim
+    return [t/count for t in total]
+
+def cosine_sim(a, b):
+    dot = sum(x*y for x,y in zip(a,b))
+    la = math.sqrt(sum(x*x for x in a)); lb = math.sqrt(sum(x*x for x in b))
+    if la == 0 or lb == 0: return 0.0
+    return dot / (la * lb)
+
+class VectorStore:
+    """A searchable notebook of document chunks.
+    
+    Each chunk gets stored with its address (embedding).
+    To search: embed the query, find chunks with similar addresses.
+    """
+    def __init__(self):
+        self.chunks = []  # list of {"text": ..., "embedding": ..., "source": ...}
+    
+    def add(self, text, source="unknown"):
+        """Add a document chunk to the store."""
+        embedding = embed(text)
+        self.chunks.append({"text": text, "embedding": embedding, "source": source})
+    
+    def search(self, query, top_k=3):
+        """Find the top_k most relevant chunks for a query."""
+        query_emb = embed(query)
+        scored = []
+        for chunk in self.chunks:
+            sim = cosine_sim(query_emb, chunk["embedding"])
+            scored.append((sim, chunk))
+        scored.sort(reverse=True, key=lambda x: x[0])
+        return scored[:top_k]
+
+# Build a knowledge base from "company documents"
+store = VectorStore()
+
+documents = [
+    ("All employees get 20 vacation days per year.", "handbook.pdf"),
+    ("Remote work policy: employees can work from home 3 days per week.", "handbook.pdf"),
+    ("Sick leave: up to 10 days per year for health reasons.", "handbook.pdf"),
+    ("Annual performance review happens every January.", "handbook.pdf"),
+    ("Team meeting every Monday at 10am in the office.", "calendar.md"),
+    ("Friday lunch: company buys pizza for all employees.", "traditions.md"),
+    ("Salary review and bonus decisions are made in December.", "compensation.pdf"),
+]
+
+print("=== Building Vector Store ===\n")
+for text, source in documents:
+    store.add(text, source)
+    print(f"  📄 Added: \"{text[:50]}...\" ({source})")
+
+print(f"\n  Total chunks stored: {len(store.chunks)}")
+
+# Search!
+queries = [
+    "How many vacation days do I get?",
+    "Can I work from home?",
+    "When is the team meeting?",
+    "What about pizza?",
+]
+
+print(f"\n{'='*55}")
+print(f"\n=== Searching the Store ===\n")
+
+for query in queries:
+    print(f"❓ \"{query}\"")
+    results = store.search(query, top_k=2)
+    for sim, chunk in results:
+        print(f"  {sim:.3f}  📄 [{chunk['source']}] {chunk['text'][:60]}...")
+    print()
+
+print("→ It found the right documents every time!")
+print("  Vacation question → vacation policy. Pizza → Friday lunch.")
+print("  This is the 'search' part of RAG.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Ex 5: RAG pipeline -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header">
+      <span class="ex-num">05</span>
+      <span class="ex-title">The RAG Pipeline — Search First, Then Ask</span>
+      <span class="ex-check" id="check-ex5">○</span>
+    </div>
+    <div class="ex-desc">Wire it together: user asks a question → search for relevant docs → paste them into the prompt → LLM answers using real information.</div>
+    <textarea id="code-ex5">
+import math
+
+# (Reusing embed/cosine/VectorStore from Ex 4)
+VOCAB = {
+    "the": [0,0,0,0,0], "a": [0,0,0,0,0], "is": [0,0,0,0,0], "and": [0,0,0,0,0],
+    "our": [0,0,0,0,0], "we": [0,0,0,0,0], "for": [0,0,0,0,0], "to": [0,0,0,0,0],
+    "of": [0,0,0,0,0], "in": [0,0,0,0,0], "are": [0,0,0,0,0], "all": [0,0,0,0,0],
+    "vacation": [2,0,1,3,1], "policy": [0,1,0,0,0], "days": [0,0,0,0,1],
+    "company": [0,2,0,0,1], "remote": [0,3,0,1,1], "work": [0,2,0,0,3],
+    "office": [0,2,0,0,1], "home": [1,0,0,2,0], "employees": [0,2,0,0,1],
+    "sick": [0,0,0,-2,0], "leave": [0,0,0,0,2], "health": [1,0,0,1,0],
+    "salary": [0,1,0,0,0], "bonus": [0,1,0,2,0], "pay": [0,1,0,0,0],
+    "how": [0,0,0,0,0], "many": [0,0,0,0,0], "do": [0,0,0,0,1],
+    "what": [0,0,0,0,0], "when": [0,0,0,0,0], "can": [0,0,0,0,1],
+    "get": [0,0,0,0,1], "per": [0,0,0,0,0], "year": [0,0,0,0,0],
+    "from": [0,0,0,0,0], "i": [0,0,0,0,0], "my": [0,0,0,0,0],
+    "review": [0,1,0,0,1], "performance": [0,1,0,0,2], "annual": [0,0,0,0,0],
+    "meeting": [0,1,0,0,2], "team": [0,1,0,1,1], "monday": [0,0,0,0,0],
+    "pizza": [0,0,4,1,0], "lunch": [0,0,3,1,0], "friday": [0,0,0,1,0],
+    "every": [0,0,0,0,0], "up": [0,0,0,0,0],
+}
+def embed(text):
+    words = text.lower().split(); dim=5; total=[0.0]*dim; count=0
+    for w in words:
+        c = w.strip(".,!?")
+        if c in VOCAB:
+            for i in range(dim): total[i]+=VOCAB[c][i]
+            count+=1
+    return [t/count for t in total] if count else [0.0]*dim
+
+def cosine_sim(a,b):
+    dot=sum(x*y for x,y in zip(a,b))
+    la=math.sqrt(sum(x*x for x in a));lb=math.sqrt(sum(x*x for x in b))
+    return dot/(la*lb) if la and lb else 0.0
+
+class VectorStore:
+    def __init__(self): self.chunks=[]
+    def add(self,text,source=""):
+        self.chunks.append({"text":text,"emb":embed(text),"source":source})
+    def search(self,query,top_k=3):
+        q=embed(query)
+        scored=[(cosine_sim(q,c["emb"]),c) for c in self.chunks]
+        scored.sort(reverse=True,key=lambda x:x[0])
+        return scored[:top_k]
+
+def rag_answer(question, store, top_k=2):
+    """The RAG pipeline:
+    1. Search for relevant documents
+    2. Build a prompt with those documents
+    3. "Ask the LLM" (simulated)
+    
+    This is the ENTIRE trick. Search first, then paste into prompt.
+    """
+    print(f"❓ Question: \"{question}\"")
+    
+    # Step 1: RETRIEVE relevant chunks
+    results = store.search(question, top_k=top_k)
+    print(f"\n📚 Step 1 — Retrieved {len(results)} relevant chunks:")
+    context_chunks = []
+    for sim, chunk in results:
+        print(f"  [{sim:.2f}] {chunk['text']}")
+        context_chunks.append(chunk['text'])
+    
+    # Step 2: BUILD the prompt (paste docs into context)
+    context = "\n".join(f"- {c}" for c in context_chunks)
+    prompt = f"""Based on these company documents:
+{context}
+
+Answer the employee's question: {question}"""
+    
+    print(f"\n📝 Step 2 — Built prompt:")
+    print(f"  ┌{'─'*50}")
+    for line in prompt.split('\n'):
+        print(f"  │ {line}")
+    print(f"  └{'─'*50}")
+    
+    # Step 3: "LLM" generates answer (simulated)
+    # In production, this calls the actual LLM with the prompt
+    if "vacation" in question.lower():
+        answer = "You get 20 vacation days per year, according to the handbook."
+    elif "home" in question.lower() or "remote" in question.lower():
+        answer = "Yes! You can work from home up to 3 days per week."
+    elif "sick" in question.lower():
+        answer = "You get up to 10 sick days per year for health reasons."
+    else:
+        answer = f"Based on the documents, here's what I found: {context_chunks[0]}"
+    
+    print(f"\n💬 Step 3 — Answer: {answer}")
+    return answer
+
+# Build knowledge base
+store = VectorStore()
+docs = [
+    ("All employees get 20 vacation days per year.", "handbook"),
+    ("Remote work policy: employees can work from home 3 days per week.", "handbook"),
+    ("Sick leave: up to 10 days per year for health reasons.", "handbook"),
+    ("Annual performance review happens every January.", "handbook"),
+    ("Team meeting every Monday at 10am in the office.", "calendar"),
+    ("Friday lunch: company buys pizza for all employees.", "traditions"),
+    ("Salary review and bonus decisions are made in December.", "compensation"),
+]
+for text, src in docs:
+    store.add(text, src)
+
+# Ask questions!
+print("=== RAG Pipeline Demo ===\n")
+rag_answer("How many vacation days do I get?", store)
+print("\n" + "═"*55 + "\n")
+rag_answer("Can I work from home?", store)
+
+print("\n" + "═"*55)
+print("\n→ That's RAG! The model didn't memorize the handbook.")
+print("  We searched for relevant parts and pasted them into the prompt.")
+print("  The model read them and answered. Simple, effective, updateable.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Ex 6: Personal memory -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Personal Memory — Remember Across Conversations</span>
+      <span class="ex-check" id="check-ex6">○</span>
+    </div>
+    <div class="ex-desc">Use the same vector store to remember things about the user. When they say "I love sushi," store it. Next conversation, retrieve it.</div>
+    <textarea id="code-ex6">
+import math, json
+
+# Simplified embedding/search (reused)
+VOCAB = {
+    "the": [0,0,0,0,0], "a": [0,0,0,0,0], "is": [0,0,0,0,0], "and": [0,0,0,0,0],
+    "i": [0,0,0,0,0], "my": [0,0,0,0,0], "love": [1,0,0,4,0], "like": [0,0,0,3,0],
+    "favorite": [0,0,0,3,0], "food": [0,0,4,1,0], "sushi": [0,0,4,1,0],
+    "pizza": [0,0,4,1,0], "italian": [0,0,3,1,0], "name": [0,0,0,0,0],
+    "birthday": [0,0,0,3,0], "dog": [3,0,0,1,1], "cat": [3,0,0,1,0],
+    "pet": [3,0,0,2,0], "color": [0,0,0,1,0], "blue": [0,0,0,1,0],
+    "movie": [0,0,0,2,0], "music": [0,0,0,2,0], "book": [0,0,0,1,0],
+    "work": [0,2,0,0,3], "live": [1,0,0,1,0], "city": [1,0,0,0,0],
+    "what": [0,0,0,0,0], "do": [0,0,0,0,1], "about": [0,0,0,0,0],
+    "remember": [0,0,0,0,0], "tell": [0,0,0,0,1], "me": [0,0,0,0,0],
+}
+def embed(text):
+    words=text.lower().split(); dim=5; total=[0.0]*dim; count=0
+    for w in words:
+        c=w.strip(".,!?")
+        if c in VOCAB:
+            for i in range(dim): total[i]+=VOCAB[c][i]
+            count+=1
+    return [t/count for t in total] if count else [0.0]*dim
+def cosine_sim(a,b):
+    dot=sum(x*y for x,y in zip(a,b))
+    la=math.sqrt(sum(x*x for x in a));lb=math.sqrt(sum(x*x for x in b))
+    return dot/(la*lb) if la and lb else 0.0
+
+class PersonalMemory:
+    """Long-term memory for a user.
+    
+    Stores facts as embeddings. Can search by similarity.
+    Persists to disk (simulated here as JSON).
+    """
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.memories = []
+    
+    def remember(self, fact, timestamp="now"):
+        """Store a new fact about the user."""
+        self.memories.append({
+            "fact": fact,
+            "embedding": embed(fact),
+            "timestamp": timestamp
+        })
+    
+    def recall(self, query, top_k=3):
+        """Search memories for relevant facts."""
+        q_emb = embed(query)
+        scored = [(cosine_sim(q_emb, m["embedding"]), m) for m in self.memories]
+        scored.sort(reverse=True, key=lambda x: x[0])
+        return scored[:top_k]
+    
+    def save_to_disk(self):
+        """Simulate saving to disk."""
+        data = [{"fact": m["fact"], "timestamp": m["timestamp"]} for m in self.memories]
+        return json.dumps(data, indent=2)
+    
+    def load_from_disk(self, json_str):
+        """Simulate loading from disk."""
+        data = json.loads(json_str)
+        for item in data:
+            self.remember(item["fact"], item["timestamp"])
+
+# === SESSION 1: User tells us things ===
+print("=== Session 1 (Monday) ===\n")
+memory = PersonalMemory("alice")
+
+facts = [
+    "My favorite food is sushi",
+    "I have a dog named Max",
+    "I love Italian movies",
+    "My birthday is March 15th",
+    "I live in Richmond",
+]
+
+for fact in facts:
+    memory.remember(fact, "Monday")
+    print(f"  💾 Stored: \"{fact}\"")
+
+# Save to "disk"
+saved = memory.save_to_disk()
+print(f"\n  📁 Saved {len(memory.memories)} memories to disk")
+
+# === SESSION 2: Different day, fresh start ===
+print(f"\n{'='*50}")
+print(f"\n=== Session 2 (Wednesday) — fresh start ===\n")
+
+memory2 = PersonalMemory("alice")
+memory2.load_from_disk(saved)  # Load from disk!
+print(f"  📂 Loaded {len(memory2.memories)} memories from disk\n")
+
+# User asks questions — bot searches memory
+questions = [
+    "What's my favorite food?",
+    "Tell me about my pet",
+    "What do I like to watch?",
+]
+
+for q in questions:
+    print(f"  ❓ \"{q}\"")
+    results = memory2.recall(q, top_k=1)
+    if results:
+        sim, mem = results[0]
+        print(f"     🧠 Recalled: \"{mem['fact']}\" (similarity: {sim:.2f})")
+    else:
+        print(f"     🧠 No memories found")
+    print()
+
+print("→ Different session, but the bot remembered everything!")
+print("  Memories were saved to disk and loaded back.")
+print("  The search finds the right memory for each question.")
+print("\n  This is exactly how OpenClaw remembers your preferences")
+print("  across conversations. Store facts → search when relevant → paste into prompt.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+
+  <!-- Ex 7: Full RAG agent -->
+  <div class="exercise" id="ex7">
+    <div class="ex-header">
+      <span class="ex-num">07</span>
+      <span class="ex-title">The Complete RAG Agent — Everything Together</span>
+      <span class="ex-check" id="check-ex7">○</span>
+    </div>
+    <div class="ex-desc">Combine: personal memory + document knowledge + RAG retrieval. The bot remembers you AND knows your company docs.</div>
+    <textarea id="code-ex7">
+import math, json
+
+# Embedding helpers (simplified)
+VOCAB = {
+    "the":[0,0,0,0,0],"a":[0,0,0,0,0],"is":[0,0,0,0,0],"and":[0,0,0,0,0],
+    "i":[0,0,0,0,0],"my":[0,0,0,0,0],"our":[0,0,0,0,0],"we":[0,0,0,0,0],
+    "for":[0,0,0,0,0],"to":[0,0,0,0,0],"of":[0,0,0,0,0],"in":[0,0,0,0,0],
+    "how":[0,0,0,0,0],"what":[0,0,0,0,0],"do":[0,0,0,0,1],"can":[0,0,0,0,1],
+    "get":[0,0,0,0,1],"many":[0,0,0,0,0],"per":[0,0,0,0,0],"year":[0,0,0,0,0],
+    "love":[1,0,0,4,0],"favorite":[0,0,0,3,0],"like":[0,0,0,3,0],
+    "food":[0,0,4,1,0],"sushi":[0,0,4,1,0],"pizza":[0,0,4,1,0],
+    "dog":[3,0,0,1,1],"pet":[3,0,0,2,0],"name":[0,0,0,0,0],
+    "vacation":[2,0,1,3,1],"policy":[0,1,0,0,0],"days":[0,0,0,0,1],
+    "remote":[0,3,0,1,1],"work":[0,2,0,0,3],"home":[1,0,0,2,0],
+    "company":[0,2,0,0,1],"employees":[0,2,0,0,1],"office":[0,2,0,0,1],
+    "sick":[0,0,0,-2,0],"leave":[0,0,0,0,2],"health":[1,0,0,1,0],
+    "meeting":[0,1,0,0,2],"team":[0,1,0,1,1],"monday":[0,0,0,0,0],
+    "lunch":[0,0,3,1,0],"friday":[0,0,0,1,0],"every":[0,0,0,0,0],
+}
+def embed(text):
+    words=text.lower().split();dim=5;total=[0.0]*dim;count=0
+    for w in words:
+        c=w.strip(".,!?")
+        if c in VOCAB:
+            for i in range(dim):total[i]+=VOCAB[c][i]
+            count+=1
+    return [t/count for t in total] if count else [0.0]*dim
+def sim(a,b):
+    dot=sum(x*y for x,y in zip(a,b))
+    la=math.sqrt(sum(x*x for x in a));lb=math.sqrt(sum(x*x for x in b))
+    return dot/(la*lb) if la and lb else 0.0
+
+class RAGAgent:
+    """A complete RAG agent with:
+    - Personal memory (remembers things about the user)
+    - Knowledge base (company documents)
+    - Retrieval pipeline (search → paste → answer)
+    """
+    def __init__(self):
+        self.memories = []    # Personal: user preferences, facts
+        self.knowledge = []   # External: company docs, reference material
+    
+    def store_memory(self, fact):
+        self.memories.append({"text": fact, "emb": embed(fact), "type": "memory"})
+    
+    def add_knowledge(self, text, source):
+        self.knowledge.append({"text": text, "emb": embed(text), "source": source, "type": "knowledge"})
+    
+    def retrieve(self, query, top_k=2):
+        """Search BOTH personal memory and knowledge base."""
+        q = embed(query)
+        all_items = self.memories + self.knowledge
+        scored = [(sim(q, item["emb"]), item) for item in all_items]
+        scored.sort(reverse=True, key=lambda x: x[0])
+        return scored[:top_k]
+    
+    def answer(self, question):
+        """The full RAG pipeline: retrieve → build prompt → answer."""
+        # Step 1: Retrieve relevant context
+        results = self.retrieve(question, top_k=3)
+        
+        # Step 2: Build prompt with context
+        context_lines = []
+        sources = {"memory": [], "knowledge": []}
+        for score, item in results:
+            if score > 0.1:  # Only include if somewhat relevant
+                context_lines.append(item["text"])
+                sources[item["type"]].append(item["text"][:40])
+        
+        # Step 3: Simulate LLM response
+        q = question.lower()
+        if "vacation" in q:
+            resp = "You get 20 vacation days per year."
+        elif "food" in q or "favorite" in q:
+            resp = "Your favorite food is sushi!"
+        elif "pet" in q or "dog" in q:
+            resp = "You have a dog named Max."
+        elif "remote" in q or "home" in q:
+            resp = "You can work from home 3 days per week."
+        elif "sick" in q:
+            resp = "You get up to 10 sick days per year."
+        else:
+            resp = f"Based on what I know: {context_lines[0] if context_lines else 'I don\'t have that info.'}"
+        
+        return resp, results
+
+# Build the agent
+agent = RAGAgent()
+
+# Add personal memories
+print("=== Loading Personal Memories ===")
+for mem in ["My favorite food is sushi", "I have a dog named Max", "I love working from home"]:
+    agent.store_memory(mem)
+    print(f"  🧠 {mem}")
+
+# Add company knowledge
+print("\n=== Loading Company Knowledge ===")
+docs = [
+    ("All employees get 20 vacation days per year.", "handbook"),
+    ("Remote work: 3 days per week from home.", "handbook"),
+    ("Sick leave: up to 10 days per year.", "handbook"),
+    ("Team meeting every Monday at 10am.", "calendar"),
+    ("Friday lunch: company buys pizza.", "traditions"),
+]
+for text, src in docs:
+    agent.add_knowledge(text, src)
+    print(f"  📄 [{src}] {text}")
+
+# Ask questions!
+print(f"\n{'='*55}")
+print("\n=== Asking the RAG Agent ===\n")
+
+questions = [
+    "What's my favorite food?",            # → personal memory
+    "How many vacation days do I get?",     # → company knowledge
+    "Can I work from home?",                # → both!
+    "Tell me about my pet",                 # → personal memory
+]
+
+for q in questions:
+    answer, results = agent.answer(q)
+    print(f"❓ {q}")
+    print(f"💬 {answer}")
+    print(f"   Sources: ", end="")
+    for score, item in results[:2]:
+        icon = "🧠" if item["type"] == "memory" else "📄"
+        print(f"{icon}({score:.2f}) ", end="")
+    print("\n")
+
+print("═"*55)
+print("\n🎉 You built a complete RAG agent!")
+print("  • Personal memory: remembers YOUR preferences")
+print("  • Knowledge base: knows company documents")
+print("  • Retrieval: searches both, pastes relevant parts into prompt")
+print("  • The model reads the pasted context and answers accurately")
+print("\n  No fine-tuning needed. No memorization.")
+print("  Just search → paste → ask. That's RAG.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex7')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex7')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex7"></div>
+  </div>
+</div>
+
+<!-- THE PAYOFF -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p><strong>Your bot now has long-term memory AND can answer questions about documents it's never been trained on.</strong></p>
+  <p style="margin-top:1rem;color:#aaa">
+    <strong>Embeddings</strong> turn meaning into addresses — similar things live nearby.<br>
+    <strong>Cosine similarity</strong> measures how similar two addresses are.<br>
+    <strong>RAG</strong> is just: search for relevant docs → paste into prompt → ask the LLM.
+  </p>
+  <p style="margin-top:1rem;color:#888;font-size:.9rem">This is how ChatGPT's retrieval works. How Claude searches uploaded files. How every enterprise AI bot answers questions about internal documents. And you just built it from scratch.</p>
+  <p style="margin-top:1.5rem;font-size:1rem">Next up: your bot can't see images or hear audio.<br>
+  <strong><a href="../build-07-see/">BUILD-07: Let It See →</a></strong></p>
+</div>
+
+<!-- GO DEEPER -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../module-11-embeddings/">Module 11: Embeddings Deep Dive</a>
+      <span class="label"> — How real embedding models work (word2vec → transformers)</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/2005.11401">📄 Lewis et al. 2020 — "Retrieval-Augmented Generation"</a>
+      <span class="label"> — The original RAG paper</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/1301.3781">📄 Mikolov et al. 2013 — "Word2Vec"</a>
+      <span class="label"> — The paper that started word embeddings</span>
+    </li>
+    <li>
+      <a href="https://projector.tensorflow.org/">🔧 TensorFlow Embedding Projector</a>
+      <span class="label"> — Explore real word embeddings in 3D</span>
+    </li>
+  </ul>
+</div>
+
+<div class="nav-footer">
+  <a href="../build-05-act/">← BUILD-05: Let It Act</a>
+  <a href="../build-07-see/">BUILD-07: Let It See →</a>
+</div>
+
+</div>
+
+<script>
+const defaults={};
+document.querySelectorAll('textarea').forEach(ta=>{defaults[ta.id]=ta.value});
+const STORAGE_KEY='build-06-remember-progress';
+let completed=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+
+function updateProgress(){
+  const total=7,done=Object.keys(completed).length;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  for(let i=1;i<=total;i++){
+    const el=document.getElementById('check-ex'+i);
+    if(completed['ex'+i]){el.textContent='✓';el.classList.add('done')}
+    else{el.textContent='○';el.classList.remove('done')}
+  }
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(completed));
+}
+function markComplete(id){completed[id]=true;updateProgress()}
+function toggleHint(id){document.getElementById('hint-'+id)?.classList.toggle('visible')}
+function resetExercise(id){document.getElementById('code-'+id).value=defaults['code-'+id];document.getElementById('output-'+id).classList.remove('visible')}
+
+let pyodide=null;
+async function initPyodide(){
+  try{pyodide=await loadPyodide();document.getElementById('loading').classList.add('hidden')}
+  catch(e){document.getElementById('loading').innerHTML='<p style="color:#ff6b4a">Failed to load Pyodide.</p>'}
+}
+async function runExercise(id){
+  if(!pyodide){alert('Pyodide still loading…');return}
+  const code=document.getElementById('code-'+id).value;
+  const output=document.getElementById('output-'+id);
+  output.classList.add('visible');output.textContent='Running…';
+  try{
+    pyodide.runPython(`import io,sys;_stdout=io.StringIO();sys.stdout=_stdout`);
+    pyodide.runPython(code);
+    const result=pyodide.runPython('_stdout.getvalue()');
+    output.textContent=result||'(no output)';output.style.color='#e0e0e0';
+    if(result&&result.trim().length>0)markComplete(id);
+  }catch(e){output.textContent='❌ Error:\n'+e.message;output.style.color='#ff6b4a'}
+}
+
+const s=document.createElement('script');
+s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+s.onload=initPyodide;document.head.appendChild(s);
+updateProgress();
+</script>
+</body>
+</html>

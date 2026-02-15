@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-03: Give It a Window</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#ffa502,#ff6b4a,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:620px;margin:0 auto}
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise textarea{width:100%;min-height:200px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.85rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+.equation{text-align:center;padding:1rem;margin:1rem 0;background:rgba(0,0,0,.2);border-radius:8px;font-family:'Georgia',serif;font-size:1.1rem;color:#c0c0e0;letter-spacing:.03em}
+.equation .small{font-size:.85rem;color:#888;margin-top:.25rem}
+.paper-quote{border-left:3px solid #3a3a6a;padding:.75rem 1rem;margin:1rem 0;font-style:italic;color:#aaa;background:rgba(50,50,120,.1);border-radius:0 6px 6px 0}
+.paper-quote cite{display:block;font-style:normal;font-size:.82rem;color:#666;margin-top:.25rem}
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+h3{color:#8aaeff;margin:1.5rem 0 .75rem}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#ffa502;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+@media(max-width:600px){.hero h1{font-size:1.7rem}.phase{padding:1.25rem}.exercise textarea{min-height:140px;font-size:.82rem}}
+
+/* Interactive slider demo */
+.demo-box{background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1.5rem;margin:1.5rem 0}
+.demo-box h4{color:#ffa502;margin-bottom:1rem}
+.slider-row{display:flex;align-items:center;gap:1rem;margin:.75rem 0;flex-wrap:wrap}
+.slider-row input[type=range]{flex:1;min-width:200px;accent-color:#ffa502}
+.slider-row .val{font-family:monospace;color:#ffa502;min-width:80px;font-size:1rem}
+.bar-chart{display:flex;align-items:flex-end;gap:2px;height:180px;margin-top:1rem;padding:0 .5rem}
+.bar{background:linear-gradient(to top,#ff6b4a,#ffa502);min-width:30px;flex:1;border-radius:3px 3px 0 0;transition:height .3s;position:relative}
+.bar .bar-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:.65rem;color:#888;white-space:nowrap}
+.bar .bar-value{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ffa502;white-space:nowrap}
+.bar-axis{border-top:1px solid #333;margin-top:0;padding-top:24px;font-size:.75rem;color:#666;text-align:center}
+.gpu-meter{margin-top:1rem;background:#1a1a2a;border-radius:8px;padding:.75rem 1rem}
+.gpu-meter .meter-fill{height:20px;border-radius:4px;transition:width .3s,background .3s;background:#4ecdc4}
+.gpu-meter .meter-label{font-size:.8rem;color:#999;margin-top:.25rem}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Loading Pyodide…</p></div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 3 of 10</div>
+  <h1>📐 Give It a Window</h1>
+  <div class="subtitle">Your attention bot works on short text. Feed it a long conversation and it chokes. Let's fix that — the same way Claude and OpenClaw do.</div>
+</div>
+
+<div class="container">
+
+<div class="progress-text"><span id="progress-count">0</span> / 7 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2>🧱 Hit the Wall</h2>
+
+  <p>Remember attention from BUILD-02? Every token looks at every other token to decide what's important. That's powerful — but let's count what happens as conversations get longer.</p>
+
+  <p style="margin-top:1rem">If your text is <strong>10 words</strong>, attention makes <strong>100 comparisons</strong> (every word checks every word, including itself: 10 × 10).</p>
+
+  <p style="margin-top:.5rem">Okay, 100 — no big deal. But watch:</p>
+
+  <div class="insight" style="border-color:#5a2a1a;background:rgba(255,80,50,.1)">
+    <strong style="color:#ff6b4a">The explosion:</strong><br>
+    10 tokens → 100 comparisons ✅ easy<br>
+    100 tokens → 10,000 comparisons 🤔 okay...<br>
+    1,000 tokens → 1,000,000 comparisons 😬 a million<br>
+    10,000 tokens → 100,000,000 comparisons 😰 a hundred million<br>
+    100,000 tokens → 10,000,000,000 comparisons 💀 ten billion
+  </div>
+
+  <p style="margin-top:1rem">See the pattern? <strong>It grows like a square.</strong> Double the text → 4× the work. Triple the text → 9× the work. This is why early GPT models could only handle about 2,000–4,000 tokens — roughly a few pages of text.</p>
+
+  <p style="margin-top:1rem">Drag the slider below. Feel the explosion for yourself:</p>
+
+  <!-- INTERACTIVE DEMO: Feel the n² explosion -->
+  <div class="demo-box" id="explosion-demo">
+    <h4>🎛️ Feel the Explosion: Token Count vs Comparisons</h4>
+    <div class="slider-row">
+      <span style="color:#888;font-size:.85rem">Tokens:</span>
+      <input type="range" id="token-slider" min="10" max="10000" value="10" step="10">
+      <span class="val" id="token-val">10</span>
+    </div>
+    <div style="display:flex;gap:1.5rem;margin-top:.75rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="color:#888;font-size:.85rem;margin-bottom:.25rem">Comparisons needed:</div>
+        <div id="comparison-val" style="font-size:1.8rem;font-weight:700;color:#ffa502;font-family:monospace">100</div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="color:#888;font-size:.85rem;margin-bottom:.25rem">GPU Memory (just for attention):</div>
+        <div id="memory-val" style="font-size:1.8rem;font-weight:700;color:#ff6b4a;font-family:monospace">0.0 KB</div>
+      </div>
+    </div>
+    <div class="gpu-meter">
+      <div class="meter-fill" id="gpu-fill" style="width:0%"></div>
+      <div class="meter-label"><span id="gpu-label">0%</span> of an A100 GPU's 80 GB memory</div>
+    </div>
+    <div style="margin-top:.75rem;font-size:.82rem;color:#666" id="explosion-note"></div>
+  </div>
+
+  <script>
+  (function(){
+    const slider=document.getElementById('token-slider');
+    const tokenVal=document.getElementById('token-val');
+    const compVal=document.getElementById('comparison-val');
+    const memVal=document.getElementById('memory-val');
+    const gpuFill=document.getElementById('gpu-fill');
+    const gpuLabel=document.getElementById('gpu-label');
+    const note=document.getElementById('explosion-note');
+
+    function fmt(n){
+      if(n>=1e12)return (n/1e12).toFixed(1)+'T';
+      if(n>=1e9)return (n/1e9).toFixed(1)+'B';
+      if(n>=1e6)return (n/1e6).toFixed(1)+'M';
+      if(n>=1e3)return (n/1e3).toFixed(1)+'K';
+      return n.toString();
+    }
+    function fmtBytes(b){
+      if(b>=1e9)return (b/1e9).toFixed(1)+' GB';
+      if(b>=1e6)return (b/1e6).toFixed(1)+' MB';
+      if(b>=1e3)return (b/1e3).toFixed(1)+' KB';
+      return b+' B';
+    }
+
+    function update(){
+      const n=parseInt(slider.value);
+      const comparisons=n*n*12; // 12 heads
+      const bytes=comparisons*4; // float32
+      const gpuPct=bytes/(80*1e9)*100;
+      tokenVal.textContent=n.toLocaleString();
+      compVal.textContent=fmt(comparisons);
+      memVal.textContent=fmtBytes(bytes);
+      const cappedPct=Math.min(gpuPct,100);
+      gpuFill.style.width=cappedPct+'%';
+      gpuFill.style.background=gpuPct>100?'#ff4444':gpuPct>50?'#ffa502':'#4ecdc4';
+      gpuLabel.textContent=gpuPct>100?'>100%':gpuPct.toFixed(gpuPct<1?2:1)+'%';
+      if(gpuPct>100)note.innerHTML='💀 <strong style="color:#ff4444">This doesn\'t fit on a single GPU.</strong> It would need '+Math.ceil(gpuPct/100)+' GPUs just for attention matrices.';
+      else if(gpuPct>50)note.innerHTML='⚠️ Over half the GPU is used just storing attention scores — no room left for actual computation.';
+      else if(n>1000)note.innerHTML='Notice how fast this grows. At 1,000 tokens it was manageable. Now it\'s eating real resources.';
+      else note.innerHTML='Comfortable for now. Try sliding to 5,000 or 10,000 to see the explosion.';
+    }
+    slider.addEventListener('input',update);
+    update();
+  })();
+  </script>
+
+  <p style="margin-top:1.5rem">So we have two problems to solve:</p>
+  <ol style="margin:1rem 0 0 1.5rem;color:#ccc">
+    <li><strong>Make attention faster</strong> — process the grid in small chunks instead of all at once</li>
+    <li><strong>Handle conversations that exceed the window</strong> — when 3 hours of chat won't fit, summarize the old stuff</li>
+  </ol>
+</div>
+
+<!-- ============================================ -->
+<!-- LEARN THE THEORY -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Learn the Theory</h2>
+
+  <h3>The Fast-Memory Trick (FlashAttention)</h3>
+
+  <p>Here's an analogy. Imagine you're doing a jigsaw puzzle on a tiny desk. The puzzle has a million pieces, but your desk only fits 100 at a time. You could spread all million pieces on the floor and crawl around — that works but it's <em>slow</em> because reaching pieces on the floor takes ages.</p>
+
+  <p style="margin-top:.75rem">Or you could be <strong>clever</strong>: bring 100 pieces to your desk, assemble what you can, put those aside, bring the next 100. You never need the whole puzzle on your desk at once.</p>
+
+  <p style="margin-top:.75rem">GPUs have exactly this problem:</p>
+
+  <ul style="margin:.5rem 0 0 1.5rem;color:#ccc">
+    <li><strong>The desk (SRAM):</strong> ~20 MB of blazing-fast memory, right next to the processor</li>
+    <li><strong>The floor (HBM):</strong> 40–80 GB of slower memory — 10 to 100× slower to access</li>
+  </ul>
+
+  <p style="margin-top:.75rem">Standard attention builds the <em>entire</em> comparison grid in the slow memory. A 10,000-token grid means 100 million cells sitting on the "floor" while the GPU crawls back and forth reading them.</p>
+
+  <div class="insight">
+    <strong>FlashAttention's idea:</strong> What if instead of building the whole million-cell grid, you built it in small 100×100 chunks? Each chunk fits on the "desk" (fast memory). You get the exact same answer, but you never build the full grid. Same math, different memory access pattern.
+  </div>
+
+  <h3>But Wait — Softmax Needs Everything… Right?</h3>
+
+  <p>Here's the catch. Remember softmax from BUILD-02? To turn scores into probabilities, you need to:</p>
+  <ol style="margin:.5rem 0 0 1.5rem;color:#ccc">
+    <li>Find the <strong>biggest score</strong> in the whole row (to prevent number overflow)</li>
+    <li>Compute <strong>e<sup>score</sup></strong> for every score</li>
+    <li>Add them all up to get the <strong>total</strong></li>
+    <li>Divide each one by the total</li>
+  </ol>
+
+  <p style="margin-top:.75rem">Steps 1 and 3 seem to need <em>all</em> the scores at once. If we're only looking at one chunk of 100, how do we know that chunk contains the biggest score? How do we know the total?</p>
+
+  <p style="margin-top:.75rem"><strong>The trick: keep a running total.</strong> Process chunk 1 — your best guess at the "biggest score" is whatever was biggest in chunk 1, and your running total is based on just those 100 numbers. Then process chunk 2 — if chunk 2 has a bigger score, update your best guess, and adjust the running total to account for the correction.</p>
+
+  <p style="margin-top:.75rem">Let's see it with actual numbers. Say we have 6 scores split into two chunks:</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-family:monospace;font-size:.88rem;color:#ccc">
+    <div>Scores: [2, 5, 1, &nbsp;|&nbsp; 3, 7, 4]</div>
+    <div style="margin-top:.5rem;color:#8aaeff">Chunk 1: [2, 5, 1]</div>
+    <div style="padding-left:1rem">max so far = 5</div>
+    <div style="padding-left:1rem">running sum = e<sup>(2-5)</sup> + e<sup>(5-5)</sup> + e<sup>(1-5)</sup> = 0.050 + 1.0 + 0.018 = <span style="color:#ffa502">1.068</span></div>
+    <div style="margin-top:.5rem;color:#8aaeff">Chunk 2: [3, 7, 4]</div>
+    <div style="padding-left:1rem">new max = max(5, 7) = <strong style="color:#ff6b4a">7</strong> ← bigger! need to correct</div>
+    <div style="padding-left:1rem">correction: old sum × e<sup>(5-7)</sup> = 1.068 × 0.135 = 0.144</div>
+    <div style="padding-left:1rem">new chunk sum = e<sup>(3-7)</sup> + e<sup>(7-7)</sup> + e<sup>(4-7)</sup> = 0.018 + 1.0 + 0.050 = 1.068</div>
+    <div style="padding-left:1rem">total running sum = 0.144 + 1.068 = <span style="color:#ffa502">1.212</span></div>
+    <div style="margin-top:.5rem;color:#4ecdc4">Final: divide each e<sup>(score-7)</sup> by 1.212</div>
+    <div style="padding-left:1rem">Same result as if we'd seen all 6 scores at once. ✅</div>
+  </div>
+
+  <p>That's it. That's the "online softmax" trick that makes FlashAttention possible. No magic — just <em>"keep a running total, correct it when you find a bigger number."</em></p>
+
+  <div class="paper-quote">
+    "We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM."
+    <cite>— Dao et al. 2022, "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"</cite>
+  </div>
+
+  <h3>When the Conversation Gets Too Long: Compaction</h3>
+
+  <p>Even with FlashAttention making attention faster, there's still a <em>limit</em> to how many tokens the model can see at once. Claude can handle ~200,000 tokens — that's a whole novel. But imagine your bot has been chatting for 3 hours. It's seen 50,000 tokens but can only hold 8,000 in its window.</p>
+
+  <p style="margin-top:.75rem"><strong>What do we do?</strong></p>
+
+  <p style="margin-top:.75rem">The answer is surprisingly simple: <strong>summarize the old stuff, keep the recent stuff.</strong></p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-size:.9rem">
+    <div style="color:#ff6b4a;font-weight:600;margin-bottom:.5rem">BEFORE compaction (12,000 tokens — overflowing!):</div>
+    <div style="color:#888;padding-left:1rem;border-left:2px solid #333;margin:.25rem 0">System prompt (500 tokens)</div>
+    <div style="color:#888;padding-left:1rem;border-left:2px solid #ff6b4a;margin:.25rem 0">Messages 1–47: hours of conversation about travel, restaurants, booking... (9,500 tokens)</div>
+    <div style="color:#ccc;padding-left:1rem;border-left:2px solid #4ecdc4;margin:.25rem 0">Messages 48–52: current topic about Italian restaurants (2,000 tokens)</div>
+
+    <div style="color:#4ecdc4;font-weight:600;margin:1rem 0 .5rem">AFTER compaction (3,500 tokens — fits!):</div>
+    <div style="color:#888;padding-left:1rem;border-left:2px solid #333;margin:.25rem 0">System prompt (500 tokens)</div>
+    <div style="color:#ffa502;padding-left:1rem;border-left:2px solid #ffa502;margin:.25rem 0">Summary: "User previously discussed travel to NYC, asked about flights and hotels, prefers upscale venues..." (1,000 tokens)</div>
+    <div style="color:#ccc;padding-left:1rem;border-left:2px solid #4ecdc4;margin:.25rem 0">Messages 48–52: current topic about Italian restaurants (2,000 tokens) — untouched</div>
+  </div>
+
+  <p>The recent conversation stays word-for-word intact. The old stuff gets squeezed into a summary. And any really important facts (like the user's name, preferences, or pending tasks) get extracted into a separate "memory" that persists forever.</p>
+
+  <p style="margin-top:.75rem">This is exactly how OpenClaw manages long-running conversations. And you're about to build it.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- BUILD THE SOLUTION -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2>🔨 Build the Solution</h2>
+  <p>Seven exercises. By the end, you've built FlashAttention's core and a compaction system.</p>
+
+  <!-- Ex 1: See n² with your own numbers -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header">
+      <span class="ex-num">01</span>
+      <span class="ex-title">Count the Comparisons</span>
+      <span class="ex-check" id="check-ex1">○</span>
+    </div>
+    <div class="ex-desc">Let's actually count: for each sequence length, how many comparisons does attention need? Print a table and see the pattern.</div>
+    <textarea id="code-ex1">
+# Attention compares every token to every other token.
+# For n tokens, that's n × n comparisons per attention head.
+# A typical model has 12 heads, so it's n × n × 12.
+
+def count_comparisons(n, n_heads=12):
+    """How many comparisons does attention need for n tokens?"""
+    per_head = n * n          # every token looks at every token
+    total = per_head * n_heads # across all heads
+    return total
+
+# Let's build a table.
+# Try changing the token counts to see the pattern!
+token_counts = [10, 50, 100, 500, 1000, 5000, 10000]
+
+print(f"{'Tokens':>8s}  {'Comparisons':>16s}  {'vs Previous':>12s}")
+print("-" * 42)
+
+prev = None
+for n in token_counts:
+    c = count_comparisons(n)
+    
+    # Format large numbers readably
+    if c >= 1e9:
+        c_str = f"{c/1e9:.1f} billion"
+    elif c >= 1e6:
+        c_str = f"{c/1e6:.1f} million"
+    elif c >= 1e3:
+        c_str = f"{c/1e3:.0f} thousand"
+    else:
+        c_str = str(c)
+    
+    ratio = f"{c/prev:.0f}×" if prev else "—"
+    prev = c
+    print(f"{n:>8,d}  {c_str:>16s}  {ratio:>12s}")
+
+print()
+print("Notice: when tokens go from 1,000 to 10,000 (10× more),")
+print("comparisons go from 12M to 1.2B (100× more).")
+print("It grows like a SQUARE. That's the bottleneck.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Ex 2: Naive attention - watch it get slow -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header">
+      <span class="ex-num">02</span>
+      <span class="ex-title">Build Naive Attention — Watch It Get Slow</span>
+      <span class="ex-check" id="check-ex2">○</span>
+    </div>
+    <div class="ex-desc">Standard attention: build the full comparison grid, apply softmax, combine with values. Time it at different sizes to feel the slowdown.</div>
+    <textarea id="code-ex2">
+import math, random, time
+random.seed(42)
+
+def random_matrix(n, d):
+    return [[random.gauss(0, 0.5) for _ in range(d)] for _ in range(n)]
+
+def naive_attention(Q, K, V):
+    """Standard attention: builds the FULL n×n grid.
+    
+    You wrote this in BUILD-02. Now we're measuring how it scales.
+    """
+    n = len(Q)
+    d_k = len(Q[0])
+    scale = math.sqrt(d_k)
+    
+    # Step 1: Every token scores against every other token → n×n grid
+    scores = []
+    for i in range(n):
+        row = []
+        for j in range(n):
+            s = sum(Q[i][k] * K[j][k] for k in range(d_k)) / scale
+            row.append(s)
+        scores.append(row)
+    
+    # Step 2: Softmax each row (turn scores into probabilities)
+    for i in range(n):
+        mx = max(scores[i])
+        exps = [math.exp(s - mx) for s in scores[i]]
+        total = sum(exps)
+        scores[i] = [e / total for e in exps]
+    
+    # Step 3: Weighted combination of values
+    d_v = len(V[0])
+    output = []
+    for i in range(n):
+        row = [sum(scores[i][j] * V[j][d] for j in range(n)) for d in range(d_v)]
+        output.append(row)
+    return output
+
+# Benchmark: double the size each time, watch the time ~4× each step
+d = 8  # small dimension so Python can handle it
+print(f"{'Tokens':>8s}  {'Time':>10s}  {'vs Previous':>12s}  {'Expected':>10s}")
+print("-" * 46)
+prev_time = None
+
+for n in [32, 64, 128, 256, 512]:
+    Q = random_matrix(n, d)
+    K = random_matrix(n, d)
+    V = random_matrix(n, d)
+    
+    start = time.time()
+    naive_attention(Q, K, V)
+    elapsed = (time.time() - start) * 1000
+    
+    ratio = f"{elapsed/prev_time:.1f}×" if prev_time else "—"
+    expected = "~4×" if prev_time else "—"
+    prev_time = elapsed
+    print(f"{n:>8d}  {elapsed:>8.1f}ms  {ratio:>12s}  {expected:>10s}")
+
+print()
+print("Each doubling ≈ 4× slower. That's the 'grows like a square' pattern.")
+print("This is why we need a smarter approach.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Ex 3: Tiled attention (FlashAttention core) -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Tiled Attention — Process the Grid in Chunks</span>
+      <span class="ex-check" id="check-ex3">○</span>
+    </div>
+    <div class="ex-desc">Instead of building the full n×n grid, process it in small tiles. Never hold the whole grid in memory. This is the heart of FlashAttention.</div>
+    <textarea id="code-ex3">
+import math, random, time
+random.seed(42)
+
+def random_matrix(n, d):
+    return [[random.gauss(0, 0.5) for _ in range(d)] for _ in range(n)]
+
+def tiled_attention(Q, K, V, tile_size=32):
+    """FlashAttention-style: process in small tiles.
+    
+    Instead of building the full 256×256 grid (65,536 cells),
+    we process it in 32×32 tiles (1,024 cells each).
+    
+    Each tile fits in "fast memory" (the desk).
+    We never build the full grid (the floor).
+    """
+    n = len(Q)
+    d_k = len(Q[0])
+    d_v = len(V[0])
+    scale = math.sqrt(d_k)
+    
+    # Running totals for each query position
+    output = [[0.0] * d_v for _ in range(n)]
+    row_max = [-float('inf')] * n  # best score seen so far
+    row_sum = [0.0] * n            # running softmax denominator
+    
+    # Process K/V in tiles (chunks)
+    for kv_start in range(0, n, tile_size):
+        kv_end = min(kv_start + tile_size, n)
+        
+        for i in range(n):
+            # Score Q[i] against just this chunk of K
+            tile_scores = []
+            for j in range(kv_start, kv_end):
+                s = sum(Q[i][k] * K[j][k] for k in range(d_k)) / scale
+                tile_scores.append(s)
+            
+            # Online softmax: update running max and sum
+            tile_max = max(tile_scores)
+            new_max = max(row_max[i], tile_max)
+            
+            # Correct previous results for the new max
+            if row_sum[i] > 0:
+                correction = math.exp(row_max[i] - new_max)
+                row_sum[i] *= correction
+                for d in range(d_v):
+                    output[i][d] *= correction
+            
+            # Add this tile's contribution
+            tile_exps = [math.exp(s - new_max) for s in tile_scores]
+            tile_sum = sum(tile_exps)
+            
+            for idx, j in enumerate(range(kv_start, kv_end)):
+                w = tile_exps[idx]
+                for d in range(d_v):
+                    output[i][d] += w * V[j][d]
+            
+            row_max[i] = new_max
+            row_sum[i] += tile_sum
+    
+    # Final: divide by total sum
+    for i in range(n):
+        for d in range(d_v):
+            output[i][d] /= row_sum[i]
+    return output
+
+# Quick naive for comparison
+def naive_attention(Q, K, V):
+    n, d_k, d_v = len(Q), len(Q[0]), len(V[0])
+    scale = math.sqrt(d_k)
+    scores = [[sum(Q[i][k]*K[j][k] for k in range(d_k))/scale for j in range(n)] for i in range(n)]
+    for i in range(n):
+        mx = max(scores[i]); exps = [math.exp(s-mx) for s in scores[i]]; t = sum(exps)
+        scores[i] = [e/t for e in exps]
+    return [[sum(scores[i][j]*V[j][d] for j in range(n)) for d in range(d_v)] for i in range(n)]
+
+# Test: do they give the SAME answer?
+n, d = 64, 8
+Q = random_matrix(n, d)
+K = random_matrix(n, d)
+V = random_matrix(n, d)
+
+naive_out = naive_attention(Q, K, V)
+tiled_out = tiled_attention(Q, K, V, tile_size=16)
+
+max_diff = 0
+for i in range(n):
+    for j in range(d):
+        max_diff = max(max_diff, abs(naive_out[i][j] - tiled_out[i][j]))
+
+print(f"Full grid: {n}×{n} = {n*n:,} cells built at once")
+print(f"Tiled:     {n*n // (16*16)} tiles of 16×16 = 256 cells each")
+print(f"Max difference: {max_diff:.2e}")
+print(f"Match: {'✅ Exact same result!' if max_diff < 1e-6 else '❌ Something is off'}")
+print()
+print("Same answer. But the tiled version never held more than")
+print("256 cells in memory at once, while naive held all 4,096.")
+print()
+print("On a GPU, this means the tile fits in fast SRAM (the 'desk')")
+print("while the full grid would spill into slow HBM (the 'floor').")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex3')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex3">The key insight: we process K/V in chunks and maintain running statistics (row_max, row_sum) for the online softmax. Each chunk only needs tile_size cells in memory.</div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Ex 4: Online softmax step by step -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header">
+      <span class="ex-num">04</span>
+      <span class="ex-title">Online Softmax — Running Totals with Real Numbers</span>
+      <span class="ex-check" id="check-ex4">○</span>
+    </div>
+    <div class="ex-desc">See the correction trick step by step. Process scores in chunks, keep a running max and sum, verify we get the same answer as normal softmax.</div>
+    <textarea id="code-ex4">
+import math, random
+random.seed(42)
+
+def standard_softmax(scores):
+    """Normal softmax — needs ALL scores at once."""
+    mx = max(scores)
+    exps = [math.exp(s - mx) for s in scores]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+def online_softmax_verbose(score_chunks):
+    """Online softmax with step-by-step logging.
+    
+    The idea: process one chunk at a time.
+    Keep a running max (m) and running sum (l).
+    When a new chunk has a bigger max, CORRECT the old sum.
+    """
+    m = -float('inf')  # best score seen so far
+    l = 0.0            # running sum of exponentials
+    all_scores = []
+    
+    for chunk_num, chunk in enumerate(score_chunks):
+        old_m = m
+        chunk_max = max(chunk)
+        m = max(m, chunk_max)  # update running max
+        
+        # Correct old sum for new max
+        if old_m != -float('inf'):
+            correction = math.exp(old_m - m)
+            l = l * correction
+            print(f"  Chunk {chunk_num+1}: scores={[f'{s:.1f}' for s in chunk]}")
+            print(f"    chunk max={chunk_max:.1f}, overall max updated: {old_m:.1f} → {m:.1f}")
+            print(f"    correction factor: e^({old_m:.1f} - {m:.1f}) = {correction:.4f}")
+            print(f"    old sum corrected: {l:.4f}")
+        else:
+            print(f"  Chunk {chunk_num+1}: scores={[f'{s:.1f}' for s in chunk]}")
+            print(f"    first chunk! max = {m:.1f}")
+        
+        # Add new chunk's contribution
+        chunk_exps = [math.exp(s - m) for s in chunk]
+        chunk_sum = sum(chunk_exps)
+        l += chunk_sum
+        all_scores.extend(chunk)
+        
+        print(f"    chunk exp sum: {chunk_sum:.4f}")
+        print(f"    running total: {l:.4f}")
+        print()
+    
+    # Final: compute probabilities
+    result = [math.exp(s - m) / l for s in all_scores]
+    return result
+
+# Six scores, split into 3 chunks of 2
+scores = [2.0, 5.0, 1.0, 3.0, 7.0, 4.0]
+chunks = [scores[0:2], scores[2:4], scores[4:6]]
+
+print("=== Standard Softmax (sees everything at once) ===")
+standard = standard_softmax(scores)
+for i, (s, p) in enumerate(zip(scores, standard)):
+    print(f"  score={s:.1f}  →  probability={p:.4f}")
+
+print(f"\n=== Online Softmax (processes chunks of 2) ===\n")
+online = online_softmax_verbose(chunks)
+
+print("=== Comparison ===")
+print(f"{'Score':>6s}  {'Standard':>10s}  {'Online':>10s}  {'Match':>6s}")
+for i in range(len(scores)):
+    match = "✅" if abs(standard[i] - online[i]) < 1e-10 else "❌"
+    print(f"{scores[i]:>6.1f}  {standard[i]:>10.6f}  {online[i]:>10.6f}  {match:>6s}")
+
+print(f"\n→ Identical! The online version never saw all 6 scores at once.")
+print(f"  It processed them in pairs and corrected as it went.")
+print(f"  This is what makes tiled attention (FlashAttention) possible.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex4')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex4">The key formula: when you find a new max, multiply your old running sum by e^(old_max − new_max) to correct it. This "rescaling" is what lets softmax work incrementally.</div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Ex 5: Context budget tracker -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header">
+      <span class="ex-num">05</span>
+      <span class="ex-title">Build a Context Budget Tracker</span>
+      <span class="ex-check" id="check-ex5">○</span>
+    </div>
+    <div class="ex-desc">System prompt + conversation history + current message must fit in the window. Watch it fill up as the conversation grows.</div>
+    <textarea id="code-ex5">
+def count_tokens(text):
+    """Simple approximation: ~4 characters per token (GPT-style)."""
+    return max(1, len(text) // 4)
+
+class ContextBudget:
+    def __init__(self, max_tokens=200):
+        self.max_tokens = max_tokens
+        self.system_prompt = ""
+        self.messages = []
+    
+    def set_system_prompt(self, text):
+        self.system_prompt = text
+    
+    def add_message(self, role, content):
+        self.messages.append({"role": role, "content": content})
+    
+    def tokens_used(self):
+        system = count_tokens(self.system_prompt)
+        msgs = sum(count_tokens(m["content"]) + 4 for m in self.messages)
+        return system + msgs
+    
+    def is_overflowing(self):
+        return self.tokens_used() > self.max_tokens
+    
+    def utilization(self):
+        return self.tokens_used() / self.max_tokens * 100
+
+# Simulate a conversation with a TINY window (200 tokens)
+budget = ContextBudget(max_tokens=200)
+budget.set_system_prompt("You are a helpful assistant.")
+
+# The conversation grows...
+conversation = [
+    ("user",      "What's the weather like today?"),
+    ("assistant", "I can't check weather, but you can use a weather app!"),
+    ("user",      "Can you recommend a restaurant in New York?"),
+    ("assistant", "Try Le Bernardin for fine dining or Joe's Pizza for casual."),
+    ("user",      "What about Italian specifically?"),
+    ("assistant", "For Italian in NYC: Carbone, L'Artusi, or Lilia in Brooklyn."),
+    ("user",      "Book me a table at Carbone for tonight."),
+    ("assistant", "I can't book directly, but try Resy or OpenTable."),
+    ("user",      "What's their phone number?"),
+]
+
+print(f"Context window: {budget.max_tokens} tokens")
+print(f"System prompt: {count_tokens(budget.system_prompt)} tokens")
+print()
+print(f"{'#':>3s}  {'Role':>10s}  {'Msg Tokens':>11s}  {'Total Used':>11s}  {'Status'}")
+print("-" * 58)
+
+for i, (role, content) in enumerate(conversation):
+    budget.add_message(role, content)
+    used = budget.tokens_used()
+    pct = budget.utilization()
+    
+    if budget.is_overflowing():
+        status = f"🔴 OVERFLOW! ({pct:.0f}%)"
+    elif pct > 80:
+        status = f"⚠️ {pct:.0f}% — compact soon!"
+    else:
+        status = f"✅ {pct:.0f}%"
+    
+    print(f"{i+1:>3d}  {role:>10s}  {count_tokens(content):>11d}  {used:>11d}  {status}")
+
+print()
+if budget.is_overflowing():
+    over = budget.tokens_used() - budget.max_tokens
+    print(f"We're {over} tokens over the limit!")
+    print("Time to compact: summarize old messages to make room.")
+else:
+    print(f"Used {budget.tokens_used()}/{budget.max_tokens} tokens.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Ex 6: Compaction -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Compaction — Summarize the Old Stuff, Keep the Recent</span>
+      <span class="ex-check" id="check-ex6">○</span>
+    </div>
+    <div class="ex-desc">When context overflows: summarize messages 1–N into a paragraph, keep recent messages word-for-word intact. See the before/after.</div>
+    <textarea id="code-ex6">
+def count_tokens(text):
+    return max(1, len(text) // 4)
+
+def compact_messages(messages, keep_recent=4):
+    """Compact older messages into a summary.
+    
+    In production, an LLM writes the summary.
+    Here we simulate it with simple extraction.
+    
+    The rule: old stuff → summarize. Recent stuff → keep intact.
+    """
+    if len(messages) <= keep_recent:
+        return messages, None
+    
+    old = messages[:-keep_recent]
+    recent = messages[-keep_recent:]
+    
+    # Extract key topics from old messages (LLM would do this in production)
+    topics = set()
+    for msg in old:
+        c = msg["content"].lower()
+        if "weather" in c: topics.add("weather inquiry")
+        if "restaurant" in c or "dining" in c: topics.add("restaurant search")
+        if "italian" in c: topics.add("Italian cuisine preference")
+        if "carbone" in c: topics.add("interested in Carbone")
+        if "book" in c: topics.add("wanted to book a table")
+    
+    summary = f"[Summary of earlier conversation: {'; '.join(sorted(topics))}.]"
+    compacted = [{"role": "system", "content": summary}] + recent
+    return compacted, summary
+
+# The overflowing conversation from Exercise 5
+messages = [
+    {"role": "user",      "content": "What's the weather like today?"},
+    {"role": "assistant", "content": "I can't check weather, but you can use a weather app!"},
+    {"role": "user",      "content": "Can you recommend a restaurant in New York?"},
+    {"role": "assistant", "content": "Try Le Bernardin for fine dining or Joe's Pizza for casual."},
+    {"role": "user",      "content": "What about Italian specifically?"},
+    {"role": "assistant", "content": "For Italian in NYC: Carbone, L'Artusi, or Lilia in Brooklyn."},
+    {"role": "user",      "content": "Book me a table at Carbone for tonight."},
+    {"role": "assistant", "content": "I can't book directly, but try Resy or OpenTable."},
+    {"role": "user",      "content": "What's their phone number?"},
+]
+
+# BEFORE
+original_tokens = sum(count_tokens(m["content"]) + 4 for m in messages)
+print("=== BEFORE compaction ===")
+print(f"{len(messages)} messages, ~{original_tokens} tokens\n")
+for m in messages:
+    preview = m["content"][:65] + "..." if len(m["content"]) > 65 else m["content"]
+    print(f"  [{m['role']:>9s}] {preview}")
+
+# COMPACT
+compacted, summary = compact_messages(messages, keep_recent=4)
+compacted_tokens = sum(count_tokens(m["content"]) + 4 for m in compacted)
+
+print(f"\n{'='*55}")
+print(f"\n=== AFTER compaction ===")
+print(f"{len(compacted)} messages, ~{compacted_tokens} tokens")
+saved = original_tokens - compacted_tokens
+print(f"Saved {saved} tokens ({saved/original_tokens*100:.0f}% smaller)\n")
+for m in compacted:
+    preview = m["content"][:70] + "..." if len(m["content"]) > 70 else m["content"]
+    color = "📦" if m["role"] == "system" else "  "
+    print(f"{color}[{m['role']:>9s}] {preview}")
+
+print(f"\n→ 5 old messages → 1 summary paragraph.")
+print(f"  Recent messages preserved word-for-word.")
+print(f"  The bot still knows what you talked about — in fewer tokens.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+
+  <!-- Ex 7: Memory bridge — extract facts before compacting -->
+  <div class="exercise" id="ex7">
+    <div class="ex-header">
+      <span class="ex-num">07</span>
+      <span class="ex-title">Memory Bridge — Extract Important Facts Before They're Gone</span>
+      <span class="ex-check" id="check-ex7">○</span>
+    </div>
+    <div class="ex-desc">Before compacting, extract key facts (preferences, names, pending tasks) to persistent storage. These survive forever — even when the summary gets compacted away too.</div>
+    <textarea id="code-ex7">
+import json
+
+def extract_facts(messages):
+    """Pull out key facts before we compact messages away.
+    
+    In production, an LLM extracts these. Here we use simple rules.
+    These facts get saved to disk — they survive across sessions.
+    """
+    facts = []
+    for msg in messages:
+        c = msg["content"].lower()
+        
+        # Preferences
+        if any(w in c for w in ["prefer", "favorite", "like", "love"]):
+            facts.append({
+                "type": "preference",
+                "content": msg["content"],
+                "from": msg["role"]
+            })
+        
+        # Action items
+        if any(w in c for w in ["book", "remind", "schedule", "call"]):
+            facts.append({
+                "type": "action_item",
+                "content": msg["content"],
+                "status": "pending"
+            })
+        
+        # Places mentioned
+        for place in ["carbone", "lilia", "l'artusi", "new york", "brooklyn"]:
+            if place in c:
+                facts.append({
+                    "type": "entity",
+                    "name": place.title(),
+                    "context": msg["content"][:60]
+                })
+                break
+    
+    # Deduplicate
+    seen = set()
+    unique = []
+    for f in facts:
+        key = f.get("content", f.get("name", ""))[:40]
+        if key not in seen:
+            seen.add(key)
+            unique.append(f)
+    return unique
+
+def memory_bridge(messages, keep_recent=4):
+    """The full pipeline:
+    1. Extract key facts → persistent storage (survives forever)
+    2. Summarize old messages → compact summary
+    3. Keep recent messages intact
+    """
+    old = messages[:-keep_recent]
+    recent = messages[-keep_recent:]
+    
+    # Step 1: Save important facts
+    facts = extract_facts(old)
+    
+    # Step 2: Build summary
+    summary = "[Earlier: User discussed restaurants in NYC, prefers Italian, interested in Carbone.]"
+    
+    # Step 3: Combine
+    compacted = [{"role": "system", "content": summary}] + recent
+    return compacted, facts
+
+# Full conversation
+messages = [
+    {"role": "user",      "content": "I love Italian food. It's my favorite cuisine."},
+    {"role": "assistant", "content": "Great taste! For Italian in NYC, try Carbone or L'Artusi."},
+    {"role": "user",      "content": "Carbone sounds great! Book me a table tonight."},
+    {"role": "assistant", "content": "I can't book directly, but Carbone uses Resy for reservations."},
+    {"role": "user",      "content": "My favorite is definitely Italian. Remember that."},
+    {"role": "assistant", "content": "Noted! Italian is your favorite. I'll remember."},
+    {"role": "user",      "content": "What's the dress code at Carbone?"},
+    {"role": "assistant", "content": "Carbone has a smart casual dress code."},
+]
+
+compacted, facts = memory_bridge(messages, keep_recent=3)
+
+print("=== Memory Bridge ===\n")
+print("📦 Facts extracted to persistent storage:")
+print("   (These survive even when the summary itself gets compacted later)\n")
+print(json.dumps(facts, indent=2))
+
+print(f"\n📝 Compacted context ({len(compacted)} messages):")
+for m in compacted:
+    preview = m["content"][:75] + "..." if len(m["content"]) > 75 else m["content"]
+    print(f"  [{m['role']:>9s}] {preview}")
+
+print(f"\n→ Facts are saved to disk. Next session, the bot loads them")
+print(f"  into the system prompt: 'User's favorite cuisine: Italian'")
+print(f"  This is why OpenClaw remembers your preferences across conversations.")
+print(f"\n  You just built both halves of the solution:")
+print(f"  • FlashAttention (Ex 1-4): make attention faster with tiling")
+print(f"  • Compaction + Memory (Ex 5-7): handle overflow gracefully")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex7')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex7')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex7"></div>
+  </div>
+</div>
+
+<!-- THE PAYOFF -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p><strong>You just built the two mechanisms that let AI assistants handle long conversations.</strong></p>
+  <p style="margin-top:1rem;color:#aaa">FlashAttention doesn't change the math — it changes <em>where</em> the math happens. Same comparison grid, but built in small tiles that fit in fast memory. That's why Claude can handle 200,000 tokens.</p>
+  <p style="margin-top:1rem;color:#aaa">Compaction doesn't lose information — it <em>distills</em> it. Key facts go to persistent storage. Old messages become a summary. Recent messages stay intact.</p>
+  <p style="margin-top:1.5rem;color:#888;font-size:.9rem">Together, they let an AI assistant run indefinitely: FlashAttention pushes the window as wide as possible, and compaction handles everything beyond it.</p>
+  <p style="margin-top:1.5rem;font-size:1rem">Next up: your bot can think, but it can't <em>talk</em> to anyone in real-time.<br>
+  <strong><a href="../build-04-talk/">BUILD-04: Make It Talk →</a></strong></p>
+</div>
+
+<!-- GO DEEPER -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../module-04-flash-attention/">Module 04: Making Attention Fast</a>
+      <span class="label"> — Full FlashAttention paper breakdown</span>
+    </li>
+    <li>
+      <a href="../oc-03-context/">OC-03: Context & Compaction</a>
+      <span class="label"> — How OpenClaw manages context in practice</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/2205.14135">📄 Dao et al. 2022 — "FlashAttention"</a>
+      <span class="label"> — The original paper</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/2307.08691">📄 Dao 2023 — "FlashAttention-2"</a>
+      <span class="label"> — Better parallelism and work partitioning</span>
+    </li>
+  </ul>
+</div>
+
+<div class="nav-footer">
+  <a href="../build-02-smarter/">← BUILD-02: Make It Smarter</a>
+  <a href="../build-04-talk/">BUILD-04: Make It Talk →</a>
+</div>
+
+</div>
+
+<script>
+const defaults={};
+document.querySelectorAll('textarea').forEach(ta=>{defaults[ta.id]=ta.value});
+const STORAGE_KEY='build-03-window-progress';
+let completed=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+
+function updateProgress(){
+  const total=7,done=Object.keys(completed).length;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  for(let i=1;i<=total;i++){
+    const el=document.getElementById('check-ex'+i);
+    if(completed['ex'+i]){el.textContent='✓';el.classList.add('done')}
+    else{el.textContent='○';el.classList.remove('done')}
+  }
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(completed));
+}
+function markComplete(id){completed[id]=true;updateProgress()}
+function toggleHint(id){document.getElementById('hint-'+id)?.classList.toggle('visible')}
+function resetExercise(id){document.getElementById('code-'+id).value=defaults['code-'+id];document.getElementById('output-'+id).classList.remove('visible')}
+
+let pyodide=null;
+async function initPyodide(){
+  try{pyodide=await loadPyodide();document.getElementById('loading').classList.add('hidden')}
+  catch(e){document.getElementById('loading').innerHTML='<p style="color:#ff6b4a">Failed to load Pyodide.</p>'}
+}
+async function runExercise(id){
+  if(!pyodide){alert('Pyodide still loading…');return}
+  const code=document.getElementById('code-'+id).value;
+  const output=document.getElementById('output-'+id);
+  output.classList.add('visible');output.textContent='Running…';
+  try{
+    pyodide.runPython(`import io,sys;_stdout=io.StringIO();sys.stdout=_stdout`);
+    pyodide.runPython(code);
+    const result=pyodide.runPython('_stdout.getvalue()');
+    output.textContent=result||'(no output)';output.style.color='#e0e0e0';
+    if(result&&result.trim().length>0)markComplete(id);
+  }catch(e){output.textContent='❌ Error:\n'+e.message;output.style.color='#ff6b4a'}
+}
+
+const s=document.createElement('script');
+s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+s.onload=initPyodide;document.head.appendChild(s);
+updateProgress();
+</script>
+</body>
+</html>

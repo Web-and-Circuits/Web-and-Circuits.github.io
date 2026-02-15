@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-01: Make It Speak</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+
+/* Header */
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffa502,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:600px;margin:0 auto}
+
+/* Phase sections */
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-wall .icon{color:#ff6b4a}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-theory .icon{color:#6b8aff}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-build .icon{color:#4ecdc4}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+
+/* Exercise blocks */
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem;position:relative}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise .code-area{position:relative}
+.exercise textarea{width:100%;min-height:180px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.88rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+
+/* Go Deeper sidebar */
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+
+/* Progress bar */
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+
+/* Equation blocks — now used as SUMMARIES, never intros */
+.equation{text-align:center;padding:1rem;margin:1rem 0;background:rgba(0,0,0,.2);border-radius:8px;font-family:'Georgia',serif;font-size:1.15rem;color:#c0c0e0;letter-spacing:.03em}
+.equation .small{font-size:.85rem;color:#888;margin-top:.25rem}
+.equation .reveal-label{font-size:.8rem;color:#4ecdc4;margin-bottom:.5rem;font-family:-apple-system,sans-serif;letter-spacing:0}
+
+/* Quote blocks */
+.paper-quote{border-left:3px solid #3a3a6a;padding:.75rem 1rem;margin:1rem 0;font-style:italic;color:#aaa;background:rgba(50,50,120,.1);border-radius:0 6px 6px 0}
+.paper-quote cite{display:block;font-style:normal;font-size:.82rem;color:#666;margin-top:.25rem}
+
+/* Key insight callout */
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+
+/* Interactive demos */
+.demo-box{background:#0d0d1a;border:1px solid #1a2a3a;border-radius:10px;padding:1.25rem;margin:1.25rem 0}
+.demo-box h4{color:#8aaeff;margin-bottom:.75rem;font-size:.95rem;font-weight:600}
+.demo-box label{color:#aaa;font-size:.88rem;display:block;margin-bottom:.35rem}
+.demo-box input[type="text"],.demo-box select{background:#111;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:6px 10px;font-size:.9rem;width:100%;max-width:300px}
+.demo-box input[type="range"]{width:100%;max-width:300px;accent-color:#4ecdc4}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:120px;margin:1rem 0;padding:0 .25rem}
+.bar-chart .bar-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;height:100%;justify-content:flex-end}
+.bar-chart .bar{background:#4ecdc4;border-radius:3px 3px 0 0;min-height:2px;width:100%;max-width:50px;transition:height .3s,background .3s}
+.bar-chart .bar.grayed{background:#333}
+.bar-chart .bar-label{font-size:.7rem;color:#888;margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.bar-chart .bar-pct{font-size:.65rem;color:#4ecdc4;margin-bottom:2px}
+.step-box{background:#111;border:1px solid #222;border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-family:monospace;font-size:.88rem;color:#ccc;line-height:1.8}
+.step-box .highlight{color:#ffa502;font-weight:600}
+.step-box .result{color:#4ecdc4;font-weight:600}
+
+/* Spinner wheel */
+.spinner-container{position:relative;width:260px;height:260px;margin:1rem auto}
+.spinner-canvas{width:260px;height:260px}
+.spin-btn{display:block;margin:.5rem auto;padding:8px 24px;background:#1a5a3a;color:#4ecdc4;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer}
+.spin-btn:hover{background:#2a7a4a}
+.spin-result{text-align:center;color:#ffa502;font-weight:600;min-height:1.5em;margin-top:.5rem}
+
+/* Bigram table */
+.bigram-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
+.bigram-table th,.bigram-table td{border:1px solid #2a2a3a;padding:6px 10px;text-align:center}
+.bigram-table th{background:#1a1a3a;color:#8aaeff;font-weight:600}
+.bigram-table td{background:#0d0d1a;color:#ccc}
+.bigram-table td.highlight-cell{background:#1a3a2a;color:#4ecdc4;font-weight:600}
+.bigram-table .row-header{background:#1a1a3a;color:#8aaeff;font-weight:600;text-align:left}
+.build-step{display:inline-block;padding:2px 8px;background:#1a3a2a;color:#4ecdc4;border-radius:10px;font-size:.75rem;font-weight:600;margin-bottom:.25rem}
+
+/* Responsive */
+@media(max-width:600px){
+  .hero h1{font-size:1.7rem}
+  .phase{padding:1.25rem}
+  .exercise textarea{min-height:140px;font-size:.82rem}
+  .bar-chart{height:80px}
+  .spinner-container{width:200px;height:200px}
+  .spinner-canvas{width:200px;height:200px}
+}
+
+/* Loading overlay */
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#4ecdc4;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Loading Pyodide…</p>
+</div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 1 of 3</div>
+  <h1>🗣️ Make It Speak</h1>
+  <div class="subtitle">Build a language-generating bot from scratch. No frameworks, no magic — just counting and picking.</div>
+</div>
+
+<div class="container">
+
+<!-- Progress -->
+<div class="progress-text"><span id="progress-count">0</span> / 6 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- PHASE 1: HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2><span class="icon">🧱</span> Hit the Wall</h2>
+  <p>You have a pile of text. Thousands of words. You want a program that generates <em>new</em> text that sounds similar. Not copy-paste — <strong>new sentences that never existed before.</strong></p>
+
+  <p style="margin-top:1rem">Your first instinct might be: pick random words? That gives you word salad. Templates like "The ___ went to the ___"? Boring and rigid. There's gotta be something smarter.</p>
+
+  <p style="margin-top:1rem">Here's the key question that unlocks everything:</p>
+
+  <div class="insight">
+    <strong>If I just said the word "the"... what word would you guess comes next?</strong><br>
+    Probably something like "cat" or "dog" or "end" — not "xylophone" or "the."<br>
+    If you can figure out which words tend to follow which, you can generate language.
+  </div>
+
+  <p style="margin-top:1rem">That's what every language model does. GPT-4, Claude, all of them. They just look at more context and have bigger tables. Let's build the simple version first and see how far it gets.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- PHASE 2: LEARN THE THEORY -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2><span class="icon">📐</span> Learn the Theory</h2>
+
+  <!-- ========== BIGRAM COUNTING ========== -->
+  <h3 style="color:#8aaeff;margin-top:0">Step 1: Counting What Follows What</h3>
+
+  <p>Let's start with a tiny sentence:</p>
+
+  <div class="step-box" style="text-align:center;font-size:1.05rem;letter-spacing:.05em">
+    <span class="highlight">the</span> cat sat on <span class="highlight">the</span> mat
+  </div>
+
+  <p style="margin-top:1rem">Look at the word <strong>"the"</strong>. What came after it?</p>
+  <ul style="margin:.75rem 0 .75rem 1.5rem;color:#ccc">
+    <li>First time: "the" → <strong>"cat"</strong></li>
+    <li>Second time: "the" → <strong>"mat"</strong></li>
+  </ul>
+  <p>So if we had to guess what comes after "the," we'd say: 50% chance "cat," 50% chance "mat."</p>
+
+  <p style="margin-top:1rem">Let's build a table. We'll go through every pair of consecutive words and count:</p>
+
+  <div class="demo-box" id="bigram-builder">
+    <h4>🔨 Build the Table — Word by Word</h4>
+    <p style="color:#888;font-size:.88rem;margin-bottom:.5rem">Corpus: "the cat sat on the mat"</p>
+    <button class="spin-btn" id="bigram-step-btn" onclick="bigramStep()" style="margin:0 0 .75rem">Show next pair →</button>
+    <div id="bigram-step-text" style="color:#ffa502;min-height:1.5em;margin-bottom:.75rem;font-size:.92rem"></div>
+    <table class="bigram-table" id="bigram-demo-table">
+      <thead>
+        <tr><th>After ↓ \ Comes →</th><th>cat</th><th>sat</th><th>on</th><th>the</th><th>mat</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="row-header">the</td><td id="bc-the-cat">-</td><td id="bc-the-sat">-</td><td id="bc-the-on">-</td><td id="bc-the-the">-</td><td id="bc-the-mat">-</td></tr>
+        <tr><td class="row-header">cat</td><td id="bc-cat-cat">-</td><td id="bc-cat-sat">-</td><td id="bc-cat-on">-</td><td id="bc-cat-the">-</td><td id="bc-cat-mat">-</td></tr>
+        <tr><td class="row-header">sat</td><td id="bc-sat-cat">-</td><td id="bc-sat-sat">-</td><td id="bc-sat-on">-</td><td id="bc-sat-the">-</td><td id="bc-sat-mat">-</td></tr>
+        <tr><td class="row-header">on</td><td id="bc-on-cat">-</td><td id="bc-on-sat">-</td><td id="bc-on-on">-</td><td id="bc-on-the">-</td><td id="bc-on-mat">-</td></tr>
+      </tbody>
+    </table>
+    <p id="bigram-done-msg" style="display:none;color:#4ecdc4;margin-top:.75rem;font-weight:600">✓ That table IS your model. That's it. That's the whole thing. Every cell says "after word X, word Y showed up this many times."</p>
+  </div>
+
+  <p style="margin-top:1rem">This kind of pair — two words in a row — is called a <strong>bigram</strong>. A model that uses bigrams to predict what comes next is called a <strong>bigram model</strong>. That's all the jargon means.</p>
+
+  <!-- ========== PROBABILITY / BAR CHART ========== -->
+  <h3 style="color:#8aaeff">Step 2: From Counts to "How Likely?"</h3>
+
+  <p>Counts are great, but we need to turn them into chances. Let's say after "the" we counted: "cat" 3 times, "dog" 2 times, "mat" 1 time. Six total.</p>
+
+  <div class="step-box">
+    "cat": 3 out of 6 = <span class="result">50%</span><br>
+    "dog": 2 out of 6 = <span class="result">33%</span><br>
+    "mat": 1 out of 6 = <span class="result">17%</span><br>
+    <br>
+    Total: 50% + 33% + 17% = <span class="highlight">100%</span>. Always.
+  </div>
+
+  <p style="margin-top:1rem">Here's a bar chart of those chances. The tallest bar is the most likely next word:</p>
+
+  <div class="demo-box">
+    <h4>📊 What Comes After a Word?</h4>
+    <label>Type a word and see what might follow it:</label>
+    <input type="text" id="prob-word-input" value="the" style="margin:.5rem 0" placeholder="Type a word...">
+    <div class="bar-chart" id="prob-bar-chart"></div>
+    <p id="prob-sum-text" style="color:#888;font-size:.85rem;margin-top:.25rem"></p>
+    <p style="color:#666;font-size:.82rem;margin-top:.5rem">What do all the bars add up to? 100%. Always. That's the only rule.</p>
+  </div>
+
+  <p style="margin-top:1rem">Scientists have a fancy name for this bar chart: <strong>probability distribution</strong>. But now you know what it actually means — it's just a bar chart where the bars always add up to 100%.</p>
+
+  <div class="equation">
+    <div class="reveal-label">Here's the math shorthand for what you just saw:</div>
+    P(next word | previous word) = count of that pair / total count
+    <div class="small">Read it as: "The chance of the next word, given the previous word, equals how often we saw that pair divided by the total."</div>
+  </div>
+
+  <!-- ========== SAMPLING / SPINNER ========== -->
+  <h3 style="color:#8aaeff">Step 3: Picking a Word — The Spinner Wheel</h3>
+
+  <p>OK so we have our bar chart of chances. Now we need to actually <em>pick</em> a word. But not just always pick the most common one — that would be boring and repetitive.</p>
+
+  <p style="margin-top:.75rem">Imagine a spinner wheel — like the kind in a board game. Each word gets a slice. <strong>Bigger slices = more likely to land there.</strong> You spin it, and wherever it stops, that's your next word.</p>
+
+  <div class="demo-box">
+    <h4>🎡 Spin the Wheel — Pick the Next Word After "the"</h4>
+    <div class="spinner-container">
+      <canvas class="spinner-canvas" id="spinner-canvas" width="260" height="260"></canvas>
+    </div>
+    <button class="spin-btn" id="spin-btn" onclick="spinWheel()">🎰 Spin!</button>
+    <div class="spin-result" id="spin-result"></div>
+    <p style="color:#666;font-size:.82rem;margin-top:.5rem;text-align:center">"cat" has the biggest slice, so it wins most often. But sometimes you land on a smaller slice — that's what keeps the output interesting.</p>
+  </div>
+
+  <p style="margin-top:1rem">In code, we won't spin an actual wheel — we'll use <code>random.choices(words, weights=probabilities)</code>. But it does exactly the same thing. Bigger weight = bigger slice = more likely to get picked.</p>
+
+  <!-- ========== TEMPERATURE ========== -->
+  <h3 style="color:#8aaeff">Step 4: Making It Boring or Wild — Temperature</h3>
+
+  <p>Right now, "cat" wins about half the time. But what if we want our bot to be <em>more predictable?</em> Or <em>more creative?</em></p>
+
+  <p style="margin-top:.75rem">Here's the idea: <strong>what if we had a knob that controls how spread out the bars are?</strong></p>
+  <ul style="margin:.75rem 0 .75rem 1.5rem;color:#ccc">
+    <li>Turn it down → one bar towers over the rest → boring, predictable output</li>
+    <li>Turn it up → all bars become similar height → wild, unpredictable output</li>
+  </ul>
+
+  <div class="demo-box">
+    <h4>🌡️ The Temperature Slider</h4>
+    <label>Temperature: <strong id="temp-val">1.0</strong></label>
+    <input type="range" id="temp-slider" min="0.1" max="3.0" step="0.1" value="1.0" oninput="updateTempDemo()">
+    <div style="display:flex;justify-content:space-between;max-width:300px;font-size:.75rem;color:#666"><span>❄️ Cold / Rigid</span><span>🔥 Hot / Chaotic</span></div>
+    <div class="bar-chart" id="temp-bar-chart" style="margin-top:1rem"></div>
+    <p id="temp-desc" style="color:#aaa;font-size:.88rem;margin-top:.5rem"></p>
+  </div>
+
+  <p style="margin-top:1rem">This knob is called <strong>temperature</strong>. Like actual temperature — cold things are rigid and predictable. Hot things are chaotic and random.</p>
+
+  <p style="margin-top:1rem">But how does it actually work? Let's look at the math step by step. Don't worry — we'll go slow.</p>
+
+  <p style="margin-top:1rem"><strong>The trick is dead simple:</strong> each word has a "score" (how good it is). We divide all the scores by the temperature number before picking.</p>
+
+  <div class="step-box">
+    Let's say three words have scores: <span class="highlight">10</span>, <span class="highlight">5</span>, <span class="highlight">2</span><br>
+    The gap between the best (10) and worst (2) is <span class="highlight">8</span>.<br><br>
+
+    <strong>Divide by a SMALL temperature (T=0.5) — differences get BIGGER:</strong><br>
+    10 ÷ 0.5 = <span class="result">20</span> &nbsp;·&nbsp; 5 ÷ 0.5 = <span class="result">10</span> &nbsp;·&nbsp; 2 ÷ 0.5 = <span class="result">4</span><br>
+    Gap went from 8 → <span class="result">16</span>. The winner dominates even more!<br><br>
+
+    <strong>Divide by a BIG temperature (T=3.0) — differences get SMALLER:</strong><br>
+    10 ÷ 3 = <span class="result">3.3</span> &nbsp;·&nbsp; 5 ÷ 3 = <span class="result">1.7</span> &nbsp;·&nbsp; 2 ÷ 3 = <span class="result">0.7</span><br>
+    Gap went from 8 → <span class="result">2.6</span>. Everything is closer together!
+  </div>
+
+  <p style="margin-top:1rem">Makes sense, right? Dividing by a small number spreads things apart. Dividing by a big number squishes them together.</p>
+
+  <p style="margin-top:1rem">But there's one more step. After dividing, we need to turn these scores back into percentages that add up to 100%. There's a function that does exactly that — it's called <strong>softmax</strong>. Here's what it does to our numbers:</p>
+
+  <div class="demo-box">
+    <h4>🔢 Softmax Step by Step — Scores → Percentages</h4>
+    <label>Temperature: <strong id="softmax-temp-val">1.0</strong></label>
+    <input type="range" id="softmax-temp-slider" min="0.1" max="3.0" step="0.1" value="1.0" oninput="updateSoftmaxDemo()">
+    <div id="softmax-steps" class="step-box" style="margin-top:.75rem"></div>
+  </div>
+
+  <p style="margin-top:1rem">Each score gets turned into <em>e</em> raised to that power (e ≈ 2.718, a special number that makes the math work cleanly). Then you divide each by the total so they add up to 100%. That's all softmax does.</p>
+
+  <p style="margin-top:1rem">Now you know every piece. Here's the whole recipe written in math shorthand:</p>
+
+  <div class="equation">
+    <div class="reveal-label">The math notation for everything you just learned:</div>
+    P'(word) = softmax(logits / T)
+    <div class="small">"logits" = the scores · "T" = temperature · "softmax" = the "make it add to 100%" function<br>You know every piece of this now. It's just shorthand for what you already understand.</div>
+  </div>
+
+  <!-- ========== TOP-K ========== -->
+  <h3 style="color:#8aaeff">Step 5: Ignoring the Junk — Top-K</h3>
+
+  <p>Even with temperature, the model sometimes picks really weird words. Words with a 0.01% chance that make no sense.</p>
+
+  <p style="margin-top:.75rem">Simple fix: <strong>what if we just... ignore the bottom 90% of words?</strong> Only let the model pick from the top few candidates.</p>
+
+  <div class="demo-box">
+    <h4>✂️ Top-K Filtering — Chop the Tail</h4>
+    <label>K = <strong id="topk-val">5</strong> (keep top K words, gray out the rest)</label>
+    <input type="range" id="topk-slider" min="1" max="8" step="1" value="5" oninput="updateTopKDemo()">
+    <div class="bar-chart" id="topk-bar-chart"></div>
+    <p id="topk-desc" style="color:#aaa;font-size:.88rem;margin-top:.5rem"></p>
+  </div>
+
+  <p style="margin-top:1rem"><strong>K=1</strong> means always pick the winner. <strong>K=5</strong> means pick from 5 candidates. <strong>K=50</strong> would mean pick from 50. After chopping, the remaining bars get re-scaled so they add back up to 100%.</p>
+
+  <!-- ========== THE RECIPE ========== -->
+  <div class="insight" style="margin-top:1.5rem">
+    <strong>That's the whole recipe:</strong><br>
+    1. Count word pairs → 2. Turn counts into percentages → 3. Adjust with temperature → 4. Chop the tail with top-K → 5. Spin the wheel → 6. Repeat<br><br>
+    This loop generates every word of every ChatGPT response. Seriously.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PHASE 3: BUILD THE SOLUTION -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2><span class="icon">🔨</span> Build the Solution</h2>
+  <p>Six exercises. By the end, your bot speaks. Each one builds on the last.</p>
+
+  <!-- Exercise 1: Count bigrams -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header" onclick="toggleHint('ex1')">
+      <span class="ex-num">01</span>
+      <span class="ex-title">Count Bigrams from a Text Corpus</span>
+      <span class="ex-check" id="check-ex1" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Remember the table we built by hand? Now do it in code. Given a text, count how often each word follows each other word.</div>
+    <textarea id="code-ex1">
+# The training corpus
+text = """the cat sat on the mat the cat ate the food
+the dog sat on the mat the dog chased the cat
+the cat ran from the dog the mat was on the floor"""
+
+# Split into words
+words = text.split()
+
+# TODO: Build a bigram frequency table
+# bigrams should be a dict of dicts: bigrams["the"]["cat"] = count
+bigrams = {}
+
+for i in range(len(words) - 1):
+    w1 = words[i]
+    w2 = words[i + 1]
+    # YOUR CODE HERE: update bigrams dict
+    pass
+
+# Print the table for "the"
+print("Words following 'the':")
+for word, count in sorted(bigrams.get("the", {}).items(), key=lambda x: -x[1]):
+    print(f"  {word}: {count}")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex1')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex1">Replace <code>pass</code> with: <code>if w1 not in bigrams: bigrams[w1] = {}</code> then <code>bigrams[w1][w2] = bigrams[w1].get(w2, 0) + 1</code></div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Exercise 2: Convert to probabilities -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header" onclick="toggleHint('ex2')">
+      <span class="ex-num">02</span>
+      <span class="ex-title">Turn Counts into Percentages</span>
+      <span class="ex-check" id="check-ex2" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Just like we did with "3 out of 6 = 50%" — divide each count by the total to get the chance of each word.</div>
+    <textarea id="code-ex2">
+# Bigram counts (from exercise 1)
+bigrams = {
+    "the": {"cat": 5, "dog": 3, "mat": 3, "food": 1, "floor": 1},
+    "cat": {"sat": 1, "ate": 1, "ran": 1, "chased": 0},
+    "dog": {"sat": 1, "chased": 1},
+    "sat": {"on": 2},
+    "on": {"the": 3}
+}
+
+# TODO: Convert counts to probabilities (percentages as decimals)
+# probs["the"]["cat"] should equal 5/13 ≈ 0.385
+probs = {}
+
+for word, followers in bigrams.items():
+    total = sum(followers.values())
+    probs[word] = {}
+    for next_word, count in followers.items():
+        # YOUR CODE HERE: divide count by total
+        pass
+
+# Verify: should sum to 1.0 (which is 100%)
+the_probs = probs["the"]
+print("Chances of each word after 'the':")
+for w, p in sorted(the_probs.items(), key=lambda x: -x[1]):
+    pct = p * 100
+    print(f"  {w}: {p:.3f}  ({pct:.1f}%)")
+print(f"\nSum: {sum(the_probs.values()):.3f}  (should be 1.000 = 100%)")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex2')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex2">Replace <code>pass</code> with: <code>probs[word][next_word] = count / total</code></div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Exercise 3: Sample the next token -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header" onclick="toggleHint('ex3')">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Spin the Wheel — Pick the Next Word!</span>
+      <span class="ex-check" id="check-ex3" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Remember the spinner wheel? In code, <code>random.choices</code> does the same thing. Bigger weight = bigger slice = more likely to land there.</div>
+    <textarea id="code-ex3">
+import random
+
+probs = {
+    "the": {"cat": 0.385, "dog": 0.231, "mat": 0.231, "food": 0.077, "floor": 0.077},
+    "cat": {"sat": 0.333, "ate": 0.333, "ran": 0.333},
+    "dog": {"sat": 0.5, "chased": 0.5},
+    "sat": {"on": 1.0},
+    "on": {"the": 1.0},
+    "mat": {"the": 0.5, "was": 0.5},
+    "was": {"on": 1.0},
+    "chased": {"the": 1.0},
+    "ran": {"from": 1.0},
+    "from": {"the": 1.0},
+    "ate": {"the": 1.0},
+    "food": {"the": 1.0},
+    "floor": {"the": 1.0}
+}
+
+def sample_next(word, prob_table):
+    """Spin the wheel: pick the next word based on the chances."""
+    if word not in prob_table:
+        return None
+    candidates = list(prob_table[word].keys())
+    weights = list(prob_table[word].values())
+    # TODO: Use random.choices to spin the wheel
+    # random.choices(candidates, weights=weights, k=1) returns a list with 1 item
+    chosen = None  # FIX THIS
+    return chosen
+
+# Generate a chain of words!
+current = "the"
+print(f"Starting word: {current}")
+for i in range(5):
+    nxt = sample_next(current, probs)
+    if nxt is None:
+        print("(dead end)")
+        break
+    print(f"  → {nxt}")
+    current = nxt
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex3')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex3">Replace <code>chosen = None</code> with: <code>chosen = random.choices(candidates, weights=weights, k=1)[0]</code></div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Exercise 4: Temperature -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header" onclick="toggleHint('ex4')">
+      <span class="ex-num">04</span>
+      <span class="ex-title">Add the Temperature Knob</span>
+      <span class="ex-check" id="check-ex4" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Remember: divide scores by temperature, then use softmax to get back to percentages. Low T = boring. High T = chaotic.</div>
+    <textarea id="code-ex4">
+import math
+import random
+
+def apply_temperature(prob_dict, temperature):
+    """The temperature recipe:
+    1. Take the log of each chance (turns percentages into scores)
+    2. Divide scores by temperature
+    3. Softmax: e^score for each, then divide by total (back to %)
+    """
+    words = list(prob_dict.keys())
+    
+    # Step 1: percentages → scores (using log)
+    log_probs = [math.log(p + 1e-10) for p in prob_dict.values()]
+    
+    # Step 2: divide by temperature (given)
+    scaled = [lp / temperature for lp in log_probs]
+    
+    # Step 3: softmax — turn scores back into percentages
+    # TODO: Implement softmax
+    # max_val = max(scaled)  # subtract max for safety (avoids huge numbers)
+    # exp_vals = [math.exp(s - max_val) for s in scaled]
+    # total = sum(exp_vals)
+    # new_probs = [e / total for e in exp_vals]
+    new_probs = []  # FIX THIS — uncomment the 4 lines above
+    
+    return dict(zip(words, new_probs))
+
+# Test with different temperatures
+original = {"cat": 0.5, "dog": 0.3, "mat": 0.15, "food": 0.05}
+
+for temp in [0.1, 0.5, 1.0, 2.0, 5.0]:
+    result = apply_temperature(original, temp)
+    top = max(result.items(), key=lambda x: x[1])
+    dist = " | ".join(f"{w}:{p:.3f}" for w, p in sorted(result.items(), key=lambda x:-x[1]))
+    print(f"T={temp:<4} → {dist}")
+
+print("\n↑ T=0.1 is nearly always 'cat'. T=5.0 is nearly a coin flip.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex4')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex4">Uncomment the 4 softmax lines and replace <code>new_probs = []</code> with <code>new_probs = [e / total for e in exp_vals]</code>. You need all 4 lines: max_val, exp_vals, total, new_probs.</div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Exercise 5: Top-k -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header" onclick="toggleHint('ex5')">
+      <span class="ex-num">05</span>
+      <span class="ex-title">Chop the Tail — Top-K Filtering</span>
+      <span class="ex-check" id="check-ex5" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Keep only the top K words, gray out the rest, re-scale so the survivors add up to 100% again.</div>
+    <textarea id="code-ex5">
+def top_k_filter(prob_dict, k):
+    """Keep only the top-k most likely words, re-normalize."""
+    # Sort by probability, biggest first
+    sorted_items = sorted(prob_dict.items(), key=lambda x: -x[1])
+    
+    # Keep only the top k
+    top_items = sorted_items[:k]
+    
+    # Re-scale so they add to 100% again
+    total = sum(p for _, p in top_items)
+    result = {}
+    for word, prob in top_items:
+        result[word] = prob / total
+    
+    return result
+
+# Test
+original = {"cat": 0.30, "dog": 0.25, "mat": 0.20, "food": 0.10,
+            "floor": 0.05, "was": 0.04, "ran": 0.03, "from": 0.03}
+
+for k in [1, 3, 5, 8]:
+    filtered = top_k_filter(original, k)
+    words = ", ".join(f"{w}:{p:.3f}" for w, p in sorted(filtered.items(), key=lambda x:-x[1]))
+    print(f"top-{k}: {words}")
+    print(f"       sum = {sum(filtered.values()):.3f}")
+    print()
+
+print("↑ top-1 always picks 'cat'. top-3 gives variety without chaos.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex5')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex5">This one's mostly done! The key logic is all there. Just run it and see how different K values change the output.</div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Exercise 6: Full generation -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header" onclick="toggleHint('ex6')">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Your Bot Speaks! — Full Generation</span>
+      <span class="ex-check" id="check-ex6" onclick="event.stopPropagation()">○</span>
+    </div>
+    <div class="ex-desc">Wire everything together: count pairs → percentages → temperature → top-K → spin the wheel → repeat. Generate actual sentences.</div>
+    <textarea id="code-ex6">
+import math, random
+
+# A richer corpus
+corpus = """the cat sat on the mat and the dog lay on the rug
+the cat chased the mouse around the house and the dog watched
+the mouse ran under the table while the cat waited patiently
+the dog barked at the mailman and the cat hid under the bed
+the bird sang on the branch and the cat watched from the window
+the sun set behind the hills and the stars came out slowly
+the wind blew through the trees and the leaves danced in the air
+the rain fell on the roof and the cat slept by the fire"""
+
+def build_bigrams(text):
+    words = text.split()
+    bg = {}
+    for i in range(len(words) - 1):
+        w1, w2 = words[i], words[i+1]
+        if w1 not in bg: bg[w1] = {}
+        bg[w1][w2] = bg[w1].get(w2, 0) + 1
+    # Convert to percentages
+    probs = {}
+    for w, followers in bg.items():
+        total = sum(followers.values())
+        probs[w] = {fw: c/total for fw, c in followers.items()}
+    return probs
+
+def apply_temperature(pd, temp):
+    words = list(pd.keys())
+    lps = [math.log(p + 1e-10) for p in pd.values()]
+    scaled = [lp / temp for lp in lps]
+    mx = max(scaled)
+    exps = [math.exp(s - mx) for s in scaled]
+    total = sum(exps)
+    return dict(zip(words, [e/total for e in exps]))
+
+def top_k_filter(pd, k):
+    top = sorted(pd.items(), key=lambda x:-x[1])[:k]
+    total = sum(p for _,p in top)
+    return {w: p/total for w,p in top}
+
+def generate(probs, start, length=12, temperature=0.8, top_k=3):
+    """Generate a sentence: the whole recipe in action."""
+    words = [start]
+    current = start
+    for _ in range(length):
+        if current not in probs:
+            break
+        dist = probs[current]
+        # TODO: Apply temperature, then top-k, then spin the wheel
+        # dist = apply_temperature(dist, temperature)
+        # dist = top_k_filter(dist, top_k)
+        # candidates = list(dist.keys())
+        # weights = list(dist.values())
+        # current = random.choices(candidates, weights=weights, k=1)[0]
+        current = "?"  # FIX THIS — uncomment the lines above
+        words.append(current)
+    return " ".join(words)
+
+# Build model
+model = build_bigrams(corpus)
+
+# Generate sentences with different settings
+print("=== Your Bot Speaks! ===\n")
+print("T=0.3 (boring & safe):")
+for _ in range(3):
+    print(f"  {generate(model, 'the', temperature=0.3, top_k=3)}")
+
+print("\nT=1.0 (balanced):")
+for _ in range(3):
+    print(f"  {generate(model, 'the', temperature=1.0, top_k=5)}")
+
+print("\nT=2.0 (creative & chaotic):")
+for _ in range(3):
+    print(f"  {generate(model, 'the', temperature=2.0, top_k=8)}")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex6')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex6">Uncomment the 5 lines in <code>generate</code> and delete <code>current = "?"</code>. All the functions are already defined above!</div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- THE PAYOFF -->
+<!-- ============================================ -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p>You just built a language model from scratch.</p>
+  <p style="margin-top:.75rem"><strong>This is exactly what GPT-4 does. Same core loop. Just a much bigger window.</strong></p>
+  <p style="margin-top:.75rem;color:#aaa">GPT-4 doesn't look at just 1 previous word — it looks at thousands. It doesn't have a table of 100 words — it has a neural network with billions of parameters encoding the chances. But the fundamental operation is identical: <strong>predict the next word, spin the wheel, repeat.</strong></p>
+  <p style="margin-top:1rem;color:#aaa">And remember that equation — <code>P'(word) = softmax(logits / T)</code>? You know every piece of it now. Logits are scores. T is the temperature knob. Softmax turns scores into percentages. <strong>You can read math notation. That wasn't hard.</strong></p>
+  <p style="margin-top:1rem;color:#888;font-size:.9rem">The gap between your bigram bot and GPT-4 isn't a different algorithm.<br>It's a bigger context window and better scores. That's it.</p>
+  <p style="margin-top:1.5rem;font-size:1.1rem"><strong>Next up:</strong> <a href="../build-02-smarter/">BUILD-02: Make It Smarter</a> — your bot only sees one word back. What if it could see <em>everything</em>?</p>
+</div>
+
+<!-- ============================================ -->
+<!-- GO DEEPER -->
+<!-- ============================================ -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../module-01-prediction-game/">Module 01: The Prediction Game</a>
+      <span class="label"> — Interactive exploration of next-token prediction</span>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/watch?v=7xTGNNLPyMI">🎬 Deep Dive into LLMs like ChatGPT</a>
+      <span class="label"> — 0:00–15:00 covers prediction, sampling, temperature</span>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/watch?v=LPZh9BOjkQs">🎬 Large Language Models explained briefly</a>
+      <span class="label"> — Quick overview of the full pipeline</span>
+    </li>
+    <li>
+      <a href="https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf">📄 Bengio et al. 2003 — "A Neural Probabilistic Language Model"</a>
+      <span class="label"> — The paper that started neural language modeling</span>
+    </li>
+  </ul>
+</div>
+
+<!-- Navigation -->
+<div class="nav-footer">
+  <a href="../">← Back to Curriculum</a>
+  <a href="../build-02-smarter/">Next: Make It Smarter →</a>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ========== EXERCISE INFRASTRUCTURE ==========
+const defaults = {};
+document.querySelectorAll('textarea').forEach(ta => {
+  defaults[ta.id] = ta.value;
+});
+
+const STORAGE_KEY = 'build-01-speak-progress';
+let completed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function updateProgress() {
+  const total = 6;
+  const done = Object.keys(completed).length;
+  document.getElementById('progress-count').textContent = done;
+  document.getElementById('progress-fill').style.width = (done/total*100)+'%';
+  for (let i = 1; i <= total; i++) {
+    const el = document.getElementById('check-ex'+i);
+    if (completed['ex'+i]) { el.textContent = '✓'; el.classList.add('done'); }
+    else { el.textContent = '○'; el.classList.remove('done'); }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+}
+
+function markComplete(exId) {
+  completed[exId] = true;
+  updateProgress();
+}
+
+function toggleHint(exId) {
+  const hint = document.getElementById('hint-'+exId);
+  hint.classList.toggle('visible');
+}
+
+function resetExercise(exId) {
+  const ta = document.getElementById('code-'+exId);
+  ta.value = defaults['code-'+exId];
+  document.getElementById('output-'+exId).classList.remove('visible');
+}
+
+let pyodide = null;
+
+async function initPyodide() {
+  try {
+    pyodide = await loadPyodide();
+    document.getElementById('loading').classList.add('hidden');
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p style="color:#ff6b4a">Failed to load Pyodide. Check your connection.</p>';
+  }
+}
+
+async function runExercise(exId) {
+  if (!pyodide) { alert('Pyodide still loading…'); return; }
+  const code = document.getElementById('code-'+exId).value;
+  const output = document.getElementById('output-'+exId);
+  output.classList.add('visible');
+  output.textContent = 'Running…';
+  try {
+    pyodide.runPython(`
+import io, sys
+_stdout = io.StringIO()
+sys.stdout = _stdout
+`);
+    pyodide.runPython(code);
+    const result = pyodide.runPython('_stdout.getvalue()');
+    output.textContent = result || '(no output)';
+    output.style.color = '#e0e0e0';
+    if (result && result.trim().length > 0) markComplete(exId);
+  } catch(e) {
+    output.textContent = '❌ Error:\n' + e.message;
+    output.style.color = '#ff6b4a';
+  }
+}
+
+// ========== INTERACTIVE DEMOS ==========
+
+// --- Demo corpus for interactive widgets ---
+const demoCorpus = `the cat sat on the mat the cat ate the food the dog sat on the mat the dog chased the cat the cat ran from the dog the mat was on the floor`;
+const demoWords = demoCorpus.split(/\s+/);
+const demoBigrams = {};
+for (let i = 0; i < demoWords.length - 1; i++) {
+  const w1 = demoWords[i], w2 = demoWords[i+1];
+  if (!demoBigrams[w1]) demoBigrams[w1] = {};
+  demoBigrams[w1][w2] = (demoBigrams[w1][w2] || 0) + 1;
+}
+const demoProbs = {};
+for (const [w, followers] of Object.entries(demoBigrams)) {
+  const total = Object.values(followers).reduce((a,b)=>a+b,0);
+  demoProbs[w] = {};
+  for (const [fw, c] of Object.entries(followers)) {
+    demoProbs[w][fw] = c / total;
+  }
+}
+
+// --- Bigram table builder ---
+const bigramPairs = [
+  ['the','cat'],['cat','sat'],['sat','on'],['on','the'],['the','mat'],
+];
+let bigramStepIdx = 0;
+const bigramCounts = {};
+
+function bigramStep() {
+  if (bigramStepIdx >= bigramPairs.length) return;
+  const [w1, w2] = bigramPairs[bigramStepIdx];
+  const key = `${w1}-${w2}`;
+  bigramCounts[key] = (bigramCounts[key] || 0) + 1;
+  
+  document.getElementById('bigram-step-text').textContent = 
+    `Pair ${bigramStepIdx+1}: "${w1}" → "${w2}"`;
+  
+  const cell = document.getElementById(`bc-${w1}-${w2}`);
+  if (cell) {
+    cell.textContent = bigramCounts[key];
+    cell.classList.add('highlight-cell');
+  }
+  
+  bigramStepIdx++;
+  if (bigramStepIdx >= bigramPairs.length) {
+    document.getElementById('bigram-step-btn').textContent = 'Done!';
+    document.getElementById('bigram-step-btn').disabled = true;
+    document.getElementById('bigram-done-msg').style.display = 'block';
+  }
+}
+
+// --- Probability bar chart ---
+function renderBarChart(containerId, probs, opts = {}) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const entries = Object.entries(probs).sort((a,b) => b[1]-a[1]);
+  const maxP = Math.max(...entries.map(e=>e[1]), 0.01);
+  const topK = opts.topK || entries.length;
+  
+  entries.forEach(([word, p], idx) => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    
+    const pct = document.createElement('div');
+    pct.className = 'bar-pct';
+    pct.textContent = (p*100).toFixed(1)+'%';
+    
+    const bar = document.createElement('div');
+    bar.className = 'bar' + (idx >= topK ? ' grayed' : '');
+    bar.style.height = (p / maxP * 100) + '%';
+    
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.textContent = word;
+    
+    col.appendChild(pct);
+    col.appendChild(bar);
+    col.appendChild(label);
+    container.appendChild(col);
+  });
+}
+
+function updateProbDemo() {
+  const word = document.getElementById('prob-word-input').value.trim().toLowerCase();
+  const probs = demoProbs[word];
+  const sumText = document.getElementById('prob-sum-text');
+  if (!probs || Object.keys(probs).length === 0) {
+    document.getElementById('prob-bar-chart').innerHTML = '<div style="color:#666;padding:1rem">Word not found in corpus. Try: the, cat, dog, sat, on, mat</div>';
+    sumText.textContent = '';
+    return;
+  }
+  renderBarChart('prob-bar-chart', probs);
+  const sum = Object.values(probs).reduce((a,b)=>a+b,0);
+  sumText.textContent = `All bars add up to: ${(sum*100).toFixed(1)}%`;
+}
+
+document.getElementById('prob-word-input').addEventListener('input', updateProbDemo);
+document.getElementById('prob-word-input').addEventListener('keyup', updateProbDemo);
+
+// --- Spinner wheel ---
+const spinnerProbs = {cat: 0.385, dog: 0.231, mat: 0.231, food: 0.077, floor: 0.077};
+const spinnerColors = ['#4ecdc4','#ff6b6b','#ffa502','#6b8aff','#a855f7'];
+let spinnerAngle = 0;
+let spinnerAnimating = false;
+
+function drawWheel(highlightIdx) {
+  const canvas = document.getElementById('spinner-canvas');
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width/2, cy = canvas.height/2, r = Math.min(cx,cy) - 15;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  const entries = Object.entries(spinnerProbs);
+  let angle = spinnerAngle;
+  
+  entries.forEach(([word, p], idx) => {
+    const sliceAngle = p * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = idx === highlightIdx ? '#fff' : spinnerColors[idx % spinnerColors.length];
+    ctx.globalAlpha = idx === highlightIdx ? 1 : 0.7;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#0a0a0f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Label
+    const midAngle = angle + sliceAngle / 2;
+    const lx = cx + Math.cos(midAngle) * r * 0.6;
+    const ly = cy + Math.sin(midAngle) * r * 0.6;
+    ctx.fillStyle = idx === highlightIdx ? '#000' : '#fff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(word, lx, ly);
+    const px = cx + Math.cos(midAngle) * r * 0.42;
+    const py = cy + Math.sin(midAngle) * r * 0.42;
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = idx === highlightIdx ? '#333' : '#ccc';
+    ctx.fillText((p*100).toFixed(0)+'%', px, py);
+    
+    angle += sliceAngle;
+  });
+  
+  // Arrow pointer at top
+  ctx.beginPath();
+  ctx.moveTo(cx, 5);
+  ctx.lineTo(cx-8, 18);
+  ctx.lineTo(cx+8, 18);
+  ctx.closePath();
+  ctx.fillStyle = '#ffa502';
+  ctx.fill();
+}
+
+function spinWheel() {
+  if (spinnerAnimating) return;
+  spinnerAnimating = true;
+  document.getElementById('spin-result').textContent = 'Spinning...';
+  
+  // Pick result based on probabilities
+  const entries = Object.entries(spinnerProbs);
+  let r = Math.random(), cumul = 0, resultIdx = 0;
+  for (let i = 0; i < entries.length; i++) {
+    cumul += entries[i][1];
+    if (r <= cumul) { resultIdx = i; break; }
+  }
+  
+  // Calculate target angle so the result lands at top (arrow)
+  let cumAngle = 0;
+  for (let i = 0; i < resultIdx; i++) cumAngle += entries[i][1] * Math.PI * 2;
+  const sliceAngle = entries[resultIdx][1] * Math.PI * 2;
+  const targetMid = cumAngle + sliceAngle / 2;
+  // We want this slice at the top (-PI/2). Wheel rotates, so we set spinnerAngle.
+  // Arrow is at -PI/2 (top). The slice mid is at spinnerAngle + targetMid.
+  // We want spinnerAngle + targetMid = -PI/2 + 2PI*N
+  const spins = 3 + Math.random() * 3; // 3-6 full spins
+  const finalAngle = -Math.PI/2 - targetMid + Math.PI * 2 * Math.floor(spins);
+  
+  const startAngle = spinnerAngle;
+  const totalRotation = finalAngle - startAngle;
+  const duration = 2000;
+  const startTime = performance.now();
+  
+  function animate(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - t, 3);
+    spinnerAngle = startAngle + totalRotation * ease;
+    drawWheel(t >= 1 ? resultIdx : -1);
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinnerAnimating = false;
+      document.getElementById('spin-result').textContent = `→ "${entries[resultIdx][0]}"!`;
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// --- Temperature demo ---
+function softmax(scores) {
+  const max = Math.max(...scores);
+  const exps = scores.map(s => Math.exp(s - max));
+  const total = exps.reduce((a,b)=>a+b,0);
+  return exps.map(e => e/total);
+}
+
+function applyTemp(probs, temp) {
+  const entries = Object.entries(probs);
+  const logProbs = entries.map(([w,p]) => Math.log(p + 1e-10));
+  const scaled = logProbs.map(lp => lp / temp);
+  const sm = softmax(scaled);
+  const result = {};
+  entries.forEach(([w], i) => result[w] = sm[i]);
+  return result;
+}
+
+const tempBaseProbs = {cat: 0.385, dog: 0.231, mat: 0.231, food: 0.077, floor: 0.077};
+
+function updateTempDemo() {
+  const temp = parseFloat(document.getElementById('temp-slider').value);
+  document.getElementById('temp-val').textContent = temp.toFixed(1);
+  const adjusted = applyTemp(tempBaseProbs, temp);
+  renderBarChart('temp-bar-chart', adjusted);
+  
+  const sorted = Object.entries(adjusted).sort((a,b)=>b[1]-a[1]);
+  const topP = (sorted[0][1]*100).toFixed(1);
+  let desc = '';
+  if (temp < 0.5) desc = `❄️ Very cold — "${sorted[0][0]}" dominates at ${topP}%. Almost always the same word.`;
+  else if (temp < 0.9) desc = `Cool — "${sorted[0][0]}" is the favorite at ${topP}%, but others have a shot.`;
+  else if (temp < 1.2) desc = `Neutral — the original chances, barely changed.`;
+  else if (temp < 2.0) desc = `Warm — bars are flattening. More variety, less predictable.`;
+  else desc = `🔥 Hot — almost a coin flip! "${sorted[0][0]}" is only at ${topP}%. Chaos mode.`;
+  document.getElementById('temp-desc').textContent = desc;
+}
+
+// --- Softmax step-by-step demo ---
+function updateSoftmaxDemo() {
+  const temp = parseFloat(document.getElementById('softmax-temp-slider').value);
+  document.getElementById('softmax-temp-val').textContent = temp.toFixed(1);
+  
+  const scores = [10, 5, 2];
+  const words = ['cat', 'dog', 'mat'];
+  const divided = scores.map(s => s / temp);
+  const max = Math.max(...divided);
+  const exps = divided.map(d => Math.exp(d - max));
+  const total = exps.reduce((a,b)=>a+b,0);
+  const probs = exps.map(e => e / total);
+  
+  let html = '';
+  html += `<strong>Scores:</strong> ${words.map((w,i) => `${w}=${scores[i]}`).join(', ')}<br>`;
+  html += `<br><strong>Step 1:</strong> Divide by T=${temp.toFixed(1)}<br>`;
+  html += words.map((w,i) => `  ${scores[i]} ÷ ${temp.toFixed(1)} = <span class="result">${divided[i].toFixed(2)}</span>`).join('<br>') + '<br>';
+  html += `<br><strong>Step 2:</strong> e^ each value (e ≈ 2.718)<br>`;
+  html += words.map((w,i) => `  e^${divided[i].toFixed(2)} = <span class="result">${(Math.exp(divided[i])).toFixed(2)}</span>`).join('<br>') + '<br>';
+  const rawExps = divided.map(d => Math.exp(d));
+  const rawTotal = rawExps.reduce((a,b)=>a+b,0);
+  html += `<br><strong>Step 3:</strong> Divide by total (${rawExps.map(e=>e.toFixed(2)).join(' + ')} = ${rawTotal.toFixed(2)})<br>`;
+  html += words.map((w,i) => `  ${rawExps[i].toFixed(2)} ÷ ${rawTotal.toFixed(2)} = <span class="result">${(rawExps[i]/rawTotal*100).toFixed(1)}%</span> ← ${w}`).join('<br>') + '<br>';
+  html += `<br>Sum: ${(probs.reduce((a,b)=>a+b,0)*100).toFixed(1)}% ✓`;
+  
+  document.getElementById('softmax-steps').innerHTML = html;
+}
+
+// --- Top-K demo ---
+const topKBaseProbs = {cat:0.25, dog:0.20, mat:0.15, food:0.12, floor:0.10, was:0.08, ran:0.06, from:0.04};
+
+function updateTopKDemo() {
+  const k = parseInt(document.getElementById('topk-slider').value);
+  document.getElementById('topk-val').textContent = k;
+  
+  // Apply top-k: keep top k, zero rest, re-normalize
+  const sorted = Object.entries(topKBaseProbs).sort((a,b)=>b[1]-a[1]);
+  const kept = sorted.slice(0, k);
+  const total = kept.reduce((a,e)=>a+e[1],0);
+  const result = {};
+  sorted.forEach(([w,p], idx) => {
+    result[w] = idx < k ? p/total : 0;
+  });
+  
+  renderBarChart('topk-bar-chart', result, {topK: k});
+  
+  const desc = k === 1 ? `Only "${sorted[0][0]}" survives. Always the same word.` :
+    k <= 3 ? `Top ${k} candidates. Focused but with some variety.` :
+    k <= 5 ? `Top ${k} candidates. Good balance of quality and creativity.` :
+    `Top ${k} — most words survive. Almost no filtering.`;
+  document.getElementById('topk-desc').textContent = desc;
+}
+
+// ========== INIT ==========
+updateProgress();
+updateProbDemo();
+drawWheel(-1);
+updateTempDemo();
+updateSoftmaxDemo();
+updateTopKDemo();
+
+// Load Pyodide
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+script.onload = initPyodide;
+document.head.appendChild(script);
+</script>
+</body>
+</html>

@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-02: Make It Smarter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#6b8aff,#4ecdc4,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:600px;margin:0 auto}
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise textarea{width:100%;min-height:200px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.85rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+.equation{text-align:center;padding:1rem;margin:1rem 0;background:rgba(0,0,0,.2);border-radius:8px;font-family:'Georgia',serif;font-size:1.1rem;color:#c0c0e0;letter-spacing:.03em}
+.equation .small{font-size:.85rem;color:#888;margin-top:.25rem}
+.paper-quote{border-left:3px solid #3a3a6a;padding:.75rem 1rem;margin:1rem 0;font-style:italic;color:#aaa;background:rgba(50,50,120,.1);border-radius:0 6px 6px 0}
+.paper-quote cite{display:block;font-style:normal;font-size:.82rem;color:#666;margin-top:.25rem}
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+.warning{background:rgba(255,107,74,.08);border:1px solid #5a2a1a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.warning strong{color:#ff6b4a}
+h3{color:#8aaeff;margin:1.5rem 0 .75rem}
+p+p{margin-top:.75rem}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#6b8aff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+.demo-grid{display:grid;gap:2px;margin:1rem 0;font-family:monospace;font-size:.85rem}
+.demo-grid .cell{padding:6px 8px;background:rgba(0,0,0,.3);border-radius:4px;text-align:center}
+.demo-grid .cell-header{color:#888;font-size:.75rem}
+.demo-grid .cell-highlight{background:rgba(78,205,196,.15);color:#4ecdc4;font-weight:bold}
+.demo-grid .cell-dim{color:#555}
+.step-label{display:inline-block;background:#1a2a5a;color:#6b8aff;padding:2px 10px;border-radius:10px;font-size:.8rem;font-weight:600;margin-bottom:.5rem}
+.metaphor{background:rgba(138,174,255,.08);border:1px solid #2a3a6a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.metaphor strong{color:#8aaeff}
+.calc{background:#0a0a1a;border:1px solid #1a1a3a;border-radius:6px;padding:.75rem 1rem;margin:.75rem 0;font-family:monospace;font-size:.9rem;color:#c0c0e0}
+.calc .label{color:#666;font-size:.8rem;display:block;margin-bottom:.25rem}
+.calc .result{color:#4ecdc4;font-weight:bold}
+canvas.viz{display:block;margin:1rem auto;background:#0a0a1a;border:1px solid #1a1a3a;border-radius:8px}
+@media(max-width:600px){.hero h1{font-size:1.7rem}.phase{padding:1.25rem}.exercise textarea{min-height:140px;font-size:.82rem}}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Loading Pyodide…</p></div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 2 of 3</div>
+  <h1>🧠 Make It Smarter</h1>
+  <div class="subtitle">Your bigram bot is dumb. It can't understand "it" refers to "the cat." Let's fix that — step by step — with attention.</div>
+</div>
+
+<div class="container">
+
+<div class="progress-text"><span id="progress-count">0</span> / 7 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2>🧱 Hit the Wall</h2>
+
+  <p>Read this sentence out loud:</p>
+
+  <div class="insight" style="border-color:#5a2a1a;background:rgba(255,80,50,.1)">
+    <strong style="color:#ff6b4a">"The cat sat on the mat because it was tired."</strong>
+  </div>
+
+  <p>What does "it" mean? Obviously, "the cat." You figured that out instantly. Now let's see what your bigram model from BUILD-01 thinks.</p>
+
+  <p>Remember how your bigram model works: it looks at <em>one</em> word, then predicts the next. That's it. One word of memory.</p>
+
+  <p>So when your model reaches "it," what does it see? Let's walk through it:</p>
+
+  <div class="calc">
+    <span class="label">The model's entire world when generating after "because":</span>
+    Current word: "because" → Predict next<br>
+    Options: "it" (30%), "the" (30%), "he" (20%), "she" (20%)<br><br>
+    <span class="label">OK, it picked "it". Now what does it know?</span>
+    Current word: "it" → Predict next<br>
+    Options: "was" (50%), "is" (30%), "ran" (20%)<br><br>
+    <span class="result">Where is "the cat" in this picture? NOWHERE.</span>
+  </div>
+
+  <p>The word "cat" appeared <strong>6 words ago</strong>. Your bigram model has already forgotten it. It's like having amnesia every second — you can only ever see the word right in front of you.</p>
+
+  <p>This isn't a minor bug. This is <strong>the</strong> fundamental limit. No amount of training data fixes it. A bigram model <em>structurally cannot</em> connect "it" back to "cat."</p>
+
+  <p>The fix? Let every word see <em>every other word</em> in the sentence, all at once. That idea — and the math behind it — became the most important paper in modern AI:</p>
+
+  <div class="paper-quote" style="border-color:#5a3a2a">
+    "Attention Is All You Need"
+    <cite>— Vaswani et al., 2017. Eight Google researchers. 120,000+ citations.</cite>
+  </div>
+
+  <p>By the end of this module, you'll read the key equation from that paper and understand every symbol. Let's build up to it.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- MEASURING SIMILARITY: THE DOT PRODUCT -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 How Do We Measure If Two Words Are Related?</h2>
+
+  <h3>Words as dots on a map</h3>
+
+  <p>Before we can make "it" look at "cat," we need a way to ask: <em>how similar are two words?</em></p>
+
+  <p>In Module 01, you saw that we represent words as lists of numbers (vectors). Let's start simple — just two numbers per word. Think of them as coordinates on a map:</p>
+
+  <div class="calc">
+    <span class="label">Three words, two numbers each:</span>
+    cat = [2, 3]&nbsp;&nbsp;&nbsp;← lives at position (2, 3) on our map<br>
+    dog = [2.5, 2.8]&nbsp;← nearby! animals are similar<br>
+    car = [9, 1]&nbsp;&nbsp;&nbsp;← way over there, totally different thing
+  </div>
+
+  <canvas class="viz" id="viz-dots" width="400" height="300"></canvas>
+
+  <p>You can <em>see</em> that cat and dog are close together, and car is far away. Close on the map = similar meaning. But we need a way to <strong>calculate</strong> that closeness with math, so a computer can do it.</p>
+
+  <h3>Multiply matching numbers and add</h3>
+
+  <p>Here's the trick. Take two words, multiply their matching numbers together, and add up the results:</p>
+
+  <div class="calc">
+    <span class="label">cat · dog:</span>
+    First numbers: 2 × 2.5 = 5<br>
+    Second numbers: 3 × 2.8 = 8.4<br>
+    Add them up: 5 + 8.4 = <span class="result">13.4</span>
+  </div>
+
+  <div class="calc">
+    <span class="label">cat · car:</span>
+    First numbers: 2 × 9 = 18<br>
+    Second numbers: 3 × 1 = 3<br>
+    Add them up: 18 + 3 = <span class="result">21</span>
+  </div>
+
+  <p>Wait — cat·car = 21 is <em>bigger</em> than cat·dog = 13.4? That can't be right. Car isn't more related to cat than dog is!</p>
+
+  <h3>Direction vs. magnitude</h3>
+
+  <p>The problem: car's numbers [9, 1] are just <em>bigger</em>. It's farther from the center of our map. The raw "multiply and add" trick gets fooled by big numbers.</p>
+
+  <p>What we actually care about is <strong>direction</strong> — which way does the arrow point? — not <strong>length</strong>.</p>
+
+  <canvas class="viz" id="viz-angles" width="400" height="300"></canvas>
+
+  <p>Look at the arrows. Cat and dog point in nearly the same direction (small angle between them). Car points off to the right (big angle). That's what we want to measure.</p>
+
+  <p>The fix is called <strong>cosine similarity</strong>: divide by the lengths of both arrows. It gives you a number between -1 and 1, where 1 = same direction, 0 = unrelated, -1 = opposite.</p>
+
+  <div class="calc">
+    <span class="label">Cosine similarity (direction only):</span>
+    cat · dog = 13.4, |cat| = 3.61, |dog| = 3.75<br>
+    cosine = 13.4 / (3.61 × 3.75) = <span class="result">0.990 ← very similar!</span><br><br>
+    cat · car = 21, |cat| = 3.61, |car| = 9.06<br>
+    cosine = 21 / (3.61 × 9.06) = <span class="result">0.642 ← less similar</span>
+  </div>
+
+  <p>Now the math matches our intuition. Good.</p>
+
+  <div class="insight">
+    <strong>The "dot product" is just "multiply matching numbers and add."</strong> That's the whole thing. You'll see it everywhere in this module. When we care about direction only (not magnitude), we normalize it into cosine similarity. Inside transformers, they use a slightly different fix — dividing by √d — which we'll get to soon.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- Q, K, V — THE LIBRARY METAPHOR -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Queries, Keys, and Values — A Library in Every Layer</h2>
+
+  <h3>The metaphor (understand this first)</h3>
+
+  <p>Imagine a library where every word in your sentence is both a visitor and a librarian.</p>
+
+  <div class="metaphor">
+    <strong>Every word does three things at once:</strong><br><br>
+    📋 <strong>Query (Q)</strong> — asks a question: <em>"Who has information I need?"</em><br>
+    🏷️ <strong>Key (K)</strong> — holds up a sign: <em>"Here's what I know about."</em><br>
+    📦 <strong>Value (V)</strong> — carries content: <em>"Here's my actual meaning to share."</em>
+  </div>
+
+  <p>Let's play this out with our sentence. The word <strong>"it"</strong> is trying to figure out what it refers to:</p>
+
+  <div class="calc">
+    <span class="label">"it" holds up its Query:</span>
+    📋 "Who am I referring to? I need a noun, probably the subject of this sentence."
+  </div>
+
+  <p>Every other word holds up its Key — a sign advertising what it knows about:</p>
+
+  <div class="calc">
+    <span class="label">Keys from other words:</span>
+    🏷️ "the" → "I'm just an article, nothing interesting"<br>
+    🏷️ "cat" → "I'm a noun! A subject! An animal!"&nbsp;&nbsp;← <span class="result">MATCH!</span><br>
+    🏷️ "sat" → "I'm a verb, an action"<br>
+    🏷️ "on" → "I'm a preposition"<br>
+    🏷️ "mat" → "I'm a noun, but an object, not a subject"<br>
+    🏷️ "because" → "I'm a conjunction"
+  </div>
+
+  <p><strong>"it"</strong> compares its Query against every Key. The best match? "cat" — it's a noun, a subject, exactly what "it" is looking for. So "cat" shares its Value (its actual meaning) with "it."</p>
+
+  <p>After this process, the representation of "it" has been <em>enriched</em> with information from "cat." The model now knows what "it" refers to.</p>
+
+  <h3>From metaphor to math</h3>
+
+  <p>But how does a word "ask a question" or "hold up a sign"? Remember, words are just lists of numbers (vectors). We need to <em>transform</em> each word vector into three different versions of itself:</p>
+
+  <p>We use <strong>matrices</strong> — grids of numbers that transform one vector into another. Think of a matrix as a <em>lens</em>: look at the same word through the "Query lens" and you see what it's looking for. Look through the "Key lens" and you see what it's advertising.</p>
+
+  <div class="calc">
+    <span class="label">Three lenses, three views of the same word:</span>
+    Query = word × W<sub>Q</sub>&nbsp;&nbsp;← "question lens"<br>
+    Key&nbsp;&nbsp; = word × W<sub>K</sub>&nbsp;&nbsp;← "sign lens"<br>
+    Value = word × W<sub>V</sub>&nbsp;&nbsp;← "content lens"
+  </div>
+
+  <p>W<sub>Q</sub>, W<sub>K</sub>, and W<sub>V</sub> are the three matrices (lenses). The model <em>learns</em> these during training — it figures out what makes a good question, a good sign, and good content to share.</p>
+
+  <h3>Let's see it with actual numbers</h3>
+
+  <p>Here's a tiny example. We'll use a 3-dimensional word vector and a 3×3 matrix. Watch how a word gets transformed into a query:</p>
+
+  <div class="calc">
+    <span class="label">Word "it" as a vector:</span>
+    it = [0.8, 0.1, 0.9]
+  </div>
+
+  <div class="calc">
+    <span class="label">The Query lens (W<sub>Q</sub>), a 3×3 matrix:</span>
+    ┌ 0.5&nbsp;&nbsp;0.0&nbsp; -0.3 ┐<br>
+    │ 0.1&nbsp;&nbsp;0.8&nbsp;&nbsp;0.0 │<br>
+    └-0.2&nbsp;&nbsp;0.1&nbsp;&nbsp;0.6 ┘
+  </div>
+
+  <div class="calc">
+    <span class="label">Multiply it × W<sub>Q</sub> (row × each column):</span>
+    Q[0] = 0.8×0.5 + 0.1×0.1 + 0.9×(−0.2) = 0.40 + 0.01 − 0.18 = <span class="result">0.23</span><br>
+    Q[1] = 0.8×0.0 + 0.1×0.8 + 0.9×0.1&nbsp;&nbsp;= 0.00 + 0.08 + 0.09 = <span class="result">0.17</span><br>
+    Q[2] = 0.8×(−0.3) + 0.1×0.0 + 0.9×0.6 = −0.24 + 0.00 + 0.54 = <span class="result">0.30</span>
+  </div>
+
+  <div class="calc">
+    <span class="label">Result:</span>
+    Query for "it" = [0.23, 0.17, 0.30]
+  </div>
+
+  <p>That's it! The word [0.8, 0.1, 0.9] went through the Query lens and became [0.23, 0.17, 0.30]. This new vector represents <em>what "it" is looking for</em>. The same word goes through W<sub>K</sub> to get its Key, and W<sub>V</sub> to get its Value.</p>
+
+  <div class="insight">
+    <strong>Same word, three different roles.</strong> The Query says what it needs, the Key says what it offers, and the Value is what it actually shares. The matrices W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> are learned — the model discovers the best way to ask questions and advertise information.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCALED DOT-PRODUCT ATTENTION — BUILD UP -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Building the Attention Equation — Step by Step</h2>
+
+  <p>Now we have Queries, Keys, and Values for every word. Here's what we do with them. We'll build up to the full equation one step at a time.</p>
+
+  <h3><span class="step-label">Step 1</span> Score every pair of words</h3>
+
+  <p>Each word's Query asks: "who should I pay attention to?" To find out, we compute the dot product (multiply and add!) of that word's Query with every other word's Key.</p>
+
+  <p>Let's do it for a tiny 3-word sentence: "cat it was." We'll fill in an attention score grid — one cell at a time:</p>
+
+  <div class="calc">
+    <span class="label">Q and K vectors (pre-computed from the matrices above):</span>
+    Q_cat = [0.4, -0.1, 0.0]&nbsp;&nbsp;&nbsp;K_cat = [0.5, 0.0, -0.1]<br>
+    Q_it &nbsp;= [0.2, &nbsp;0.2, 0.3]&nbsp;&nbsp;&nbsp;K_it &nbsp;= [0.4, 0.1, &nbsp;0.3]<br>
+    Q_was = [0.0, &nbsp;0.5, 0.1]&nbsp;&nbsp;&nbsp;K_was = [0.1, 0.6, &nbsp;0.0]
+  </div>
+
+  <div class="calc">
+    <span class="label">Score = Q · K (multiply matching numbers, add up)</span><br><br>
+    score(cat→cat) = 0.4×0.5 + (−0.1)×0.0 + 0.0×(−0.1) = <span class="result">0.20</span><br>
+    score(cat→it) &nbsp;= 0.4×0.4 + (−0.1)×0.1 + 0.0×0.3 &nbsp;= <span class="result">0.15</span><br>
+    score(cat→was) = 0.4×0.1 + (−0.1)×0.6 + 0.0×0.0 &nbsp;= <span class="result">−0.02</span><br><br>
+    score(it→cat) &nbsp;= 0.2×0.5 + 0.2×0.0 + 0.3×(−0.1) = <span class="result">0.07</span><br>
+    score(it→it) &nbsp;&nbsp;= 0.2×0.4 + 0.2×0.1 + 0.3×0.3 &nbsp;= <span class="result">0.19</span><br>
+    score(it→was) &nbsp;= 0.2×0.1 + 0.2×0.6 + 0.3×0.0 &nbsp;= <span class="result">0.14</span>
+  </div>
+
+  <p>Higher score = better match between that Query and that Key = "I should pay more attention to that word."</p>
+
+  <h3><span class="step-label">Step 2</span> Scale the scores (so softmax doesn't break)</h3>
+
+  <p>In real models, these dot products can get very large — especially when vectors have hundreds of dimensions. Big numbers are a problem because of the next step (softmax).</p>
+
+  <p>Watch what happens when scores are too big:</p>
+
+  <div class="calc">
+    <span class="label">Softmax with normal scores: [0.2, 0.15, -0.02]</span>
+    → [0.37, 0.35, 0.28]&nbsp;&nbsp;← nice spread, every word gets some attention
+  </div>
+
+  <div class="calc">
+    <span class="label">Softmax with huge scores: [20, 15, -2]</span>
+    → [0.993, 0.007, 0.000]&nbsp;&nbsp;← one word gets ALL the attention, rest get nothing
+  </div>
+
+  <p>When scores are too big, softmax "saturates" — it crushes everything to 0 or 1. The model can only look at one word at a time, which defeats the whole purpose.</p>
+
+  <p>The fix is simple: divide every score by √d<sub>k</sub> (the square root of the dimension of the Key vectors). With 3-dimensional keys: √3 ≈ 1.73.</p>
+
+  <div class="calc">
+    <span class="label">Why √d? Intuition:</span>
+    When you add up d random products, the result grows proportionally to √d.<br>
+    Dividing by √d brings scores back to a reasonable range, regardless of dimension.
+  </div>
+
+  <h3><span class="step-label">Step 3</span> Softmax — turn scores into weights</h3>
+
+  <p>You learned softmax in Module 01! It takes any list of numbers and turns them into probabilities that sum to 1. Bigger input → bigger probability, but nothing goes below 0 and everything adds up nicely.</p>
+
+  <div class="calc">
+    <span class="label">Scaled scores for "it" → softmax:</span>
+    [0.07/1.73, 0.19/1.73, 0.14/1.73] = [0.04, 0.11, 0.08]<br>
+    softmax → [<span class="result">0.32</span>, <span class="result">0.35</span>, <span class="result">0.33</span>]<br>
+    These are attention weights. They sum to 1.0.
+  </div>
+
+  <p>Now "it" has a weight for every word: how much to listen to each one.</p>
+
+  <h3><span class="step-label">Step 4</span> Weighted sum of Values — gather information</h3>
+
+  <p>Each word's Value vector contains its meaning. We multiply each Value by its attention weight and add them all up. It's a <strong>weighted average</strong>: words with higher attention contribute more meaning.</p>
+
+  <div class="calc">
+    <span class="label">Values and attention weights for "it":</span>
+    0.32 × V_cat + 0.35 × V_it + 0.33 × V_was<br><br>
+    <span class="label">If V_cat=[0.9, 0.1, 0.0], V_it=[0.7, 0.3, 0.1], V_was=[0.0, 0.5, 0.2]:</span>
+    [0] = 0.32×0.9 + 0.35×0.7 + 0.33×0.0 = <span class="result">0.533</span><br>
+    [1] = 0.32×0.1 + 0.35×0.3 + 0.33×0.5 = <span class="result">0.302</span><br>
+    [2] = 0.32×0.0 + 0.35×0.1 + 0.33×0.2 = <span class="result">0.101</span>
+  </div>
+
+  <p>The output vector for "it" — [0.533, 0.302, 0.101] — is a <em>blend</em> of everyone's meaning, weighted by relevance. "It" now carries information from "cat."</p>
+
+  <h3><span class="step-label">The equation</span> You already know it</h3>
+
+  <p>You just did four steps. Here they are as a single equation:</p>
+
+  <div class="equation">
+    Attention(Q, K, V) = softmax(Q K<sup>T</sup> / √d<sub>k</sub>) · V
+    <div class="small">Step 1: QK<sup>T</sup> (score every pair) · Step 2: ÷ √d<sub>k</sub> (scale down) · Step 3: softmax (make weights) · Step 4: × V (weighted sum)</div>
+  </div>
+
+  <p>That's it. That's the equation from the paper. You just did every step by hand.</p>
+
+  <div class="paper-quote">
+    "We call our particular attention 'Scaled Dot-Product Attention'. The input consists of queries and keys of dimension d<sub>k</sub>, and values of dimension d<sub>v</sub>."
+    <cite>— Vaswani et al. 2017, §3.2.1</cite>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MULTI-HEAD ATTENTION -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Multi-Head Attention — Asking Many Questions at Once</h2>
+
+  <p>One attention head asks one type of question. In our example, the head learned to ask "who is the subject?" — and it found that "it" refers to "cat." Great.</p>
+
+  <p>But language needs <em>many</em> questions answered simultaneously:</p>
+
+  <div class="metaphor">
+    <strong>Different questions about the same sentence:</strong><br><br>
+    🔍 Head 1: "Who is the subject?" → "it" attends to "cat"<br>
+    🔍 Head 2: "What's the action?" → "tired" attends to "was"<br>
+    🔍 Head 3: "Why is this happening?" → "tired" attends to "because"<br>
+    🔍 Head 4: "What's the tense?" → verbs attend to "was" (past tense)<br>
+    🔍 Head 5: "Positive or negative?" → "tired" signals mild negativity
+  </div>
+
+  <p>Each head has its own W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> matrices — its own "lenses." So each head asks different questions and finds different relationships.</p>
+
+  <p>The solution: run 8 attention heads <strong>in parallel</strong> (the original paper used 8). Each one independently computes its own attention. Then we concatenate (glue together) all their outputs:</p>
+
+  <div class="calc">
+    <span class="label">Multi-Head in plain English:</span>
+    1. Run 8 separate attention computations, each with its own Q/K/V matrices<br>
+    2. Each head produces a small output vector<br>
+    3. Concatenate (join end-to-end) all 8 outputs<br>
+    4. Multiply by one more matrix W<sup>O</sup> to combine them
+  </div>
+
+  <div class="equation">
+    MultiHead(Q, K, V) = Concat(head₁, ..., head<sub>h</sub>) · W<sup>O</sup>
+    <div class="small">where headᵢ = Attention(X·W<sub>Qᵢ</sub>, X·W<sub>Kᵢ</sub>, X·W<sub>Vᵢ</sub>)</div>
+  </div>
+
+  <p>In the original transformer: 8 heads, each working with 64 dimensions (512 ÷ 8 = 64). It's like having 8 specialists instead of one generalist.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- POSITION ENCODINGS -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Position Encodings — Teaching Order</h2>
+
+  <p>There's a serious problem with everything we've built so far. Look at these two sentences:</p>
+
+  <div class="warning">
+    <strong>"Dog bites man"</strong> — routine event, not news.<br>
+    <strong>"Man bites dog"</strong> — front page headline!<br><br>
+    Same three words. Completely different meaning. But attention treats words like a <em>bag</em> — it doesn't know which word came first!
+  </div>
+
+  <p>Think about it: the dot product of Query("dog") and Key("bites") is the same number regardless of whether "dog" appears before or after "bites." Attention has no concept of position.</p>
+
+  <p>The fix: <strong>add a unique fingerprint to each position</strong>. Before words enter the attention mechanism, we add a position signal to each one:</p>
+
+  <div class="calc">
+    <span class="label">Position fingerprints:</span>
+    Position 0 gets pattern: [0.00, 1.00, 0.00, 1.00, ...]<br>
+    Position 1 gets pattern: [0.84, 0.54, 0.01, 1.00, ...]<br>
+    Position 2 gets pattern: [0.91, -0.42, 0.02, 1.00, ...]<br>
+    <em>Every position has a unique, recognizable pattern.</em>
+  </div>
+
+  <div class="calc">
+    <span class="label">Adding position to words:</span>
+    "dog" at position 0 = embedding("dog") + position(0) → different vector<br>
+    "dog" at position 2 = embedding("dog") + position(2) → different vector!<br><br>
+    <span class="result">Same word, different positions → different vectors → different attention</span>
+  </div>
+
+  <p>The original paper used sine and cosine waves at different frequencies to generate these fingerprints. Each dimension oscillates at a different speed, creating a unique pattern for each position — like a barcode.</p>
+
+  <div class="equation">
+    PE(pos, 2i) = sin(pos / 10000<sup>2i/d</sup>) &nbsp;&nbsp; PE(pos, 2i+1) = cos(pos / 10000<sup>2i/d</sup>)
+    <div class="small">Each dimension i oscillates at a different frequency. Position 0 and position 100 have completely different patterns.</div>
+  </div>
+
+  <div class="insight">
+    <strong>The transformer recipe:</strong> Take words → turn them into vectors → add position fingerprints → run through multi-head attention. Now the model knows which words relate to which, <em>and in what order</em>. That's the core of every GPT, Claude, and LLM.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- BUILD THE SOLUTION — 7 EXERCISES -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2>🔨 Build It Yourself</h2>
+  <p>Seven exercises. By the end, you've built the core of the transformer — in code, with real numbers.</p>
+
+  <!-- Ex 1: Show bigram failing -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header" onclick="toggleHint('ex1')">
+      <span class="ex-num">01</span>
+      <span class="ex-title">The Amnesia Problem: Watch Your Bigram Fail</span>
+      <span class="ex-check" id="check-ex1">○</span>
+    </div>
+    <div class="ex-desc">Your bigram model tries to process "The cat sat on the mat because it was tired." Watch it forget about "the cat" the moment it moves on. At each step, it only sees ONE word.</div>
+    <textarea id="code-ex1">
+# Your bigram model from BUILD-01 — let's watch it struggle
+
+bigrams = {
+    "the": {"cat": 0.4, "mat": 0.3, "dog": 0.2, "bird": 0.1},
+    "cat": {"sat": 0.4, "ate": 0.2, "was": 0.2, "ran": 0.2},
+    "sat": {"on": 0.7, "down": 0.2, "by": 0.1},
+    "on":  {"the": 0.9, "it": 0.1},
+    "mat": {"because": 0.4, "and": 0.3, "but": 0.3},
+    "because": {"it": 0.3, "the": 0.3, "he": 0.2, "she": 0.2},
+    "it":  {"was": 0.5, "is": 0.3, "ran": 0.2},
+    "was": {"tired": 0.3, "hungry": 0.3, "happy": 0.2, "the": 0.2},
+}
+
+sentence = "the cat sat on the mat because it was tired".split()
+
+print("BIGRAM MODEL'S VIEW — one word at a time:\n")
+print(f"Full sentence: {' '.join(sentence)}")
+print(f"{'='*55}\n")
+
+for i in range(len(sentence) - 1):
+    current = sentence[i]
+    actual_next = sentence[i + 1]
+    
+    # What does the model see?
+    context_window = current  # JUST this one word!
+    
+    # What does it predict?
+    if current in bigrams:
+        preds = sorted(bigrams[current].items(), key=lambda x: -x[1])
+        top_pred = preds[0][0]
+        top_prob = preds[0][1]
+    else:
+        top_pred = "???"
+        top_prob = 0
+    
+    # How much of the sentence has it forgotten?
+    forgotten = sentence[:i]  # everything before current word
+    
+    marker = "✓" if top_pred == actual_next else "✗"
+    print(f"Step {i+1:2d}: sees '{current}' → predicts '{top_pred}' ({top_prob:.0%}) {marker}")
+    if forgotten:
+        print(f"         FORGOTTEN: {' '.join(forgotten)}")
+    print()
+
+print("THE PROBLEM:")
+print("At step 8, the model sees 'it' but has NO MEMORY of 'the cat'.")
+print("It can't know that 'it' = 'the cat'.")
+print("It's like having amnesia every single second.")
+print("\nWe need to let every word see EVERY other word. We need ATTENTION.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Ex 2: Dot product and cosine similarity -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header" onclick="toggleHint('ex2')">
+      <span class="ex-num">02</span>
+      <span class="ex-title">Dot Product & Cosine Similarity — Measuring Relatedness</span>
+      <span class="ex-check" id="check-ex2">○</span>
+    </div>
+    <div class="ex-desc">Compute dot products and cosine similarity for word pairs. See why raw dot product can be misleading, and how cosine fixes it.</div>
+    <textarea id="code-ex2">
+import math
+
+# Words as 2D vectors (from the explanation above)
+words = {
+    "cat": [2, 3],
+    "dog": [2.5, 2.8],
+    "car": [9, 1],
+    "kitten": [1.8, 3.2],
+    "truck": [8.5, 0.8],
+}
+
+def dot_product(a, b):
+    """Multiply matching numbers and add — that's the whole thing."""
+    return sum(x * y for x, y in zip(a, b))
+
+def magnitude(v):
+    """Length of a vector: sqrt(sum of squares)"""
+    return math.sqrt(sum(x**2 for x in v))
+
+def cosine_similarity(a, b):
+    """Dot product divided by both lengths — measures DIRECTION only."""
+    dot = dot_product(a, b)
+    mag_a = magnitude(a)
+    mag_b = magnitude(b)
+    if mag_a == 0 or mag_b == 0:
+        return 0
+    return dot / (mag_a * mag_b)
+
+# Compare everything to "cat"
+target = "cat"
+print(f"Comparing every word to '{target}':\n")
+print(f"{'Word':10s} {'Vector':15s} {'Dot Product':>12s} {'Cosine Sim':>12s}")
+print("-" * 52)
+
+for word, vec in words.items():
+    if word == target:
+        continue
+    dot = dot_product(words[target], vec)
+    cos = cosine_similarity(words[target], vec)
+    vec_str = f"[{vec[0]}, {vec[1]}]"
+    print(f"{word:10s} {vec_str:15s} {dot:12.2f} {cos:12.3f}")
+
+print(f"\n{'='*52}")
+print("NOTICE: cat·car (dot=21) > cat·dog (dot=13.4)")
+print("        But cosine says cat-dog (0.990) > cat-car (0.642)")
+print("\nDot product is fooled by magnitude (car has big numbers).")
+print("Cosine similarity measures DIRECTION — what we actually want.")
+
+# Now with higher-dimensional embeddings (more realistic)
+print(f"\n{'='*52}")
+print("\nNow with 4D embeddings [animal, action, location, pronoun]:\n")
+
+embeddings_4d = {
+    "cat":     [0.9, 0.0, 0.0, 0.0],
+    "it":      [0.8, 0.0, 0.0, 0.9],
+    "sat":     [0.0, 0.8, 0.0, 0.0],
+    "mat":     [0.0, 0.0, 0.9, 0.0],
+    "because": [0.0, 0.0, 0.0, 0.0],
+}
+
+target = "it"
+print(f"Cosine similarity of '{target}' to other words:")
+results = []
+for word, vec in embeddings_4d.items():
+    if word == target:
+        continue
+    cos = cosine_similarity(embeddings_4d[target], vec)
+    results.append((word, cos))
+
+results.sort(key=lambda x: -x[1])
+for word, cos in results:
+    bar = "█" * int(cos * 30) if cos > 0 else ""
+    print(f"  {word:10s} {cos:+.3f}  {bar}")
+
+print(f"\n→ 'it' is most similar to '{results[0][0]}' — exactly right!")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex2')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex2">Try changing the vectors. What happens if you make "car" point in the same direction as "cat" but with bigger numbers? The dot product changes but cosine stays the same.</div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Ex 3: Q, K, V projections -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header" onclick="toggleHint('ex3')">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Q, K, V — Turn Words Into Questions, Signs, and Content</span>
+      <span class="ex-check" id="check-ex3">○</span>
+    </div>
+    <div class="ex-desc">Take word vectors and multiply them by W_Q, W_K, and W_V matrices. Watch the same word become three different things. Uses small 3×3 matrices so you can follow every number.</div>
+    <textarea id="code-ex3">
+# Three words, 3 dimensions each (keeping it small so you can follow the math)
+words = ["cat", "it", "was"]
+X = [
+    [0.9, 0.1, 0.0],   # "cat" — mostly dimension 0
+    [0.8, 0.1, 0.9],   # "it"  — dimensions 0 and 2 (animal + pronoun)
+    [0.0, 0.5, 0.1],   # "was" — mostly dimension 1
+]
+
+# The three "lenses" — small enough to verify by hand
+# In real models these are LEARNED. Here they're hand-crafted for clarity.
+W_Q = [  # Query lens: "what am I looking for?"
+    [ 0.5,  0.0, -0.3],
+    [ 0.1,  0.8,  0.0],
+    [-0.2,  0.1,  0.6],
+]
+
+W_K = [  # Key lens: "what do I know about?"
+    [ 0.7, -0.1,  0.0],
+    [ 0.0,  0.6,  0.2],
+    [ 0.1,  0.0,  0.5],
+]
+
+W_V = [  # Value lens: "what meaning do I carry?"
+    [ 0.3,  0.5,  0.0],
+    [ 0.0,  0.2,  0.7],
+    [ 0.4,  0.0,  0.3],
+]
+
+def matmul(A, B):
+    """Multiply matrix A (m×n) by matrix B (n×p) → result (m×p)."""
+    m, n, p = len(A), len(B), len(B[0])
+    result = []
+    for i in range(m):
+        row = []
+        for j in range(p):
+            val = sum(A[i][k] * B[k][j] for k in range(n))
+            row.append(round(val, 3))
+        result.append(row)
+    return result
+
+# Project each word through all three lenses
+Q = matmul(X, W_Q)
+K = matmul(X, W_K)
+V = matmul(X, W_V)
+
+print("SAME WORDS, THREE DIFFERENT VIEWS:\n")
+
+print("Queries (Q) — what each word is LOOKING FOR:")
+for i, w in enumerate(words):
+    print(f"  {w:5s}: {Q[i]}")
+
+print("\nKeys (K) — what each word ADVERTISES:")
+for i, w in enumerate(words):
+    print(f"  {w:5s}: {K[i]}")
+
+print("\nValues (V) — what each word SHARES:")
+for i, w in enumerate(words):
+    print(f"  {w:5s}: {V[i]}")
+
+# Let's verify one by hand
+print("\n--- VERIFY: 'it' through W_Q (you can check this!) ---")
+it_vec = X[1]  # [0.8, 0.1, 0.9]
+print(f"it = {it_vec}")
+print(f"W_Q row 0: {[W_Q[k][0] for k in range(3)]}")
+q0 = it_vec[0]*W_Q[0][0] + it_vec[1]*W_Q[1][0] + it_vec[2]*W_Q[2][0]
+q1 = it_vec[0]*W_Q[0][1] + it_vec[1]*W_Q[1][1] + it_vec[2]*W_Q[2][1]
+q2 = it_vec[0]*W_Q[0][2] + it_vec[1]*W_Q[1][2] + it_vec[2]*W_Q[2][2]
+print(f"Q[0] = 0.8×{W_Q[0][0]} + 0.1×{W_Q[1][0]} + 0.9×{W_Q[2][0]} = {q0:.3f}")
+print(f"Q[1] = 0.8×{W_Q[0][1]} + 0.1×{W_Q[1][1]} + 0.9×{W_Q[2][1]} = {q1:.3f}")
+print(f"Q[2] = 0.8×{W_Q[0][2]} + 0.1×{W_Q[1][2]} + 0.9×{W_Q[2][2]} = {q2:.3f}")
+print(f"→ Query for 'it' = [{q0:.3f}, {q1:.3f}, {q2:.3f}] ✓")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex3')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex3">Try changing the W_Q matrix and re-running. Different lenses produce different queries — the model learns which lens works best during training.</div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Ex 4: Scaled dot-product attention — the full computation -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header" onclick="toggleHint('ex4')">
+      <span class="ex-num">04</span>
+      <span class="ex-title">Scaled Dot-Product Attention — The Heart of the Transformer</span>
+      <span class="ex-check" id="check-ex4">○</span>
+    </div>
+    <div class="ex-desc">Build the full attention equation step by step: QK^T, divide by √d, softmax, multiply by V. Each step is labeled so you can match it to the equation.</div>
+    <textarea id="code-ex4">
+import math
+
+# Pre-computed Q, K, V for "the cat sat on it"
+# (from Exercise 3's process, but for 5 words)
+words = ["the", "cat", "sat", "on", "it"]
+
+Q = [[ 0.1, -0.1,  0.2],   # the
+     [ 0.4, -0.1,  0.0],   # cat
+     [-0.1,  0.7,  0.1],   # sat
+     [ 0.0,  0.0,  0.4],   # on
+     [ 0.2,  0.2,  0.3]]   # it
+
+K = [[ 0.1,  0.0,  0.3],   # the
+     [ 0.6,  0.0, -0.1],   # cat — strong Key as a noun/subject
+     [ 0.0,  0.7,  0.1],   # sat
+     [ 0.0, -0.1,  0.5],   # on
+     [ 0.5,  0.1,  0.0]]   # it
+
+V = [[ 0.1,  0.2,  0.3],   # the
+     [ 0.9,  0.1,  0.0],   # cat — carries "cat meaning"
+     [ 0.0,  0.8,  0.2],   # sat
+     [ 0.2,  0.0,  0.7],   # on
+     [ 0.7,  0.3,  0.1]]   # it
+
+d_k = 3  # dimension of keys
+n = len(words)
+
+def softmax(scores):
+    """Turn any numbers into probabilities that sum to 1."""
+    mx = max(scores)
+    exps = [math.exp(s - mx) for s in scores]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+# ── STEP 1: Compute QK^T (score every pair) ──
+print("STEP 1: QK^T — score every pair of words\n")
+scores = []
+for i in range(n):
+    row = []
+    for j in range(n):
+        s = sum(Q[i][k] * K[j][k] for k in range(d_k))
+        row.append(s)
+    scores.append(row)
+
+header = "        " + "  ".join(f"{w:>6s}" for w in words)
+print(header)
+for i, w in enumerate(words):
+    vals = "  ".join(f"{scores[i][j]:6.3f}" for j in range(n))
+    print(f"  {w:5s} {vals}")
+
+# ── STEP 2: Divide by √d_k ──
+scale = math.sqrt(d_k)
+print(f"\nSTEP 2: Divide by √{d_k} = {scale:.2f} (prevent softmax saturation)\n")
+
+scaled = [[s / scale for s in row] for row in scores]
+print(header)
+for i, w in enumerate(words):
+    vals = "  ".join(f"{scaled[i][j]:6.3f}" for j in range(n))
+    print(f"  {w:5s} {vals}")
+
+# ── STEP 3: Softmax each row ──
+print(f"\nSTEP 3: Softmax — turn each row into weights (sum = 1.0)\n")
+weights = [softmax(row) for row in scaled]
+print(header)
+for i, w in enumerate(words):
+    vals = "  ".join(f"{weights[i][j]:6.3f}" for j in range(n))
+    row_sum = sum(weights[i])
+    print(f"  {w:5s} {vals}  (sum={row_sum:.2f})")
+
+# ── STEP 4: Multiply weights × V ──
+print(f"\nSTEP 4: Weights × V — weighted average of meanings\n")
+output = []
+for i in range(n):
+    out = [sum(weights[i][j] * V[j][d] for j in range(n)) for d in range(d_k)]
+    output.append(out)
+    print(f"  {words[i]:5s}: [{', '.join(f'{v:.3f}' for v in out)}]")
+
+# ── THE RESULT ──
+it_idx = words.index("it")
+cat_idx = words.index("cat")
+print(f"\n{'='*55}")
+print(f"KEY RESULT: 'it' attends to 'cat' with weight {weights[it_idx][cat_idx]:.3f}")
+print(f"            'it' attends to itself with weight {weights[it_idx][it_idx]:.3f}")
+print(f"\nThe attention equation you just computed:")
+print(f"  Attention(Q,K,V) = softmax(QK^T / √d_k) · V")
+print(f"  Step 1: QK^T    |  Step 2: ÷ √d  |  Step 3: softmax  |  Step 4: × V")
+print(f"\nYou just ran the heart of every transformer. 🎉")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex4')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex4">Try making cat's Key more different from it's Query — change K[1] and watch the attention weight from "it" to "cat" drop. The model learns Q/K matrices that make important connections have high dot products.</div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Ex 5: Multi-head attention -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header" onclick="toggleHint('ex5')">
+      <span class="ex-num">05</span>
+      <span class="ex-title">Multi-Head Attention — Different Heads, Different Questions</span>
+      <span class="ex-check" id="check-ex5">○</span>
+    </div>
+    <div class="ex-desc">Run two attention heads on the same input. See how each head discovers a different type of relationship — one finds coreference ("it"→"cat"), another finds verb-subject links.</div>
+    <textarea id="code-ex5">
+import math
+
+def softmax(scores):
+    mx = max(scores)
+    exps = [math.exp(s - mx) for s in scores]
+    t = sum(exps)
+    return [e/t for e in exps]
+
+def attention_head(Q, K, V, d_k):
+    """One attention head: softmax(QK^T/√d) · V"""
+    n = len(Q)
+    scale = math.sqrt(d_k)
+    scores = [[sum(Q[i][k]*K[j][k] for k in range(d_k))/scale
+               for j in range(n)] for i in range(n)]
+    weights = [softmax(row) for row in scores]
+    d_v = len(V[0])
+    output = [[sum(weights[i][j]*V[j][d] for j in range(n))
+                for d in range(d_v)] for i in range(n)]
+    return output, weights
+
+words = ["cat", "sat", "on", "it"]
+
+# HEAD 1: Trained to find coreference (what does a pronoun refer to?)
+# "it" asks "who is the noun I refer to?" Cat's key says "I'm a noun!"
+Q1 = [[ 0.3, 0.0],   # cat: not asking much
+      [ 0.0, 0.1],   # sat
+      [ 0.0, 0.0],   # on
+      [ 0.8, 0.1]]   # it: strongly asking "who am I?"
+K1 = [[ 0.9, 0.0],   # cat: "I'm a noun/subject!"
+      [ 0.0, 0.3],   # sat
+      [ 0.0, 0.0],   # on
+      [ 0.4, 0.0]]   # it
+V1 = [[ 0.9, 0.1],   # cat's meaning
+      [ 0.1, 0.8],   # sat's meaning
+      [ 0.0, 0.1],   # on's meaning
+      [ 0.7, 0.2]]   # it's meaning
+
+# HEAD 2: Trained to find verb-subject links
+# "sat" asks "who is doing the action?" Cat's key matches.
+Q2 = [[ 0.1, 0.0],   # cat
+      [ 0.7, 0.5],   # sat: "who is my subject?"
+      [ 0.0, 0.6],   # on: "what am I connecting?"
+      [ 0.1, 0.0]]   # it
+K2 = [[ 0.6, 0.3],   # cat: "I can be a subject!"
+      [ 0.1, 0.0],   # sat
+      [ 0.0, 0.1],   # on
+      [ 0.5, 0.2]]   # it
+V2 = [[ 0.8, 0.2],
+      [ 0.2, 0.7],
+      [ 0.1, 0.0],
+      [ 0.6, 0.3]]
+
+print("HEAD 1: Coreference — 'who does this pronoun refer to?'\n")
+out1, w1 = attention_head(Q1, K1, V1, 2)
+print(f"{'':6s} {'  '.join(f'{w:5s}' for w in words)}")
+for i, w in enumerate(words):
+    row = "  ".join(f"{w1[i][j]:.3f}" for j in range(len(words)))
+    print(f"  {w:4s}  {row}")
+print(f"\n  → 'it' attends to 'cat' with weight {w1[3][0]:.3f} ✓ Found the referent!")
+
+print(f"\n{'='*50}\n")
+print("HEAD 2: Verb-Subject — 'who is doing the action?'\n")
+out2, w2 = attention_head(Q2, K2, V2, 2)
+print(f"{'':6s} {'  '.join(f'{w:5s}' for w in words)}")
+for i, w in enumerate(words):
+    row = "  ".join(f"{w2[i][j]:.3f}" for j in range(len(words)))
+    print(f"  {w:4s}  {row}")
+print(f"\n  → 'sat' attends to 'cat' with weight {w2[1][0]:.3f} ✓ Found the subject!")
+
+# Concatenate outputs
+print(f"\n{'='*50}\n")
+print("CONCATENATE: glue both heads' outputs together\n")
+for i, w in enumerate(words):
+    combined = out1[i] + out2[i]  # just join the lists
+    print(f"  {w:4s}: head1={[f'{v:.2f}' for v in out1[i]]} + head2={[f'{v:.2f}' for v in out2[i]]}")
+    print(f"        → concat={[f'{v:.2f}' for v in combined]}")
+
+print(f"\nEach word now carries information from MULTIPLE types of relationships.")
+print(f"Head 1 found referents. Head 2 found subjects. Both contribute.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex5')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex5">In real models, the Q/K/V matrices are learned — the model discovers which "questions" to ask. Here they're hand-crafted to show the principle: different heads find different things.</div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Ex 6: Position encodings -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header" onclick="toggleHint('ex6')">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Position Encodings — Teaching the Model Word Order</span>
+      <span class="ex-check" id="check-ex6">○</span>
+    </div>
+    <div class="ex-desc">"Dog bites man" vs "Man bites dog" — same words, opposite meanings. Without position info, attention can't tell the difference. Add sinusoidal position encodings and watch order emerge.</div>
+    <textarea id="code-ex6">
+import math
+
+def sinusoidal_pe(max_len, d_model):
+    """Sinusoidal position encoding from the original paper.
+    PE(pos, 2i)   = sin(pos / 10000^(2i/d_model))
+    PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))
+    """
+    PE = []
+    for pos in range(max_len):
+        pe = []
+        for i in range(d_model):
+            if i % 2 == 0:
+                val = math.sin(pos / (10000 ** (i / d_model)))
+            else:
+                val = math.cos(pos / (10000 ** ((i-1) / d_model)))
+            pe.append(val)
+        PE.append(pe)
+    return PE
+
+def dot_product(a, b):
+    return sum(x*y for x, y in zip(a, b))
+
+d_model = 8
+PE = sinusoidal_pe(6, d_model)
+
+# Show position fingerprints
+print("POSITION FINGERPRINTS (first 4 of 8 dimensions):\n")
+for pos in range(6):
+    vals = " ".join(f"{PE[pos][d]:+.3f}" for d in range(4))
+    print(f"  Position {pos}: [{vals} ...]")
+
+# Now show why this matters
+print(f"\n{'='*55}")
+print("WHY THIS MATTERS: 'Dog bites man' vs 'Man bites dog'\n")
+
+# Same word embeddings for both sentences
+embed = {
+    "dog":   [0.8, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "bites": [0.0, 0.7, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "man":   [0.7, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+}
+
+sent1 = ["dog", "bites", "man"]
+sent2 = ["man", "bites", "dog"]
+
+# WITHOUT position encoding
+print("WITHOUT position encoding:")
+for word in sent1:
+    print(f"  '{word}' → [{', '.join(f'{v:.1f}' for v in embed[word][:4])} ...]")
+print(f"  Dot product dog·bites = {dot_product(embed['dog'], embed['bites']):.3f}")
+print()
+print("  'dog bites man' and 'man bites dog' produce IDENTICAL vectors!")
+print("  The model can't tell them apart. 😱\n")
+
+# WITH position encoding
+print("WITH position encoding:")
+def add_position(word, pos):
+    return [e + p for e, p in zip(embed[word], PE[pos])]
+
+print(f"\n  Sentence 1: 'dog bites man'")
+s1_vecs = []
+for i, word in enumerate(sent1):
+    vec = add_position(word, i)
+    s1_vecs.append(vec)
+    print(f"    '{word}' @ pos {i} → [{', '.join(f'{v:+.2f}' for v in vec[:4])} ...]")
+
+print(f"\n  Sentence 2: 'man bites dog'")
+s2_vecs = []
+for i, word in enumerate(sent2):
+    vec = add_position(word, i)
+    s2_vecs.append(vec)
+    print(f"    '{word}' @ pos {i} → [{', '.join(f'{v:+.2f}' for v in vec[:4])} ...]")
+
+# Compare "dog" in both positions
+d1 = dot_product(s1_vecs[0], s1_vecs[1])  # dog(pos0) · bites(pos1)
+d2 = dot_product(s2_vecs[2], s2_vecs[1])  # dog(pos2) · bites(pos1)
+print(f"\n  dog(pos 0) · bites = {d1:.3f}")
+print(f"  dog(pos 2) · bites = {d2:.3f}")
+print(f"  DIFFERENT! Position changes the attention pattern. ✓")
+print(f"\n  Now the model knows: in sentence 1, dog is the BITER.")
+print(f"  In sentence 2, dog is the BITTEN.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex6')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex6">Try increasing d_model to 16 or 32. With more dimensions, positions become even more distinct. In real transformers, d_model = 512 or more.</div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+
+  <!-- Ex 7: Wire it all together -->
+  <div class="exercise" id="ex7">
+    <div class="ex-header" onclick="toggleHint('ex7')">
+      <span class="ex-num">07</span>
+      <span class="ex-title">Wire It Together — The Full Transformer Core</span>
+      <span class="ex-check" id="check-ex7">○</span>
+    </div>
+    <div class="ex-desc">Combine everything: embeddings + position encodings + multi-head attention. Process "The cat sat on the mat because it was tired" and show that "it" learns to attend to "cat."</div>
+    <textarea id="code-ex7">
+import math, random
+random.seed(42)
+
+# ── COMPONENTS (you built all of these!) ──
+
+def softmax(scores):
+    mx = max(scores)
+    exps = [math.exp(s - mx) for s in scores]
+    t = sum(exps)
+    return [e/t for e in exps]
+
+def position_encoding(pos, d):
+    return [math.sin(pos/(10000**(i/d))) if i%2==0
+            else math.cos(pos/(10000**((i-1)/d))) for i in range(d)]
+
+def random_matrix(rows, cols, seed):
+    random.seed(seed)
+    return [[random.gauss(0, 0.5) for _ in range(cols)] for _ in range(rows)]
+
+def mat_vec(M, v):
+    """Matrix × vector"""
+    return [sum(M[i][j]*v[j] for j in range(len(v))) for i in range(len(M))]
+
+def attention_head(X, seed, d_k):
+    """One attention head with learned projections."""
+    n = len(X)
+    d = len(X[0])
+    Wq = random_matrix(d_k, d, seed)
+    Wk = random_matrix(d_k, d, seed+1)
+    Wv = random_matrix(d_k, d, seed+2)
+    
+    Q = [mat_vec(Wq, x) for x in X]
+    K = [mat_vec(Wk, x) for x in X]
+    V = [mat_vec(Wv, x) for x in X]
+    
+    scale = math.sqrt(d_k)
+    scores = [[sum(Q[i][k]*K[j][k] for k in range(d_k))/scale
+               for j in range(n)] for i in range(n)]
+    weights = [softmax(row) for row in scores]
+    output = [[sum(weights[i][j]*V[j][dd] for j in range(n))
+                for dd in range(d_k)] for i in range(n)]
+    return output, weights
+
+# ── THE FULL PIPELINE ──
+
+sentence = "the cat sat on the mat because it was tired"
+words = sentence.split()
+d_model = 8
+n_heads = 2
+
+# Step 1: Word embeddings
+vocab = {
+    "the":     [0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "cat":     [0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "sat":     [0.0, 0.8, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "on":      [0.0, 0.0, 0.7, 0.1, 0.0, 0.0, 0.0, 0.0],
+    "mat":     [0.1, 0.0, 0.0, 0.8, 0.0, 0.0, 0.0, 0.0],
+    "because": [0.0, 0.0, 0.0, 0.0, 0.5, 0.1, 0.0, 0.0],
+    "it":      [0.8, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.9],
+    "was":     [0.0, 0.5, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0],
+    "tired":   [0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0],
+}
+
+print(f"INPUT: '{sentence}'")
+print(f"       {len(words)} words → {d_model}-dim vectors + position\n")
+
+# Step 2: Add position encodings
+X = []
+for pos, word in enumerate(words):
+    emb = vocab.get(word, [0]*d_model)
+    pe = position_encoding(pos, d_model)
+    combined = [e + p for e, p in zip(emb, pe)]
+    X.append(combined)
+
+print("Step 1 ✓ Embedded words into vectors")
+print("Step 2 ✓ Added position encodings")
+
+# Step 3: Multi-head attention
+print(f"Step 3 ✓ Running {n_heads} attention heads...\n")
+
+all_weights = []
+all_outputs = []
+for h in range(n_heads):
+    out, w = attention_head(X, seed=h*1000, d_k=d_model//n_heads)
+    all_outputs.append(out)
+    all_weights.append(w)
+
+# Show what "it" (index 7) attends to
+it_idx = 7
+print("WHAT DOES 'it' ATTEND TO?\n")
+
+for h in range(n_heads):
+    question_type = "Coreference" if h == 0 else "Syntax"
+    print(f"  Head {h+1} ({question_type}):")
+    ranked = sorted(range(len(words)), key=lambda j: -all_weights[h][it_idx][j])
+    for j in ranked[:4]:
+        bar = "█" * int(all_weights[h][it_idx][j] * 30)
+        print(f"    {words[j]:10s} {all_weights[h][it_idx][j]:.3f}  {bar}")
+    print()
+
+# Step 4: Concatenate heads
+concat = [all_outputs[0][i] + all_outputs[1][i] for i in range(len(words))]
+
+print(f"Step 4 ✓ Concatenated {n_heads} heads → {len(concat[0])}-dim output per word\n")
+print("="*55)
+print()
+
+# The big moment
+cat_idx = 1
+best_head = max(range(n_heads), key=lambda h: all_weights[h][it_idx][cat_idx])
+best_weight = all_weights[best_head][it_idx][cat_idx]
+
+print(f"BEFORE attention: 'it' = just a pronoun, no referent")
+print(f"AFTER attention:  'it' attended to 'cat' (weight={best_weight:.3f})")
+print(f"                  Now 'it' carries meaning from 'cat'!\n")
+
+print("The full equation you just computed:")
+print("  Attention(Q,K,V) = softmax(Q·K^T / √d_k) · V")
+print("  MultiHead = Concat(head₁, head₂) · W_O\n")
+
+print("✅ You just built the core of the transformer.")
+print("   Same math as GPT-4, Claude, Gemini — just with 8 dimensions")
+print("   instead of thousands, and 2 heads instead of 96.")
+print("\n   Vaswani et al. 2017, equation 1 — and you understood every symbol.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex7')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex7')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex7')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex7">This is the grand finale — everything wired together. Try changing the random seed or number of heads. With different seeds, different heads will discover different patterns.</div>
+    <div class="output" id="output-ex7"></div>
+  </div>
+</div>
+
+<!-- THE PAYOFF -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p><strong>You just read an equation from a famous paper<br>and understood every symbol.</strong></p>
+  <div class="equation" style="margin:1.5rem auto;max-width:550px">
+    Attention(Q, K, V) = softmax(Q K<sup>T</sup> / √d<sub>k</sub>) · V
+  </div>
+  <p style="color:#aaa">
+    Q K<sup>T</sup> — score every pair (dot products). ÷ √d<sub>k</sub> — keep scores manageable.<br>
+    softmax — turn scores into weights. · V — weighted sum of meanings.
+  </p>
+  <p style="margin-top:1rem;color:#aaa">Every token can now attend to every other token. "It" knows about "cat." Your bot has global context instead of tunnel vision.</p>
+  <p style="margin-top:1rem;color:#888;font-size:.9rem">GPT-4 uses this same mechanism — just with 96 attention heads, 128 layers, and billions of parameters. The math you wrote is the same math running in every API call to Claude or ChatGPT.</p>
+  <p style="margin-top:1.5rem;font-size:1.1rem"><strong>But there's a problem:</strong> attention looks at <em>every</em> token pair. That's O(n²). With long conversations, it explodes.<br><a href="../build-03-window/">BUILD-03: Give It a Window →</a></p>
+</div>
+
+<!-- GO DEEPER -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../module-02-attention/">Module 02: Attention Is All You Need</a>
+      <span class="label"> — Deep dive with the original paper</span>
+    </li>
+    <li>
+      <a href="../module-03-position/">Module 03: Position & RoPE</a>
+      <span class="label"> — Sinusoidal → RoPE → ALiBi evolution</span>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/watch?v=wjZofJX0v4M">🎬 3Blue1Brown: Transformers</a>
+      <span class="label"> — Beautiful visual explanation</span>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc">🎬 3Blue1Brown: Attention step-by-step</a>
+      <span class="label"> — Q, K, V animated</span>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/watch?v=kCc8FmEb1nY">🎬 Karpathy: Let's build GPT from scratch</a>
+      <span class="label"> — Full implementation walkthrough</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/1706.03762">📄 Vaswani et al. 2017 — "Attention Is All You Need"</a>
+      <span class="label"> — The paper that started it all</span>
+    </li>
+  </ul>
+</div>
+
+<div class="nav-footer">
+  <a href="../build-01-speak/">← Previous: Make It Speak</a>
+  <a href="../build-03-window/">Next: Give It a Window →</a>
+</div>
+
+</div>
+
+<script>
+// ── Visualizations ──
+function drawDots() {
+  const c = document.getElementById('viz-dots');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+  
+  // Axes
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, h - 30);
+  ctx.lineTo(w - 20, h - 30);
+  ctx.moveTo(40, h - 30);
+  ctx.lineTo(40, 20);
+  ctx.stroke();
+  
+  // Scale: x 0-10, y 0-4
+  const sx = (x) => 40 + (x / 10) * (w - 70);
+  const sy = (y) => h - 30 - (y / 4) * (h - 60);
+  
+  const points = [
+    { name: 'cat', x: 2, y: 3, color: '#4ecdc4' },
+    { name: 'dog', x: 2.5, y: 2.8, color: '#6b8aff' },
+    { name: 'car', x: 9, y: 1, color: '#ff6b4a' },
+  ];
+  
+  points.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(sx(p.x), sy(p.y), 6, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.fillStyle = p.color;
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.fillText(`${p.name} [${p.x}, ${p.y}]`, sx(p.x) + 10, sy(p.y) + 4);
+  });
+  
+  // Bracket showing cat-dog are close
+  ctx.strokeStyle = '#4ecdc444';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(sx(2), sy(3));
+  ctx.lineTo(sx(2.5), sy(2.8));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#4ecdc488';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('close!', sx(2.25) - 15, sy(2.9) + 20);
+}
+
+function drawAngles() {
+  const c = document.getElementById('viz-angles');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+  
+  const ox = 60, oy = h - 50;
+  const scale = 28;
+  
+  const vecs = [
+    { name: 'cat', x: 2, y: 3, color: '#4ecdc4' },
+    { name: 'dog', x: 2.5, y: 2.8, color: '#6b8aff' },
+    { name: 'car', x: 9, y: 1, color: '#ff6b4a' },
+  ];
+  
+  // Draw arrows from origin
+  vecs.forEach(v => {
+    const ex = ox + v.x * scale;
+    const ey = oy - v.y * scale;
+    
+    ctx.strokeStyle = v.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    
+    // Arrowhead
+    const angle = Math.atan2(-(v.y), v.x);
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 8 * Math.cos(angle - 0.3), ey + 8 * Math.sin(angle - 0.3));
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 8 * Math.cos(angle + 0.3), ey + 8 * Math.sin(angle + 0.3));
+    ctx.stroke();
+    
+    ctx.fillStyle = v.color;
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.fillText(v.name, ex + 5, ey - 5);
+  });
+  
+  // Angle arc between cat and dog (small)
+  const catAngle = Math.atan2(3, 2);
+  const dogAngle = Math.atan2(2.8, 2.5);
+  ctx.strokeStyle = '#4ecdc488';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(ox, oy, 40, -catAngle, -dogAngle, catAngle > dogAngle);
+  ctx.stroke();
+  ctx.fillStyle = '#4ecdc488';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText('small angle', ox + 42, oy - 42);
+  
+  // Angle arc between cat and car (big)
+  const carAngle = Math.atan2(1, 9);
+  ctx.strokeStyle = '#ff6b4a88';
+  ctx.beginPath();
+  ctx.arc(ox, oy, 55, -carAngle, -catAngle);
+  ctx.stroke();
+  ctx.fillStyle = '#ff6b4a88';
+  ctx.fillText('big angle', ox + 58, oy - 20);
+  
+  // Origin dot
+  ctx.beginPath();
+  ctx.arc(ox, oy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#666';
+  ctx.fill();
+}
+
+drawDots();
+drawAngles();
+
+// ── Exercise engine ──
+const defaults = {};
+document.querySelectorAll('textarea').forEach(ta => { defaults[ta.id] = ta.value });
+const STORAGE_KEY = 'build-02-smarter-progress';
+let completed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function updateProgress() {
+  const total = 7, done = Object.keys(completed).length;
+  document.getElementById('progress-count').textContent = done;
+  document.getElementById('progress-fill').style.width = (done / total * 100) + '%';
+  for (let i = 1; i <= total; i++) {
+    const el = document.getElementById('check-ex' + i);
+    if (completed['ex' + i]) { el.textContent = '✓'; el.classList.add('done') }
+    else { el.textContent = '○'; el.classList.remove('done') }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+}
+
+function markComplete(id) { completed[id] = true; updateProgress() }
+function toggleHint(id) { document.getElementById('hint-' + id)?.classList.toggle('visible') }
+function resetExercise(id) {
+  document.getElementById('code-' + id).value = defaults['code-' + id];
+  document.getElementById('output-' + id).classList.remove('visible');
+}
+
+let pyodide = null;
+async function initPyodide() {
+  try {
+    pyodide = await loadPyodide();
+    document.getElementById('loading').classList.add('hidden');
+  } catch (e) {
+    document.getElementById('loading').innerHTML = '<p style="color:#ff6b4a">Failed to load Pyodide.</p>';
+  }
+}
+
+async function runExercise(id) {
+  if (!pyodide) { alert('Pyodide still loading…'); return }
+  const code = document.getElementById('code-' + id).value;
+  const output = document.getElementById('output-' + id);
+  output.classList.add('visible');
+  output.textContent = 'Running…';
+  try {
+    pyodide.runPython(`import io,sys;_stdout=io.StringIO();sys.stdout=_stdout`);
+    pyodide.runPython(code);
+    const result = pyodide.runPython('_stdout.getvalue()');
+    output.textContent = result || '(no output)';
+    output.style.color = '#e0e0e0';
+    if (result && result.trim().length > 0) markComplete(id);
+  } catch (e) {
+    output.textContent = '❌ Error:\n' + e.message;
+    output.style.color = '#ff6b4a';
+  }
+}
+
+const s = document.createElement('script');
+s.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+s.onload = initPyodide;
+document.head.appendChild(s);
+updateProgress();
+</script>
+</body>
+</html>

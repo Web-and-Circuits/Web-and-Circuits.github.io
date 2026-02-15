@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-07: Automation — Cron, Heartbeats & Hooks</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a2e;--border:#2a2a3e;--text:#e0e0e8;--dim:#888;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--pink:#ec4899;--purple:#a855f7}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.hero{text-align:center;padding:60px 20px 40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 70%);pointer-events:none}
+.module-tag{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:1px;margin-bottom:16px}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:800;margin-bottom:12px;background:linear-gradient(135deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{font-size:18px;color:var(--dim);max-width:600px;margin:0 auto}
+.pulse-icon{font-size:48px;margin-bottom:16px;animation:pulse-glow 2s ease-in-out infinite}
+@keyframes pulse-glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+
+/* Navigation */
+.act-nav{display:flex;gap:8px;justify-content:center;padding:20px;flex-wrap:wrap;position:sticky;top:0;z-index:100;background:rgba(10,10,15,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.act-btn{padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--dim);cursor:pointer;font-size:14px;font-weight:600;transition:.2s}
+.act-btn:hover,.act-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(99,102,241,.1)}
+
+/* Sections */
+.act-section{display:none;padding:40px 0 60px}
+.act-section.active{display:block}
+.section-header{text-align:center;margin-bottom:40px}
+.section-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.section-header p{color:var(--dim);font-size:15px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+.card h3{font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .icon{font-size:22px}
+
+/* Timeline */
+.timeline-wrap{position:relative;overflow-x:auto;padding:20px 0}
+.timeline-canvas{position:relative;height:280px;min-width:100%}
+.timeline-hours{display:flex;position:absolute;bottom:0;left:0;right:0;height:30px}
+.timeline-hour{flex:1;text-align:center;font-size:11px;color:var(--dim);border-left:1px solid var(--border);padding-top:8px;min-width:0}
+.timeline-track{position:absolute;left:0;right:0;height:200px;top:10px}
+.timeline-grid-line{position:absolute;top:0;bottom:0;width:1px;background:var(--border);opacity:.4}
+.timeline-event{position:absolute;cursor:pointer;transition:.2s;z-index:2}
+.timeline-event:hover{transform:scale(1.2);z-index:10}
+.timeline-dot{width:14px;height:14px;border-radius:50%;border:2px solid;position:relative}
+.timeline-dot::after{content:'';position:absolute;top:14px;left:50%;transform:translateX(-50%);width:1px;height:20px;background:currentColor;opacity:.3}
+.timeline-label{position:absolute;top:38px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--surface2)}
+.type-systemEvent{color:var(--cyan)}
+.type-agentTurn{color:var(--purple)}
+.now-line{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;opacity:.7}
+.now-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--red);font-weight:700;white-space:nowrap}
+
+/* Controls */
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.controls select,.controls input,.controls button{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px}
+.controls button{background:var(--accent);border-color:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+.controls button:hover{opacity:.85}
+.controls button.danger{background:var(--red);border-color:var(--red)}
+.controls label{font-size:13px;color:var(--dim);font-weight:600}
+.schedule-type-info{font-size:12px;color:var(--dim);margin-top:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent)}
+
+/* Job list */
+.job-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.job-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:13px}
+.job-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.job-item .name{flex:1;font-weight:600}
+.job-item .schedule{color:var(--dim);font-size:12px}
+.job-item .remove{cursor:pointer;color:var(--red);font-size:16px;padding:0 4px;opacity:.6}
+.job-item .remove:hover{opacity:1}
+
+/* Heartbeat */
+.hb-flow{display:flex;flex-direction:column;gap:0;align-items:center;padding:20px 0}
+.hb-step{display:flex;align-items:center;gap:12px;padding:12px 20px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);min-width:280px;max-width:400px;width:100%;opacity:.3;transform:translateY(10px);transition:.4s}
+.hb-step.visible{opacity:1;transform:translateY(0)}
+.hb-step .step-icon{font-size:24px;flex-shrink:0}
+.hb-step .step-text{font-size:14px}
+.hb-step .step-text strong{display:block;font-size:13px}
+.hb-step .step-text span{color:var(--dim);font-size:12px}
+.hb-arrow{font-size:20px;color:var(--dim);padding:4px 0;opacity:0;transition:.3s}
+.hb-arrow.visible{opacity:1}
+.hb-controls{text-align:center;margin-top:16px}
+.hb-controls button{padding:10px 24px;border-radius:8px;border:none;background:var(--green);color:#fff;font-weight:700;cursor:pointer;font-size:14px}
+.hb-controls button:hover{opacity:.85}
+.hb-batch{margin-top:20px;padding:16px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)}
+.hb-batch h4{font-size:14px;margin-bottom:8px;color:var(--orange)}
+.hb-check{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+.hb-check .check-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:.3s}
+.hb-check .check-dot.done{background:var(--green)}
+.hb-check.done{color:var(--green)}
+.hb-result{margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;display:none}
+
+/* Decision Tree */
+.dt-container{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
+.dt-node{padding:16px 24px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);text-align:center;max-width:400px;width:100%;transition:.3s}
+.dt-node.question{border-color:var(--accent)}
+.dt-node.answer{border-color:var(--green);background:rgba(34,197,94,.1)}
+.dt-node h4{font-size:15px;margin-bottom:10px}
+.dt-node p{font-size:13px;color:var(--dim)}
+.dt-choices{display:flex;gap:12px;justify-content:center}
+.dt-choice{padding:8px 24px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-weight:600;font-size:14px;transition:.2s}
+.dt-choice:hover{border-color:var(--accent);color:var(--accent)}
+.dt-choice.yes{border-color:var(--green);color:var(--green)}
+.dt-choice.no{border-color:var(--orange);color:var(--orange)}
+.dt-reset{margin-top:12px;padding:6px 16px;border:none;background:var(--surface2);color:var(--dim);cursor:pointer;border-radius:6px;font-size:12px}
+.dt-reset:hover{color:var(--text)}
+.dt-scenarios{margin-top:24px}
+.dt-scenario{padding:12px 16px;background:var(--surface2);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);transition:.2s}
+.dt-scenario:hover{border-color:var(--accent)}
+.dt-scenario .scenario-q{font-size:14px;font-weight:600}
+.dt-scenario .scenario-a{font-size:13px;color:var(--dim);margin-top:6px;display:none}
+.dt-scenario.open .scenario-a{display:block}
+
+/* Hooks */
+.hook-flow{display:flex;flex-direction:column;gap:0;align-items:center}
+.hook-event{display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);width:100%;max-width:420px;cursor:pointer;transition:.2s}
+.hook-event:hover{border-color:var(--pink)}
+.hook-event .hook-icon{font-size:24px}
+.hook-event .hook-text strong{font-size:14px;display:block}
+.hook-event .hook-text span{font-size:12px;color:var(--dim)}
+.hook-arrow{color:var(--dim);padding:4px;font-size:18px}
+.hook-detail{padding:16px;background:var(--surface2);border-radius:10px;border:1px solid var(--pink);margin-top:12px;font-size:13px;display:none}
+.hook-detail.open{display:block}
+.hook-detail pre{background:var(--bg);padding:12px;border-radius:8px;overflow-x:auto;font-size:12px;margin-top:8px;color:var(--cyan);line-height:1.5}
+
+/* Exercises */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+.exercise h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.exercise .ex-desc{font-size:13px;color:var(--dim);margin-bottom:16px}
+.exercise textarea{width:100%;min-height:120px;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'SF Mono',Monaco,monospace;font-size:13px;resize:vertical;line-height:1.5}
+.exercise .ex-hint{font-size:12px;color:var(--dim);margin-top:8px;padding:8px 12px;background:var(--surface2);border-radius:6px;display:none;border-left:3px solid var(--orange)}
+.ex-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ex-actions button{padding:8px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer}
+.btn-check{background:var(--accent);color:#fff}
+.btn-hint{background:var(--surface2);color:var(--dim);border:1px solid var(--border) !important}
+.btn-solution{background:var(--surface2);color:var(--dim);border:1px solid var(--border) !important}
+.ex-feedback{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;display:none}
+.ex-feedback.correct{background:rgba(34,197,94,.1);border:1px solid var(--green);color:var(--green)}
+.ex-feedback.partial{background:rgba(245,158,11,.1);border:1px solid var(--orange);color:var(--orange)}
+.ex-solution{margin-top:12px;display:none}
+.ex-solution pre{background:var(--bg);padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;color:var(--cyan);line-height:1.5}
+
+/* Connections */
+.conn-links{display:grid;gap:12px}
+.conn-link{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text);transition:.2s}
+.conn-link:hover{border-color:var(--accent);background:rgba(99,102,241,.05)}
+.conn-link .link-icon{font-size:20px}
+.conn-link .link-text{font-size:14px;font-weight:600}
+.conn-link .link-desc{font-size:12px;color:var(--dim)}
+.conn-link .arrow{margin-left:auto;color:var(--dim)}
+
+.examples-grid{display:grid;gap:16px;margin-top:16px}
+.example-card{padding:16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--accent)}
+.example-card h4{font-size:14px;margin-bottom:6px}
+.example-card p{font-size:13px;color:var(--dim)}
+
+.issues-list{display:flex;flex-direction:column;gap:8px}
+.issue{padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+.issue .issue-icon{font-size:18px;flex-shrink:0}
+.issue strong{display:block;margin-bottom:2px}
+.issue span{color:var(--dim)}
+
+/* Narrative */
+.narrative{text-align:center;padding:40px 20px;margin:40px 0;background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(6,182,212,.05));border-radius:16px;border:1px solid var(--border)}
+.narrative blockquote{font-size:18px;font-style:italic;color:var(--accent2);max-width:600px;margin:0 auto;line-height:1.7}
+
+/* Footer */
+.footer{text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;border-top:1px solid var(--border)}
+
+/* Responsive */
+@media(max-width:600px){
+  .hero{padding:40px 16px 24px}
+  .card{padding:16px}
+  .controls{flex-direction:column}
+  .controls select,.controls input,.controls button{width:100%}
+  .dt-choices{flex-direction:column}
+  .hook-event{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="pulse-icon">💓</div>
+  <div class="module-tag">OC-07</div>
+  <h1>Automation: Cron, Heartbeats & Hooks</h1>
+  <p class="subtitle">Most AI assistants sit and wait. OpenClaw agents act on their own — checking, monitoring, reminding. Cron is the clock. Heartbeat is the pulse. Hooks are the reflexes.</p>
+</div>
+
+<nav class="act-nav">
+  <button class="act-btn active" onclick="showAct('explore')">🔍 Explore</button>
+  <button class="act-btn" onclick="showAct('build')">🔨 Build</button>
+  <button class="act-btn" onclick="showAct('connect')">🔗 Connect</button>
+</nav>
+
+<!-- ==================== ACT 1: EXPLORE ==================== -->
+<section id="act-explore" class="act-section active">
+<div class="container">
+  <div class="section-header">
+    <h2>⏱️ The Automation Engine</h2>
+    <p>See how OpenClaw agents stay alive when you're not talking to them</p>
+  </div>
+
+  <!-- 1. CRON TIMELINE -->
+  <div class="card">
+    <h3><span class="icon">🕐</span> 24-Hour Cron Timeline</h3>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">Cron jobs fire at scheduled times. <span class="type-systemEvent">● systemEvent</span> injects text into the main session. <span class="type-agentTurn">● agentTurn</span> runs an isolated session with its own model call.</p>
+
+    <div class="controls">
+      <input type="text" id="cron-name" placeholder="Job name" style="flex:1;min-width:120px">
+      <select id="cron-type">
+        <option value="systemEvent">systemEvent</option>
+        <option value="agentTurn">agentTurn</option>
+      </select>
+      <select id="cron-sched" onchange="updateSchedInput()">
+        <option value="at">at (one-shot)</option>
+        <option value="every">every (interval)</option>
+        <option value="cron">cron (expression)</option>
+      </select>
+      <input type="text" id="cron-time" placeholder="09:00" style="width:100px">
+      <button onclick="addCronJob()">+ Add</button>
+    </div>
+    <div class="schedule-type-info" id="sched-info">
+      <strong>at</strong> — Fire once at a specific time. Example: <code>09:00</code>, <code>14:30</code>
+    </div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-canvas" id="timeline">
+        <div class="timeline-track" id="timeline-track"></div>
+        <div class="timeline-hours" id="timeline-hours"></div>
+      </div>
+    </div>
+
+    <div class="job-list" id="job-list"></div>
+  </div>
+
+  <!-- 2. HEARTBEAT -->
+  <div class="card">
+    <h3><span class="icon">💓</span> Heartbeat Cycle</h3>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">The heartbeat batches multiple checks into a single model turn — much cheaper than individual cron jobs for routine monitoring.</p>
+
+    <div class="hb-flow" id="hb-flow">
+      <div class="hb-step" id="hb-0"><span class="step-icon">🌐</span><div class="step-text"><strong>Gateway sends poll</strong><span>Heartbeat interval triggers (every ~30 min)</span></div></div>
+      <div class="hb-arrow">↓</div>
+      <div class="hb-step" id="hb-1"><span class="step-icon">📋</span><div class="step-text"><strong>Agent reads HEARTBEAT.md</strong><span>Checklist of things to monitor</span></div></div>
+      <div class="hb-arrow">↓</div>
+      <div class="hb-step" id="hb-2"><span class="step-icon">🔍</span><div class="step-text"><strong>Batch check items</strong><span>Email, calendar, alerts — all in one turn</span></div></div>
+      <div class="hb-arrow">↓</div>
+      <div class="hb-step" id="hb-3"><span class="step-icon">🤔</span><div class="step-text"><strong>Decision</strong><span>Anything need attention?</span></div></div>
+      <div class="hb-arrow">↓</div>
+      <div class="hb-step" id="hb-4"><span class="step-icon">✅</span><div class="step-text"><strong id="hb-result-text">HEARTBEAT_OK</strong><span id="hb-result-sub">Nothing to report — stay quiet</span></div></div>
+    </div>
+
+    <div class="hb-batch" id="hb-batch" style="display:none">
+      <h4>📋 Heartbeat Checklist (one model turn)</h4>
+      <div class="hb-check" id="hbc-0"><span class="check-dot"></span> Check Gmail for urgent emails</div>
+      <div class="hb-check" id="hbc-1"><span class="check-dot"></span> Calendar events in next 2 hours</div>
+      <div class="hb-check" id="hbc-2"><span class="check-dot"></span> GitHub notifications</div>
+      <div class="hb-check" id="hbc-3"><span class="check-dot"></span> Weather alerts</div>
+      <div class="hb-check" id="hbc-4"><span class="check-dot"></span> System health check</div>
+      <div class="hb-result" id="hb-final-result"></div>
+    </div>
+
+    <div class="hb-controls">
+      <button onclick="runHeartbeat()">▶ Run Heartbeat Cycle</button>
+    </div>
+  </div>
+
+  <!-- 3. DECISION TREE -->
+  <div class="card">
+    <h3><span class="icon">🌳</span> Cron vs Heartbeat Decision Tree</h3>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">Not sure which to use? Walk through the decision tree, then test your understanding with real scenarios.</p>
+
+    <div class="dt-container" id="dt-container"></div>
+    <button class="dt-reset" onclick="resetDecisionTree()">↺ Reset</button>
+
+    <div class="dt-scenarios">
+      <p style="font-size:14px;font-weight:700;margin-bottom:12px">Try these scenarios — click to reveal the answer:</p>
+      <div class="dt-scenario" onclick="this.classList.toggle('open')">
+        <div class="scenario-q">📧 "Check email every 30 minutes for urgent messages"</div>
+        <div class="scenario-a">💓 <strong>Heartbeat</strong> — Timing doesn't need to be exact, can batch with other checks, benefits from conversational context about what's "urgent".</div>
+      </div>
+      <div class="dt-scenario" onclick="this.classList.toggle('open')">
+        <div class="scenario-q">📊 "Generate a weekly report every Monday at 9 AM"</div>
+        <div class="scenario-a">⏰ <strong>Cron (agentTurn)</strong> — Exact timing matters, needs isolation (heavy task), runs independently with its own model call.</div>
+      </div>
+      <div class="dt-scenario" onclick="this.classList.toggle('open')">
+        <div class="scenario-q">🌤️ "Check weather + calendar + news before I wake up"</div>
+        <div class="scenario-a">💓 <strong>Heartbeat</strong> — Multiple checks batching together perfectly, timing is approximate ("morning"), saves API calls vs 3 separate cron jobs.</div>
+      </div>
+      <div class="dt-scenario" onclick="this.classList.toggle('open')">
+        <div class="scenario-q">⏰ "Remind me in 20 minutes to take the pizza out"</div>
+        <div class="scenario-a">⏰ <strong>Cron (at)</strong> — One-shot, exact timing, simple injection via systemEvent. Perfect "at" schedule type.</div>
+      </div>
+      <div class="dt-scenario" onclick="this.classList.toggle('open')">
+        <div class="scenario-q">🔐 "Monitor server logs for security anomalies"</div>
+        <div class="scenario-a">⏰ <strong>Cron (agentTurn)</strong> — Needs isolation (analyzing logs is heavy), should use a dedicated thinking level, runs independently without polluting main session.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. HOOKS & WEBHOOKS -->
+  <div class="card">
+    <h3><span class="icon">🪝</span> Hooks & Webhooks</h3>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">External events trigger agent actions in real-time. No polling, no waiting — instant reaction. Click each event to see the flow.</p>
+
+    <div class="hook-flow">
+      <div class="hook-event" onclick="toggleHook('gh')">
+        <span class="hook-icon">🐙</span>
+        <div class="hook-text"><strong>GitHub Push</strong><span>New commit pushed to main branch</span></div>
+      </div>
+      <div class="hook-detail" id="hook-gh">
+        <strong>Flow:</strong> GitHub → webhook POST → Gateway → systemEvent injected
+        <pre>{
+  "event": "push",
+  "ref": "refs/heads/main",
+  "commits": [{
+    "message": "fix: resolve auth timeout",
+    "author": "dab"
+  }],
+  "repository": "openclaw/core"
+}
+
+→ Agent receives:
+"🐙 New push to openclaw/core (main):
+ • fix: resolve auth timeout — by dab"</pre>
+      </div>
+
+      <div class="hook-arrow">↓</div>
+
+      <div class="hook-event" onclick="toggleHook('email')">
+        <span class="hook-icon">📬</span>
+        <div class="hook-text"><strong>Email Arrival</strong><span>Important email from known sender</span></div>
+      </div>
+      <div class="hook-detail" id="hook-email">
+        <strong>Flow:</strong> Email server → polling hook → Gateway → agent processes
+        <pre>Email detected:
+  From: client@acme.com
+  Subject: "Contract revision needed ASAP"
+  Priority: High
+
+→ Agent receives systemEvent:
+"📬 Urgent email from client@acme.com:
+ Subject: Contract revision needed ASAP
+ Action needed — should I draft a reply?"</pre>
+      </div>
+
+      <div class="hook-arrow">↓</div>
+
+      <div class="hook-event" onclick="toggleHook('stripe')">
+        <span class="hook-icon">💳</span>
+        <div class="hook-text"><strong>Stripe Payment</strong><span>New subscription created</span></div>
+      </div>
+      <div class="hook-detail" id="hook-stripe">
+        <strong>Flow:</strong> Stripe → webhook POST → Gateway → agent notifies team
+        <pre>{
+  "type": "customer.subscription.created",
+  "data": {
+    "customer_email": "new@startup.io",
+    "plan": "pro",
+    "amount": 4900
+  }
+}
+
+→ Agent announces to #sales channel:
+"💳 New Pro subscription! new@startup.io — $49/mo 🎉"</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="narrative">
+    <blockquote>"Cron is the clock. Heartbeat is the pulse. Hooks are the reflexes. Together they make an agent that's alive even when you're not talking to it."</blockquote>
+  </div>
+</div>
+</section>
+
+<!-- ==================== ACT 2: BUILD ==================== -->
+<section id="act-build" class="act-section">
+<div class="container">
+  <div class="section-header">
+    <h2>🔨 Build Exercises</h2>
+    <p>Put your understanding to work — configure cron jobs, design heartbeats, handle webhooks</p>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="exercise">
+    <h3>Exercise 1: Write a Cron Job Config</h3>
+    <div class="ex-desc">Schedule a daily standup summary that runs at 9:00 AM EST. It should use <code>agentTurn</code> (isolated session) with a prompt that tells the agent to check recent messages and generate a summary. Write the JSON config.</div>
+    <textarea id="ex1" spellcheck="false" placeholder='{ "schedule": "...", "type": "...", ... }'></textarea>
+    <div class="ex-actions">
+      <button class="btn-check" onclick="checkEx(1)">Check</button>
+      <button class="btn-hint" onclick="toggleHint(1)">💡 Hint</button>
+      <button class="btn-solution" onclick="toggleSolution(1)">Show Solution</button>
+    </div>
+    <div class="ex-hint" id="hint-1">Think about: schedule type ("cron" for daily), the cron expression for 9 AM, type "agentTurn", and a prompt field. Timezone matters!</div>
+    <div class="ex-feedback" id="fb-1"></div>
+    <div class="ex-solution" id="sol-1">
+      <pre>{
+  "name": "daily-standup-summary",
+  "schedule": "cron",
+  "cron": "0 9 * * *",
+  "timezone": "America/New_York",
+  "type": "agentTurn",
+  "prompt": "Review messages from the last 24 hours across all channels. Generate a concise standup summary: what happened, what needs attention, any blockers. Post to #standup.",
+  "model": "claude-sonnet-4-20250514"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise">
+    <h3>Exercise 2: Design a HEARTBEAT.md</h3>
+    <div class="ex-desc">Given these 5 tasks with different frequencies, write a HEARTBEAT.md that batches them efficiently with rotation logic:
+    <br>• Check Gmail — every heartbeat
+    <br>• Calendar events — every heartbeat  
+    <br>• GitHub notifications — every 2nd heartbeat
+    <br>• Weather forecast — 2x daily (morning + evening)
+    <br>• Weekly project review — Mondays only</div>
+    <textarea id="ex2" spellcheck="false" placeholder="# HEARTBEAT.md&#10;&#10;## Every heartbeat&#10;..."></textarea>
+    <div class="ex-actions">
+      <button class="btn-check" onclick="checkEx(2)">Check</button>
+      <button class="btn-hint" onclick="toggleHint(2)">💡 Hint</button>
+      <button class="btn-solution" onclick="toggleSolution(2)">Show Solution</button>
+    </div>
+    <div class="ex-hint" id="hint-2">Use the heartbeat-state.json to track rotation. Group tasks by frequency. Include conditions like "if Monday" or "if before 10 AM".</div>
+    <div class="ex-feedback" id="fb-2"></div>
+    <div class="ex-solution" id="sol-2">
+      <pre># HEARTBEAT.md
+
+## Every heartbeat (always check)
+- [ ] Gmail — scan for urgent unread (allowed senders list)
+- [ ] Calendar — events in next 2 hours? Alert if &lt;30 min
+
+## Every 2nd heartbeat (check lastChecks in heartbeat-state.json)
+- [ ] GitHub notifications — new mentions, PR reviews, issues
+
+## Time-based rotation
+- [ ] Weather — if before 10 AM or after 5 PM, check forecast
+- [ ] Weekly review — if Monday AND first heartbeat of the day:
+      Summarize: open PRs, pending tasks, week's priorities
+
+## State tracking
+Update `memory/heartbeat-state.json` after each run:
+```json
+{
+  "lastChecks": {
+    "email": &lt;timestamp&gt;,
+    "calendar": &lt;timestamp&gt;,
+    "github": &lt;timestamp&gt;,
+    "weather": &lt;timestamp&gt;,
+    "weeklyReview": &lt;timestamp&gt;
+  },
+  "heartbeatCount": &lt;n&gt;
+}
+```
+
+## Rules
+- Late night (23:00–08:00): only email, skip rest
+- If nothing found: reply HEARTBEAT_OK
+- If action taken: log to memory/YYYY-MM-DD.md</pre>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise">
+    <h3>Exercise 3: Webhook Handler</h3>
+    <div class="ex-desc">Given this inbound GitHub webhook payload for a pull request, extract the relevant info and compose the systemEvent text that the agent would receive:
+    <pre style="margin:8px 0;font-size:12px;background:var(--bg);padding:10px;border-radius:6px;color:var(--cyan)">{
+  "action": "opened",
+  "pull_request": {
+    "title": "Add webhook support for Stripe events",
+    "number": 142,
+    "user": { "login": "sarah-dev" },
+    "base": { "ref": "main" },
+    "additions": 847,
+    "deletions": 23,
+    "changed_files": 12
+  },
+  "repository": { "full_name": "openclaw/gateway" }
+}</pre></div>
+    <textarea id="ex3" spellcheck="false" placeholder="Write the systemEvent text the agent would receive..."></textarea>
+    <div class="ex-actions">
+      <button class="btn-check" onclick="checkEx(3)">Check</button>
+      <button class="btn-hint" onclick="toggleHint(3)">💡 Hint</button>
+      <button class="btn-solution" onclick="toggleSolution(3)">Show Solution</button>
+    </div>
+    <div class="ex-hint" id="hint-3">Include: repo name, PR number, title, author, target branch, and a size summary. Make it scannable — the agent needs to decide if action is needed.</div>
+    <div class="ex-feedback" id="fb-3"></div>
+    <div class="ex-solution" id="sol-3">
+      <pre>🔀 New PR opened on openclaw/gateway (#142)
+Title: Add webhook support for Stripe events
+Author: sarah-dev → main
+Size: +847/-23 across 12 files
+
+This is a significant PR — consider reviewing or notifying the team.</pre>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise">
+    <h3>Exercise 4: Cron vs Heartbeat Decision</h3>
+    <div class="ex-desc">For each scenario, write "CRON" or "HEARTBEAT" and briefly explain why:</div>
+    <div style="font-size:13px;margin-bottom:12px;color:var(--dim)">
+      1. Send a birthday message to a team member at exactly midnight<br>
+      2. Check Slack, email, and Twitter mentions periodically<br>
+      3. Run a database backup script every 6 hours<br>
+      4. Monitor stock prices during market hours<br>
+      5. Generate and post a weekly newsletter every Sunday at 8 PM<br>
+      6. Watch for breaking news and alert if relevant
+    </div>
+    <textarea id="ex4" spellcheck="false" placeholder="1. CRON — ...&#10;2. HEARTBEAT — ...&#10;..."></textarea>
+    <div class="ex-actions">
+      <button class="btn-check" onclick="checkEx(4)">Check</button>
+      <button class="btn-solution" onclick="toggleSolution(4)">Show Solution</button>
+    </div>
+    <div class="ex-feedback" id="fb-4"></div>
+    <div class="ex-solution" id="sol-4">
+      <pre>1. CRON (at) — Exact timing matters (midnight), one-shot,
+   simple systemEvent injection
+
+2. HEARTBEAT — Multiple checks batching together, timing
+   approximate, benefits from context awareness
+
+3. CRON (every 6h, agentTurn) — Exact interval, needs
+   isolation (heavy task), no conversational context needed
+
+4. HEARTBEAT — Frequent checks batch well, needs context
+   about which stocks matter, timing flexible
+
+5. CRON (cron expression, agentTurn) — Exact schedule,
+   heavy generation task, needs isolation + dedicated model
+
+6. HEARTBEAT — Approximate timing OK, can batch with other
+   checks, needs context about what's "relevant"</pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== ACT 3: CONNECT ==================== -->
+<section id="act-connect" class="act-section">
+<div class="container">
+  <div class="section-header">
+    <h2>🔗 Connections</h2>
+    <p>Where to go next — docs, real examples, and common gotchas</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">📚</span> Documentation</h3>
+    <div class="conn-links">
+      <a class="conn-link" href="https://docs.openclaw.com/features/cron" target="_blank">
+        <span class="link-icon">⏰</span>
+        <div><span class="link-text">Cron Jobs</span><br><span class="link-desc">Schedule types, config reference, delivery options</span></div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="conn-link" href="https://docs.openclaw.com/features/heartbeat" target="_blank">
+        <span class="link-icon">💓</span>
+        <div><span class="link-text">Heartbeat</span><br><span class="link-desc">Heartbeat polling, HEARTBEAT.md design, state tracking</span></div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="conn-link" href="https://docs.openclaw.com/features/hooks" target="_blank">
+        <span class="link-icon">🪝</span>
+        <div><span class="link-text">Hooks & Webhooks</span><br><span class="link-desc">Inbound webhooks, event routing, auth configuration</span></div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="conn-link" href="https://docs.openclaw.com/guides/cron-vs-heartbeat" target="_blank">
+        <span class="link-icon">⚖️</span>
+        <div><span class="link-text">Cron vs Heartbeat Guide</span><br><span class="link-desc">When to use which — decision framework and examples</span></div>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🌍</span> Real-World Examples</h3>
+    <div class="examples-grid">
+      <div class="example-card">
+        <h4>📬 Gmail Polling</h4>
+        <p>Heartbeat checks Gmail every ~30 min via <code>gog</code> CLI. Filters by allowed senders, flags unknowns for triage. State tracked in <code>heartbeat-state.json</code> to avoid re-processing. Urgent emails trigger immediate notification to Discord.</p>
+      </div>
+      <div class="example-card">
+        <h4>📅 Calendar Checks</h4>
+        <p>Batched into heartbeat alongside email. Alerts for events within 2 hours. Agent proactively reminds about meetings, suggests prep materials, and warns about scheduling conflicts.</p>
+      </div>
+      <div class="example-card">
+        <h4>🔐 Security Alert Monitoring</h4>
+        <p>Cron job (agentTurn) runs every 4 hours with elevated thinking. Analyzes system logs, checks for unusual SSH attempts, monitors service health. Isolated session prevents context pollution.</p>
+      </div>
+      <div class="example-card">
+        <h4>📢 Delivery System</h4>
+        <p>Cron results get announced to channels. An <code>agentTurn</code> cron can specify which channel to deliver results to — Discord, Slack, or even email. The gateway handles routing the agent's output to the right destination.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">⚠️</span> Common Issues</h3>
+    <div class="issues-list">
+      <div class="issue">
+        <span class="issue-icon">🕐</span>
+        <div><strong>Cron Timezone Confusion</strong><span>Always set <code>timezone</code> in cron config. Cron expressions are evaluated in the specified timezone. If omitted, it defaults to UTC — your 9 AM job fires at 4 AM EST.</span></div>
+      </div>
+      <div class="issue">
+        <span class="issue-icon">🔥</span>
+        <div><strong>Heartbeat Token Burn</strong><span>Each heartbeat is a model turn. If your HEARTBEAT.md is huge, you're burning tokens every 30 minutes. Keep the checklist lean — use rotation and conditions to limit per-heartbeat work.</span></div>
+      </div>
+      <div class="issue">
+        <span class="issue-icon">🔑</span>
+        <div><strong>Webhook Auth</strong><span>Webhooks are HTTP endpoints — they need authentication. Verify webhook signatures (GitHub sends <code>X-Hub-Signature-256</code>), use shared secrets, and always validate the source.</span></div>
+      </div>
+      <div class="issue">
+        <span class="issue-icon">🔄</span>
+        <div><strong>Cron Overlap</strong><span>If a cron job takes longer than its interval, you get overlapping runs. Use <code>agentTurn</code> for heavy tasks — they run in isolated sessions that don't block the main loop.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="narrative">
+    <blockquote>"An agent that only responds is a tool. An agent that acts on its own — checking, monitoring, alerting, preparing — is a partner. Automation is what makes the difference."</blockquote>
+  </div>
+</div>
+</section>
+
+<div class="footer">
+  <p>OC-07: Automation — Part of the <strong>OpenClaw Deep-Dive Curriculum</strong></p>
+</div>
+
+<script>
+// === ACT NAVIGATION ===
+function showAct(id) {
+  document.querySelectorAll('.act-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.act-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('act-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// === CRON TIMELINE ===
+const defaultJobs = [
+  {name: 'Morning brief', type: 'agentTurn', sched: 'at', time: '07:00', hours: [7]},
+  {name: 'Standup summary', type: 'agentTurn', sched: 'cron', time: '0 9 * * *', hours: [9]},
+  {name: 'Email digest', type: 'systemEvent', sched: 'every', time: '3h', hours: [0,3,6,9,12,15,18,21]},
+  {name: 'EOD report', type: 'agentTurn', sched: 'at', time: '17:00', hours: [17]},
+  {name: 'Backup check', type: 'agentTurn', sched: 'cron', time: '0 2 * * *', hours: [2]},
+];
+let jobs = [...defaultJobs];
+
+function initTimeline() {
+  const hoursEl = document.getElementById('timeline-hours');
+  hoursEl.innerHTML = '';
+  for (let h = 0; h < 24; h++) {
+    const d = document.createElement('div');
+    d.className = 'timeline-hour';
+    d.textContent = h.toString().padStart(2,'0');
+    hoursEl.appendChild(d);
+  }
+  renderJobs();
+}
+
+function renderJobs() {
+  const track = document.getElementById('timeline-track');
+  const list = document.getElementById('job-list');
+  track.innerHTML = '';
+  list.innerHTML = '';
+
+  // grid lines
+  for (let h = 0; h < 24; h++) {
+    const line = document.createElement('div');
+    line.className = 'timeline-grid-line';
+    line.style.left = (h / 24 * 100) + '%';
+    track.appendChild(line);
+  }
+
+  // now line
+  const now = new Date();
+  const nowFrac = (now.getHours() + now.getMinutes()/60) / 24;
+  const nowLine = document.createElement('div');
+  nowLine.className = 'now-line';
+  nowLine.style.left = (nowFrac * 100) + '%';
+  nowLine.innerHTML = '<span class="now-label">NOW</span>';
+  track.appendChild(nowLine);
+
+  // events
+  const lanes = {};
+  jobs.forEach((job, ji) => {
+    job.hours.forEach((h, i) => {
+      const frac = h / 24;
+      const lane = ji % 4;
+      const ev = document.createElement('div');
+      ev.className = 'timeline-event type-' + job.type;
+      ev.style.left = (frac * 100) + '%';
+      ev.style.top = (10 + lane * 45) + 'px';
+      ev.innerHTML = `<div class="timeline-dot" style="border-color:currentColor;background:currentColor"></div><div class="timeline-label">${job.name}</div>`;
+      ev.title = `${job.name} (${job.type}) — ${job.sched}: ${job.time}`;
+      track.appendChild(ev);
+    });
+
+    const item = document.createElement('div');
+    item.className = 'job-item';
+    item.innerHTML = `<span class="dot" style="background:${job.type === 'agentTurn' ? 'var(--purple)' : 'var(--cyan)'}"></span>
+      <span class="name">${job.name}</span>
+      <span class="schedule">${job.sched}: ${job.time}</span>
+      <span class="remove" onclick="removeJob(${ji})">×</span>`;
+    list.appendChild(item);
+  });
+}
+
+function parseHours(sched, time) {
+  if (sched === 'at') {
+    const [h] = time.split(':').map(Number);
+    return isNaN(h) ? [] : [h % 24];
+  }
+  if (sched === 'every') {
+    const m = time.match(/(\d+)\s*h/i);
+    if (!m) return [];
+    const interval = parseInt(m[1]);
+    const hrs = [];
+    for (let h = 0; h < 24; h += interval) hrs.push(h);
+    return hrs;
+  }
+  if (sched === 'cron') {
+    const parts = time.trim().split(/\s+/);
+    if (parts.length < 2) return [];
+    const hourPart = parts[1];
+    if (hourPart === '*') {
+      return Array.from({length:24}, (_,i) => i);
+    }
+    if (hourPart.includes('/')) {
+      const [,step] = hourPart.split('/').map(Number);
+      const hrs = [];
+      for (let h = 0; h < 24; h += step) hrs.push(h);
+      return hrs;
+    }
+    if (hourPart.includes(',')) return hourPart.split(',').map(Number);
+    const h = parseInt(hourPart);
+    return isNaN(h) ? [] : [h];
+  }
+  return [];
+}
+
+function addCronJob() {
+  const name = document.getElementById('cron-name').value.trim();
+  const type = document.getElementById('cron-type').value;
+  const sched = document.getElementById('cron-sched').value;
+  const time = document.getElementById('cron-time').value.trim();
+  if (!name || !time) return;
+  const hours = parseHours(sched, time);
+  if (hours.length === 0) return;
+  jobs.push({name, type, sched, time, hours});
+  document.getElementById('cron-name').value = '';
+  document.getElementById('cron-time').value = '';
+  renderJobs();
+}
+
+function removeJob(i) { jobs.splice(i, 1); renderJobs(); }
+
+function updateSchedInput() {
+  const sched = document.getElementById('cron-sched').value;
+  const input = document.getElementById('cron-time');
+  const info = document.getElementById('sched-info');
+  if (sched === 'at') {
+    input.placeholder = '09:00';
+    info.innerHTML = '<strong>at</strong> — Fire once at a specific time. Example: <code>09:00</code>, <code>14:30</code>';
+  } else if (sched === 'every') {
+    input.placeholder = '3h';
+    info.innerHTML = '<strong>every</strong> — Repeat at a fixed interval. Example: <code>3h</code>, <code>6h</code>';
+  } else {
+    input.placeholder = '0 9 * * *';
+    info.innerHTML = '<strong>cron</strong> — Standard cron expression. Example: <code>0 9 * * *</code> (daily 9 AM), <code>0 */6 * * *</code> (every 6h)';
+  }
+}
+
+// === HEARTBEAT ===
+let hbRunning = false;
+async function runHeartbeat() {
+  if (hbRunning) return;
+  hbRunning = true;
+  
+  // Reset
+  document.querySelectorAll('.hb-step').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.hb-arrow').forEach(a => a.classList.remove('visible'));
+  document.querySelectorAll('.hb-check').forEach(c => { c.classList.remove('done'); c.querySelector('.check-dot').classList.remove('done'); });
+  document.getElementById('hb-batch').style.display = 'none';
+  document.getElementById('hb-final-result').style.display = 'none';
+  document.getElementById('hb-result-text').textContent = 'HEARTBEAT_OK';
+  document.getElementById('hb-result-sub').textContent = 'Nothing to report — stay quiet';
+
+  const steps = document.querySelectorAll('.hb-step');
+  const arrows = document.querySelectorAll('.hb-arrow');
+
+  for (let i = 0; i < 3; i++) {
+    await sleep(600);
+    steps[i].classList.add('visible');
+    if (i < arrows.length) { await sleep(300); arrows[i].classList.add('visible'); }
+  }
+
+  // Show batch
+  await sleep(400);
+  document.getElementById('hb-batch').style.display = 'block';
+  steps[2].classList.add('visible');
+
+  // Animate checks
+  const checks = document.querySelectorAll('.hb-check');
+  let foundSomething = false;
+  const urgentIdx = Math.random() > 0.4 ? Math.floor(Math.random() * 5) : -1;
+
+  for (let i = 0; i < checks.length; i++) {
+    await sleep(500);
+    checks[i].classList.add('done');
+    checks[i].querySelector('.check-dot').classList.add('done');
+    if (i === urgentIdx) foundSomething = true;
+  }
+
+  // Decision
+  await sleep(500);
+  arrows[2].classList.add('visible');
+  await sleep(300);
+  steps[3].classList.add('visible');
+  await sleep(600);
+  arrows[3].classList.add('visible');
+  await sleep(300);
+
+  if (foundSomething) {
+    const actions = ['📬 Urgent email found — notifying channel', '📅 Meeting in 45 min — sending reminder', '🔔 GitHub mention — PR review requested', '⛈️ Severe weather alert — heads up sent', '⚠️ High CPU detected — alerting team'];
+    document.getElementById('hb-result-text').textContent = '🚨 Action Taken';
+    document.getElementById('hb-result-sub').textContent = actions[urgentIdx];
+    steps[4].style.borderColor = 'var(--orange)';
+  } else {
+    steps[4].style.borderColor = 'var(--green)';
+  }
+  steps[4].classList.add('visible');
+
+  const result = document.getElementById('hb-final-result');
+  result.style.display = 'block';
+  result.textContent = foundSomething ? 'Heartbeat complete — action taken, logged to memory' : 'Heartbeat complete — HEARTBEAT_OK (all quiet)';
+  result.style.background = foundSomething ? 'rgba(245,158,11,.1)' : 'rgba(34,197,94,.1)';
+  result.style.color = foundSomething ? 'var(--orange)' : 'var(--green)';
+  result.style.border = `1px solid ${foundSomething ? 'var(--orange)' : 'var(--green)'}`;
+
+  hbRunning = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// === DECISION TREE ===
+const dtTree = {
+  q: "Does the timing need to be exact?",
+  yes: {
+    q: "Does it need isolation from the main session?",
+    yes: { answer: "⏰ Use Cron (agentTurn)", desc: "Exact timing + isolation = cron with agentTurn. Runs in its own session with a dedicated model call." },
+    no: {
+      q: "Is it a one-shot or recurring?",
+      yes: { answer: "⏰ Use Cron (at)", desc: "One-shot exact timing. Fire once via 'at' schedule, typically a systemEvent." },
+      no: { answer: "⏰ Use Cron (cron/every)", desc: "Recurring exact schedule. Use a cron expression or 'every' interval." }
+    }
+  },
+  no: {
+    q: "Can multiple checks batch together?",
+    yes: { answer: "💓 Use Heartbeat", desc: "Batching saves tokens and API calls. Put all checks in HEARTBEAT.md and let one model turn handle them." },
+    no: {
+      q: "Does it need conversational context?",
+      yes: { answer: "💓 Use Heartbeat", desc: "Heartbeat runs in the main session with full conversational context — it knows what's been discussed." },
+      no: { answer: "⏰ Use Cron (agentTurn)", desc: "Standalone task without batching or context needs. Cron with agentTurn keeps it clean." }
+    }
+  }
+};
+
+let dtCurrent = dtTree;
+let dtPath = [];
+
+function renderDecisionTree() {
+  const c = document.getElementById('dt-container');
+  c.innerHTML = '';
+
+  // Show path
+  dtPath.forEach(p => {
+    const node = document.createElement('div');
+    node.className = 'dt-node';
+    node.innerHTML = `<h4>${p.q}</h4><p style="color:var(--accent)">→ ${p.choice}</p>`;
+    node.style.opacity = '.5';
+    c.appendChild(node);
+  });
+
+  if (dtCurrent.answer) {
+    const node = document.createElement('div');
+    node.className = 'dt-node answer';
+    node.innerHTML = `<h4>${dtCurrent.answer}</h4><p>${dtCurrent.desc}</p>`;
+    c.appendChild(node);
+  } else {
+    const node = document.createElement('div');
+    node.className = 'dt-node question';
+    node.innerHTML = `<h4>${dtCurrent.q}</h4>`;
+    c.appendChild(node);
+
+    const choices = document.createElement('div');
+    choices.className = 'dt-choices';
+    const yesLabel = dtCurrent.yes.q ? 'Yes' : (dtCurrent.q.includes('one-shot') ? 'One-shot' : 'Yes');
+    const noLabel = dtCurrent.no ? (dtCurrent.q.includes('one-shot') ? 'Recurring' : 'No') : 'No';
+    choices.innerHTML = `<button class="dt-choice yes" onclick="dtChoose('yes','${yesLabel}')">${yesLabel}</button><button class="dt-choice no" onclick="dtChoose('no','${noLabel}')">${noLabel}</button>`;
+    c.appendChild(choices);
+  }
+}
+
+function dtChoose(dir, label) {
+  dtPath.push({q: dtCurrent.q, choice: label});
+  dtCurrent = dtCurrent[dir];
+  renderDecisionTree();
+}
+
+function resetDecisionTree() {
+  dtCurrent = dtTree;
+  dtPath = [];
+  renderDecisionTree();
+}
+
+// === HOOKS ===
+function toggleHook(id) {
+  const el = document.getElementById('hook-' + id);
+  el.classList.toggle('open');
+}
+
+// === EXERCISES ===
+function checkEx(n) {
+  const val = document.getElementById('ex' + n).value.trim();
+  const fb = document.getElementById('fb-' + n);
+  if (!val) { fb.style.display = 'block'; fb.className = 'ex-feedback partial'; fb.textContent = 'Write something first!'; return; }
+  
+  const checks = {
+    1: () => {
+      const has = (s) => val.toLowerCase().includes(s.toLowerCase());
+      const hits = [has('agentTurn') || has('agent_turn'), has('cron') || has('schedule'), has('9') || has('09'), has('prompt') || has('message'), has('timezone') || has('EST') || has('New_York')];
+      return hits.filter(Boolean).length;
+    },
+    2: () => {
+      const has = (s) => val.toLowerCase().includes(s.toLowerCase());
+      const hits = [has('gmail') || has('email'), has('calendar'), has('github'), has('weather'), has('monday') || has('weekly'), has('heartbeat_ok') || has('HEARTBEAT_OK'), has('rotation') || has('every 2') || has('2nd')];
+      return hits.filter(Boolean).length;
+    },
+    3: () => {
+      const has = (s) => val.toLowerCase().includes(s.toLowerCase());
+      const hits = [has('142') || has('#142'), has('sarah') || has('sarah-dev'), has('webhook') || has('stripe') || has('Add webhook'), has('openclaw/gateway') || has('gateway'), has('847') || has('12 file')];
+      return hits.filter(Boolean).length;
+    },
+    4: () => {
+      const has = (s) => val.toLowerCase().includes(s.toLowerCase());
+      const hits = [has('cron'), has('heartbeat'), val.split('\n').length >= 4];
+      return hits.filter(Boolean).length;
+    }
+  };
+
+  const thresholds = {1: [3,5], 2: [4,7], 3: [3,5], 4: [2,3]};
+  const score = checks[n]();
+  const [partial, full] = thresholds[n];
+
+  fb.style.display = 'block';
+  if (score >= full) {
+    fb.className = 'ex-feedback correct';
+    fb.textContent = '✅ Excellent! You covered all the key points.';
+  } else if (score >= partial) {
+    fb.className = 'ex-feedback partial';
+    fb.textContent = `⚠️ Good start — you're missing some elements. Check the solution for comparison. (${score}/${full} key points)`;
+  } else {
+    fb.className = 'ex-feedback partial';
+    fb.textContent = `⚠️ Needs more detail. Try the hint, or check the solution. (${score}/${full} key points)`;
+  }
+}
+
+function toggleHint(n) {
+  const el = document.getElementById('hint-' + n);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleSolution(n) {
+  const el = document.getElementById('sol-' + n);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// === INIT ===
+initTimeline();
+renderDecisionTree();
+</script>
+</body>
+</html>

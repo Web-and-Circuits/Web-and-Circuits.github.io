@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 02: Attention Is All You Need</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--surface:#131a2b;--surface2:#1a2340;--accent:#4fc3f7;--accent2:#7c4dff;--text:#e0e6f0;--text2:#8892a8;--success:#66bb6a;--warn:#ffa726;--pink:#f06292;--border:#2a3555;--radius:12px}
+html{scroll-behavior:smooth}
+body{font-family:'SF Pro Text',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Progress bar */
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--pink));z-index:1000;transition:width .3s}
+
+/* Nav */
+nav{position:fixed;top:12px;right:12px;z-index:999;display:flex;gap:6px}
+nav button{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;transition:.2s}
+nav button:hover,nav button.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative}
+.hero h1{font-size:clamp(2rem,6vw,3.5rem);font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero .sub{color:var(--text2);font-size:1.1rem;max-width:500px;margin-bottom:2rem}
+.hero .paper-ref{font-size:.85rem;color:var(--text2);font-style:italic;margin-top:1rem;opacity:.7}
+.start-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:14px 36px;border-radius:30px;font-size:1.1rem;cursor:pointer;transition:.3s;font-weight:600}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,195,247,.3)}
+
+/* Sections */
+section{padding:3rem 1.5rem;max-width:900px;margin:0 auto}
+.act-header{text-align:center;margin-bottom:2.5rem}
+.act-header .act-label{font-size:.8rem;text-transform:uppercase;letter-spacing:3px;color:var(--accent);margin-bottom:.5rem}
+.act-header h2{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700}
+.act-header p{color:var(--text2);margin-top:.5rem;max-width:600px;margin-left:auto;margin-right:auto}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+.card h3{font-size:1.1rem;margin-bottom:.75rem;color:var(--accent)}
+
+/* Attention Viz */
+#attn-input{width:100%;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:1rem;margin-bottom:1rem;outline:none}
+#attn-input:focus{border-color:var(--accent)}
+#attn-viz{position:relative;width:100%;min-height:300px;overflow-x:auto}
+#attn-svg{width:100%;min-height:280px}
+.word-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:.9rem;transition:.2s;display:inline-block;margin:3px}
+.word-btn:hover,.word-btn.selected{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+#attn-heatmap{margin-top:1rem}
+#heatmap-canvas{border-radius:var(--radius);cursor:pointer}
+.attn-instructions{font-size:.85rem;color:var(--text2);margin-bottom:1rem}
+
+/* Pyodide */
+#pyodide-status{text-align:center;padding:1rem;color:var(--text2);font-size:.9rem}
+.puzzle{margin-bottom:2rem}
+.puzzle-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.puzzle-header h3{font-size:1rem}
+.puzzle-num{background:var(--accent2);color:#fff;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;margin-right:8px}
+.puzzle textarea{width:100%;min-height:160px;background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);color:#c9d1d9;font-family:'SF Mono',Menlo,monospace;font-size:.85rem;padding:12px;resize:vertical;outline:none;tab-size:4}
+.puzzle textarea:focus{border-color:var(--accent)}
+.puzzle-controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.run-btn{background:var(--success);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.run-btn:hover{opacity:.85}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+.hint-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem}
+.puzzle-output{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:8px;font-family:'SF Mono',Menlo,monospace;font-size:.8rem;color:#8b949e;min-height:40px;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.puzzle-output.success{border-color:var(--success);color:var(--success)}
+.puzzle-output.error{border-color:#f44336;color:#f44336}
+.puzzle-desc{color:var(--text2);font-size:.9rem;margin-bottom:.75rem}
+.check-mark{color:var(--success);font-weight:700;font-size:1.1rem}
+
+/* Act 3 */
+.paper-quote{border-left:3px solid var(--accent2);padding:.75rem 1rem;margin:1rem 0;background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:var(--text2)}
+.paper-quote cite{display:block;margin-top:.5rem;font-style:normal;font-size:.8rem;color:var(--accent)}
+.eq-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;text-align:center;font-size:1.2rem;margin:1rem 0;font-family:Georgia,serif;letter-spacing:1px}
+.mapping-table{width:100%;border-collapse:collapse;margin:1rem 0}
+.mapping-table th,.mapping-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+.mapping-table th{color:var(--accent);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
+.mapping-table td:first-child{font-family:Georgia,serif;color:var(--pink)}
+.mapping-table td:last-child{font-family:'SF Mono',Menlo,monospace;color:var(--success)}
+.arch-diagram{position:relative;margin:2rem auto;text-align:center}
+.arch-diagram svg{max-width:100%}
+.you-built{display:inline-block;background:var(--success);color:var(--bg);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:1px}
+.resources{display:grid;gap:1rem;margin-top:1.5rem}
+.resource-link{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;transition:.2s}
+.resource-link:hover{border-color:var(--accent);transform:translateY(-1px);text-decoration:none}
+
+/* Completion */
+.completion{text-align:center;padding:4rem 2rem}
+.completion h2{font-size:2rem;margin-bottom:1rem}
+.completion .trophy{font-size:4rem;margin-bottom:1rem}
+
+/* Responsive */
+@media(max-width:600px){section{padding:2rem 1rem}.puzzle textarea{min-height:200px;font-size:.8rem}}
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:0%"></div>
+
+<nav>
+<button onclick="scrollToAct('hero')" class="active" data-act="hero">Start</button>
+<button onclick="scrollToAct('act1')" data-act="act1">Explore</button>
+<button onclick="scrollToAct('act2')" data-act="act2">Build</button>
+<button onclick="scrollToAct('act3')" data-act="act3">Connect</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero" id="hero">
+<h1>Attention Is All You Need</h1>
+<p class="sub">The mechanism that lets AI understand language. You'll explore it, build it, then connect it to the paper that started it all.</p>
+<button class="start-btn" onclick="scrollToAct('act1')">Begin →</button>
+<p class="paper-ref">Based on Vaswani et al., 2017 — "Attention Is All You Need"</p>
+</div>
+
+<!-- ACT 1: THE EXPLORABLE -->
+<section id="act1">
+<div class="act-header">
+<div class="act-label">Act 1</div>
+<h2>The Explorable</h2>
+<p>See how attention lets words "look at" other words to understand meaning.</p>
+</div>
+
+<div class="card">
+<h3>🔍 Interactive Attention</h3>
+<p class="attn-instructions">Type a sentence (or use the default). Click a word to see what it attends to. The brighter the connection, the stronger the attention weight.</p>
+<input id="attn-input" type="text" value="The cat sat on the mat because it was tired" placeholder="Type a sentence...">
+<div id="word-selector"></div>
+<div id="attn-viz">
+<svg id="attn-svg"></svg>
+</div>
+</div>
+
+<div class="card">
+<h3>🎨 Attention Heatmap</h3>
+<p class="attn-instructions">Click any cell to drag the attention weight up or down. Watch how redistributing attention changes which words "matter" to each other.</p>
+<div id="attn-heatmap">
+<canvas id="heatmap-canvas"></canvas>
+</div>
+<div id="heatmap-info" style="font-size:.85rem;color:var(--text2);margin-top:8px"></div>
+</div>
+</section>
+
+<!-- ACT 2: THE BUILD -->
+<section id="act2">
+<div class="act-header">
+<div class="act-label">Act 2</div>
+<h2>The Build</h2>
+<p>Build attention from scratch in Python. Each puzzle adds a piece.</p>
+</div>
+
+<div id="pyodide-status">⏳ Loading Python runtime (Pyodide)...</div>
+<div id="puzzles-container"></div>
+</section>
+
+<!-- ACT 3: THE CONNECTION -->
+<section id="act3">
+<div class="act-header">
+<div class="act-label">Act 3</div>
+<h2>The Connection</h2>
+<p>Everything you just built maps directly to the original paper.</p>
+</div>
+
+<div class="card">
+<h3>📜 From the Paper</h3>
+<div class="paper-quote">
+"An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors."
+<cite>— Section 3.2, Vaswani et al., 2017</cite>
+</div>
+<div class="paper-quote">
+"We found it beneficial to linearly project the queries, keys and values h times with different, learned linear projections to d_k, d_k and d_v dimensions, respectively."
+<cite>— Section 3.2.2, Multi-Head Attention</cite>
+</div>
+<div class="paper-quote">
+"Instead of performing a single attention function with d_model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times."
+<cite>— Section 3.2.2, Multi-Head Attention</cite>
+</div>
+</div>
+
+<div class="card">
+<h3>📐 The Core Equation</h3>
+<div class="eq-box">Attention(Q, K, V) = softmax(Q K<sup>T</sup> / √d<sub>k</sub>) V</div>
+<p style="color:var(--text2);font-size:.9rem;margin-top:.75rem">This is Section 3.2.1 — <strong>Scaled Dot-Product Attention</strong>. The √d<sub>k</sub> scaling prevents the dot products from growing too large, which would push softmax into regions with tiny gradients.</p>
+</div>
+
+<div class="card">
+<h3>🗺️ Paper Notation → Your Code</h3>
+<table class="mapping-table">
+<thead><tr><th>Paper</th><th>Your Code</th><th>What It Is</th></tr></thead>
+<tbody>
+<tr><td>Q</td><td>queries</td><td>What am I looking for?</td></tr>
+<tr><td>K</td><td>keys</td><td>What do I contain?</td></tr>
+<tr><td>V</td><td>values</td><td>What do I offer?</td></tr>
+<tr><td>d<sub>k</sub></td><td>d_k</td><td>Dimension of keys</td></tr>
+<tr><td>QK<sup>T</sup>/√d<sub>k</sub></td><td>scores / np.sqrt(d_k)</td><td>Scaled similarity</td></tr>
+<tr><td>softmax(·)</td><td>softmax(scores)</td><td>Normalized weights</td></tr>
+<tr><td>h</td><td>num_heads</td><td>Number of attention heads</td></tr>
+<tr><td>W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup></td><td>W_q, W_k, W_v</td><td>Projection matrices</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>🏗️ The Architecture — What You Built</h3>
+<div class="arch-diagram">
+<svg viewBox="0 0 400 520" width="400" xmlns="http://www.w3.org/2000/svg" style="font-family:sans-serif">
+<!-- Background boxes -->
+<rect x="50" y="10" width="300" height="500" rx="12" fill="#131a2b" stroke="#2a3555"/>
+<text x="200" y="40" text-anchor="middle" fill="#8892a8" font-size="12" font-weight="600">TRANSFORMER BLOCK</text>
+
+<!-- Input -->
+<rect x="130" y="460" width="140" height="35" rx="8" fill="#1a2340" stroke="#2a3555"/>
+<text x="200" y="482" text-anchor="middle" fill="#e0e6f0" font-size="11">Input Embedding</text>
+
+<!-- Self-Attention -->
+<rect x="100" y="370" width="200" height="55" rx="8" fill="#1a3a2a" stroke="#66bb6a" stroke-width="2"/>
+<text x="200" y="393" text-anchor="middle" fill="#66bb6a" font-size="12" font-weight="700">Multi-Head Attention</text>
+<text x="200" y="412" text-anchor="middle" fill="#66bb6a" font-size="9">⬆ YOU BUILT THIS (Puzzles 1-5)</text>
+
+<!-- Add & Norm 1 -->
+<rect x="130" y="310" width="140" height="35" rx="8" fill="#1a2340" stroke="#2a3555"/>
+<text x="200" y="332" text-anchor="middle" fill="#e0e6f0" font-size="11">Add & Norm</text>
+
+<!-- FFN -->
+<rect x="130" y="240" width="140" height="35" rx="8" fill="#1a2340" stroke="#2a3555"/>
+<text x="200" y="262" text-anchor="middle" fill="#e0e6f0" font-size="11">Feed Forward</text>
+
+<!-- Add & Norm 2 -->
+<rect x="130" y="170" width="140" height="35" rx="8" fill="#1a2340" stroke="#2a3555"/>
+<text x="200" y="192" text-anchor="middle" fill="#e0e6f0" font-size="11">Add & Norm</text>
+
+<!-- Output -->
+<rect x="130" y="60" width="140" height="35" rx="8" fill="#1a2340" stroke="#2a3555"/>
+<text x="200" y="82" text-anchor="middle" fill="#e0e6f0" font-size="11">Output</text>
+
+<!-- Arrows -->
+<line x1="200" y1="460" x2="200" y2="425" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="200" y1="370" x2="200" y2="345" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="200" y1="310" x2="200" y2="275" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="200" y1="240" x2="200" y2="205" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="200" y1="170" x2="200" y2="95" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrow)"/>
+
+<!-- Residual connections -->
+<path d="M95 455 L75 455 L75 335 L130 335" fill="none" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="4"/>
+<path d="M95 365 L75 365 L75 195 L130 195" fill="none" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="4"/>
+
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#4fc3f7"/>
+</marker>
+</defs>
+</svg>
+</div>
+</div>
+
+<div class="card">
+<h3>📚 Keep Going</h3>
+<div class="resources">
+<a class="resource-link" href="https://jalammar.github.io/illustrated-transformer/" target="_blank" rel="noopener">
+<span style="font-size:1.5rem">🎨</span>
+<span><strong>The Illustrated Transformer</strong><br><span style="color:var(--text2);font-size:.85rem">Jay Alammar's visual walkthrough — the best visual companion</span></span>
+</a>
+<a class="resource-link" href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">
+<span style="font-size:1.5rem">📄</span>
+<span><strong>Original Paper (arXiv)</strong><br><span style="color:var(--text2);font-size:.85rem">Vaswani et al., 2017 — "Attention Is All You Need"</span></span>
+</a>
+<a class="resource-link" href="https://nlp.seas.harvard.edu/annotated-transformer/" target="_blank" rel="noopener">
+<span style="font-size:1.5rem">💻</span>
+<span><strong>The Annotated Transformer</strong><br><span style="color:var(--text2);font-size:.85rem">Harvard NLP — line-by-line code annotation of the paper</span></span>
+</a>
+</div>
+</div>
+
+<div class="completion" id="completion">
+<div class="trophy">🏆</div>
+<h2>Module Complete!</h2>
+<p style="color:var(--text2);max-width:500px;margin:1rem auto">You explored attention visually, built it from scratch in Python, and connected it to the paper that changed everything. Next up: Module 03.</p>
+</div>
+</section>
+
+<script>
+// ========== NAVIGATION & PROGRESS ==========
+const acts = ['hero','act1','act2','act3'];
+function scrollToAct(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+function updateProgress(){
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  const p=h>0?Math.min(100,window.scrollY/h*100):0;
+  document.getElementById('progress-bar').style.width=p+'%';
+  const btns=document.querySelectorAll('nav button');
+  let current='hero';
+  acts.forEach(id=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<200)current=id});
+  btns.forEach(b=>{b.classList.toggle('active',b.dataset.act===current)});
+}
+window.addEventListener('scroll',updateProgress);
+
+// ========== ACT 1: ATTENTION VISUALIZATION ==========
+let attnWeights=[], words=[], selectedWord=-1;
+
+function generateAttnWeights(words){
+  const n=words.length, w=[];
+  // Simulate plausible attention with positional + semantic heuristics
+  const lower=words.map(x=>x.toLowerCase());
+  for(let i=0;i<n;i++){
+    w[i]=[];
+    for(let j=0;j<n;j++){
+      let v=Math.random()*.3;
+      // Self-attention bias
+      if(i===j) v+=.5;
+      // Nearby words get more attention
+      const dist=Math.abs(i-j);
+      v+=Math.max(0,.4-dist*.08);
+      // Pronoun resolution: "it" -> "cat"
+      if(lower[i]==='it'&&(lower[j]==='cat'||lower[j]==='mat'))v+=.6;
+      if(lower[i]==='was'&&lower[j]==='it')v+=.4;
+      if(lower[i]==='tired'&&(lower[j]==='cat'||lower[j]==='it'))v+=.5;
+      // "because" links clauses
+      if(lower[i]==='because')v+=.1;
+      if(lower[j]==='because'&&i>words.indexOf('because'))v+=.2;
+      w[i][j]=v;
+    }
+    // Normalize (softmax-like)
+    const max=Math.max(...w[i]);
+    const exps=w[i].map(x=>Math.exp(x-max));
+    const sum=exps.reduce((a,b)=>a+b,0);
+    w[i]=exps.map(x=>x/sum);
+  }
+  return w;
+}
+
+function renderWords(){
+  const sel=document.getElementById('word-selector');
+  sel.innerHTML='';
+  words.forEach((w,i)=>{
+    const btn=document.createElement('button');
+    btn.className='word-btn'+(i===selectedWord?' selected':'');
+    btn.textContent=w;
+    btn.onclick=()=>{selectedWord=i;renderWords();renderSVG()};
+    sel.appendChild(btn);
+  });
+}
+
+function renderSVG(){
+  const svg=document.getElementById('attn-svg');
+  if(selectedWord<0||!words.length){svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#8892a8" font-size="14">Click a word above to see its attention pattern</text>';return;}
+  const n=words.length;
+  const W=Math.max(600,n*70);
+  svg.setAttribute('viewBox',`0 0 ${W} 200`);
+  let html='';
+  const gap=W/(n+1);
+  // Query word on top
+  const qx=gap*(selectedWord+1);
+  html+=`<circle cx="${qx}" cy="30" r="5" fill="#f06292"/>`;
+  html+=`<text x="${qx}" y="20" text-anchor="middle" fill="#f06292" font-size="12" font-weight="700">${words[selectedWord]}</text>`;
+  // Key words on bottom
+  const weights=attnWeights[selectedWord];
+  const maxW=Math.max(...weights);
+  for(let j=0;j<n;j++){
+    const kx=gap*(j+1);
+    const w=weights[j];
+    const opacity=Math.max(.05,w/maxW);
+    const thick=1+w/maxW*8;
+    const color=j===selectedWord?'#f06292':'#4fc3f7';
+    html+=`<line x1="${qx}" y1="35" x2="${kx}" y2="155" stroke="${color}" stroke-width="${thick}" opacity="${opacity}"/>`;
+    html+=`<text x="${kx}" y="180" text-anchor="middle" fill="#e0e6f0" font-size="11">${words[j]}</text>`;
+    html+=`<text x="${kx}" y="195" text-anchor="middle" fill="#8892a8" font-size="9">${(w*100).toFixed(1)}%</text>`;
+    html+=`<circle cx="${kx}" cy="160" r="${3+w/maxW*6}" fill="${color}" opacity="${opacity}"/>`;
+  }
+  svg.innerHTML=html;
+}
+
+function renderHeatmap(){
+  const canvas=document.getElementById('heatmap-canvas');
+  const n=words.length;
+  if(!n)return;
+  const cellSize=Math.min(50,Math.floor((Math.min(window.innerWidth-60,850))/( n+2)));
+  const pad=cellSize*2;
+  canvas.width=pad+n*cellSize;
+  canvas.height=pad+n*cellSize;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a0e17';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Labels
+  ctx.fillStyle='#8892a8';ctx.font=`${Math.min(11,cellSize*.5)}px sans-serif`;
+  for(let i=0;i<n;i++){
+    ctx.save();ctx.translate(pad+i*cellSize+cellSize/2,pad-4);ctx.rotate(-Math.PI/4);
+    ctx.fillText(words[i],0,0);ctx.restore();
+    ctx.fillText(words[i],2,pad+i*cellSize+cellSize/2+4);
+  }
+  // Cells
+  for(let i=0;i<n;i++){
+    for(let j=0;j<n;j++){
+      const w=attnWeights[i][j];
+      const r=Math.floor(79+w*177), g=Math.floor(195-w*120), b=Math.floor(247-w*200);
+      ctx.fillStyle=`rgb(${r},${g},${b})`;
+      ctx.fillRect(pad+j*cellSize,pad+i*cellSize,cellSize-1,cellSize-1);
+      if(cellSize>25){
+        ctx.fillStyle=w>.3?'#000':'#fff';
+        ctx.font=`${Math.min(9,cellSize*.35)}px monospace`;
+        ctx.fillText((w*100).toFixed(0),pad+j*cellSize+3,pad+i*cellSize+cellSize/2+3);
+      }
+    }
+  }
+  // Make draggable
+  canvas._cellSize=cellSize;canvas._pad=pad;
+}
+
+// Drag to edit weights
+(function(){
+  const canvas=document.getElementById('heatmap-canvas');
+  let dragging=false,di=-1,dj=-1,startY=0;
+  canvas.addEventListener('mousedown',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left,y=e.clientY-rect.top;
+    const cs=canvas._cellSize,pad=canvas._pad;
+    const j=Math.floor((x-pad)/cs),i=Math.floor((y-pad)/cs);
+    if(i>=0&&i<words.length&&j>=0&&j<words.length){dragging=true;di=i;dj=j;startY=e.clientY}
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const delta=(startY-e.clientY)*.005;
+    attnWeights[di][dj]=Math.max(.01,Math.min(1,attnWeights[di][dj]+delta));
+    // Re-normalize row
+    const sum=attnWeights[di].reduce((a,b)=>a+b,0);
+    attnWeights[di]=attnWeights[di].map(x=>x/sum);
+    startY=e.clientY;
+    renderHeatmap();
+    if(selectedWord===di)renderSVG();
+    document.getElementById('heatmap-info').textContent=`"${words[di]}" → "${words[dj]}": ${(attnWeights[di][dj]*100).toFixed(1)}%`;
+  });
+  window.addEventListener('mouseup',()=>{dragging=false});
+  // Touch support
+  canvas.addEventListener('touchstart',e=>{
+    const t=e.touches[0],rect=canvas.getBoundingClientRect();
+    const x=t.clientX-rect.left,y=t.clientY-rect.top;
+    const cs=canvas._cellSize,pad=canvas._pad;
+    const j=Math.floor((x-pad)/cs),i=Math.floor((y-pad)/cs);
+    if(i>=0&&i<words.length&&j>=0&&j<words.length){dragging=true;di=i;dj=j;startY=t.clientY;e.preventDefault()}
+  },{passive:false});
+  canvas.addEventListener('touchmove',e=>{
+    if(!dragging)return;e.preventDefault();
+    const t=e.touches[0],delta=(startY-t.clientY)*.005;
+    attnWeights[di][dj]=Math.max(.01,Math.min(1,attnWeights[di][dj]+delta));
+    const sum=attnWeights[di].reduce((a,b)=>a+b,0);
+    attnWeights[di]=attnWeights[di].map(x=>x/sum);
+    startY=t.clientY;renderHeatmap();if(selectedWord===di)renderSVG();
+  },{passive:false});
+  canvas.addEventListener('touchend',()=>{dragging=false});
+})();
+
+function initAttention(){
+  const input=document.getElementById('attn-input');
+  function update(){
+    words=input.value.trim().split(/\s+/).filter(Boolean);
+    attnWeights=generateAttnWeights(words);
+    selectedWord=-1;
+    renderWords();renderSVG();renderHeatmap();
+  }
+  input.addEventListener('input',update);
+  update();
+  // Auto-select "it" if present
+  const itIdx=words.findIndex(w=>w.toLowerCase()==='it');
+  if(itIdx>=0){selectedWord=itIdx;renderWords();renderSVG()}
+}
+initAttention();
+
+// ========== ACT 2: PYODIDE PUZZLES ==========
+const puzzles=[
+  {
+    title:'Dot Product Similarity',
+    desc:'Compute the dot product between two word vectors. This measures how similar they are — the foundation of attention.',
+    code:`import numpy as np
+
+# Two word vectors (imagine these come from an embedding)
+cat = np.array([0.9, 0.1, 0.3, 0.8])
+dog = np.array([0.8, 0.2, 0.4, 0.7])
+
+# TODO: Compute the dot product of cat and dog
+# Hint: np.dot() or use the @ operator
+similarity = ___
+
+print(f"cat · dog = {similarity:.4f}")
+# Expected: ~1.06`,
+    solution:'np.dot(cat, dog)',
+    check:r=>r.includes('1.06')||r.includes('1.0600'),
+    hint:'Use np.dot(cat, dog) — it multiplies element-wise and sums.'
+  },
+  {
+    title:'Building Q, K, V Matrices',
+    desc:'Project an embedding through learned weight matrices to get Queries, Keys, and Values — the three ingredients of attention.',
+    code:`import numpy as np
+np.random.seed(42)
+
+# Embedding: 4 words, each dim=8
+X = np.random.randn(4, 8)
+
+# Weight matrices (normally learned, we init random)
+d_k = 4  # dimension of queries/keys
+d_v = 4  # dimension of values
+W_q = np.random.randn(8, d_k)
+W_k = np.random.randn(8, d_k)
+W_v = np.random.randn(8, d_v)
+
+# TODO: Compute Q, K, V by multiplying X with each weight matrix
+Q = ___
+K = ___
+V = ___
+
+print(f"Q shape: {Q.shape}")  # Expected: (4, 4)
+print(f"K shape: {K.shape}")  # Expected: (4, 4)
+print(f"V shape: {V.shape}")  # Expected: (4, 4)
+print("Q[0,:2]:", np.round(Q[0,:2], 3))`,
+    solution:'X @ W_q',
+    check:r=>r.includes('(4, 4)')&&(r.match(/\(4, 4\)/g)||[]).length>=3,
+    hint:'Matrix multiplication: Q = X @ W_q (and similar for K, V).'
+  },
+  {
+    title:'Scaled Dot-Product Attention',
+    desc:'The core equation from the paper: Attention(Q,K,V) = softmax(QKᵀ/√d_k)V',
+    code:`import numpy as np
+np.random.seed(42)
+
+def softmax(x):
+    e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+# Setup
+d_k = 4
+Q = np.random.randn(4, d_k)
+K = np.random.randn(4, d_k)
+V = np.random.randn(4, d_k)
+
+# TODO: Implement scaled dot-product attention
+# Step 1: Compute scores = Q @ K^T
+scores = ___
+
+# Step 2: Scale by sqrt(d_k)
+scores = ___
+
+# Step 3: Apply softmax to get attention weights
+weights = ___
+
+# Step 4: Multiply weights by V to get output
+output = ___
+
+print(f"Attention weights shape: {weights.shape}")  # (4, 4)
+print(f"Output shape: {output.shape}")  # (4, 4)
+print(f"Weights row 0 sum: {weights[0].sum():.4f}")  # 1.0000
+print("✅ Scaled dot-product attention works!")`,
+    solution:'Q @ K.T',
+    check:r=>r.includes('1.0000')&&r.includes('✅'),
+    hint:'scores = Q @ K.T, then scores / np.sqrt(d_k), then softmax(scores), then weights @ V'
+  },
+  {
+    title:'Multi-Head Attention',
+    desc:'Split Q, K, V into multiple heads, attend separately, then concatenate. This lets the model attend to different things simultaneously.',
+    code:`import numpy as np
+np.random.seed(42)
+
+def softmax(x):
+    e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+def attention(Q, K, V):
+    d_k = K.shape[-1]
+    scores = Q @ K.T / np.sqrt(d_k)
+    return softmax(scores) @ V
+
+# 4 words, d_model=8, num_heads=2
+seq_len, d_model, num_heads = 4, 8, 2
+d_k = d_model // num_heads  # = 4
+
+X = np.random.randn(seq_len, d_model)
+Q = X  # Simplified: skip projection for clarity
+K = X
+V = X
+
+# TODO: Split into heads, attend, concatenate
+# Step 1: Reshape Q,K,V to (num_heads, seq_len, d_k)
+Q_heads = Q.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+K_heads = K.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+V_heads = V.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+
+# Step 2: Apply attention to each head
+head_outputs = []
+for i in range(num_heads):
+    head_out = attention(Q_heads[i], K_heads[i], V_heads[i])
+    head_outputs.append(head_out)
+
+# Step 3: Concatenate heads back together
+# TODO: Stack and reshape back to (seq_len, d_model)
+multi_head_out = ___
+
+print(f"Multi-head output shape: {multi_head_out.shape}")  # (4, 8)
+print(f"✅ Multi-head attention: {num_heads} heads, d_k={d_k}")`,
+    solution:"np.concatenate(head_outputs, axis=-1)",
+    check:r=>r.includes('(4, 8)')&&r.includes('✅'),
+    hint:'np.concatenate(head_outputs, axis=-1) — join along the last dimension.'
+  },
+  {
+    title:'Full Self-Attention Layer',
+    desc:'Put it all together: project → split heads → attend → concat → output projection. A complete self-attention layer!',
+    code:`import numpy as np
+np.random.seed(42)
+
+def softmax(x):
+    e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+class SelfAttention:
+    def __init__(self, d_model, num_heads):
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_k = d_model // num_heads
+        # Initialize projection weights
+        self.W_q = np.random.randn(d_model, d_model) * 0.1
+        self.W_k = np.random.randn(d_model, d_model) * 0.1
+        self.W_v = np.random.randn(d_model, d_model) * 0.1
+        self.W_o = np.random.randn(d_model, d_model) * 0.1
+
+    def forward(self, X):
+        seq_len = X.shape[0]
+        # TODO: Project to Q, K, V
+        Q = X @ self.W_q
+        K = X @ self.W_k
+        V = X @ self.W_v
+
+        # TODO: Reshape for multi-head: (num_heads, seq_len, d_k)
+        Q = Q.reshape(seq_len, self.num_heads, self.d_k).transpose(1, 0, 2)
+        K = K.reshape(seq_len, self.num_heads, self.d_k).transpose(1, 0, 2)
+        V = V.reshape(seq_len, self.num_heads, self.d_k).transpose(1, 0, 2)
+
+        # TODO: Scaled dot-product attention per head
+        heads = []
+        for i in range(self.num_heads):
+            scores = Q[i] @ K[i].T / np.sqrt(self.d_k)
+            weights = softmax(scores)
+            heads.append(weights @ V[i])
+
+        # TODO: Concatenate and project output
+        concat = np.concatenate(heads, axis=-1)
+        output = ___
+
+        return output
+
+# Test it!
+sa = SelfAttention(d_model=8, num_heads=2)
+X = np.random.randn(4, 8)  # 4 words, dim=8
+result = sa.forward(X)
+print(f"Input shape: {X.shape}")
+print(f"Output shape: {result.shape}")  # Should be (4, 8)
+assert result.shape == X.shape, "Shape mismatch!"
+print("✅ Full self-attention layer complete!")
+print("🎉 You built the core of a Transformer!")`,
+    solution:'concat @ self.W_o',
+    check:r=>r.includes('🎉')&&r.includes('✅'),
+    hint:'The final output projection: concat @ self.W_o'
+  }
+];
+
+let pyodide=null, puzzleStates=puzzles.map(()=>({solved:false}));
+
+function renderPuzzles(){
+  const c=document.getElementById('puzzles-container');
+  c.innerHTML=puzzles.map((p,i)=>`
+<div class="card puzzle" id="puzzle-${i}">
+  <div class="puzzle-header">
+    <h3><span class="puzzle-num">${i+1}</span>${p.title} ${puzzleStates[i].solved?'<span class="check-mark">✓</span>':''}</h3>
+  </div>
+  <p class="puzzle-desc">${p.desc}</p>
+  <textarea id="code-${i}" spellcheck="false">${p.code}</textarea>
+  <div class="puzzle-controls">
+    <button class="run-btn" id="run-${i}" onclick="runPuzzle(${i})" ${pyodide?'':'disabled'}>▶ Run</button>
+    <button class="hint-btn" onclick="showHint(${i})">💡 Hint</button>
+  </div>
+  <div class="puzzle-output" id="output-${i}"></div>
+</div>`).join('');
+}
+
+function showHint(i){
+  const o=document.getElementById(`output-${i}`);
+  o.textContent='💡 '+puzzles[i].hint;
+  o.className='puzzle-output';
+}
+
+async function runPuzzle(i){
+  if(!pyodide)return;
+  const code=document.getElementById(`code-${i}`).value;
+  const out=document.getElementById(`output-${i}`);
+  const btn=document.getElementById(`run-${i}`);
+  btn.disabled=true;btn.textContent='⏳ Running...';
+  out.textContent='';out.className='puzzle-output';
+  try{
+    pyodide.runPython('import io,sys; _stdout=io.StringIO(); sys.stdout=_stdout');
+    pyodide.runPython(code);
+    const result=pyodide.runPython('_stdout.getvalue()');
+    out.textContent=result;
+    if(puzzles[i].check(result)){
+      out.className='puzzle-output success';
+      puzzleStates[i].solved=true;
+      document.querySelector(`#puzzle-${i} .puzzle-header h3`).innerHTML=
+        `<span class="puzzle-num">${i+1}</span>${puzzles[i].title} <span class="check-mark">✓</span>`;
+    }
+  }catch(e){
+    out.textContent='Error: '+e.message;
+    out.className='puzzle-output error';
+  }
+  btn.disabled=false;btn.textContent='▶ Run';
+  pyodide.runPython('sys.stdout=sys.__stdout__');
+}
+
+renderPuzzles();
+
+// Load Pyodide
+async function loadPyodide_(){
+  const status=document.getElementById('pyodide-status');
+  try{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+    document.head.appendChild(script);
+    await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=reject});
+    status.textContent='⏳ Initializing Python + NumPy...';
+    pyodide=await loadPyodide();
+    await pyodide.loadPackage('numpy');
+    status.textContent='✅ Python ready! Solve the puzzles below.';
+    status.style.color='var(--success)';
+    document.querySelectorAll('.run-btn').forEach(b=>b.disabled=false);
+  }catch(e){
+    status.textContent='⚠️ Could not load Python runtime. Check your connection and reload.';
+    status.style.color='var(--warn)';
+  }
+}
+loadPyodide_();
+</script>
+</body>
+</html>

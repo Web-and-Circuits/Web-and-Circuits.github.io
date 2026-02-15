@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 11: Embeddings & Vector Search</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--card:#131829;--border:#1e2744;--text:#e0e6f0;--dim:#7a86a8;--accent:#4fc3f7;--accent2:#ab47bc;--accent3:#66bb6a;--gold:#ffd54f;--red:#ef5350;--orange:#ff9800}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+h1{font-size:2.2em;text-align:center;padding:40px 0 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.5em;color:var(--accent);margin:40px 0 15px;padding-top:20px;border-top:1px solid var(--border)}
+h3{font-size:1.15em;color:var(--gold);margin:25px 0 10px}
+.subtitle{text-align:center;color:var(--dim);margin-bottom:30px;font-size:1.05em}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0}
+canvas{border-radius:8px;display:block;cursor:crosshair;touch-action:none}
+.canvas-wrap{position:relative;margin:10px 0}
+button{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:.95em;margin:4px}
+button:hover{opacity:.85}
+button.secondary{background:var(--border);color:var(--text)}
+.input-row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.input-row input,.input-row textarea{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:.95em}
+.result{background:var(--bg);border-left:3px solid var(--accent);padding:10px 15px;margin:10px 0;border-radius:0 6px 6px 0;font-family:'Courier New',monospace;font-size:.9em;white-space:pre-wrap;overflow-x:auto}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;margin:2px}
+.tag-text{background:rgba(79,195,247,.2);color:var(--accent)}
+.tag-img{background:rgba(171,71,188,.2);color:var(--accent2)}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin:8px 0;font-size:.85em;color:var(--dim)}
+.legend span::before{content:'●';margin-right:4px}
+.pyodide-status{font-size:.85em;color:var(--dim);margin:5px 0}
+.editor{background:#0d1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:10px 0}
+.editor-header{background:var(--border);padding:6px 12px;font-size:.8em;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.editor textarea{width:100%;background:#0d1117;color:#e6edf3;border:none;padding:12px;font-family:'Courier New',monospace;font-size:.88em;line-height:1.5;resize:vertical;min-height:140px;tab-size:4}
+.editor textarea:focus{outline:none}
+.test-result{padding:8px 12px;font-size:.88em;font-family:'Courier New',monospace;border-top:1px solid var(--border)}
+.test-pass{color:var(--accent3)}
+.test-fail{color:var(--red)}
+.quote{border-left:3px solid var(--accent2);padding:10px 15px;margin:15px 0;font-style:italic;color:var(--dim);background:rgba(171,71,188,.05);border-radius:0 6px 6px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}h1{font-size:1.6em}}
+.emoji{font-size:1.3em;vertical-align:middle}
+a{color:var(--accent)}
+.progress-bar{display:flex;gap:4px;margin:20px 0;flex-wrap:wrap}
+.progress-bar .dot{width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.7em;color:var(--dim);transition:.3s}
+.progress-bar .dot.done{background:var(--accent3);color:#fff}
+.progress-bar .dot.active{background:var(--accent);color:#fff}
+.sim-meter{height:24px;background:var(--bg);border-radius:12px;overflow:hidden;margin:8px 0}
+.sim-meter .fill{height:100%;border-radius:12px;transition:width .5s;display:flex;align-items:center;padding:0 10px;font-size:.8em;color:#fff;font-weight:600}
+.sweep-line{position:absolute;pointer-events:none}
+.db-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.db-card h4{color:var(--accent);margin-bottom:5px;font-size:1em}
+.db-card p{font-size:.82em;color:var(--dim)}
+.act-label{display:inline-block;padding:3px 12px;border-radius:4px;font-size:.75em;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.act1-label{background:rgba(79,195,247,.15);color:var(--accent)}
+.act2-label{background:rgba(255,213,79,.15);color:var(--gold)}
+.act3-label{background:rgba(171,71,188,.15);color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🧭 Embeddings & Vector Search</h1>
+<p class="subtitle">Everything is searchable once everything is a vector</p>
+
+<!-- ═══════ ACT 1 ═══════ -->
+<span class="act-label act1-label">Act 1 — The Explorable</span>
+<h2>🔮 Word Analogy: King − Man + Woman = ?</h2>
+<p>Drag the word dots around. The <b style="color:var(--gold)">gold ★</b> shows where <em>king − man + woman</em> lands. Notice how it falls near <em>queen</em>.</p>
+<div class="card">
+ <div class="canvas-wrap">
+  <canvas id="analogyCanvas" width="800" height="420"></canvas>
+ </div>
+ <div class="legend"><span style="color:var(--accent)">Words</span><span style="color:var(--gold)">★ Analogy result</span></div>
+ <button onclick="resetAnalogy()">Reset Positions</button>
+ <div id="analogyResult" class="result"></div>
+</div>
+
+<h2>📐 Sentence Similarity</h2>
+<p>Type two sentences and see their cosine similarity. Vectors are shown as arrows from the origin.</p>
+<div class="card">
+ <div class="input-row">
+  <input id="sent1" placeholder="The cat sat on the mat" value="The cat sat on the mat">
+  <input id="sent2" placeholder="A kitten rested on the rug" value="A kitten rested on the rug">
+ </div>
+ <button onclick="computeSentSim()">Compare</button>
+ <div class="canvas-wrap"><canvas id="sentCanvas" width="800" height="300"></canvas></div>
+ <div class="sim-meter"><div id="simFill" class="fill" style="width:0%;background:linear-gradient(90deg,var(--red),var(--gold),var(--accent3))"></div></div>
+ <div id="sentResult" class="result">Type two sentences and click Compare</div>
+</div>
+
+<h2>🔍 Vector Search</h2>
+<p>Type a query — watch a radar sweep find the nearest neighbors among 20 pre-embedded items.</p>
+<div class="card">
+ <div class="input-row">
+  <input id="searchQuery" placeholder="machine learning algorithms" value="machine learning algorithms">
+  <button onclick="runVectorSearch()">Search</button>
+ </div>
+ <div class="canvas-wrap"><canvas id="searchCanvas" width="800" height="420"></canvas></div>
+ <div id="searchResults" class="result">Results will appear here...</div>
+</div>
+
+<h2>🖼️ CLIP: Text & Images in One Space</h2>
+<p>Text embeddings (blue) and image embeddings (purple) live in the same space. "A photo of a dog" lands near the dog image embedding!</p>
+<div class="card">
+ <div class="canvas-wrap"><canvas id="clipCanvas" width="800" height="420"></canvas></div>
+ <div class="legend"><span style="color:var(--accent)">Text embeddings</span><span style="color:var(--accent2)">Image embeddings</span></div>
+ <div id="clipInfo" class="result">Hover over dots to see labels and distances</div>
+</div>
+
+<!-- ═══════ ACT 2 ═══════ -->
+<span class="act-label act2-label">Act 2 — The Build</span>
+<h2>🐍 Python Puzzles</h2>
+<p>Five challenges from basic similarity to a full RAG pipeline. <span id="pyStatus" class="pyodide-status">Loading Pyodide...</span></p>
+<div class="progress-bar" id="puzzleProgress"></div>
+
+<!-- Puzzle 1 -->
+<h3>Puzzle 1: Cosine Similarity</h3>
+<p>Compute the cosine similarity between two vectors. Return a float between -1 and 1.</p>
+<div class="editor">
+ <div class="editor-header"><span>puzzle1.py</span><button onclick="runPuzzle(0)">▶ Run & Test</button></div>
+ <textarea id="code0" rows="10">import math
+
+def cosine_similarity(a, b):
+    # a and b are lists of floats (same length)
+    # Return the cosine similarity: dot(a,b) / (|a| * |b|)
+    # YOUR CODE HERE
+    pass</textarea>
+</div>
+<div id="result0" class="test-result"></div>
+
+<!-- Puzzle 2 -->
+<h3>Puzzle 2: Brute-Force Vector Search</h3>
+<p>Given a query vector and a list of vectors, return the indices of the top-K most similar.</p>
+<div class="editor">
+ <div class="editor-header"><span>puzzle2.py</span><button onclick="runPuzzle(1)">▶ Run & Test</button></div>
+ <textarea id="code1" rows="12">def vector_search(query, vectors, k=3):
+    # query: list of floats
+    # vectors: list of list of floats
+    # Return: list of (index, similarity) tuples, top-k by similarity, descending
+    # Use your cosine_similarity from Puzzle 1 (it's available)
+    # YOUR CODE HERE
+    pass</textarea>
+</div>
+<div id="result1" class="test-result"></div>
+
+<!-- Puzzle 3 -->
+<h3>Puzzle 3: Product Quantization</h3>
+<p>Split vectors into sub-vectors, quantize each to nearest centroid. Approximate distances from codebook.</p>
+<div class="editor">
+ <div class="editor-header"><span>puzzle3.py</span><button onclick="runPuzzle(2)">▶ Run & Test</button></div>
+ <textarea id="code2" rows="18">import math
+
+def quantize_vector(vector, codebooks):
+    """
+    vector: list of D floats
+    codebooks: list of M codebooks, each is a list of K centroids
+      codebooks[m] = list of K sub-vectors (each len D/M)
+    Return: list of M centroid indices (one per sub-space)
+    For each sub-space m, find the nearest centroid.
+    """
+    # YOUR CODE HERE
+    pass
+
+def approximate_distance(codes_a, codes_b, codebooks):
+    """
+    Given quantized codes for two vectors and the codebooks,
+    compute approximate L2 distance by summing sub-space distances.
+    """
+    # YOUR CODE HERE
+    pass</textarea>
+</div>
+<div id="result2" class="test-result"></div>
+
+<!-- Puzzle 4 -->
+<h3>Puzzle 4: Inverted File Index (IVF)</h3>
+<p>Cluster vectors into buckets. At search time, only scan the nearest cluster(s).</p>
+<div class="editor">
+ <div class="editor-header"><span>puzzle4.py</span><button onclick="runPuzzle(3)">▶ Run & Test</button></div>
+ <textarea id="code3" rows="20">import math
+
+def build_ivf(vectors, centroids):
+    """
+    Assign each vector to its nearest centroid.
+    vectors: list of vectors (list of floats)
+    centroids: list of centroid vectors
+    Return: dict mapping centroid_index -> list of vector indices
+    """
+    # YOUR CODE HERE
+    pass
+
+def search_ivf(query, vectors, centroids, ivf_index, n_probe=1, k=3):
+    """
+    1. Find the n_probe nearest centroids to query
+    2. Only search vectors in those clusters
+    3. Return top-k (index, similarity) by cosine similarity, descending
+    """
+    # YOUR CODE HERE
+    pass</textarea>
+</div>
+<div id="result3" class="test-result"></div>
+
+<!-- Puzzle 5 -->
+<h3>Puzzle 5: RAG Pipeline</h3>
+<p>Chunk text, embed (simulated), retrieve relevant chunks, and build a prompt for generation.</p>
+<div class="editor">
+ <div class="editor-header"><span>puzzle5.py</span><button onclick="runPuzzle(4)">▶ Run & Test</button></div>
+ <textarea id="code4" rows="24">def chunk_text(text, chunk_size=100, overlap=20):
+    """
+    Split text into overlapping chunks of ~chunk_size characters.
+    Return list of strings.
+    """
+    # YOUR CODE HERE
+    pass
+
+def build_rag_prompt(query, retrieved_chunks):
+    """
+    Given a query and list of retrieved text chunks,
+    build a prompt string in this format:
+    
+    Context:
+    [1] first chunk
+    [2] second chunk
+    ...
+    
+    Question: {query}
+    
+    Answer based on the context above.
+    """
+    # YOUR CODE HERE
+    pass</textarea>
+</div>
+<div id="result4" class="test-result"></div>
+
+<!-- ═══════ ACT 3 ═══════ -->
+<span class="act-label act3-label">Act 3 — The Connection</span>
+<h2>📜 The Papers</h2>
+
+<h3>Paper #10: RAG (Lewis et al., 2020)</h3>
+<div class="quote">"We build RAG models where the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia, accessed with a pre-trained neural retriever."</div>
+<div class="card">
+ <p><b>Key insight:</b> Instead of storing all knowledge in model weights (parametric), give the model a searchable external memory (non-parametric). At inference time: embed the query → retrieve relevant passages → generate an answer conditioned on retrieved context.</p>
+ <p style="margin-top:10px"><b>Why it matters:</b> RAG lets small models punch above their weight. A 400M parameter model with retrieval can outperform a 175B model without it on knowledge-intensive tasks. It also makes knowledge <em>updatable</em> — just update the index, no retraining needed.</p>
+ <p style="margin-top:8px;font-size:.85em;color:var(--dim)"><a href="https://arxiv.org/abs/2005.11401" target="_blank">arxiv.org/abs/2005.11401</a></p>
+</div>
+
+<h3>CLIP (Radford et al., 2021)</h3>
+<div class="quote">"We demonstrate that the simple pre-training task of predicting which caption goes with which image is an efficient and scalable way to learn SOTA image representations from scratch."</div>
+<div class="card">
+ <p><b>Contrastive learning:</b> Train on 400M image-text pairs. For each batch, maximize similarity between correct image-text pairs and minimize similarity between incorrect ones. The result: a shared embedding space where text and images are directly comparable.</p>
+ <p style="margin-top:10px"><b>The magic:</b> You can search images with text ("sunset over mountains"), classify images with any label set (zero-shot), and even do arithmetic: <em>image_of_car + "but red"</em> → finds red cars.</p>
+ <p style="margin-top:8px;font-size:.85em;color:var(--dim)"><a href="https://arxiv.org/abs/2103.00020" target="_blank">arxiv.org/abs/2103.00020</a></p>
+</div>
+
+<h2>🗄️ Vector Database Landscape</h2>
+<div class="card">
+ <div class="grid2">
+  <div class="db-card">
+   <h4>FAISS</h4>
+   <p>Meta's library. Blazing fast. GPU support. The gold standard for research. Not a database — a search library.</p>
+  </div>
+  <div class="db-card">
+   <h4>ChromaDB</h4>
+   <p>Developer-friendly. Embeds in your Python app. Great for prototyping RAG. Open source.</p>
+  </div>
+  <div class="db-card">
+   <h4>Pinecone</h4>
+   <p>Fully managed cloud service. Scales to billions of vectors. Pay per query. Zero ops.</p>
+  </div>
+  <div class="db-card">
+   <h4>pgvector</h4>
+   <p>PostgreSQL extension. Add vector search to your existing DB. HNSW index. Familiar SQL interface.</p>
+  </div>
+ </div>
+</div>
+
+<h2>🌐 Real-World Applications</h2>
+<div class="card">
+ <p>🔎 <b>Semantic Search</b> — Search by meaning, not keywords. "How to fix a broken pipe" finds plumbing AND software articles based on context.</p>
+ <p style="margin-top:10px">🎯 <b>Recommendation Systems</b> — Embed users and items in the same space. Nearest neighbors = recommendations. Spotify, Netflix, Amazon all use this.</p>
+ <p style="margin-top:10px">🤖 <b>RAG Chatbots</b> — ChatGPT + your company docs. Embed docs, retrieve relevant chunks, generate grounded answers. The dominant enterprise AI pattern of 2024-2026.</p>
+ <p style="margin-top:10px">🖼️ <b>Image Search by Description</b> — Type "golden retriever on a beach" to find photos. CLIP embeddings make this trivial.</p>
+</div>
+
+<h2>💡 The Universal Interface</h2>
+<div class="card" style="border-color:var(--gold)">
+ <p style="font-size:1.1em;text-align:center;color:var(--gold);font-weight:600">Once everything is a vector, everything is searchable.</p>
+ <p style="margin-top:12px">Text, images, audio, code, molecules, user behavior — all can be embedded into vectors. And once they're vectors, you get similarity search, clustering, analogy, and transfer for free. Embeddings are the universal adapter between the messy real world and the clean linear algebra that computers love.</p>
+ <p style="margin-top:10px;color:var(--dim)">This is why embedding models (like OpenAI's text-embedding-3, Cohere's embed, or open-source models like E5 and BGE) are arguably more important infrastructure than the LLMs themselves. The LLM is the brain; embeddings are the eyes and ears.</p>
+</div>
+
+<p style="text-align:center;padding:40px 0;color:var(--dim)">Module 11 · AI Beach Week 🏖️</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// ANALOGY DEMO
+// ═══════════════════════════════════════
+const AC=document.getElementById('analogyCanvas'),ax=AC.getContext('2d');
+let aW,aH,dpr=window.devicePixelRatio||1;
+function sizeCanvas(c,w,h){c.width=w*dpr;c.height=h*dpr;c.style.width=w+'px';c.style.height=h+'px';c.getContext('2d').setTransform(dpr,0,0,dpr,0,0)}
+// Word positions in 2D embedding space (simplified for visualization)
+const words=[
+ {label:'king',x:500,y:120,ox:500,oy:120,color:'#4fc3f7'},
+ {label:'queen',x:500,y:300,ox:500,oy:300,color:'#ab47bc'},
+ {label:'man',x:250,y:120,ox:250,oy:120,color:'#66bb6a'},
+ {label:'woman',x:250,y:300,ox:250,oy:300,color:'#ef5350'},
+ {label:'prince',x:420,y:160,ox:420,oy:160,color:'#4fc3f7'},
+ {label:'princess',x:420,y:260,ox:420,oy:260,color:'#ab47bc'},
+ {label:'uncle',x:330,y:160,ox:330,oy:160,color:'#66bb6a'},
+ {label:'aunt',x:330,y:260,ox:330,oy:260,color:'#ef5350'}
+];
+let dragWord=null,analogyPt={x:0,y:0};
+function computeAnalogy(){
+ // king - man + woman
+ const k=words[0],m=words[2],w=words[3];
+ analogyPt.x=k.x-m.x+w.x;
+ analogyPt.y=k.y-m.y+w.y;
+ const q=words[1];
+ const dist=Math.sqrt((analogyPt.x-q.x)**2+(analogyPt.y-q.y)**2);
+ document.getElementById('analogyResult').textContent=
+  `king(${k.x.toFixed(0)},${k.y.toFixed(0)}) − man(${m.x.toFixed(0)},${m.y.toFixed(0)}) + woman(${w.x.toFixed(0)},${w.y.toFixed(0)}) = (${analogyPt.x.toFixed(0)},${analogyPt.y.toFixed(0)})\nDistance to queen: ${dist.toFixed(1)}px${dist<60?' ✨ Very close!':dist<120?' — Getting there!':' — Try dragging words to see the relationship'}`;
+}
+function drawAnalogy(){
+ const w=AC.clientWidth,h=AC.clientHeight;
+ ax.clearRect(0,0,w,h);
+ // Grid
+ ax.strokeStyle='#1a2040';ax.lineWidth=1;
+ for(let i=0;i<w;i+=40){ax.beginPath();ax.moveTo(i,0);ax.lineTo(i,h);ax.stroke()}
+ for(let i=0;i<h;i+=40){ax.beginPath();ax.moveTo(0,i);ax.lineTo(w,i);ax.stroke()}
+ // Draw gender/royalty axes hints
+ ax.strokeStyle='#2a3560';ax.lineWidth=1;ax.setLineDash([5,5]);
+ ax.beginPath();ax.moveTo(w/2,20);ax.lineTo(w/2,h-20);ax.stroke();
+ ax.beginPath();ax.moveTo(20,h/2);ax.lineTo(w-20,h/2);ax.stroke();
+ ax.setLineDash([]);
+ ax.fillStyle='#3a4570';ax.font='12px sans-serif';ax.textAlign='center';
+ ax.fillText('← common          royalty →',w/2,h-8);
+ ax.save();ax.translate(12,h/2);ax.rotate(-Math.PI/2);ax.fillText('← male          female →',0,0);ax.restore();
+ // Analogy vector arrows
+ const k=words[0],m=words[2],wo=words[3];
+ drawArrow(ax,m.x,m.y,k.x,k.y,'rgba(255,213,79,.3)',2);
+ drawArrow(ax,wo.x,wo.y,analogyPt.x,analogyPt.y,'rgba(255,213,79,.3)',2);
+ // Analogy point
+ ax.beginPath();ax.arc(analogyPt.x,analogyPt.y,10,0,Math.PI*2);
+ ax.fillStyle='rgba(255,213,79,.2)';ax.fill();
+ ax.strokeStyle='#ffd54f';ax.lineWidth=2;ax.stroke();
+ ax.fillStyle='#ffd54f';ax.font='bold 16px sans-serif';ax.textAlign='center';
+ ax.fillText('★',analogyPt.x,analogyPt.y+5);
+ ax.font='11px sans-serif';ax.fillText('king−man+woman',analogyPt.x,analogyPt.y+24);
+ // Dots
+ words.forEach(w=>{
+  ax.beginPath();ax.arc(w.x,w.y,14,0,Math.PI*2);
+  ax.fillStyle=w.color;ax.fill();
+  ax.fillStyle='#fff';ax.font='bold 12px sans-serif';ax.textAlign='center';
+  ax.fillText(w.label,w.x,w.y-20);
+  ax.fillStyle='rgba(0,0,0,.6)';ax.fillText(w.label[0].toUpperCase(),w.x,w.y+4);
+ });
+ computeAnalogy();
+}
+function drawArrow(ctx,x1,y1,x2,y2,color,lw){
+ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.stroke();
+ const a=Math.atan2(y2-y1,x2-x1),hl=10;
+ ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-hl*Math.cos(a-0.4),y2-hl*Math.sin(a-0.4));ctx.lineTo(x2-hl*Math.cos(a+0.4),y2-hl*Math.sin(a+0.4));ctx.closePath();ctx.fillStyle=color;ctx.fill();
+}
+function getWordAt(x,y){for(let i=words.length-1;i>=0;i--){const w=words[i];if((x-w.x)**2+(y-w.y)**2<400)return i}return-1}
+function cpos(e,c){const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top}}
+AC.addEventListener('pointerdown',e=>{const p=cpos(e,AC);const i=getWordAt(p.x,p.y);if(i>=0){dragWord=i;AC.setPointerCapture(e.pointerId)}});
+AC.addEventListener('pointermove',e=>{if(dragWord!==null){const p=cpos(e,AC);words[dragWord].x=p.x;words[dragWord].y=p.y;drawAnalogy()}});
+AC.addEventListener('pointerup',()=>{dragWord=null});
+function resetAnalogy(){words.forEach(w=>{w.x=w.ox;w.y=w.oy});drawAnalogy()}
+
+// ═══════════════════════════════════════
+// SENTENCE SIMILARITY
+// ═══════════════════════════════════════
+const SC=document.getElementById('sentCanvas'),sx=SC.getContext('2d');
+// Simple bag-of-words embedding for demo
+function simpleEmbed(text){
+ const vocab='the a an is was are were am be been being have has had do does did will would shall should may might can could of in to for on with at by from as into about between through after before above below up down out off over under'.split(' ');
+ const ws=text.toLowerCase().replace(/[^a-z ]/g,'').split(/\s+/).filter(Boolean);
+ // Hash each word to a 2D position
+ let vx=0,vy=0;
+ ws.forEach(w=>{let h=0;for(let i=0;i<w.length;i++)h=((h<<5)-h+w.charCodeAt(i))|0;vx+=Math.sin(h);vy+=Math.cos(h*1.7)});
+ const mag=Math.sqrt(vx*vx+vy*vy)||1;
+ return[vx/mag,vy/mag];
+}
+function cosSim(a,b){
+ let dot=0,ma=0,mb=0;
+ for(let i=0;i<a.length;i++){dot+=a[i]*b[i];ma+=a[i]*a[i];mb+=b[i]*b[i]}
+ return dot/(Math.sqrt(ma)*Math.sqrt(mb)||1);
+}
+function computeSentSim(){
+ const t1=document.getElementById('sent1').value,t2=document.getElementById('sent2').value;
+ const v1=simpleEmbed(t1),v2=simpleEmbed(t2);
+ const sim=cosSim(v1,v2);
+ const w=SC.clientWidth,h=SC.clientHeight;
+ const cx=w/2,cy=h-30,len=120;
+ sx.clearRect(0,0,w,h);
+ sx.strokeStyle='#1a2040';sx.lineWidth=1;
+ for(let i=0;i<w;i+=40){sx.beginPath();sx.moveTo(i,0);sx.lineTo(i,h);sx.stroke()}
+ for(let i=0;i<h;i+=40){sx.beginPath();sx.moveTo(0,i);sx.lineTo(w,i);sx.stroke()}
+ // Draw arrows
+ drawArrow(sx,cx,cy,cx+v1[0]*len,cy-v1[1]*len,'#4fc3f7',3);
+ drawArrow(sx,cx,cy,cx+v2[0]*len,cy-v2[1]*len,'#ab47bc',3);
+ sx.font='13px sans-serif';
+ sx.fillStyle='#4fc3f7';sx.textAlign='left';sx.fillText('Sentence 1',cx+v1[0]*len+10,cy-v1[1]*len);
+ sx.fillStyle='#ab47bc';sx.fillText('Sentence 2',cx+v2[0]*len+10,cy-v2[1]*len);
+ // Angle arc
+ const a1=Math.atan2(-v1[1],v1[0]),a2=Math.atan2(-v2[1],v2[0]);
+ sx.beginPath();sx.arc(cx,cy,40,Math.min(a1,a2),Math.max(a1,a2));sx.strokeStyle='rgba(255,213,79,.5)';sx.lineWidth=2;sx.stroke();
+ sx.fillStyle='#ffd54f';sx.font='12px sans-serif';sx.textAlign='center';
+ const ma=(a1+a2)/2;sx.fillText(`θ`,cx+55*Math.cos(ma),cy+55*Math.sin(ma));
+ // Sim bar
+ const pct=((sim+1)/2*100);
+ document.getElementById('simFill').style.width=pct+'%';
+ document.getElementById('simFill').textContent=sim.toFixed(3);
+ document.getElementById('sentResult').textContent=`Cosine similarity: ${sim.toFixed(4)}\nAngle: ${(Math.acos(Math.min(1,Math.max(-1,sim)))*180/Math.PI).toFixed(1)}°\n\nNote: This uses a simple hash-based embedding for demonstration.\nReal models (e.g., all-MiniLM-L6) produce 384-dimensional vectors.`;
+}
+
+// ═══════════════════════════════════════
+// VECTOR SEARCH
+// ═══════════════════════════════════════
+const VC=document.getElementById('searchCanvas'),vx2=VC.getContext('2d');
+const searchItems=[
+ "Machine learning is a subset of AI","Deep learning uses neural networks",
+ "Cats are popular pets worldwide","Dogs are known as man's best friend",
+ "Python is a programming language","JavaScript runs in browsers",
+ "The ocean covers 71% of Earth","Climate change affects weather patterns",
+ "Transformers revolutionized NLP","Attention is all you need",
+ "Cooking requires fresh ingredients","Italian food is globally loved",
+ "Basketball is played with five players","Soccer is the world's most popular sport",
+ "Quantum computing uses qubits","Classical computers use binary bits",
+ "Music therapy helps with anxiety","Playing guitar is a creative outlet",
+ "Embeddings represent meaning as vectors","Vector databases enable fast similarity search"
+];
+const searchEmbeds=searchItems.map((s,i)=>{
+ const e=simpleEmbed(s);
+ // Spread out more for visualization
+ const angle=(i/searchItems.length)*Math.PI*2+e[0];
+ const r=100+Math.abs(e[1])*100;
+ return{text:s,x:400+r*Math.cos(angle),y:210+r*Math.sin(angle),vec:e};
+});
+let sweepAngle=-1,sweepActive=false,searchResultsList=[];
+function runVectorSearch(){
+ const q=document.getElementById('searchQuery').value;
+ const qv=simpleEmbed(q);
+ // Score all items
+ const scored=searchEmbeds.map((it,i)=>({i,sim:cosSim(qv,it.vec),text:it.text}));
+ scored.sort((a,b)=>b.sim-a.sim);
+ searchResultsList=scored.slice(0,5);
+ // Animate sweep
+ sweepAngle=0;sweepActive=true;
+ const qx=400+qv[0]*80,qy=210+qv[1]*80;
+ function animate(){
+  drawSearch(qx,qy);
+  if(sweepAngle<Math.PI*2){sweepAngle+=0.06;requestAnimationFrame(animate)}
+  else{sweepActive=false;drawSearch(qx,qy)}
+ }
+ animate();
+ let res='Top 5 results:\n';
+ searchResultsList.forEach((r,i)=>{res+=`${i+1}. [${r.sim.toFixed(3)}] ${r.text}\n`});
+ document.getElementById('searchResults').textContent=res;
+}
+function drawSearch(qx,qy){
+ const w=VC.clientWidth,h=VC.clientHeight;
+ vx2.clearRect(0,0,w,h);
+ vx2.strokeStyle='#1a2040';vx2.lineWidth=1;
+ for(let i=0;i<w;i+=40){vx2.beginPath();vx2.moveTo(i,0);vx2.lineTo(i,h);vx2.stroke()}
+ for(let i=0;i<h;i+=40){vx2.beginPath();vx2.moveTo(0,i);vx2.lineTo(w,i);vx2.stroke()}
+ // Sweep
+ if(sweepActive){
+  vx2.beginPath();vx2.moveTo(qx,qy);
+  vx2.arc(qx,qy,300,sweepAngle-0.3,sweepAngle);
+  vx2.closePath();
+  const g=vx2.createRadialGradient(qx,qy,0,qx,qy,300);
+  g.addColorStop(0,'rgba(79,195,247,.15)');g.addColorStop(1,'rgba(79,195,247,0)');
+  vx2.fillStyle=g;vx2.fill();
+ }
+ const topI=new Set(searchResultsList.map(r=>r.i));
+ searchEmbeds.forEach((it,i)=>{
+  const isHit=topI.has(i);
+  vx2.beginPath();vx2.arc(it.x,it.y,isHit?8:5,0,Math.PI*2);
+  vx2.fillStyle=isHit?'#66bb6a':'#3a4570';vx2.fill();
+  if(isHit){vx2.strokeStyle='#66bb6a';vx2.lineWidth=1;vx2.setLineDash([3,3]);
+   vx2.beginPath();vx2.moveTo(qx,qy);vx2.lineTo(it.x,it.y);vx2.stroke();vx2.setLineDash([]);
+   vx2.fillStyle='#e0e6f0';vx2.font='11px sans-serif';vx2.textAlign='left';
+   vx2.fillText(it.text.slice(0,30)+'…',it.x+12,it.y+4);}
+ });
+ // Query point
+ vx2.beginPath();vx2.arc(qx,qy,10,0,Math.PI*2);vx2.fillStyle='#4fc3f7';vx2.fill();
+ vx2.fillStyle='#fff';vx2.font='bold 12px sans-serif';vx2.textAlign='center';vx2.fillText('Q',qx,qy+4);
+}
+
+// ═══════════════════════════════════════
+// CLIP DEMO
+// ═══════════════════════════════════════
+const CC=document.getElementById('clipCanvas'),cx2=CC.getContext('2d');
+const clipData=[
+ {label:'a photo of a dog',type:'text',x:200,y:160},
+ {label:'a cute puppy picture',type:'text',x:230,y:190},
+ {label:'dog.jpg',type:'img',x:210,y:140},
+ {label:'puppy.jpg',type:'img',x:250,y:170},
+ {label:'a photo of a cat',type:'text',x:550,y:150},
+ {label:'feline close-up',type:'text',x:580,y:180},
+ {label:'cat.jpg',type:'img',x:560,y:130},
+ {label:'kitten.jpg',type:'img',x:530,y:170},
+ {label:'a red sports car',type:'text',x:350,y:330},
+ {label:'ferrari racing',type:'text',x:380,y:350},
+ {label:'sportscar.jpg',type:'img',x:360,y:310},
+ {label:'a sunset over ocean',type:'text',x:150,y:340},
+ {label:'sunset_beach.jpg',type:'img',x:170,y:320},
+ {label:'mountain landscape',type:'text',x:650,y:320},
+ {label:'alps.jpg',type:'img',x:630,y:340}
+];
+let clipHover=-1;
+function drawCLIP(){
+ const w=CC.clientWidth,h=CC.clientHeight;
+ cx2.clearRect(0,0,w,h);
+ cx2.strokeStyle='#1a2040';cx2.lineWidth=1;
+ for(let i=0;i<w;i+=40){cx2.beginPath();cx2.moveTo(i,0);cx2.lineTo(i,h);cx2.stroke()}
+ for(let i=0;i<h;i+=40){cx2.beginPath();cx2.moveTo(0,i);cx2.lineTo(w,i);cx2.stroke()}
+ // Draw clusters (faint circles)
+ [[220,165,70,'dog'],[555,155,70,'cat'],[365,330,60,'car'],[160,330,50,'sunset'],[640,330,50,'mountain']].forEach(([cx,cy,r,l])=>{
+  cx2.beginPath();cx2.arc(cx,cy,r,0,Math.PI*2);cx2.strokeStyle='rgba(255,255,255,.05)';cx2.lineWidth=1;cx2.stroke();
+  cx2.fillStyle='rgba(255,255,255,.04)';cx2.fill();
+ });
+ clipData.forEach((d,i)=>{
+  const isText=d.type==='text';
+  const isHov=i===clipHover;
+  cx2.beginPath();cx2.arc(d.x,d.y,isHov?10:7,0,Math.PI*2);
+  cx2.fillStyle=isText?'#4fc3f7':'#ab47bc';cx2.fill();
+  if(isHov){cx2.strokeStyle='#fff';cx2.lineWidth=2;cx2.stroke();
+   cx2.fillStyle='#fff';cx2.font='12px sans-serif';cx2.textAlign='left';
+   cx2.fillText(d.label,d.x+14,d.y+4);
+   // Show nearest of opposite type
+   let bestD=Infinity,bestJ=-1;
+   clipData.forEach((d2,j)=>{if(d2.type!==d.type){const dist=Math.sqrt((d.x-d2.x)**2+(d.y-d2.y)**2);if(dist<bestD){bestD=dist;bestJ=j}}});
+   if(bestJ>=0){cx2.setLineDash([3,3]);cx2.beginPath();cx2.moveTo(d.x,d.y);cx2.lineTo(clipData[bestJ].x,clipData[bestJ].y);cx2.strokeStyle='rgba(255,213,79,.4)';cx2.lineWidth=1;cx2.stroke();cx2.setLineDash([]);
+    document.getElementById('clipInfo').textContent=`${d.label} (${d.type}) ↔ ${clipData[bestJ].label} (${clipData[bestJ].type}) — distance: ${bestD.toFixed(1)}px`}
+  }else{
+   cx2.fillStyle=isText?'rgba(79,195,247,.7)':'rgba(171,71,188,.7)';cx2.font='10px sans-serif';cx2.textAlign='center';
+   cx2.fillText(d.label.length>20?d.label.slice(0,18)+'…':d.label,d.x,d.y-12);
+  }
+ });
+}
+CC.addEventListener('pointermove',e=>{
+ const p=cpos(e,CC);let found=-1;
+ clipData.forEach((d,i)=>{if((p.x-d.x)**2+(p.y-d.y)**2<200)found=i});
+ if(found!==clipHover){clipHover=found;drawCLIP()}
+});
+CC.addEventListener('pointerleave',()=>{clipHover=-1;drawCLIP()});
+
+// ═══════════════════════════════════════
+// RESIZE HANDLING
+// ═══════════════════════════════════════
+function resizeAll(){
+ [AC,SC,VC,CC].forEach(c=>{
+  const w=c.parentElement.clientWidth;
+  const h=parseInt(c.getAttribute('height'));
+  sizeCanvas(c,w,h);
+ });
+ drawAnalogy();drawSearch(400,210);drawCLIP();computeSentSim();
+}
+window.addEventListener('resize',resizeAll);
+setTimeout(resizeAll,50);
+
+// ═══════════════════════════════════════
+// PYODIDE PUZZLES
+// ═══════════════════════════════════════
+let pyodide=null;const puzzleSolved=[false,false,false,false,false];
+function updateProgress(){
+ const el=document.getElementById('puzzleProgress');
+ el.innerHTML='';
+ for(let i=0;i<5;i++){const d=document.createElement('div');d.className='dot'+(puzzleSolved[i]?' done':'');d.textContent=i+1;el.appendChild(d)}
+}
+updateProgress();
+
+async function loadPyodide(){
+ try{
+  const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+  document.head.appendChild(s);
+  await new Promise((res,rej)=>{s.onload=res;s.onerror=rej});
+  pyodide=await globalThis.loadPyodide();
+  document.getElementById('pyStatus').textContent='✅ Pyodide ready';
+  document.getElementById('pyStatus').style.color='#66bb6a';
+ }catch(e){document.getElementById('pyStatus').textContent='⚠️ Pyodide failed to load — puzzles run locally';document.getElementById('pyStatus').style.color='var(--orange)'}
+}
+loadPyodide();
+
+const tests=[
+// Puzzle 1 tests
+`
+import math
+a,b=[1,0,0],[0,1,0]
+r=cosine_similarity(a,b)
+assert abs(r-0.0)<1e-6, f"Expected 0.0, got {r}"
+a,b=[1,2,3],[1,2,3]
+r=cosine_similarity(a,b)
+assert abs(r-1.0)<1e-6, f"Expected 1.0, got {r}"
+a,b=[1,0],[0.707,0.707]
+r=cosine_similarity(a,b)
+assert abs(r-0.707)<0.01, f"Expected ~0.707, got {r}"
+"All tests passed! ✅"
+`,
+// Puzzle 2 tests
+`
+import math
+def cosine_similarity(a,b):
+    dot=sum(x*y for x,y in zip(a,b))
+    ma=math.sqrt(sum(x*x for x in a))
+    mb=math.sqrt(sum(x*x for x in b))
+    return dot/(ma*mb) if ma*mb else 0
+vecs=[[1,0,0],[0,1,0],[0.9,0.1,0],[0,0,1]]
+result=vector_search([1,0,0],vecs,k=2)
+assert len(result)==2, f"Expected 2 results, got {len(result)}"
+assert result[0][0]==0, f"Expected index 0 first, got {result[0][0]}"
+assert result[1][0]==2, f"Expected index 2 second, got {result[1][0]}"
+"All tests passed! ✅"
+`,
+// Puzzle 3 tests
+`
+import math
+# 4D vector, 2 sub-spaces of 2D each, 2 centroids per sub-space
+codebooks=[
+  [[0,0],[1,1]],  # sub-space 0
+  [[0,0],[1,1]]   # sub-space 1
+]
+codes=quantize_vector([0.9,0.8,0.1,0.2],codebooks)
+assert codes==[1,0], f"Expected [1,0], got {codes}"
+codes2=quantize_vector([0.1,0.2,0.9,0.8],codebooks)
+assert codes2==[0,1], f"Expected [0,1], got {codes2}"
+d=approximate_distance([1,0],[0,1],codebooks)
+assert d>0, f"Expected positive distance, got {d}"
+"All tests passed! ✅"
+`,
+// Puzzle 4 tests
+`
+import math
+def cosine_similarity(a,b):
+    dot=sum(x*y for x,y in zip(a,b))
+    ma=math.sqrt(sum(x*x for x in a))
+    mb=math.sqrt(sum(x*x for x in b))
+    return dot/(ma*mb) if ma*mb else 0
+vecs=[[1,0],[0.9,0.1],[-1,0],[-0.9,-0.1],[0,1],[0.1,0.9]]
+centroids=[[1,0],[-1,0],[0,1]]
+ivf=build_ivf(vecs,centroids)
+assert 0 in ivf and 1 in ivf and 2 in ivf, f"Missing clusters"
+assert 0 in ivf[0] and 1 in ivf[0], f"Expected 0,1 in cluster 0"
+result=search_ivf([0.95,0.05],vecs,centroids,ivf,n_probe=1,k=2)
+assert len(result)==2, f"Expected 2 results"
+assert result[0][0] in [0,1], f"Top result should be in cluster 0"
+"All tests passed! ✅"
+`,
+// Puzzle 5 tests
+`
+text="A"*250
+chunks=chunk_text(text,chunk_size=100,overlap=20)
+assert len(chunks)>=3, f"Expected >=3 chunks, got {len(chunks)}"
+assert all(len(c)<=100 for c in chunks[:-1]), "Chunks too long"
+prompt=build_rag_prompt("What is AI?",["AI is cool","ML is a subset"])
+assert "Context:" in prompt, "Missing Context header"
+assert "[1]" in prompt, "Missing chunk numbering"
+assert "What is AI?" in prompt, "Missing query"
+assert "Answer based on" in prompt.lower() or "answer based on" in prompt, "Missing answer instruction"
+"All tests passed! ✅"
+`
+];
+
+async function runPuzzle(i){
+ const el=document.getElementById('result'+i);
+ const code=document.getElementById('code'+i).value;
+ el.className='test-result';el.textContent='Running...';
+ if(!pyodide){el.className='test-result test-fail';el.textContent='Pyodide not loaded yet';return}
+ try{
+  const full=code+'\n'+tests[i];
+  const r=await pyodide.runPythonAsync(full);
+  el.className='test-result test-pass';el.textContent=r;
+  puzzleSolved[i]=true;updateProgress();
+ }catch(e){
+  el.className='test-result test-fail';el.textContent='❌ '+e.message.split('\n').slice(-2).join('\n');
+ }
+}
+
+// Tab key in editors
+document.querySelectorAll('.editor textarea').forEach(ta=>{
+ ta.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const s=ta.selectionStart,end=ta.selectionEnd;ta.value=ta.value.substring(0,s)+'    '+ta.value.substring(end);ta.selectionStart=ta.selectionEnd=s+4}
+ });
+});
+</script>
+</body>
+</html>

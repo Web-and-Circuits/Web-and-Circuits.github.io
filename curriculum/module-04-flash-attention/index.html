@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 04: Making Attention Fast (FlashAttention)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--surface:#131a2b;--surface2:#1a2340;--border:#2a3555;--text:#e2e8f0;--dim:#8892a8;--accent:#60a5fa;--accent2:#a78bfa;--green:#34d399;--orange:#fb923c;--red:#f87171;--yellow:#fbbf24;--pink:#f472b6}
+body{background:var(--bg);color:var(--text);font-family:'SF Mono',Monaco,'Cascadia Code',monospace;line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:20px}
+h1{font-size:clamp(1.5rem,4vw,2.2rem);background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+h2{font-size:1.3rem;color:var(--accent);margin:40px 0 16px;border-bottom:1px solid var(--border);padding-bottom:8px}
+h3{font-size:1.1rem;color:var(--accent2);margin:24px 0 12px}
+p,.desc{color:var(--dim);margin-bottom:12px;font-size:0.92rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0}
+.quote{border-left:3px solid var(--accent2);padding:12px 16px;background:rgba(167,139,250,0.08);border-radius:0 8px 8px 0;margin:16px 0;font-style:italic;font-size:0.88rem;color:var(--dim)}
+.quote cite{display:block;margin-top:8px;color:var(--accent2);font-style:normal;font-size:0.8rem}
+button,.btn{background:var(--accent);color:#000;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;transition:all 0.2s}
+button:hover{opacity:0.85;transform:translateY(-1px)}
+button.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+button.run-btn{background:var(--green);color:#000}
+button.active{background:var(--accent);color:#000}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:600}
+.tag-slow{background:rgba(248,113,113,0.15);color:var(--red)}
+.tag-fast{background:rgba(52,211,153,0.15);color:var(--green)}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
+label{font-size:0.85rem;color:var(--dim)}
+input[type=range]{-webkit-appearance:none;background:var(--border);height:6px;border-radius:3px;outline:none;flex:1;min-width:120px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer}
+select{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-family:inherit;font-size:0.85rem}
+.nav{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap}
+.nav button{flex:1;min-width:120px;padding:10px;background:var(--surface2);color:var(--dim);border:1px solid var(--border)}
+.nav button.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+/* GPU Visualization */
+.gpu-vis{position:relative;width:100%;height:420px;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin:16px 0}
+.gpu-label{position:absolute;top:8px;left:12px;font-size:0.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.hbm-zone{position:absolute;bottom:0;left:0;right:0;height:55%;background:rgba(248,113,113,0.06);border-top:1px dashed var(--red)}
+.hbm-label{position:absolute;top:8px;right:12px;font-size:0.72rem;color:var(--red);opacity:0.8}
+.hbm-sub{font-size:0.65rem;color:var(--dim);display:block}
+.sram-zone{position:absolute;top:0;left:0;right:0;height:25%;background:rgba(52,211,153,0.06);border-bottom:1px dashed var(--green)}
+.sram-label{position:absolute;top:8px;left:12px;font-size:0.72rem;color:var(--green);opacity:0.8}
+.sram-sub{font-size:0.65rem;color:var(--dim);display:block}
+.compute-zone{position:absolute;top:25%;left:0;right:0;height:20%;background:rgba(96,165,250,0.06);display:flex;align-items:center;justify-content:center}
+.compute-label{font-size:0.72rem;color:var(--accent);opacity:0.8}
+.data-block{position:absolute;width:40px;height:24px;border-radius:4px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-weight:700;transition:none;z-index:10}
+.data-block.q-block{background:var(--accent);color:#000}
+.data-block.k-block{background:var(--accent2);color:#000}
+.data-block.v-block{background:var(--orange);color:#000}
+.data-block.s-block{background:var(--yellow);color:#000}
+.data-block.o-block{background:var(--green);color:#000}
+.step-indicator{position:absolute;bottom:8px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;font-size:0.78rem}
+.step-text{color:var(--yellow)}
+.io-counter{color:var(--red);font-size:0.75rem}
+
+/* Chart */
+.chart-wrap{position:relative;width:100%;height:240px;background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:40px 50px 40px 60px;margin:16px 0}
+.chart-wrap canvas{width:100%!important;height:100%!important}
+
+/* Puzzle area */
+.puzzle{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden}
+.puzzle-header{padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.puzzle-header h3{margin:0 0 4px;font-size:1rem}
+.puzzle-header p{margin:0;font-size:0.82rem}
+.puzzle-body{display:flex;flex-direction:column}
+.code-area{position:relative;padding:16px;background:#0d1117;font-size:0.82rem}
+.code-area textarea{width:100%;min-height:180px;background:transparent;color:var(--text);border:none;outline:none;font-family:inherit;font-size:0.82rem;resize:vertical;line-height:1.5;tab-size:4}
+.code-area .hint{position:absolute;top:8px;right:12px;font-size:0.7rem;color:var(--dim);cursor:pointer}
+.code-area .hint:hover{color:var(--accent)}
+.output-area{padding:12px 16px;background:rgba(0,0,0,0.3);border-top:1px solid var(--border);min-height:60px;font-size:0.8rem;white-space:pre-wrap;color:var(--green);max-height:200px;overflow-y:auto}
+.output-area .error{color:var(--red)}
+.output-area .info{color:var(--dim)}
+.puzzle-controls{padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--border)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:0.7rem;font-weight:600}
+.status-badge.pass{background:rgba(52,211,153,0.15);color:var(--green)}
+.status-badge.fail{background:rgba(248,113,113,0.15);color:var(--red)}
+
+/* Connection section */
+.timeline{position:relative;padding-left:24px;margin:16px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:20px}
+.timeline-item::before{content:'';position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-item.highlight::before{background:var(--green)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}
+.stat-card{background:var(--surface2);border-radius:8px;padding:16px;text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-card .label{font-size:0.78rem;color:var(--dim);margin-top:4px}
+
+.pyodide-loading{padding:20px;text-align:center;color:var(--dim);font-size:0.85rem}
+.hidden{display:none}
+@media(max-width:600px){.container{padding:12px}.gpu-vis{height:350px}.chart-wrap{height:200px;padding:30px 40px 30px 50px}}
+</style>
+</head>
+<body>
+<div class="container">
+<p style="font-size:0.8rem;color:var(--dim);margin-bottom:4px">MODULE 04 · BEACH WEEK AI</p>
+<h1>🔥 Making Attention Fast</h1>
+<p style="font-size:1.05rem;color:var(--text);margin-bottom:4px">FlashAttention: An IO-Aware Approach</p>
+<p>The trick that made 200K context windows possible — and it's not about math, it's about <em>memory</em>.</p>
+
+<!-- Navigation -->
+<div class="nav">
+<button class="active" onclick="showAct(0)">Act 1: Explore</button>
+<button onclick="showAct(1)">Act 2: Build</button>
+<button onclick="showAct(2)">Act 3: Connect</button>
+</div>
+
+<!-- ============ ACT 1: THE EXPLORABLE ============ -->
+<div id="act0" class="act">
+<h2>⚡ Act 1: The Memory Wall</h2>
+<p>GPUs are <em>absurdly</em> fast at math. The bottleneck? Getting data to the math units. Let's see why.</p>
+
+<h3>GPU Memory Hierarchy</h3>
+<div class="card" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+<div style="flex:1;min-width:200px">
+<div style="margin-bottom:12px">
+<span class="tag tag-fast">SRAM (On-chip)</span>
+<div style="font-size:0.85rem;margin-top:4px"><strong>20 MB</strong> · <strong>19 TB/s</strong> bandwidth</div>
+<div style="font-size:0.78rem;color:var(--dim)">Tiny but blazing fast. Right next to compute units.</div>
+</div>
+<div>
+<span class="tag tag-slow">HBM (Off-chip)</span>
+<div style="font-size:0.85rem;margin-top:4px"><strong>40-80 GB</strong> · <strong>1.5 TB/s</strong> bandwidth</div>
+<div style="font-size:0.78rem;color:var(--dim)">Big but ~12× slower. Where your tensors actually live.</div>
+</div>
+</div>
+<div style="flex:1;min-width:200px;text-align:center">
+<div style="font-size:2.5rem;font-weight:700;color:var(--red)">12×</div>
+<div style="font-size:0.82rem;color:var(--dim)">bandwidth gap between<br>SRAM and HBM</div>
+</div>
+</div>
+
+<h3>Standard Attention: The Memory Shuttle</h3>
+<p>Watch data bounce between HBM and SRAM for <em>every single step</em> of attention. Each arrow is expensive IO.</p>
+<div class="controls">
+<button id="stdPlayBtn" onclick="startStdAnim()">▶ Play Standard</button>
+<button class="secondary" id="flashPlayBtn" onclick="startFlashAnim()">▶ Play FlashAttention</button>
+<button class="secondary" onclick="resetAnim()">⟲ Reset</button>
+</div>
+<div class="gpu-vis" id="gpuVis">
+<div class="sram-zone">
+<div class="sram-label">SRAM (20 MB) <span class="sram-sub">19 TB/s</span></div>
+</div>
+<div class="compute-zone">
+<div class="compute-label">⚙️ Compute Units (312 TFLOPS)</div>
+</div>
+<div class="hbm-zone">
+<div class="hbm-label">HBM (40 GB) <span class="hbm-sub">1.5 TB/s</span></div>
+</div>
+<div class="step-indicator">
+<span class="step-text" id="stepText">Press Play to start</span>
+<span class="io-counter" id="ioCounter">IO ops: 0</span>
+</div>
+</div>
+
+<h3>Memory & Speed: The O(n²) Problem</h3>
+<p>Drag the sequence length slider and watch memory usage explode for standard attention.</p>
+<div class="controls">
+<label>Sequence length: <strong id="seqLabel">1024</strong></label>
+<input type="range" id="seqSlider" min="8" max="16" value="10" oninput="updateChart()">
+</div>
+<div class="chart-wrap">
+<canvas id="memChart"></canvas>
+</div>
+<div class="controls">
+<label>Wall-clock comparison:</label>
+</div>
+<div class="chart-wrap" style="height:180px">
+<canvas id="speedChart"></canvas>
+</div>
+</div>
+
+<!-- ============ ACT 2: THE BUILD ============ -->
+<div id="act1" class="act hidden">
+<h2>🔨 Act 2: Build FlashAttention</h2>
+<p>Four puzzles, each building on the last. By the end you'll have implemented the core of the algorithm.</p>
+<div class="pyodide-loading" id="pyodideStatus">Loading Python runtime (Pyodide)... ⏳</div>
+
+<!-- Puzzle 1 -->
+<div class="puzzle">
+<div class="puzzle-header">
+<h3>Puzzle 1: Naive Attention</h3>
+<p>Compute the full N×N attention matrix. Feel the O(n²) memory pain.</p>
+</div>
+<div class="puzzle-body">
+<div class="code-area">
+<span class="hint" onclick="showHint(0)">💡 hint</span>
+<textarea id="code0" spellcheck="false">import numpy as np
+
+def naive_attention(Q, K, V):
+    """
+    Q, K, V: shape (N, d)
+    Return: attention output O of shape (N, d)
+    
+    Steps:
+    1. Compute scores S = Q @ K^T  (N×N matrix!)
+    2. Apply softmax to each row of S
+    3. Compute output O = S @ V
+    
+    YOUR CODE HERE (replace pass):
+    """
+    pass
+</textarea>
+</div>
+<div class="puzzle-controls">
+<button class="run-btn" onclick="runPuzzle(0)">▶ Run & Test</button>
+<span id="status0"></span>
+</div>
+<div class="output-area" id="output0"><span class="info">Output will appear here...</span></div>
+</div>
+</div>
+
+<!-- Puzzle 2 -->
+<div class="puzzle">
+<div class="puzzle-header">
+<h3>Puzzle 2: Tiled Matrix Multiply</h3>
+<p>Process a big matmul in blocks. This is the spatial pattern FlashAttention uses.</p>
+</div>
+<div class="puzzle-body">
+<div class="code-area">
+<span class="hint" onclick="showHint(1)">💡 hint</span>
+<textarea id="code1" spellcheck="false">import numpy as np
+
+def tiled_matmul(A, B, block_size=64):
+    """
+    A: (M, K), B: (K, N)
+    Return C: (M, N) computed in tiles of block_size.
+    
+    Instead of one giant matmul, process block_size rows
+    of A at a time. Accumulate into C.
+    
+    This simulates processing tiles that fit in SRAM.
+    
+    YOUR CODE HERE:
+    """
+    M, K_ = A.shape
+    _, N = B.shape
+    C = np.zeros((M, N))
+    pass  # fill in the tiled loop
+    return C
+</textarea>
+</div>
+<div class="puzzle-controls">
+<button class="run-btn" onclick="runPuzzle(1)">▶ Run & Test</button>
+<span id="status1"></span>
+</div>
+<div class="output-area" id="output1"><span class="info">Output will appear here...</span></div>
+</div>
+</div>
+
+<!-- Puzzle 3 -->
+<div class="puzzle">
+<div class="puzzle-header">
+<h3>Puzzle 3: Online Softmax ⭐</h3>
+<p>THE key insight. Compute softmax without seeing all values at once. This is what makes FlashAttention possible.</p>
+</div>
+<div class="puzzle-body">
+<div class="code-area">
+<span class="hint" onclick="showHint(2)">💡 hint</span>
+<textarea id="code2" spellcheck="false">import numpy as np
+
+def online_softmax(blocks):
+    """
+    blocks: list of 1D arrays (chunks of a single row)
+    Return: softmax over the concatenation, BUT computed
+            one block at a time (never materializing the full row).
+    
+    Algorithm (track running max & sum):
+    1. m = -inf (running max)
+    2. l = 0    (running sum of exp)
+    3. For each block x_i:
+       a. m_new = max(m, max(x_i))
+       b. l = l * exp(m - m_new) + sum(exp(x_i - m_new))
+       c. m = m_new
+    4. Final: for each block x_i, softmax = exp(x_i - m) / l
+    
+    YOUR CODE HERE:
+    """
+    pass
+</textarea>
+</div>
+<div class="puzzle-controls">
+<button class="run-btn" onclick="runPuzzle(2)">▶ Run & Test</button>
+<span id="status2"></span>
+</div>
+<div class="output-area" id="output2"><span class="info">Output will appear here...</span></div>
+</div>
+</div>
+
+<!-- Puzzle 4 -->
+<div class="puzzle">
+<div class="puzzle-header">
+<h3>Puzzle 4: Tiled Attention (FlashAttention Core)</h3>
+<p>Put it all together. Tiled attention with online softmax — no N×N matrix ever materialized!</p>
+</div>
+<div class="puzzle-body">
+<div class="code-area">
+<span class="hint" onclick="showHint(3)">💡 hint</span>
+<textarea id="code3" spellcheck="false">import numpy as np
+
+def flash_attention(Q, K, V, block_size=64):
+    """
+    Q, K, V: shape (N, d)
+    Return: O shape (N, d) — same result as naive attention
+            but using O(N) memory instead of O(N²).
+    
+    For each block of Q rows (size B):
+      Initialize: O_i=0, l_i=0, m_i=-inf
+      For each block of K,V rows (size B):
+        1. S_ij = Q_i @ K_j^T           (B×B, fits in SRAM!)
+        2. m_new = max(m_i, rowmax(S_ij))
+        3. P_ij = exp(S_ij - m_new)      (local softmax numerator)
+        4. l_i = l_i * exp(m_i - m_new) + rowsum(P_ij)
+        5. O_i = O_i * exp(m_i - m_new) + P_ij @ V_j
+        6. m_i = m_new
+      Final: O_i = O_i / l_i
+    
+    YOUR CODE HERE:
+    """
+    N, d = Q.shape
+    O = np.zeros((N, d))
+    pass
+    return O
+</textarea>
+</div>
+<div class="puzzle-controls">
+<button class="run-btn" onclick="runPuzzle(3)">▶ Run & Test</button>
+<span id="status3"></span>
+</div>
+<div class="output-area" id="output3"><span class="info">Output will appear here...</span></div>
+</div>
+</div>
+</div>
+
+<!-- ============ ACT 3: THE CONNECTION ============ -->
+<div id="act2" class="act hidden">
+<h2>🌊 Act 3: The Paper & The Impact</h2>
+<p>FlashAttention (Dao et al., 2022) is an <em>IO-complexity</em> paper disguised as an ML paper.</p>
+
+<div class="quote">
+"We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM."
+<cite>— Dao et al., "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness", NeurIPS 2022</cite>
+</div>
+
+<h3>The Key Insight</h3>
+<div class="card">
+<p style="color:var(--text);font-size:0.95rem;margin-bottom:12px">Attention isn't <strong>compute-bound</strong>. It's <strong>memory-bound</strong>.</p>
+<p>An A100 GPU does 312 TFLOPS of math but can only move 1.5 TB/s from HBM. Standard attention reads and writes the N×N attention matrix to HBM multiple times. FlashAttention never materializes it — everything stays tiled in SRAM.</p>
+</div>
+
+<div class="quote">
+"FlashAttention requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes."
+<cite>— Theorem 2, FlashAttention paper</cite>
+</div>
+
+<h3>The Numbers</h3>
+<div class="stat-grid">
+<div class="stat-card">
+<div class="num">2-4×</div>
+<div class="label">Wall-clock speedup</div>
+</div>
+<div class="stat-card">
+<div class="num">15%</div>
+<div class="label">End-to-end BERT speedup</div>
+</div>
+<div class="stat-card">
+<div class="num">3×</div>
+<div class="label">GPT-2 training speedup</div>
+</div>
+<div class="stat-card">
+<div class="num">5-20×</div>
+<div class="label">Memory reduction</div>
+</div>
+</div>
+
+<h3>The Timeline: How We Got Long Context</h3>
+<div class="timeline">
+<div class="timeline-item">
+<strong>2017</strong> — Transformer paper. Attention is O(n²). Sequences max at ~512 tokens.
+</div>
+<div class="timeline-item">
+<strong>2020-21</strong> — Sparse/linear attention approximations (Linformer, Performer). Trade quality for speed. None widely adopted.
+</div>
+<div class="timeline-item highlight">
+<strong>May 2022</strong> — <strong style="color:var(--green)">FlashAttention</strong> (Dao et al.). Exact attention, just faster. No approximation. The IO-awareness insight.
+</div>
+<div class="timeline-item highlight">
+<strong>Jul 2023</strong> — <strong style="color:var(--green)">FlashAttention-2</strong>. Better parallelism, ~2× faster than v1. Approaches theoretical peak FLOPS.
+</div>
+<div class="timeline-item">
+<strong>Mar 2023</strong> — GPT-4 launches with <strong>32K context</strong> (rumored to use FlashAttention).
+</div>
+<div class="timeline-item">
+<strong>Nov 2023</strong> — GPT-4 Turbo: <strong>128K context</strong>. Claude 2.1: <strong>200K context</strong>.
+</div>
+<div class="timeline-item highlight">
+<strong>2024</strong> — <strong style="color:var(--green)">FlashAttention-3</strong>. Exploits Hopper GPU features (FP8, warp specialization). Even faster.
+</div>
+<div class="timeline-item">
+<strong>Today</strong> — Million-token contexts becoming standard. All built on IO-aware attention.
+</div>
+</div>
+
+<h3>Why This Matters</h3>
+<div class="card">
+<p style="color:var(--text);font-size:0.95rem">FlashAttention didn't change the math of attention. It changed <em>where the math happens</em>.</p>
+<p style="margin-top:12px">This is the lesson: <strong>algorithms aren't just about asymptotic complexity — they're about the hardware they run on.</strong> The memory hierarchy is real, and ignoring it leaves 10× performance on the table.</p>
+<p style="margin-top:12px">Without FlashAttention (or something like it), GPT-4's 128K context and Claude's 200K context would be impractical. The O(n²) memory wall would make them impossibly slow and expensive. One paper about memory access patterns changed what LLMs can do.</p>
+</div>
+
+<div class="card" style="text-align:center;margin-top:32px">
+<p style="color:var(--accent);font-size:1rem;margin-bottom:8px">📄 Read the paper</p>
+<p style="font-size:0.85rem"><a href="https://arxiv.org/abs/2205.14135" style="color:var(--accent)" target="_blank">arxiv.org/abs/2205.14135</a></p>
+<p style="font-size:0.85rem;margin-top:8px"><a href="https://arxiv.org/abs/2307.08691" style="color:var(--accent2)" target="_blank">FlashAttention-2</a> · <a href="https://arxiv.org/abs/2407.08691" style="color:var(--accent2)" target="_blank">FlashAttention-3</a></p>
+</div>
+
+<div style="text-align:center;margin:40px 0 20px;color:var(--dim);font-size:0.85rem">
+<p>Module 04 complete. Next up: <strong>Module 05</strong> →</p>
+</div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ===== ACT NAVIGATION =====
+const acts = document.querySelectorAll('.act');
+const navBtns = document.querySelectorAll('.nav button');
+function showAct(i){
+  acts.forEach((a,j)=>{a.classList.toggle('hidden',j!==i)});
+  navBtns.forEach((b,j)=>{b.classList.toggle('active',j===i)});
+  if(i===0) updateChart();
+}
+
+// ===== GPU ANIMATION =====
+const vis = document.getElementById('gpuVis');
+const stepText = document.getElementById('stepText');
+const ioCounter = document.getElementById('ioCounter');
+let animBlocks=[], animRunning=false, ioCount=0;
+
+function clearBlocks(){animBlocks.forEach(b=>{if(b.parentNode)b.parentNode.removeChild(b)});animBlocks=[];ioCount=0;ioCounter.textContent='IO ops: 0'}
+
+function makeBlock(label,cls,x,y){
+  const b=document.createElement('div');
+  b.className='data-block '+cls;
+  b.textContent=label;
+  b.style.left=x+'px';b.style.top=y+'px';
+  vis.appendChild(b);animBlocks.push(b);return b;
+}
+
+function animateTo(block,x,y,dur){
+  return new Promise(r=>{
+    const sx=parseFloat(block.style.left),sy=parseFloat(block.style.top);
+    const start=performance.now();
+    function step(t){
+      const p=Math.min((t-start)/dur,1);
+      const ease=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      block.style.left=(sx+(x-sx)*ease)+'px';
+      block.style.top=(sy+(y-sy)*ease)+'px';
+      if(p<1)requestAnimationFrame(step);else r();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+const HBM_Y=280,SRAM_Y=30,COMP_Y=130;
+
+async function startStdAnim(){
+  if(animRunning)return;animRunning=true;clearBlocks();
+  const vw=vis.clientWidth;
+  // Place Q,K,V in HBM
+  const q=makeBlock('Q','q-block',vw*0.15,HBM_Y);
+  const k=makeBlock('K','k-block',vw*0.35,HBM_Y);
+  const v=makeBlock('V','v-block',vw*0.55,HBM_Y);
+
+  // Step 1: Q,K to SRAM
+  stepText.textContent='Step 1: Load Q, K from HBM → SRAM';
+  await Promise.all([animateTo(q,vw*0.2,SRAM_Y,600),animateTo(k,vw*0.4,SRAM_Y,600)]);
+  ioCount+=2;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Step 2: Compute S = QK^T
+  stepText.textContent='Step 2: Compute S = Q × Kᵀ (in SRAM)';
+  await new Promise(r=>setTimeout(r,400));
+  const s=makeBlock('S','s-block',vw*0.6,SRAM_Y);
+
+  // Step 3: Write S back to HBM (it's N×N, doesn't fit!)
+  stepText.textContent='Step 3: Write S (N×N!) back to HBM 😰';
+  await animateTo(s,vw*0.75,HBM_Y,600);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Step 4: Read S back for softmax
+  stepText.textContent='Step 4: Read S back from HBM for softmax';
+  const s2=makeBlock('S','s-block',vw*0.75,HBM_Y);
+  await animateTo(s2,vw*0.6,SRAM_Y,600);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Step 5: Softmax
+  stepText.textContent='Step 5: Compute softmax(S) → P';
+  await new Promise(r=>setTimeout(r,400));
+  s2.textContent='P';s2.className='data-block s-block';
+
+  // Step 6: Write P back to HBM
+  stepText.textContent='Step 6: Write P back to HBM 😰😰';
+  await animateTo(s2,vw*0.75,HBM_Y+30,600);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Step 7: Read P and V
+  stepText.textContent='Step 7: Read P and V from HBM';
+  const p2=makeBlock('P','s-block',vw*0.75,HBM_Y+30);
+  await Promise.all([animateTo(p2,vw*0.3,SRAM_Y,600),animateTo(v,vw*0.5,SRAM_Y,600)]);
+  ioCount+=2;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Step 8: Compute O
+  stepText.textContent='Step 8: O = P × V → Write O to HBM';
+  await new Promise(r=>setTimeout(r,400));
+  const o=makeBlock('O','o-block',vw*0.7,SRAM_Y);
+  await animateTo(o,vw*0.7,HBM_Y,600);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  stepText.textContent='Done! '+ioCount+' HBM reads/writes. S and P each written & read back.';
+  animRunning=false;
+}
+
+async function startFlashAnim(){
+  if(animRunning)return;animRunning=true;clearBlocks();
+  const vw=vis.clientWidth;
+
+  // Q,K,V in HBM
+  const q1=makeBlock('Q₁','q-block',vw*0.1,HBM_Y);
+  const q2=makeBlock('Q₂','q-block',vw*0.18,HBM_Y);
+  const k1=makeBlock('K₁','k-block',vw*0.32,HBM_Y);
+  const k2=makeBlock('K₂','k-block',vw*0.4,HBM_Y);
+  const v1=makeBlock('V₁','v-block',vw*0.54,HBM_Y);
+  const v2=makeBlock('V₂','v-block',vw*0.62,HBM_Y);
+
+  // Tile 1
+  stepText.textContent='Tile 1: Load Q₁, K₁, V₁ → SRAM (one tile)';
+  await Promise.all([animateTo(q1,vw*0.15,SRAM_Y,500),animateTo(k1,vw*0.35,SRAM_Y,500),animateTo(v1,vw*0.55,SRAM_Y,500)]);
+  ioCount+=3;ioCounter.textContent='IO ops: '+ioCount;
+
+  stepText.textContent='Tile 1: Compute S₁₁, softmax, O₁ — ALL in SRAM! ✨';
+  await new Promise(r=>setTimeout(r,600));
+  const o1=makeBlock('O₁','o-block',vw*0.72,SRAM_Y);
+
+  // Move K1,V1 out, bring K2,V2
+  stepText.textContent='Tile 2: Swap K₁,V₁ for K₂,V₂ (Q₁ stays!)';
+  await Promise.all([animateTo(k1,vw*0.32,HBM_Y,400),animateTo(v1,vw*0.54,HBM_Y,400)]);
+  await Promise.all([animateTo(k2,vw*0.35,SRAM_Y,500),animateTo(v2,vw*0.55,SRAM_Y,500)]);
+  ioCount+=2;ioCounter.textContent='IO ops: '+ioCount;
+
+  stepText.textContent='Tile 2: Update O₁ with K₂,V₂ contribution (online softmax!) ✨';
+  await new Promise(r=>setTimeout(r,600));
+
+  // Write O1 to HBM
+  stepText.textContent='Write final O₁ to HBM. S was NEVER in HBM!';
+  await animateTo(o1,vw*0.72,HBM_Y,500);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  // Tile for Q2
+  stepText.textContent='Now process Q₂ tiles the same way...';
+  await Promise.all([animateTo(q1,vw*0.1,HBM_Y,300),animateTo(q2,vw*0.15,SRAM_Y,500)]);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+  await new Promise(r=>setTimeout(r,500));
+
+  const o2=makeBlock('O₂','o-block',vw*0.82,SRAM_Y);
+  await new Promise(r=>setTimeout(r,400));
+  await animateTo(o2,vw*0.82,HBM_Y,500);
+  ioCount+=1;ioCounter.textContent='IO ops: '+ioCount;
+
+  stepText.textContent='Done! Only '+ioCount+' IO ops. No N×N matrix ever touched HBM! 🚀';
+  animRunning=false;
+}
+
+function resetAnim(){animRunning=false;clearBlocks();stepText.textContent='Press Play to start'}
+
+// ===== CHARTS =====
+function updateChart(){
+  const exp=parseInt(document.getElementById('seqSlider').value);
+  const n=Math.pow(2,exp);
+  document.getElementById('seqLabel').textContent=n;
+  drawMemChart(n);drawSpeedChart(n);
+}
+
+function drawMemChart(currentN){
+  const c=document.getElementById('memChart');
+  const ctx=c.getContext('2d');
+  const W=c.parentElement.clientWidth-110,H=c.parentElement.clientHeight-80;
+  c.width=(W+110)*2;c.height=(H+80)*2;c.style.width=(W+110)+'px';c.style.height=(H+80)+'px';
+  ctx.scale(2,2);ctx.clearRect(0,0,W+110,H+80);
+  const ox=55,oy=10,w=W,h=H;
+  
+  const ns=[256,512,1024,2048,4096,8192,16384,32768,65536];
+  const stdMem=ns.map(n=>n*n*4/1e6); // N² floats in MB
+  const flashMem=ns.map(n=>n*128*4/1e6); // N*d floats in MB (d=128 head dim)
+  const maxY=Math.max(...stdMem)*1.1;
+
+  // axes
+  ctx.strokeStyle='#2a3555';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(ox,oy+h);ctx.lineTo(ox+w,oy+h);ctx.stroke();
+
+  // Y labels
+  ctx.fillStyle='#8892a8';ctx.font='11px monospace';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const val=maxY*i/4;const y=oy+h-h*i/4;
+    ctx.fillText(val>=1000?(val/1000).toFixed(1)+'GB':val.toFixed(0)+'MB',ox-6,y+4);
+    if(i>0){ctx.strokeStyle='#1a2340';ctx.beginPath();ctx.moveTo(ox,y);ctx.lineTo(ox+w,y);ctx.stroke()}
+  }
+
+  // X labels
+  ctx.textAlign='center';
+  ns.forEach((n,i)=>{
+    const x=ox+w*i/(ns.length-1);
+    if(i%2===0)ctx.fillText(n>=1024?(n/1024)+'K':n,x,oy+h+16);
+  });
+
+  // Standard line
+  ctx.strokeStyle='#f87171';ctx.lineWidth=2;ctx.beginPath();
+  ns.forEach((n,i)=>{const x=ox+w*i/(ns.length-1),y=oy+h-h*(stdMem[i]/maxY);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
+  ctx.stroke();
+
+  // Flash line
+  ctx.strokeStyle='#34d399';ctx.lineWidth=2;ctx.beginPath();
+  ns.forEach((n,i)=>{const x=ox+w*i/(ns.length-1),y=oy+h-h*(flashMem[i]/maxY);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
+  ctx.stroke();
+
+  // Current N marker
+  const ci=ns.findIndex(v=>v>=currentN);
+  if(ci>=0){
+    const x=ox+w*ci/(ns.length-1);
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+h);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // Legend
+  ctx.fillStyle='#f87171';ctx.fillRect(ox+w-140,oy+4,12,3);
+  ctx.fillStyle='#8892a8';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText('Standard O(n²)',ox+w-124,oy+9);
+  ctx.fillStyle='#34d399';ctx.fillRect(ox+w-140,oy+18,12,3);
+  ctx.fillStyle='#8892a8';ctx.fillText('Flash O(n)',ox+w-124,oy+23);
+}
+
+function drawSpeedChart(currentN){
+  const c=document.getElementById('speedChart');
+  const ctx=c.getContext('2d');
+  const W=c.parentElement.clientWidth-110,H=c.parentElement.clientHeight-60;
+  c.width=(W+110)*2;c.height=(H+60)*2;c.style.width=(W+110)+'px';c.style.height=(H+60)+'px';
+  ctx.scale(2,2);ctx.clearRect(0,0,W+110,H+60);
+  const ox=55,oy=10,w=W,h=H;
+
+  const ns=[512,1024,2048,4096,8192,16384,32768];
+  // Approximate speedup factors from paper
+  const speedups=[1.3,1.7,2.2,2.8,3.2,3.6,4.0];
+  const ci=ns.findIndex(v=>v>=currentN);
+
+  ctx.strokeStyle='#2a3555';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(ox,oy+h);ctx.lineTo(ox+w,oy+h);ctx.stroke();
+
+  ctx.fillStyle='#8892a8';ctx.font='11px monospace';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const val=i+1;const y=oy+h-h*i/4;ctx.fillText(val+'×',ox-6,y+4)}
+
+  ctx.textAlign='center';
+  const barW=w/ns.length*0.6;
+  ns.forEach((n,i)=>{
+    const x=ox+w*(i+0.5)/ns.length;
+    const bh=h*(speedups[i]-1)/4;
+    const highlight=ci>=0&&i===ci;
+    ctx.fillStyle=highlight?'#60a5fa':'rgba(96,165,250,0.4)';
+    ctx.fillRect(x-barW/2,oy+h-bh,barW,bh);
+    ctx.fillStyle='#8892a8';ctx.font='9px monospace';
+    ctx.fillText(n>=1024?(n/1024)+'K':n,x,oy+h+14);
+    ctx.fillStyle=highlight?'#60a5fa':'#8892a8';ctx.font='10px monospace';
+    ctx.fillText(speedups[i]+'×',x,oy+h-bh-6);
+  });
+
+  ctx.fillStyle='#8892a8';ctx.font='10px monospace';ctx.textAlign='left';
+  ctx.fillText('FlashAttention speedup vs standard',ox,oy+h+30);
+}
+
+// ===== PYODIDE / PUZZLES =====
+let pyodide=null;
+const hints=[
+  'S = Q @ K.T; then apply np.exp and normalize each row (subtract max for stability); then O = S @ V',
+  'Loop: for i in range(0, M, block_size): C[i:i+block_size] = A[i:i+block_size] @ B',
+  'Track m (running max) and l (running sum of exp). Update with correction factor exp(m_old - m_new).',
+  'Outer loop over Q blocks, inner over K/V blocks. Track m_i, l_i, O_i per Q-block. Apply correction exp(m_old-m_new) to both l_i and O_i when max changes.'
+];
+
+function showHint(i){alert(hints[i])}
+
+const tests=[
+  // Puzzle 0: naive attention
+  `
+import numpy as np
+np.random.seed(42)
+Q=np.random.randn(8,4);K=np.random.randn(8,4);V=np.random.randn(8,4)
+O=naive_attention(Q,K,V)
+assert O is not None,"Function returned None"
+assert O.shape==(8,4),f"Wrong shape: {O.shape}"
+# Check against reference
+S=Q@K.T;S=S-S.max(axis=1,keepdims=True);S=np.exp(S);S=S/S.sum(axis=1,keepdims=True);O_ref=S@V
+assert np.allclose(O,O_ref,atol=1e-6),f"Values wrong. Max diff: {np.max(np.abs(O-O_ref))}"
+mem_n=64;mem_bytes=mem_n*mem_n*4
+print(f"✅ Correct! For N={mem_n}, the N×N matrix uses {mem_bytes:,} bytes ({mem_bytes/1024:.0f} KB)")
+print(f"   For N=65536, that's {65536*65536*4/1e9:.1f} GB — doesn't fit in GPU memory!")
+`,
+  // Puzzle 1: tiled matmul
+  `
+import numpy as np
+np.random.seed(42)
+A=np.random.randn(256,128);B=np.random.randn(128,64)
+C=tiled_matmul(A,B,block_size=64)
+assert C is not None,"Function returned None"
+C_ref=A@B
+assert np.allclose(C,C_ref,atol=1e-6),f"Values wrong. Max diff: {np.max(np.abs(C-C_ref))}"
+print("✅ Correct! Tiled matmul matches. Each tile fits in SRAM.")
+print(f"   Processed {256//64} tiles of 64 rows each")
+print(f"   Max memory per tile: {64*128*4/1024:.0f} KB (vs {256*128*4/1024:.0f} KB full)")
+`,
+  // Puzzle 2: online softmax
+  `
+import numpy as np
+np.random.seed(42)
+full=np.random.randn(128)
+blocks=[full[i:i+32] for i in range(0,128,32)]
+result=online_softmax(blocks)
+assert result is not None,"Function returned None"
+ref=np.exp(full-full.max());ref=ref/ref.sum()
+if isinstance(result,list):result=np.concatenate(result)
+assert np.allclose(result,ref,atol=1e-6),f"Values wrong. Max diff: {np.max(np.abs(result-ref))}"
+print("✅ Correct! Online softmax matches full softmax exactly.")
+print("   Key insight: we never had all 128 values in memory at once!")
+print("   This is THE trick that makes FlashAttention possible.")
+`,
+  // Puzzle 3: flash attention
+  `
+import numpy as np
+np.random.seed(42)
+N=128;d=32
+Q=np.random.randn(N,d);K=np.random.randn(N,d);V=np.random.randn(N,d)
+O=flash_attention(Q,K,V,block_size=32)
+assert O is not None,"Function returned None"
+assert O.shape==(N,d),f"Wrong shape: {O.shape}"
+S=Q@K.T;S=S-S.max(axis=1,keepdims=True);S=np.exp(S);S=S/S.sum(axis=1,keepdims=True);O_ref=S@V
+assert np.allclose(O,O_ref,atol=1e-5),f"Values wrong. Max diff: {np.max(np.abs(O-O_ref))}"
+print("✅ 🎉 FlashAttention WORKS! Output matches naive attention exactly.")
+print(f"   Standard: materialized {N}×{N} = {N*N} element matrix")
+print(f"   Flash: max tile was {32}×{32} = {32*32} elements")
+print(f"   Memory ratio: {N*N/(32*32):.0f}× less! And we got the EXACT same answer.")
+print("\\n   You just built the core of the algorithm that enabled 200K context windows! 🌊")
+`
+];
+
+async function initPyodide(){
+  try{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+    document.head.appendChild(s);
+    await new Promise((r,j)=>{s.onload=r;s.onerror=j});
+    pyodide=await loadPyodide();
+    await pyodide.loadPackage('numpy');
+    document.getElementById('pyodideStatus').innerHTML='✅ Python ready! Solve the puzzles below.';
+  }catch(e){
+    document.getElementById('pyodideStatus').innerHTML='⚠️ Could not load Pyodide. <button onclick="initPyodide()">Retry</button><br><span style="font-size:0.8rem">'+e.message+'</span>';
+  }
+}
+
+async function runPuzzle(i){
+  if(!pyodide){document.getElementById('output'+i).innerHTML='<span class="error">Python not loaded yet...</span>';return}
+  const code=document.getElementById('code'+i).value;
+  const out=document.getElementById('output'+i);
+  const status=document.getElementById('status'+i);
+  out.textContent='Running...';
+  try{
+    pyodide.runPython('import io as _io,sys as _sys;_sys.stdout=_io.StringIO();_sys.stderr=_io.StringIO()');
+    pyodide.runPython(code);
+    pyodide.runPython(tests[i]);
+    const stdout=pyodide.runPython('_sys.stdout.getvalue()');
+    const stderr=pyodide.runPython('_sys.stderr.getvalue()');
+    out.innerHTML=stdout+(stderr?'\n<span class="error">'+stderr+'</span>':'');
+    status.innerHTML='<span class="status-badge pass">✅ PASS</span>';
+  }catch(e){
+    const stdout=pyodide.runPython('_sys.stdout.getvalue()');
+    out.innerHTML=(stdout?stdout+'\n':'')+'<span class="error">❌ '+e.message+'</span>';
+    status.innerHTML='<span class="status-badge fail">❌ FAIL</span>';
+  }
+}
+
+// ===== INIT =====
+updateChart();
+window.addEventListener('resize',updateChart);
+// Lazy load pyodide when Act 2 shown
+const origShowAct=showAct;
+window.showAct=function(i){origShowAct(i);if(i===1&&!pyodide)initPyodide()};
+// Also override the nav showAct
+</script>
+</body>
+</html>

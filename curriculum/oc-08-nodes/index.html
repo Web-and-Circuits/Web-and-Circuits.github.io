@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>OC-08: Nodes & Devices — Giving Your Agent a Body</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            color: #e1e1e1;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        .act { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .act.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center; font-size: 2.4em; margin-bottom: 0.3em;
+            background: linear-gradient(45deg, #00d4ff, #7b2ff7, #ff6b9d);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .subtitle { text-align: center; color: #888; font-size: 1.1em; margin-bottom: 2em; }
+
+        h2 { color: #00d4ff; margin: 2em 0 1em; font-size: 1.8em; }
+        h3 { color: #7b2ff7; margin: 1.5em 0 0.8em; font-size: 1.3em; }
+
+        .nav-tabs {
+            display: flex; justify-content: center; gap: 8px; margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 10px 24px; border-radius: 25px; cursor: pointer;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa; font-size: 0.95em; transition: all 0.3s;
+        }
+        .nav-tab:hover { background: rgba(123,47,247,0.2); color: #fff; }
+        .nav-tab.active {
+            background: linear-gradient(135deg, #7b2ff7, #00d4ff);
+            color: #fff; border-color: transparent; font-weight: 600;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 24px; margin: 20px 0;
+        }
+
+        .card-glow {
+            background: rgba(123,47,247,0.08); border: 1px solid rgba(123,47,247,0.3);
+            border-radius: 16px; padding: 24px; margin: 20px 0;
+        }
+
+        /* ===== NODE TOPOLOGY CANVAS ===== */
+        .topology-wrap {
+            position: relative; width: 100%; aspect-ratio: 4/3;
+            background: rgba(0,0,0,0.3); border-radius: 16px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06); margin: 20px 0;
+        }
+        .topology-wrap canvas { width: 100%; height: 100%; display: block; }
+
+        .topo-controls {
+            display: flex; gap: 10px; justify-content: center; margin: 12px 0; flex-wrap: wrap;
+        }
+
+        button, .btn {
+            padding: 10px 22px; border-radius: 10px; cursor: pointer;
+            background: linear-gradient(135deg, #7b2ff7, #5b1fd7); border: none;
+            color: #fff; font-size: 0.9em; font-weight: 600; transition: all 0.2s;
+        }
+        button:hover, .btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
+        button:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .btn-outline {
+            background: transparent; border: 1px solid rgba(123,47,247,0.5);
+            color: #b388ff;
+        }
+
+        /* ===== FLOW ANIMATION ===== */
+        .flow-diagram {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; flex-wrap: wrap; margin: 20px 0; font-size: 0.9em;
+        }
+        .flow-step {
+            padding: 10px 16px; border-radius: 10px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s; white-space: nowrap;
+        }
+        .flow-step.active {
+            background: rgba(123,47,247,0.3); border-color: #7b2ff7;
+            box-shadow: 0 0 20px rgba(123,47,247,0.3);
+        }
+        .flow-arrow { color: #555; font-size: 1.2em; }
+
+        /* ===== CODE BLOCKS ===== */
+        pre {
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 18px; overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em;
+            line-height: 1.5; margin: 12px 0;
+        }
+        code { font-family: 'SF Mono', 'Fira Code', monospace; }
+        .kw { color: #c792ea; } .str { color: #c3e88d; } .num { color: #f78c6c; }
+        .cm { color: #546e7a; } .fn { color: #82aaff; } .prop { color: #f07178; }
+
+        /* ===== EXERCISES ===== */
+        .exercise {
+            background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 16px; padding: 24px; margin: 24px 0;
+        }
+        .exercise h3 { color: #00d4ff; margin-top: 0; }
+        .exercise-num {
+            display: inline-block; background: #00d4ff; color: #0a0a1a;
+            width: 28px; height: 28px; border-radius: 50%; text-align: center;
+            line-height: 28px; font-weight: 700; font-size: 0.85em; margin-right: 8px;
+        }
+
+        textarea {
+            width: 100%; min-height: 120px; background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            color: #e1e1e1; font-family: 'SF Mono', monospace; font-size: 0.85em;
+            padding: 14px; resize: vertical; margin: 10px 0;
+        }
+        textarea:focus { outline: none; border-color: #7b2ff7; }
+
+        .feedback {
+            padding: 14px; border-radius: 10px; margin: 10px 0; display: none;
+            font-size: 0.9em;
+        }
+        .feedback.correct {
+            display: block; background: rgba(76,175,80,0.15);
+            border: 1px solid rgba(76,175,80,0.3); color: #a5d6a7;
+        }
+        .feedback.incorrect {
+            display: block; background: rgba(244,67,54,0.15);
+            border: 1px solid rgba(244,67,54,0.3); color: #ef9a9a;
+        }
+        .feedback.hint {
+            display: block; background: rgba(255,193,7,0.12);
+            border: 1px solid rgba(255,193,7,0.25); color: #ffe082;
+        }
+
+        /* ===== CAPABILITY BADGES ===== */
+        .cap-badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+        .cap-badge {
+            padding: 4px 10px; border-radius: 6px; font-size: 0.75em; font-weight: 600;
+            background: rgba(123,47,247,0.2); color: #b388ff; border: 1px solid rgba(123,47,247,0.3);
+        }
+        .cap-badge.cam { background: rgba(0,212,255,0.15); color: #80deea; border-color: rgba(0,212,255,0.3); }
+        .cap-badge.screen { background: rgba(255,107,157,0.15); color: #f48fb1; border-color: rgba(255,107,157,0.3); }
+        .cap-badge.loc { background: rgba(76,175,80,0.15); color: #a5d6a7; border-color: rgba(76,175,80,0.3); }
+        .cap-badge.audio { background: rgba(255,193,7,0.15); color: #ffe082; border-color: rgba(255,193,7,0.3); }
+
+        /* ===== PAIRING FLOW ===== */
+        .pairing-steps {
+            display: flex; flex-direction: column; gap: 0;
+            margin: 20px 0; position: relative;
+        }
+        .pairing-step {
+            display: flex; gap: 16px; align-items: flex-start;
+            padding: 16px 0; position: relative;
+        }
+        .pairing-step::before {
+            content: ''; position: absolute; left: 17px; top: 44px;
+            width: 2px; height: calc(100% - 28px);
+            background: rgba(123,47,247,0.3);
+        }
+        .pairing-step:last-child::before { display: none; }
+        .step-num {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            background: rgba(123,47,247,0.2); border: 2px solid #7b2ff7;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85em; color: #b388ff;
+            transition: all 0.4s;
+        }
+        .pairing-step.active .step-num {
+            background: #7b2ff7; color: #fff;
+            box-shadow: 0 0 15px rgba(123,47,247,0.5);
+        }
+
+        /* ===== CONNECTION LINKS ===== */
+        .link-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .link-card {
+            padding: 16px; border-radius: 12px; text-decoration: none;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            color: #e1e1e1; transition: all 0.2s;
+        }
+        .link-card:hover {
+            background: rgba(123,47,247,0.1); border-color: rgba(123,47,247,0.3);
+            transform: translateY(-2px);
+        }
+        .link-card .icon { font-size: 1.5em; margin-bottom: 6px; }
+        .link-card .label { font-weight: 600; font-size: 0.9em; }
+
+        .use-case {
+            padding: 16px 20px; border-left: 3px solid #7b2ff7;
+            background: rgba(123,47,247,0.05); margin: 12px 0; border-radius: 0 10px 10px 0;
+        }
+        .use-case strong { color: #b388ff; }
+
+        .warning {
+            background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.25);
+            border-radius: 10px; padding: 14px 18px; margin: 12px 0;
+            color: #ffcc80; font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.7em; }
+            .flow-diagram { font-size: 0.8em; gap: 4px; }
+            .flow-step { padding: 8px 10px; }
+            .topology-wrap { aspect-ratio: 1/1; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>OC-08: Nodes & Devices</h1>
+    <p class="subtitle">Giving your agent a body</p>
+
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="showAct(0)">🔮 Explore</div>
+        <div class="nav-tab" onclick="showAct(1)">🔨 Build</div>
+        <div class="nav-tab" onclick="showAct(2)">🔗 Connect</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACT 1: THE EXPLORABLE                                         -->
+    <!-- ============================================================ -->
+    <div class="act active" id="act0">
+        <h2>The Node Network</h2>
+        <p>Without nodes, your agent is a brain in a jar — it can think and write, but it can't <em>see</em>, <em>show</em>, or <em>sense</em> anything. Nodes give it eyes, screens, ears, and a sense of place.</p>
+
+        <!-- TOPOLOGY VISUALIZATION -->
+        <div class="card" style="padding: 12px;">
+            <div class="topology-wrap">
+                <canvas id="topoCanvas"></canvas>
+            </div>
+            <div class="topo-controls">
+                <button onclick="animateCommand()">▶ Send Command</button>
+                <button class="btn-outline" onclick="resetTopo()">Reset</button>
+            </div>
+            <p style="text-align:center; color:#666; font-size:0.8em; margin-top:8px;">
+                Click "Send Command" to watch a camera_snap flow through the network
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>How Nodes Connect</h3>
+            <p>Each node maintains a persistent <strong>WebSocket</strong> connection to the gateway. The gateway knows every connected node, its capabilities, and its pairing status.</p>
+            <pre><span class="cm">// What the gateway sees</span>
+{
+  <span class="prop">"nodes"</span>: [
+    { <span class="prop">"id"</span>: <span class="str">"macbook-pro"</span>, <span class="prop">"caps"</span>: [<span class="str">"screen"</span>, <span class="str">"canvas"</span>, <span class="str">"audio"</span>] },
+    { <span class="prop">"id"</span>: <span class="str">"iphone-14"</span>,  <span class="prop">"caps"</span>: [<span class="str">"camera"</span>, <span class="str">"location"</span>, <span class="str">"audio"</span>] },
+    { <span class="prop">"id"</span>: <span class="str">"rpi-garage"</span>, <span class="prop">"caps"</span>: [<span class="str">"camera"</span>, <span class="str">"gpio"</span>] },
+    { <span class="prop">"id"</span>: <span class="str">"pixel-8"</span>,    <span class="prop">"caps"</span>: [<span class="str">"camera"</span>, <span class="str">"screen"</span>, <span class="str">"location"</span>] }
+  ]
+}</pre>
+        </div>
+
+        <!-- CAMERA FLOW -->
+        <h2>📸 Camera: Seeing Through Devices</h2>
+        <p>The camera system lets your agent see the physical world. Three operations:</p>
+
+        <div class="card">
+            <h3>camera_snap — Single Photo</h3>
+            <div class="flow-diagram" id="cameraFlow">
+                <div class="flow-step" id="cf1">🤖 Agent</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" id="cf2">camera_snap(node, front)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" id="cf3">📡 Gateway</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" id="cf4">📱 iPhone</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" id="cf5">📷 Capture</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" id="cf6">🧠 Analyze</div>
+            </div>
+            <button onclick="animateCameraFlow()" style="margin: 8px auto; display:block;">▶ Animate Flow</button>
+        </div>
+
+        <div class="card">
+            <h3>Camera Operations</h3>
+            <pre><span class="cm">// List available cameras on a node</span>
+<span class="fn">camera_list</span>({ <span class="prop">node</span>: <span class="str">"iphone-14"</span> })
+<span class="cm">// → [{ id: "front", facing: "front" }, { id: "back", facing: "back" }]</span>
+
+<span class="cm">// Snap a photo — facing: front | back | both</span>
+<span class="fn">camera_snap</span>({
+  <span class="prop">node</span>: <span class="str">"iphone-14"</span>,
+  <span class="prop">facing</span>: <span class="str">"front"</span>,
+  <span class="prop">quality</span>: <span class="num">0.8</span>,
+  <span class="prop">maxWidth</span>: <span class="num">1920</span>
+})
+<span class="cm">// → Returns image data for vision model analysis</span>
+
+<span class="cm">// Record a short video clip</span>
+<span class="fn">camera_clip</span>({
+  <span class="prop">node</span>: <span class="str">"rpi-garage"</span>,
+  <span class="prop">facing</span>: <span class="str">"back"</span>,
+  <span class="prop">durationMs</span>: <span class="num">5000</span>
+})
+<span class="cm">// → 5-second video clip from the garage camera</span></pre>
+        </div>
+
+        <div class="card-glow">
+            <strong>💡 Key insight:</strong> <code>facing: "both"</code> on <code>camera_snap</code> takes photos from front <em>and</em> back cameras simultaneously — useful for capturing context from both sides of a phone at once.
+        </div>
+
+        <!-- CANVAS & A2UI -->
+        <h2>🖥️ Canvas: Showing Things on Screens</h2>
+        <p>Canvas lets your agent <em>display</em> content on a node's screen. The agent writes HTML, the gateway serves it, and the node renders it.</p>
+
+        <div class="card">
+            <div class="flow-diagram" id="canvasFlow">
+                <div class="flow-step">🤖 Agent writes HTML</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">📡 Gateway serves it</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">🖥️ Node displays it</div>
+            </div>
+            <pre><span class="cm">// Present a canvas on a node</span>
+<span class="fn">canvas</span>({
+  <span class="prop">action</span>: <span class="str">"present"</span>,
+  <span class="prop">node</span>: <span class="str">"macbook-pro"</span>,
+  <span class="prop">url</span>: <span class="str">"data:text/html,&lt;h1&gt;Hello from your agent!&lt;/h1&gt;"</span>,
+  <span class="prop">width</span>: <span class="num">800</span>,
+  <span class="prop">height</span>: <span class="num">600</span>
+})
+
+<span class="cm">// Navigate to a new URL</span>
+<span class="fn">canvas</span>({ <span class="prop">action</span>: <span class="str">"navigate"</span>, <span class="prop">node</span>: <span class="str">"macbook-pro"</span>, <span class="prop">url</span>: <span class="str">"https://dashboard.example.com"</span> })
+
+<span class="cm">// Execute JavaScript in the canvas</span>
+<span class="fn">canvas</span>({ <span class="prop">action</span>: <span class="str">"eval"</span>, <span class="prop">node</span>: <span class="str">"macbook-pro"</span>, <span class="prop">javaScript</span>: <span class="str">"document.title"</span> })
+
+<span class="cm">// Take a snapshot of what's rendered</span>
+<span class="fn">canvas</span>({ <span class="prop">action</span>: <span class="str">"snapshot"</span>, <span class="prop">node</span>: <span class="str">"macbook-pro"</span> })
+
+<span class="cm">// Hide the canvas</span>
+<span class="fn">canvas</span>({ <span class="prop">action</span>: <span class="str">"hide"</span>, <span class="prop">node</span>: <span class="str">"macbook-pro"</span> })</pre>
+        </div>
+
+        <div class="card">
+            <h3>A2UI — Agent-to-UI Updates</h3>
+            <p>Instead of rewriting the whole page, A2UI lets the agent push <strong>structured JSONL updates</strong> to a canvas that's already displayed. Think of it like a live data feed.</p>
+            <pre><span class="cm">// Push structured data to the canvas</span>
+<span class="fn">canvas</span>({
+  <span class="prop">action</span>: <span class="str">"a2ui_push"</span>,
+  <span class="prop">node</span>: <span class="str">"macbook-pro"</span>,
+  <span class="prop">jsonl</span>: <span class="str">'{"temp":72,"humidity":45,"status":"ok"}'</span>
+})
+
+<span class="cm">// The canvas HTML listens for these updates:</span>
+<span class="cm">// window.addEventListener('a2ui', e => {</span>
+<span class="cm">//   const data = e.detail;  // { temp: 72, humidity: 45 }</span>
+<span class="cm">//   updateDashboard(data);</span>
+<span class="cm">// });</span>
+
+<span class="cm">// Reset all A2UI state</span>
+<span class="fn">canvas</span>({ <span class="prop">action</span>: <span class="str">"a2ui_reset"</span>, <span class="prop">node</span>: <span class="str">"macbook-pro"</span> })</pre>
+        </div>
+
+        <!-- PAIRING FLOW -->
+        <h2>🔐 Pairing: How Devices Join</h2>
+        <p>Nodes don't just connect — they go through a <strong>pairing flow</strong> for security. The owner must explicitly approve each device.</p>
+
+        <div class="card">
+            <div class="pairing-steps" id="pairingSteps">
+                <div class="pairing-step active" id="ps1">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong>Device connects via WebSocket</strong>
+                        <p style="color:#999; font-size:0.9em;">Sends a <code>connect</code> frame with <code>role: "node"</code> and declares its capabilities</p>
+                        <pre style="margin-top:8px; font-size:0.8em;">{
+  <span class="prop">"type"</span>: <span class="str">"connect"</span>,
+  <span class="prop">"role"</span>: <span class="str">"node"</span>,
+  <span class="prop">"name"</span>: <span class="str">"garage-pi"</span>,
+  <span class="prop">"capabilities"</span>: [<span class="str">"camera"</span>, <span class="str">"gpio"</span>]
+}</pre>
+                    </div>
+                </div>
+                <div class="pairing-step" id="ps2">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong>Gateway creates pending pairing</strong>
+                        <p style="color:#999; font-size:0.9em;">The node appears in the pending list. It can't do anything yet.</p>
+                    </div>
+                </div>
+                <div class="pairing-step" id="ps3">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong>Owner approves the pairing</strong>
+                        <p style="color:#999; font-size:0.9em;">Via the agent: <code>nodes({ action: "approve", node: "garage-pi" })</code></p>
+                    </div>
+                </div>
+                <div class="pairing-step" id="ps4">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong>Node is paired — commands flow</strong>
+                        <p style="color:#999; font-size:0.9em;">The node can now receive commands matching its declared capabilities.</p>
+                        <div class="cap-badges" style="margin-top:8px;">
+                            <span class="cap-badge cam">📷 camera</span>
+                            <span class="cap-badge">⚡ gpio</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="animatePairing()" style="margin: 8px auto; display:block;">▶ Animate Pairing</button>
+        </div>
+
+        <div class="card-glow">
+            <strong>🔒 Security model:</strong> Pairing is <em>device-based</em>, not user-based. Each physical device must be individually approved. A compromised API key can't magically add new hardware to your network — the owner must explicitly approve each node.
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACT 2: THE BUILD                                              -->
+    <!-- ============================================================ -->
+    <div class="act" id="act1">
+        <h2>Build: Hands On</h2>
+        <p>Four exercises to cement your understanding of nodes, capabilities, and the command flow.</p>
+
+        <!-- EXERCISE 1 -->
+        <div class="exercise">
+            <h3><span class="exercise-num">1</span> Node Capability Declaration</h3>
+            <p>Write the WebSocket <code>connect</code> frame for a Raspberry Pi that has a USB camera and GPIO pins for controlling a garage door. Name it <code>"garage-pi"</code>.</p>
+            <textarea id="ex1" placeholder='{ "type": "connect", ... }'></textarea>
+            <button onclick="checkEx1()">Check</button>
+            <div class="feedback" id="fb1"></div>
+        </div>
+
+        <!-- EXERCISE 2 -->
+        <div class="exercise">
+            <h3><span class="exercise-num">2</span> Command Routing</h3>
+            <p>You have these nodes connected:</p>
+            <div class="card" style="margin: 12px 0; padding: 14px;">
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div><strong>macbook-pro:</strong> <span class="cap-badge screen">🖥️ screen</span> <span class="cap-badge">🎨 canvas</span> <span class="cap-badge audio">🔊 audio</span></div>
+                    <div><strong>iphone-14:</strong> <span class="cap-badge cam">📷 camera</span> <span class="cap-badge loc">📍 location</span> <span class="cap-badge audio">🔊 audio</span></div>
+                    <div><strong>rpi-front-door:</strong> <span class="cap-badge cam">📷 camera</span></div>
+                    <div><strong>pixel-8:</strong> <span class="cap-badge cam">📷 camera</span> <span class="cap-badge screen">🖥️ screen</span> <span class="cap-badge loc">📍 location</span></div>
+                </div>
+            </div>
+            <p>The user says: <em>"Take a photo of the front door."</em> Which node should get the command, and what tool call do you write?</p>
+            <textarea id="ex2" placeholder="Node: ___. Tool call: camera_snap({ ... })"></textarea>
+            <button onclick="checkEx2()">Check</button>
+            <div class="feedback" id="fb2"></div>
+        </div>
+
+        <!-- EXERCISE 3 -->
+        <div class="exercise">
+            <h3><span class="exercise-num">3</span> Canvas Dashboard</h3>
+            <p>Write simple HTML for a status dashboard that an agent would present to a node's screen. It should show: current time, temperature (72°F), and a status indicator (green = OK). Keep it under 20 lines.</p>
+            <textarea id="ex3" placeholder="<html>...</html>" style="min-height: 160px;"></textarea>
+            <button onclick="checkEx3()">Check</button>
+            <button class="btn-outline" onclick="previewEx3()" style="margin-left: 8px;">Preview</button>
+            <div class="feedback" id="fb3"></div>
+            <div id="ex3preview" style="margin-top:12px; display:none; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.1);">
+                <iframe id="ex3frame" style="width:100%; height:200px; border:none; background:#111;"></iframe>
+            </div>
+        </div>
+
+        <!-- EXERCISE 4 -->
+        <div class="exercise">
+            <h3><span class="exercise-num">4</span> Security Check</h3>
+            <p>A command comes in: <code>camera_snap({ node: "garage-pi" })</code></p>
+            <p>The node's status is:</p>
+            <pre style="font-size:0.82em;">{
+  <span class="prop">"id"</span>: <span class="str">"garage-pi"</span>,
+  <span class="prop">"paired"</span>: <span class="kw">true</span>,
+  <span class="prop">"capabilities"</span>: [<span class="str">"gpio"</span>],
+  <span class="prop">"online"</span>: <span class="kw">true</span>
+}</pre>
+            <p>Should this command be allowed? Why or why not?</p>
+            <textarea id="ex4" placeholder="Your answer..."></textarea>
+            <button onclick="checkEx4()">Check</button>
+            <div class="feedback" id="fb4"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACT 3: THE CONNECTION                                         -->
+    <!-- ============================================================ -->
+    <div class="act" id="act2">
+        <h2>The Connection</h2>
+        <p>Nodes are where your agent crosses into the physical world. Here's where to go deeper.</p>
+
+        <h3>📚 Documentation</h3>
+        <div class="link-grid">
+            <a class="link-card" href="https://docs.openclaw.com/nodes" target="_blank">
+                <div class="icon">🔌</div>
+                <div class="label">Nodes</div>
+                <div style="color:#888; font-size:0.8em;">Pairing, status, capabilities</div>
+            </a>
+            <a class="link-card" href="https://docs.openclaw.com/camera" target="_blank">
+                <div class="icon">📷</div>
+                <div class="label">Camera</div>
+                <div style="color:#888; font-size:0.8em;">snap, list, clip</div>
+            </a>
+            <a class="link-card" href="https://docs.openclaw.com/screen-record" target="_blank">
+                <div class="icon">🖥️</div>
+                <div class="label">Screen Record</div>
+                <div style="color:#888; font-size:0.8em;">Capture node screens</div>
+            </a>
+            <a class="link-card" href="https://docs.openclaw.com/location" target="_blank">
+                <div class="icon">📍</div>
+                <div class="label">Location</div>
+                <div style="color:#888; font-size:0.8em;">GPS, accuracy levels</div>
+            </a>
+            <a class="link-card" href="https://docs.openclaw.com/canvas" target="_blank">
+                <div class="icon">🎨</div>
+                <div class="label">Canvas</div>
+                <div style="color:#888; font-size:0.8em;">Present, eval, snapshot</div>
+            </a>
+            <a class="link-card" href="https://docs.openclaw.com/a2ui" target="_blank">
+                <div class="icon">⚡</div>
+                <div class="label">A2UI</div>
+                <div style="color:#888; font-size:0.8em;">Agent-to-UI data push</div>
+            </a>
+        </div>
+
+        <h3>🌍 Real Use Cases</h3>
+
+        <div class="use-case">
+            <strong>🏠 Home Surveillance</strong><br>
+            Raspberry Pi nodes with cameras at entry points. Agent checks periodically, analyzes motion, sends alerts to your phone via notifications. All local, no cloud camera service needed.
+        </div>
+        <div class="use-case">
+            <strong>📊 Office Dashboard</strong><br>
+            Canvas on a wall-mounted tablet showing team status, build pipelines, weather, calendar. Agent updates via A2UI — push new data without page refreshes.
+        </div>
+        <div class="use-case">
+            <strong>📱 Mobile Notifications</strong><br>
+            Agent sends time-sensitive notifications to your phone node. Priority levels: passive, active, timeSensitive. Your agent knows when to buzz and when to wait.
+        </div>
+        <div class="use-case">
+            <strong>📍 Location Tracking</strong><br>
+            Phone node reports GPS coordinates with configurable accuracy (coarse, balanced, precise). Agent knows where you are for context-aware assistance — "you're near that coffee shop you liked."
+        </div>
+
+        <h3>🔧 Advanced Integration</h3>
+
+        <div class="card">
+            <h3 style="margin-top:0;">XPC Bridge (macOS)</h3>
+            <p>On macOS, OpenClaw uses the <strong>XPC bridge</strong> for native integration. This lets the node communicate with macOS system services — screen recording permissions, camera access, audio routing — through Apple's inter-process communication framework.</p>
+            <p style="color:#999; font-size:0.9em; margin-top:8px;">This is why the macOS node can do things like screen recording and canvas presentation as native windows, not just browser tabs.</p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Voice Wake</h3>
+            <p>Nodes with audio capability can listen for a <strong>wake word</strong>. When triggered, the agent activates and responds — turning your device into a voice-activated assistant. The audio processing happens on-device; only the transcribed text reaches the agent.</p>
+            <pre><span class="cm">// Voice wake is configured per-node</span>
+<span class="cm">// When the wake word is detected:</span>
+<span class="cm">// 1. Node starts recording audio</span>
+<span class="cm">// 2. Transcription runs on-device or via gateway</span>
+<span class="cm">// 3. Text is sent to the agent as a message</span>
+<span class="cm">// 4. Agent responds (optionally via TTS back to the node)</span></pre>
+        </div>
+
+        <h3>⚠️ Common Issues</h3>
+
+        <div class="warning">
+            <strong>Node Disconnection:</strong> WebSocket connections drop. Nodes reconnect automatically, but commands sent during disconnection fail. Check <code>nodes({ action: "status" })</code> before sending critical commands.
+        </div>
+        <div class="warning">
+            <strong>Camera Permissions:</strong> Mobile nodes need camera permissions granted in the OS. If <code>camera_snap</code> fails, the user needs to check their device settings — the agent can't grant permissions remotely.
+        </div>
+        <div class="warning">
+            <strong>Canvas Rendering:</strong> Canvas displays as a native window (macOS) or webview (mobile). Complex CSS/JS works, but test on the target device. Use <code>canvas({ action: "snapshot" })</code> to verify what the user actually sees.
+        </div>
+
+        <div class="card-glow" style="margin-top: 30px; text-align: center;">
+            <p style="font-size: 1.1em; margin-bottom: 8px;">
+                <strong>Nodes give your agent a body.</strong>
+            </p>
+            <p style="color: #999;">
+                Without them, it can only read and write text. With nodes, it can see through cameras, show things on screens, know where you are, and listen for your voice. This is where software agents start becoming <em>physical</em> agents.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== ACT NAVIGATION =====
+const acts = document.querySelectorAll('.act');
+const tabs = document.querySelectorAll('.nav-tab');
+
+function showAct(i) {
+    acts.forEach((a, j) => { a.classList.toggle('active', i === j); });
+    tabs.forEach((t, j) => { t.classList.toggle('active', i === j); });
+}
+
+// ===== TOPOLOGY CANVAS =====
+const canvas = document.getElementById('topoCanvas');
+const ctx = canvas.getContext('2d');
+let dpr = window.devicePixelRatio || 1;
+let W, H, nodes, animState = null;
+
+const nodesDef = [
+    { id: 'gateway', label: '📡 Gateway', color: '#7b2ff7', r: 36, caps: [] },
+    { id: 'macbook', label: '💻 MacBook', color: '#00d4ff', r: 28, caps: ['screen','canvas','audio'], angle: -Math.PI/4 },
+    { id: 'iphone', label: '📱 iPhone', color: '#ff6b9d', r: 28, caps: ['camera','location','audio'], angle: Math.PI/4 },
+    { id: 'rpi', label: '🔧 Raspberry Pi', color: '#4caf50', r: 28, caps: ['camera','gpio'], angle: 3*Math.PI/4 },
+    { id: 'android', label: '📱 Android', color: '#ffb74d', r: 28, caps: ['camera','screen','location'], angle: -3*Math.PI/4 },
+];
+
+function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    layoutNodes();
+}
+
+function layoutNodes() {
+    const cx = W/2, cy = H/2, rad = Math.min(W, H) * 0.33;
+    nodes = nodesDef.map((n, i) => {
+        if (i === 0) return { ...n, x: cx, y: cy };
+        return { ...n, x: cx + Math.cos(n.angle) * rad, y: cy + Math.sin(n.angle) * rad };
+    });
+}
+
+function drawTopo(t) {
+    ctx.clearRect(0, 0, W, H);
+    const gw = nodes[0];
+
+    // Draw connections
+    for (let i = 1; i < nodes.length; i++) {
+        const n = nodes[i];
+        ctx.beginPath();
+        ctx.moveTo(gw.x, gw.y); ctx.lineTo(n.x, n.y);
+        ctx.strokeStyle = 'rgba(123,47,247,0.2)'; ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Animated pulse
+        const pulse = (Date.now() / 2000 + i * 0.25) % 1;
+        const px = gw.x + (n.x - gw.x) * pulse;
+        const py = gw.y + (n.y - gw.y) * pulse;
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(123,47,247,0.5)';
+        ctx.fill();
+    }
+
+    // Draw command animation
+    if (animState) {
+        const { phase, start, nodeIdx } = animState;
+        const elapsed = Date.now() - start;
+        const dur = 800;
+        const target = nodes[nodeIdx];
+
+        if (phase === 0) { // agent label → gateway
+            const p = Math.min(elapsed / dur, 1);
+            drawPacket(W * 0.08, gw.y, gw.x, gw.y, p, '#00d4ff');
+            if (p >= 1) { animState.phase = 1; animState.start = Date.now(); }
+        } else if (phase === 1) { // gateway → node
+            const p = Math.min(elapsed / dur, 1);
+            drawPacket(gw.x, gw.y, target.x, target.y, p, '#00d4ff');
+            if (p >= 1) { animState.phase = 2; animState.start = Date.now(); }
+        } else if (phase === 2) { // flash at node
+            if (elapsed < 400) {
+                ctx.beginPath(); ctx.arc(target.x, target.y, 40 + elapsed/10, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(0,212,255,${0.3 - elapsed/1400})`;
+                ctx.fill();
+            } else { animState.phase = 3; animState.start = Date.now(); }
+        } else if (phase === 3) { // node → gateway (result)
+            const p = Math.min(elapsed / dur, 1);
+            drawPacket(target.x, target.y, gw.x, gw.y, p, '#4caf50');
+            if (p >= 1) { animState.phase = 4; animState.start = Date.now(); }
+        } else if (phase === 4) { // gateway → agent
+            const p = Math.min(elapsed / dur, 1);
+            drawPacket(gw.x, gw.y, W * 0.08, gw.y, p, '#4caf50');
+            if (p >= 1) animState = null;
+        }
+    }
+
+    // Draw nodes
+    for (const n of nodes) {
+        // Glow
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 8, 0, Math.PI * 2);
+        ctx.fillStyle = n.color + '15'; ctx.fill();
+
+        // Circle
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = n.color + '30'; ctx.strokeStyle = n.color; ctx.lineWidth = 2;
+        ctx.fill(); ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#e1e1e1'; ctx.font = `${Math.max(11, n.r * 0.42)}px -apple-system, sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(n.label, n.x, n.y);
+
+        // Capability badges below
+        if (n.caps.length) {
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.fillStyle = '#888';
+            ctx.fillText(n.caps.join(' · '), n.x, n.y + n.r + 14);
+        }
+    }
+
+    // Agent icon
+    ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🤖', W * 0.08, gw.y - 16);
+    ctx.font = '10px -apple-system, sans-serif'; ctx.fillStyle = '#888';
+    ctx.fillText('Agent', W * 0.08, gw.y + 4);
+
+    requestAnimationFrame(drawTopo);
+}
+
+function drawPacket(x1, y1, x2, y2, p, color) {
+    const x = x1 + (x2 - x1) * p;
+    const y = y1 + (y2 - y1) * p;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = color + '30'; ctx.fill();
+}
+
+function animateCommand() {
+    animState = { phase: 0, start: Date.now(), nodeIdx: 2 }; // send to iPhone
+}
+
+function resetTopo() { animState = null; }
+
+// ===== CAMERA FLOW ANIMATION =====
+function animateCameraFlow() {
+    const steps = ['cf1','cf2','cf3','cf4','cf5','cf6'];
+    steps.forEach(id => document.getElementById(id).classList.remove('active'));
+    steps.forEach((id, i) => {
+        setTimeout(() => {
+            if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+            document.getElementById(id).classList.add('active');
+        }, i * 600);
+    });
+    setTimeout(() => steps.forEach(id => document.getElementById(id).classList.remove('active')), steps.length * 600 + 1000);
+}
+
+// ===== PAIRING ANIMATION =====
+function animatePairing() {
+    const steps = ['ps1','ps2','ps3','ps4'];
+    steps.forEach(s => document.getElementById(s).classList.remove('active'));
+    steps.forEach((id, i) => {
+        setTimeout(() => document.getElementById(id).classList.add('active'), i * 900);
+    });
+}
+
+// ===== EXERCISE CHECKS =====
+function checkEx1() {
+    const v = document.getElementById('ex1').value.toLowerCase();
+    const fb = document.getElementById('fb1');
+    const hasConnect = v.includes('"connect"') || v.includes("'connect'");
+    const hasRole = v.includes('"node"') || v.includes("'node'");
+    const hasCamera = v.includes('camera');
+    const hasGpio = v.includes('gpio');
+    const hasName = v.includes('garage') || v.includes('pi');
+
+    if (hasConnect && hasRole && hasCamera && hasGpio && hasName) {
+        fb.className = 'feedback correct';
+        fb.textContent = '✅ Correct! The connect frame declares role: "node", names the device, and lists its capabilities (camera + gpio).';
+    } else {
+        const missing = [];
+        if (!hasConnect) missing.push('type: "connect"');
+        if (!hasRole) missing.push('role: "node"');
+        if (!hasCamera) missing.push('"camera" capability');
+        if (!hasGpio) missing.push('"gpio" capability');
+        if (!hasName) missing.push('a device name');
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Missing: ' + missing.join(', ') + '. The frame needs all of these.';
+    }
+}
+
+function checkEx2() {
+    const v = document.getElementById('ex2').value.toLowerCase();
+    const fb = document.getElementById('fb2');
+    const hasNode = v.includes('rpi-front-door') || v.includes('rpi') || v.includes('front-door');
+    const hasSnap = v.includes('camera_snap') || v.includes('snap');
+
+    if (hasNode && hasSnap) {
+        fb.className = 'feedback correct';
+        fb.textContent = '✅ Correct! "rpi-front-door" is the right node — its name matches the intent. Multiple nodes have cameras, but semantic matching (front door → rpi-front-door) picks the right one.';
+    } else if (!hasNode) {
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Which node\'s name most closely matches "front door"? Look at the node names again.';
+    } else {
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Right node! Now write the camera_snap tool call to take the photo.';
+    }
+}
+
+function checkEx3() {
+    const v = document.getElementById('ex3').value;
+    const fb = document.getElementById('fb3');
+    const hasHtml = v.includes('<') && v.includes('>');
+    const hasTemp = v.includes('72') || v.includes('temp');
+    const hasTime = v.includes('time') || v.includes('Time') || v.includes('clock') || v.includes('Date');
+    const hasStatus = v.includes('green') || v.includes('#0f0') || v.includes('#4caf50') || v.includes('ok') || v.includes('OK') || v.includes('status');
+
+    if (hasHtml && hasTemp && (hasTime || hasStatus)) {
+        fb.className = 'feedback correct';
+        fb.textContent = '✅ Looks like a valid dashboard! Click "Preview" to see how it renders. An agent would present this via canvas({ action: "present", url: "data:text/html,..." }).';
+    } else {
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Write HTML that shows: temperature (72°F), current time, and a green status indicator. Keep it simple!';
+    }
+}
+
+function previewEx3() {
+    const v = document.getElementById('ex3').value;
+    const wrap = document.getElementById('ex3preview');
+    const frame = document.getElementById('ex3frame');
+    if (!v.trim()) return;
+    wrap.style.display = 'block';
+    frame.srcdoc = v;
+}
+
+function checkEx4() {
+    const v = document.getElementById('ex4').value.toLowerCase();
+    const fb = document.getElementById('fb4');
+    const denied = v.includes('no') || v.includes('denied') || v.includes('reject') || v.includes('not allowed') || v.includes('should not') || v.includes('fail');
+    const reason = v.includes('capabilit') || v.includes('camera') || v.includes('gpio');
+
+    if (denied && reason) {
+        fb.className = 'feedback correct';
+        fb.textContent = '✅ Correct! The node is paired and online, but its capabilities only include "gpio" — not "camera". The command should be rejected. Capabilities act as a whitelist: a node can only receive commands matching what it declared.';
+    } else if (denied) {
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Right answer — it should be denied. But why? Look at the capabilities list carefully.';
+    } else {
+        fb.className = 'feedback hint';
+        fb.textContent = '💡 Check the node\'s capabilities array. Does it include "camera"?';
+    }
+}
+
+// ===== INIT =====
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+requestAnimationFrame(drawTopo);
+</script>
+</body>
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 09: The Open Source Race</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--card:#131829;--border:#1e2844;--text:#e2e8f0;--muted:#8892b0;--green:#10b981;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;--purple:#a855f7;--accent:#06b6d4;--code-bg:#1a1f35}
+body{font-family:'SF Mono',Monaco,'Cascadia Code',monospace;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:1rem}
+h1{font-size:1.8rem;text-align:center;margin:2rem 0 .5rem;background:linear-gradient(135deg,var(--green),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.3rem;color:var(--accent);margin:2rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+h3{font-size:1.1rem;color:var(--green);margin:1.5rem 0 .5rem}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:2rem;font-size:.85rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin:1rem 0}
+.act-label{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:3px;margin-bottom:.5rem;font-weight:700;letter-spacing:1px}
+.act1 .act-label{background:var(--green);color:#000}
+.act2 .act-label{background:var(--blue);color:#fff}
+.act3 .act-label{background:var(--purple);color:#fff}
+
+/* Race Track */
+.race-container{position:relative;overflow-x:auto;margin:1rem 0}
+canvas#raceCanvas{width:100%;border-radius:8px;cursor:crosshair}
+.race-controls{display:flex;gap:.5rem;margin:.5rem 0;flex-wrap:wrap}
+.race-controls button{background:var(--card);border:1px solid var(--border);color:var(--text);padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:inherit}
+.race-controls button:hover,.race-controls button.active{border-color:var(--accent);color:var(--accent)}
+.tooltip-box{position:fixed;background:#1a1f35;border:1px solid var(--accent);border-radius:6px;padding:10px 14px;font-size:.75rem;pointer-events:none;z-index:100;max-width:280px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.tooltip-box .model-name{font-weight:700;font-size:.85rem;margin-bottom:4px}
+.tooltip-box .stat{color:var(--muted)}
+.tooltip-box .stat span{color:var(--text)}
+.legend{display:flex;gap:1rem;font-size:.7rem;margin:.5rem 0;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+
+/* Distillation Demo */
+.distill-demo{display:grid;grid-template-columns:1fr 40px 1fr;gap:.5rem;align-items:center;margin:1rem 0}
+.distill-model{text-align:center}
+.distill-model .name{font-size:.8rem;font-weight:700;margin-bottom:.5rem}
+.distill-arrow{text-align:center;color:var(--accent);font-size:1.2rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.bar-container{margin:4px 0}
+.bar-label{font-size:.65rem;color:var(--muted);display:flex;justify-content:space-between}
+.bar{height:16px;background:var(--code-bg);border-radius:3px;overflow:hidden;margin:2px 0}
+.bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.distill-controls{text-align:center;margin-top:.5rem}
+.distill-controls button{background:var(--green);color:#000;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.8rem}
+.temp-slider{margin:.5rem 0;display:flex;align-items:center;gap:.5rem;font-size:.75rem;justify-content:center}
+.temp-slider input{width:120px;accent-color:var(--accent)}
+
+/* Code Puzzles */
+.puzzle{margin:1.5rem 0}
+.puzzle-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.puzzle-num{font-size:.7rem;color:var(--blue);font-weight:700}
+textarea.code-input{width:100%;min-height:180px;background:var(--code-bg);color:var(--green);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:.78rem;resize:vertical;tab-size:4}
+.btn-row{display:flex;gap:.5rem;margin:.5rem 0}
+.btn{padding:5px 14px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:4px;cursor:pointer;font-family:inherit;font-size:.75rem}
+.btn-run{border-color:var(--green);color:var(--green)}
+.btn-run:hover{background:var(--green);color:#000}
+.btn-hint{border-color:var(--yellow);color:var(--yellow)}
+.btn-reset{border-color:var(--muted);color:var(--muted)}
+.output{background:#000;color:var(--green);padding:8px;border-radius:4px;font-size:.72rem;min-height:40px;max-height:200px;overflow-y:auto;white-space:pre-wrap;margin:.5rem 0}
+.output.error{color:var(--red)}
+.status-badge{font-size:.65rem;padding:2px 6px;border-radius:3px}
+.status-badge.pass{background:var(--green);color:#000}
+.status-badge.fail{background:var(--red);color:#fff}
+
+/* Papers */
+.paper{border-left:3px solid var(--purple);padding:.8rem;margin:1rem 0;background:var(--code-bg);border-radius:0 6px 6px 0}
+.paper .title{font-weight:700;color:var(--accent);font-size:.85rem}
+.paper .meta{font-size:.7rem;color:var(--muted);margin:4px 0}
+.paper blockquote{border-left:2px solid var(--yellow);padding-left:8px;margin:8px 0;font-style:italic;color:var(--yellow);font-size:.8rem}
+.paper .insight{font-size:.8rem;margin-top:6px}
+.narrative{font-size:.9rem;line-height:1.7;color:var(--text);margin:1rem 0;padding:1rem;background:linear-gradient(135deg,rgba(16,185,129,.05),rgba(168,85,247,.05));border-radius:8px}
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--green);z-index:999;transition:width .3s}
+
+/* Responsive */
+@media(max-width:600px){
+ .container{padding:.5rem}
+ h1{font-size:1.3rem}
+ .distill-demo{grid-template-columns:1fr;gap:1rem}
+ .distill-arrow{transform:rotate(90deg)}
+ textarea.code-input{min-height:140px;font-size:.7rem}
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+<div id="tooltip" class="tooltip-box"></div>
+
+<div class="container">
+<h1>🏁 The Open Source Race</h1>
+<p class="subtitle">Module 09 · How open models caught up — and changed everything</p>
+
+<!-- ═══ ACT 1 ═══ -->
+<div class="act1">
+<span class="act-label">ACT 1 — THE EXPLORABLE</span>
+<h2>The Race Track: Open vs Closed (2018–2025)</h2>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Hover over any model to see its stats. Watch open models close the gap.</p>
+<div class="legend">
+ <span><i style="background:var(--green)"></i>Open</span>
+ <span><i style="background:var(--red)"></i>Closed</span>
+ <span><i style="background:var(--yellow)"></i>Semi-Open</span>
+ <span>Size = parameter count · Position = capability</span>
+</div>
+<div class="race-controls">
+ <button class="active" onclick="setMetric('capability')">Capability</button>
+ <button onclick="setMetric('efficiency')">Efficiency</button>
+ <button onclick="setMetric('size')">Parameters</button>
+</div>
+<div class="race-container">
+ <canvas id="raceCanvas" height="420"></canvas>
+</div>
+
+<h3>🧪 Knowledge Distillation Demo</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">A large teacher model trains a smaller student by sharing its probability outputs ("soft targets").</p>
+<div class="card">
+ <div class="temp-slider">Temperature: <input type="range" min="1" max="20" value="4" id="tempSlider" oninput="updateDistill()"> T=<span id="tempVal">4</span></div>
+ <div class="distill-demo">
+  <div class="distill-model">
+   <div class="name">🎓 Teacher (70B)</div>
+   <div id="teacherBars"></div>
+  </div>
+  <div class="distill-arrow">→</div>
+  <div class="distill-model">
+   <div class="name">📚 Student (7B)</div>
+   <div id="studentBars"></div>
+  </div>
+ </div>
+ <div class="distill-controls">
+  <button onclick="runDistillStep()">Train Step</button>
+  <span style="font-size:.7rem;color:var(--muted);margin-left:8px" id="distillInfo">Click to train the student</span>
+ </div>
+</div>
+</div>
+
+<!-- ═══ ACT 2 ═══ -->
+<div class="act2">
+<span class="act-label">ACT 2 — THE BUILD</span>
+<h2>Python Puzzles</h2>
+<p style="font-size:.8rem;color:var(--muted)">Run real Python in your browser (Pyodide). Complete each puzzle.</p>
+<div id="pyStatus" style="font-size:.75rem;color:var(--yellow);margin:.5rem 0">⏳ Loading Python runtime...</div>
+
+<!-- Puzzle 1 -->
+<div class="puzzle card">
+<div class="puzzle-header"><span class="puzzle-num">PUZZLE 1/4</span><span id="p1status"></span></div>
+<h3>Model Efficiency Comparison</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Calculate FLOPs/param and tokens/param ratios. Which model trains most efficiently?</p>
+<textarea class="code-input" id="code1">import numpy as np
+
+# Model data: (name, params_B, training_tokens_T, approx_FLOPs_e21)
+models = [
+    ("GPT-3",      175,  0.3,   314),
+    ("LLaMA-7B",   7,    1.0,    84),
+    ("LLaMA-13B",  13,   1.0,   156),
+    ("LLaMA-65B",  65,   1.4,  1090),
+    ("Mistral-7B", 7,    8.0,   672),
+    ("Qwen-72B",   72,   3.0,  2592),
+]
+
+# TODO: For each model, compute:
+#   flops_per_param = FLOPs / params  (in units of 1e12)
+#   tokens_per_param = tokens / params (in units of 1e3)
+# Print a table and identify the most efficient model
+
+for name, params, tokens, flops in models:
+    flops_per_param = ___  # FLOPs (1e21) / params (B) → multiply by 1e12
+    tokens_per_param = ___  # tokens (T) / params (B) → multiply by 1e3
+    print(f"{name:15s}  FLOPs/param: {flops_per_param:8.1f}T  tokens/param: {tokens_per_param:6.0f}")
+</textarea>
+<div class="btn-row">
+ <button class="btn btn-run" onclick="runPuzzle(1)">▶ Run</button>
+ <button class="btn btn-hint" onclick="showHint(1)">💡 Hint</button>
+ <button class="btn btn-reset" onclick="resetPuzzle(1)">↺ Reset</button>
+</div>
+<div class="output" id="out1"></div>
+</div>
+
+<!-- Puzzle 2 -->
+<div class="puzzle card">
+<div class="puzzle-header"><span class="puzzle-num">PUZZLE 2/4</span><span id="p2status"></span></div>
+<h3>Knowledge Distillation</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Implement soft target distillation: soften teacher logits, compute KL divergence loss.</p>
+<textarea class="code-input" id="code2">import numpy as np
+
+def softmax(logits, temperature=1.0):
+    """Softmax with temperature scaling."""
+    # TODO: Apply temperature, then softmax
+    # Higher temperature → softer distribution
+    scaled = logits / ___
+    exp_scaled = np.exp(scaled - np.max(scaled))
+    return exp_scaled / np.sum(exp_scaled)
+
+def distillation_loss(teacher_logits, student_logits, temperature):
+    """KL divergence between soft teacher and student distributions."""
+    teacher_soft = softmax(teacher_logits, temperature)
+    student_soft = softmax(student_logits, temperature)
+    # KL(teacher || student) = sum(teacher * log(teacher/student))
+    loss = np.sum(teacher_soft * np.log(teacher_soft / (student_soft + 1e-8)))
+    return loss * (temperature ** 2)  # Scale by T^2 (Hinton et al.)
+
+# Test it
+teacher = np.array([5.0, 2.0, 0.5, 0.1, -1.0])  # Confident teacher
+student = np.array([1.0, 1.0, 1.0, 1.0, 1.0])    # Untrained student
+
+for T in [1, 2, 5, 10, 20]:
+    loss = distillation_loss(teacher, student, T)
+    soft = softmax(teacher, T)
+    print(f"T={T:2d}  loss={loss:.4f}  teacher_soft={np.round(soft, 3)}")
+</textarea>
+<div class="btn-row">
+ <button class="btn btn-run" onclick="runPuzzle(2)">▶ Run</button>
+ <button class="btn btn-hint" onclick="showHint(2)">💡 Hint</button>
+ <button class="btn btn-reset" onclick="resetPuzzle(2)">↺ Reset</button>
+</div>
+<div class="output" id="out2"></div>
+</div>
+
+<!-- Puzzle 3 -->
+<div class="puzzle card">
+<div class="puzzle-header"><span class="puzzle-num">PUZZLE 3/4</span><span id="p3status"></span></div>
+<h3>Quantization: Float32 → Int8</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Quantize model weights and measure the accuracy-size tradeoff.</p>
+<textarea class="code-input" id="code3">import numpy as np
+np.random.seed(42)
+
+# Simulate a weight matrix (like a small transformer layer)
+weights_f32 = np.random.randn(256, 256).astype(np.float32)
+
+def quantize_int8(weights):
+    """Quantize float32 weights to int8 (symmetric quantization)."""
+    # Find the scale factor: map max absolute value to 127
+    max_val = np.max(np.abs(weights))
+    scale = ___  # max_val / 127
+    # Quantize: round(weights / scale), clip to [-128, 127]
+    quantized = np.clip(np.round(weights / scale), -128, 127).astype(np.int8)
+    return quantized, scale
+
+def dequantize(quantized, scale):
+    """Convert int8 back to float32."""
+    return quantized.astype(np.float32) * ___  # multiply by scale
+
+# Quantize
+q_weights, scale = quantize_int8(weights_f32)
+reconstructed = dequantize(q_weights, scale)
+
+# Measure error
+mse = np.mean((weights_f32 - reconstructed) ** 2)
+max_err = np.max(np.abs(weights_f32 - reconstructed))
+size_ratio = weights_f32.nbytes / q_weights.nbytes
+
+print(f"Original size:     {weights_f32.nbytes:,} bytes")
+print(f"Quantized size:    {q_weights.nbytes:,} bytes")
+print(f"Compression ratio: {size_ratio:.1f}x")
+print(f"MSE:               {mse:.6f}")
+print(f"Max error:         {max_err:.6f}")
+print(f"Correlation:       {np.corrcoef(weights_f32.flatten(), reconstructed.flatten())[0,1]:.6f}")
+</textarea>
+<div class="btn-row">
+ <button class="btn btn-run" onclick="runPuzzle(3)">▶ Run</button>
+ <button class="btn btn-hint" onclick="showHint(3)">💡 Hint</button>
+ <button class="btn btn-reset" onclick="resetPuzzle(3)">↺ Reset</button>
+</div>
+<div class="output" id="out3"></div>
+</div>
+
+<!-- Puzzle 4 -->
+<div class="puzzle card">
+<div class="puzzle-header"><span class="puzzle-num">PUZZLE 4/4</span><span id="p4status"></span></div>
+<h3>Benchmark Normalization</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Compare models across different benchmarks by normalizing scores.</p>
+<textarea class="code-input" id="code4">import numpy as np
+
+# Scores on different benchmarks (approximate real values)
+# Columns: MMLU (0-100), HumanEval (0-100), GSM8K (0-100)
+benchmarks = ["MMLU", "HumanEval", "GSM8K"]
+models = {
+    "GPT-4":        [86.4, 67.0, 92.0],
+    "LLaMA-2-70B":  [68.9, 29.9, 56.8],
+    "Mistral-7B":   [62.5, 30.5, 52.2],
+    "LLaMA-3-70B":  [82.0, 81.7, 93.0],
+    "DeepSeek-R1":  [90.8, 71.5, 97.3],
+    "Qwen3-235B":   [88.0, 80.0, 95.0],
+}
+
+# TODO: Normalize each benchmark column to 0-1 using min-max scaling
+# Then compute an average "composite score" for each model
+
+scores = np.array(list(models.values()))
+names = list(models.keys())
+
+# Min-max normalize each column
+mins = scores.min(axis=___)   # axis? (0=columns, 1=rows)
+maxs = scores.max(axis=___)
+normalized = (scores - mins) / (maxs - mins)
+
+# Composite = mean across benchmarks
+composite = normalized.mean(axis=___)  # which axis?
+
+# Print results sorted by composite score
+order = np.argsort(composite)[::-1]
+print(f"{'Model':18s} {'MMLU':>6s} {'Human':>6s} {'GSM8K':>6s} {'Composite':>10s}")
+print("-" * 52)
+for i in order:
+    n = normalized[i]
+    print(f"{names[i]:18s} {n[0]:6.3f} {n[1]:6.3f} {n[2]:6.3f} {composite[i]:10.3f}")
+</textarea>
+<div class="btn-row">
+ <button class="btn btn-run" onclick="runPuzzle(4)">▶ Run</button>
+ <button class="btn btn-hint" onclick="showHint(4)">💡 Hint</button>
+ <button class="btn btn-reset" onclick="resetPuzzle(4)">↺ Reset</button>
+</div>
+<div class="output" id="out4"></div>
+</div>
+</div>
+
+<!-- ═══ ACT 3 ═══ -->
+<div class="act3">
+<span class="act-label">ACT 3 — THE CONNECTION</span>
+<h2>Three Papers That Changed the Game</h2>
+
+<div class="paper">
+<div class="title">📄 Paper #7: LLaMA — Open and Efficient Foundation Language Models</div>
+<div class="meta">Touvron et al., Meta AI · February 2023</div>
+<blockquote>"LLaMA-13B outperforms GPT-3 (175B) on most benchmarks"</blockquote>
+<div class="insight">
+<strong>The insight:</strong> You don't need the biggest model — you need the best-trained one. LLaMA applied Chinchilla-optimal scaling: train a smaller model on <em>more data</em> rather than inflating parameters. A 13B model beat a 175B one. The weights leaked within a week of release, and the open-source ecosystem exploded. Alpaca, Vicuna, and hundreds of fine-tunes appeared within months.
+<br><br>
+<strong>Connected to:</strong> BERT (Paper #3) opened the floodgates by open-sourcing the first great pretrained model. T5 (Paper #27) showed "text-to-text" could unify tasks. The Textbooks paper (#22, "Textbooks Are All You Need") proved that <em>data quality</em> could substitute for model size — Phi-1 at 1.3B matched models 10× larger.
+</div>
+</div>
+
+<div class="paper">
+<div class="title">📄 Paper #15: DeepSeek-R1</div>
+<div class="meta">Guo et al., DeepSeek AI · January 2025</div>
+<blockquote>"Through RL, the model naturally develops reasoning behaviors like self-verification and reflection"</blockquote>
+<div class="insight">
+<strong>The insight:</strong> Open models can <em>reason</em>. DeepSeek-R1 used reinforcement learning (not just supervised fine-tuning) to teach chain-of-thought reasoning, matching o1-level performance. Crucially, they showed distillation works: R1's reasoning ability transferred to models as small as 1.5B parameters. The distilled DeepSeek-R1-7B outperformed much larger non-reasoning models.
+<br><br>
+<strong>The distillation story:</strong> Train a massive 671B model with RL to reason → distill its outputs into a 7B model → the small model inherits reasoning patterns it could never learn on its own. This is why the interactive demo above matters — it's how we democratize intelligence.
+</div>
+</div>
+
+<div class="paper">
+<div class="title">📄 Paper #16: Qwen3 Technical Report</div>
+<div class="meta">Yang et al., Alibaba · 2025</div>
+<blockquote>"Qwen3 encompasses both dense and MoE models... competing with state-of-the-art models"</blockquote>
+<div class="insight">
+<strong>The insight:</strong> The race is global. Qwen3's 235B-parameter MoE model (30B active) matches GPT-4o and DeepSeek-R1. With mixture-of-experts, only a fraction of parameters activate per token — you get the capacity of a huge model with the inference cost of a small one. Released with Apache 2.0 license.
+<br><br>
+<strong>The bigger picture:</strong> Chinese labs (DeepSeek, Qwen, Yi), European startups (Mistral), and Meta are all publishing open-weight models that compete with closed ones. The "moat" that proprietary labs enjoyed in 2023 has largely evaporated. You can now run frontier-class models on a MacBook.
+</div>
+</div>
+
+<div class="narrative">
+<h3>🌊 The Narrative Arc</h3>
+<p>Open source didn't just catch up — it <strong>changed the rules</strong>.</p>
+<p style="margin-top:.5rem">In 2020, GPT-3 felt like magic that only OpenAI could do: 175 billion parameters, closed weights, $4.6M to train. By 2025, you can download a model that matches it <em>from your phone</em>.</p>
+<p style="margin-top:.5rem">The path: <strong>BERT</strong> proved open-source LLMs could dominate. <strong>LLaMA</strong> proved you don't need a trillion-dollar company. <strong>Mistral</strong> proved a startup of 20 could compete. <strong>DeepSeek</strong> proved reasoning isn't a moat. <strong>Qwen</strong> proved the race is truly global.</p>
+<p style="margin-top:.5rem">The key techniques that got us here: <em>Chinchilla-optimal training</em> (more data, fewer params), <em>knowledge distillation</em> (big model teaches small model), <em>quantization</em> (run in less memory), and <em>mixture-of-experts</em> (activate only what you need).</p>
+<p style="margin-top:.5rem;color:var(--green)"><strong>You built all four of those techniques in the puzzles above.</strong> That's the toolkit that's democratizing AI.</p>
+</div>
+</div>
+
+<footer style="text-align:center;padding:2rem 0;color:var(--muted);font-size:.7rem">
+Module 09 · AI Beach Week · The Open Source Race 🏖️
+</footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// RACE TRACK VISUALIZATION
+// ═══════════════════════════════════════
+const MODELS = [
+ {name:"BERT",y:2018.8,params:0.34,tokens:0.003,type:"open",capability:45,efficiency:90,
+  info:"340M params · 3.3B tokens · Opened the floodgates for open pretrained models"},
+ {name:"GPT-2",y:2019.2,params:1.5,tokens:0.01,type:"semi",capability:35,efficiency:40,
+  info:"1.5B params · ~10B tokens · OpenAI initially withheld release, citing safety"},
+ {name:"T5",y:2019.8,params:11,tokens:0.034,type:"open",capability:55,efficiency:60,
+  info:"11B params · 34B tokens · Text-to-text framework, fully open (Google)"},
+ {name:"GPT-3",y:2020.5,params:175,tokens:0.3,type:"closed",capability:70,efficiency:25,
+  info:"175B params · 300B tokens · API-only, $4.6M training cost"},
+ {name:"LLaMA",y:2023.1,params:65,tokens:1.4,type:"semi",capability:72,efficiency:75,
+  info:"65B params · 1.4T tokens · 13B beat GPT-3. Leaked, then opened"},
+ {name:"LLaMA-2",y:2023.5,params:70,tokens:2.0,type:"open",capability:76,efficiency:78,
+  info:"70B params · 2T tokens · Fully open release from Meta"},
+ {name:"Mistral-7B",y:2023.7,params:7,tokens:8,type:"open",capability:68,efficiency:92,
+  info:"7B params · 8T tokens · Apache 2.0, tiny team, huge impact"},
+ {name:"Mixtral",y:2023.9,params:46.7,tokens:8,type:"open",capability:78,efficiency:88,
+  info:"46.7B total (12.9B active) · First mainstream open MoE"},
+ {name:"LLaMA-3",y:2024.3,params:70,tokens:15,type:"open",capability:88,efficiency:85,
+  info:"70B params · 15T tokens · Matching GPT-4 class"},
+ {name:"DeepSeek-R1",y:2025.0,params:671,tokens:14.8,type:"open",capability:95,efficiency:82,
+  info:"671B MoE (37B active) · RL-trained reasoning, distills to 7B"},
+ {name:"Qwen3",y:2025.2,params:235,tokens:36,type:"open",capability:94,efficiency:87,
+  info:"235B MoE (30B active) · Apache 2.0, matches GPT-4o"},
+];
+
+let currentMetric = 'capability';
+const canvas = document.getElementById('raceCanvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+let hoveredModel = null;
+let dpr = window.devicePixelRatio || 1;
+
+function resizeCanvas() {
+ const rect = canvas.getBoundingClientRect();
+ canvas.width = rect.width * dpr;
+ canvas.height = rect.height * dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ drawRace();
+}
+
+function getMetricVal(m) {
+ if (currentMetric==='capability') return m.capability;
+ if (currentMetric==='efficiency') return m.efficiency;
+ return Math.min(100, Math.log10(m.params*1e9)/11*100);
+}
+
+function drawRace() {
+ const W = canvas.width/dpr, H = canvas.height/dpr;
+ const pad = {l:70,r:30,t:30,b:30};
+ const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+
+ ctx.clearRect(0,0,W,H);
+
+ // Background
+ ctx.fillStyle = '#0d1117';
+ ctx.fillRect(0,0,W,H);
+
+ // Grid
+ const years = [2019,2020,2021,2022,2023,2024,2025];
+ ctx.strokeStyle = '#1e2844';
+ ctx.lineWidth = 1;
+ ctx.font = '10px monospace';
+ ctx.fillStyle = '#8892b0';
+ ctx.textAlign = 'center';
+ for (const yr of years) {
+  const x = pad.l + ((yr-2018.5)/(2025.5-2018.5))*cw;
+  ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+  ctx.fillText(yr, x, H-pad.b+14);
+ }
+
+ // X-axis label
+ ctx.fillStyle='#8892b0'; ctx.textAlign='left'; ctx.font='9px monospace';
+ const metricLabels = {capability:'Capability Score →',efficiency:'Training Efficiency →',size:'Log(Parameters) →'};
+ ctx.textAlign='right';
+ ctx.fillText(metricLabels[currentMetric], W-pad.r, pad.t-8);
+
+ // Track lanes (percentage axis)
+ ctx.textAlign='right';
+ for (let p=0;p<=100;p+=25) {
+  const barX = pad.l + (p/100)*cw;
+  ctx.strokeStyle='#1e2844'; ctx.beginPath();
+  ctx.moveTo(barX,pad.t); ctx.lineTo(barX,H-pad.b); ctx.stroke();
+ }
+
+ // Draw models
+ const modelPositions = [];
+ for (const m of MODELS) {
+  const y = pad.t + ((m.y-2018.5)/(2025.5-2018.5))*ch;
+  const x = pad.l + (getMetricVal(m)/100)*cw;
+  const r = Math.max(5, Math.min(18, Math.log10(m.params*1e9)/11*18));
+
+  const color = m.type==='open'?'#10b981':m.type==='closed'?'#ef4444':'#eab308';
+
+  // Glow
+  if (hoveredModel===m) {
+   ctx.shadowColor=color; ctx.shadowBlur=15;
+  }
+
+  // Track line
+  ctx.strokeStyle=color+'40'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(x,y); ctx.stroke();
+
+  // Runner dot
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+
+  // Label
+  ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+  ctx.fillStyle=hoveredModel===m?'#fff':color;
+  ctx.font=(hoveredModel===m?'bold ':'')+`${r<8?9:10}px monospace`;
+  ctx.textAlign='left';
+  ctx.fillText(m.name, x+r+4, y+3);
+
+  modelPositions.push({m,x,y,r});
+ }
+
+ // Store for hit testing
+ canvas._models = modelPositions;
+}
+
+function setMetric(m) {
+ currentMetric = m;
+ document.querySelectorAll('.race-controls button').forEach(b=>b.classList.remove('active'));
+ event.target.classList.add('active');
+ drawRace();
+}
+
+canvas.addEventListener('mousemove', (e)=>{
+ const rect = canvas.getBoundingClientRect();
+ const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+ hoveredModel = null;
+ for (const {m,x,y,r} of (canvas._models||[])) {
+  if (Math.hypot(mx-x,my-y) < r+6) { hoveredModel=m; break; }
+ }
+ if (hoveredModel) {
+  const m = hoveredModel;
+  const color = m.type==='open'?'#10b981':m.type==='closed'?'#ef4444':'#eab308';
+  const typeLabel = m.type==='open'?'Open Source':m.type==='closed'?'Closed':'Semi-Open';
+  tooltip.innerHTML = `<div class="model-name" style="color:${color}">${m.name}</div>
+   <div class="stat">Type: <span style="color:${color}">${typeLabel}</span></div>
+   <div class="stat">Parameters: <span>${m.params>=1?m.params+'B':Math.round(m.params*1000)+'M'}</span></div>
+   <div class="stat">Training tokens: <span>${m.tokens>=1?m.tokens+'T':Math.round(m.tokens*1000)+'B'}</span></div>
+   <div class="stat">Capability: <span>${m.capability}/100</span></div>
+   <div class="stat">Efficiency: <span>${m.efficiency}/100</span></div>
+   <div style="margin-top:6px;font-size:.7rem;color:#8892b0">${m.info}</div>`;
+  tooltip.style.display='block';
+  let tx = e.clientX+15, ty = e.clientY-10;
+  if (tx+280>window.innerWidth) tx=e.clientX-290;
+  if (ty+150>window.innerHeight) ty=e.clientY-150;
+  tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
+ } else {
+  tooltip.style.display='none';
+ }
+ drawRace();
+});
+canvas.addEventListener('mouseleave',()=>{hoveredModel=null;tooltip.style.display='none';drawRace()});
+
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 50);
+
+// ═══════════════════════════════════════
+// DISTILLATION DEMO
+// ═══════════════════════════════════════
+const classes = ['cat','dog','bird','fish','frog'];
+const teacherLogits = [5.0, 2.0, 0.5, 0.1, -1.0];
+let studentLogits = [1,1,1,1,1];
+let distillStep = 0;
+
+function softmax(logits, T=1) {
+ const scaled = logits.map(l=>l/T);
+ const max = Math.max(...scaled);
+ const exp = scaled.map(s=>Math.exp(s-max));
+ const sum = exp.reduce((a,b)=>a+b);
+ return exp.map(e=>e/sum);
+}
+
+function renderBars(containerId, probs, labels) {
+ const c = document.getElementById(containerId);
+ c.innerHTML = '';
+ for (let i=0;i<probs.length;i++) {
+  const pct = (probs[i]*100).toFixed(1);
+  const color = i===0?'var(--green)':i===1?'var(--blue)':'var(--muted)';
+  c.innerHTML += `<div class="bar-container">
+   <div class="bar-label"><span>${labels[i]}</span><span>${pct}%</span></div>
+   <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+ }
+}
+
+function updateDistill() {
+ const T = parseInt(document.getElementById('tempSlider').value);
+ document.getElementById('tempVal').textContent = T;
+ const tp = softmax(teacherLogits, T);
+ const sp = softmax(studentLogits, T);
+ renderBars('teacherBars', tp, classes);
+ renderBars('studentBars', sp, classes);
+}
+
+function runDistillStep() {
+ distillStep++;
+ const T = parseInt(document.getElementById('tempSlider').value);
+ const teacherSoft = softmax(teacherLogits, T);
+ // Gradient step: move student logits toward teacher distribution
+ const lr = 0.5;
+ const studentSoft = softmax(studentLogits, T);
+ for (let i=0;i<studentLogits.length;i++) {
+  studentLogits[i] += lr * (teacherSoft[i] - studentSoft[i]) * T;
+ }
+ updateDistill();
+ const tp = softmax(teacherLogits,1), sp = softmax(studentLogits,1);
+ const kl = tp.reduce((s,p,i)=>s+p*Math.log(p/(sp[i]+1e-8)),0);
+ document.getElementById('distillInfo').textContent = `Step ${distillStep} · KL divergence: ${kl.toFixed(4)}`;
+}
+
+updateDistill();
+
+// ═══════════════════════════════════════
+// PYODIDE PUZZLES
+// ═══════════════════════════════════════
+let pyodide = null;
+const origCode = {};
+
+async function initPyodide() {
+ try {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+  document.head.appendChild(s);
+  await new Promise((res,rej)=>{s.onload=res;s.onerror=rej});
+  pyodide = await loadPyodide();
+  await pyodide.loadPackage('numpy');
+  document.getElementById('pyStatus').innerHTML = '✅ Python ready (numpy loaded)';
+  document.getElementById('pyStatus').style.color = 'var(--green)';
+ } catch(e) {
+  document.getElementById('pyStatus').innerHTML = '❌ Failed to load Pyodide: '+e.message;
+  document.getElementById('pyStatus').style.color = 'var(--red)';
+ }
+}
+
+// Store originals
+for (let i=1;i<=4;i++) origCode[i]=document.getElementById('code'+i).value;
+
+function resetPuzzle(n) { document.getElementById('code'+n).value=origCode[n]; document.getElementById('out'+n).textContent=''; document.getElementById('p'+n+'status').innerHTML=''; }
+
+const HINTS = {
+ 1: "flops_per_param = (flops / params) * 1e12 ... but units are already in 1e21 and B, so: flops/params gives 1e21/1e9 = 1e12. tokens_per_param = (tokens / params) * 1e3 since tokens is in T (1e12) and params in B (1e9).",
+ 2: "The blank is just: temperature — divide logits by the temperature parameter.",
+ 3: "scale = max_val / 127, and dequantize multiplies by scale.",
+ 4: "All three blanks should be 0 — axis=0 operates along columns for min/max, and axis=1 averages across benchmarks per model."
+};
+
+function showHint(n) { document.getElementById('out'+n).textContent='💡 '+HINTS[n]; document.getElementById('out'+n).className='output'; }
+
+const VALIDATORS = {
+ 1: o => o.includes('FLOPs/param') && o.includes('tokens/param') && !o.includes('___'),
+ 2: o => o.includes('loss=') && o.includes('teacher_soft=') && !o.includes('___'),
+ 3: o => o.includes('Compression ratio: 4') && o.includes('Correlation') && !o.includes('___'),
+ 4: o => o.includes('Composite') && o.split('\n').length >= 7 && !o.includes('___'),
+};
+
+async function runPuzzle(n) {
+ const out = document.getElementById('out'+n);
+ const badge = document.getElementById('p'+n+'status');
+ if (!pyodide) { out.textContent='⏳ Pyodide still loading...'; return; }
+ const code = document.getElementById('code'+n).value;
+ if (code.includes('___')) { out.textContent='⚠️ Replace all ___ blanks with your answers first!'; out.className='output error'; return; }
+ try {
+  pyodide.runPython('import io,sys; sys.stdout=io.StringIO()');
+  pyodide.runPython(code);
+  const result = pyodide.runPython('sys.stdout.getvalue()');
+  out.textContent = result;
+  out.className = 'output';
+  if (VALIDATORS[n](result)) {
+   badge.innerHTML='<span class="status-badge pass">✓ PASS</span>';
+  } else {
+   badge.innerHTML='<span class="status-badge fail">✗ CHECK</span>';
+  }
+ } catch(e) {
+  out.textContent = '❌ '+e.message;
+  out.className='output error';
+  badge.innerHTML='<span class="status-badge fail">✗ ERROR</span>';
+ }
+}
+
+initPyodide();
+
+// ═══════════════════════════════════════
+// PROGRESS BAR
+// ═══════════════════════════════════════
+window.addEventListener('scroll',()=>{
+ const h = document.documentElement;
+ const pct = (h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+ document.getElementById('progressBar').style.width=pct+'%';
+});
+</script>
+</body>
+</html>

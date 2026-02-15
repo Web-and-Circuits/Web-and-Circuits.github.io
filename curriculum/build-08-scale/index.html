@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>BUILD-08: Let It Scale</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#121212;color:#e1e1e1;line-height:1.7;min-height:100vh}
+        .container{max-width:960px;margin:0 auto;padding:20px}
+        .phase{border-radius:16px;padding:30px;margin:30px 0;position:relative;overflow:hidden}
+        .phase::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px}
+        .phase-wall{background:rgba(255,90,60,0.06);border:1px solid rgba(255,90,60,0.2)}.phase-wall::before{background:#ff5a3c}
+        .phase-theory{background:rgba(60,130,255,0.06);border:1px solid rgba(60,130,255,0.2)}.phase-theory::before{background:#3c82ff}
+        .phase-build{background:rgba(50,205,100,0.06);border:1px solid rgba(50,205,100,0.2)}.phase-build::before{background:#32cd64}
+        .phase-payoff{background:rgba(255,200,50,0.06);border:1px solid rgba(255,200,50,0.2)}.phase-payoff::before{background:#ffc832}
+        .phase-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.75em;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px}
+        .tag-wall{background:rgba(255,90,60,0.2);color:#ff5a3c}
+        .tag-theory{background:rgba(60,130,255,0.2);color:#3c82ff}
+        .tag-build{background:rgba(50,205,100,0.2);color:#32cd64}
+        .tag-payoff{background:rgba(255,200,50,0.2);color:#ffc832}
+        h1{text-align:center;font-size:2.4em;margin-bottom:0.3em;background:linear-gradient(135deg,#ff5a3c,#3c82ff,#32cd64);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .subtitle{text-align:center;color:#888;font-size:1.1em;margin-bottom:30px}
+        h2{font-size:1.5em;margin-bottom:15px}
+        h3{font-size:1.2em;margin:20px 0 10px;color:#ccc}
+        p{margin:10px 0}
+        code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.9em}
+        pre{background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:16px;overflow-x:auto;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:1.5;margin:15px 0}
+        .progress-track{background:rgba(255,255,255,0.08);height:6px;border-radius:3px;margin:20px 0;overflow:hidden}
+        .progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#ff5a3c,#3c82ff,#32cd64);transition:width 0.4s ease}
+        .progress-label{text-align:center;font-size:0.8em;color:#888;margin-bottom:5px}
+        .exercise{background:#1a1a2e;border:1px solid #2a2a4e;border-radius:12px;padding:24px;margin:20px 0}
+        .exercise-num{display:inline-block;background:#32cd64;color:#000;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-weight:700;font-size:0.85em;margin-right:8px}
+        .exercise h3{display:inline;color:#32cd64}
+        .code-editor{background:#0d1117;border:1px solid #333;border-radius:8px;overflow:hidden;margin:15px 0}
+        .code-header{background:#1a1a2e;padding:8px 14px;font-size:0.8em;color:#888;display:flex;justify-content:space-between;align-items:center}
+        .code-header .lang{color:#3c82ff;font-weight:600}
+        textarea.code{width:100%;min-height:220px;background:#0d1117;color:#c9d1d9;border:none;padding:14px;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:1.5;resize:vertical;tab-size:4}
+        textarea.code:focus{outline:none}
+        .btn{display:inline-block;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.95em;font-weight:600;transition:all 0.2s}
+        .btn:hover{transform:translateY(-1px)}
+        .btn-run{background:#32cd64;color:#000}.btn-run:hover{background:#3de070}
+        .btn-reset{background:rgba(255,255,255,0.08);color:#ccc}.btn-reset:hover{background:rgba(255,255,255,0.12)}
+        .btn-nav{background:linear-gradient(135deg,#3c82ff,#32cd64);color:#fff;padding:12px 28px;font-size:1em;text-decoration:none}
+        .btn-group{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}
+        .output{background:#0a0a15;border:1px solid #2a2a4e;border-radius:8px;padding:14px;margin:10px 0;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;min-height:60px;white-space:pre-wrap;color:#a0a0a0;max-height:300px;overflow-y:auto}
+        .output.success{border-color:#32cd64;color:#32cd64}
+        .output.error{border-color:#ff5a3c;color:#ff5a3c}
+        .sidebar{position:fixed;top:0;right:-320px;width:320px;height:100vh;background:#1a1a2e;border-left:1px solid #333;padding:24px;overflow-y:auto;transition:right 0.3s ease;z-index:100}
+        .sidebar.open{right:0}
+        .sidebar h3{color:#ffc832;margin-bottom:15px}
+        .sidebar-toggle{position:fixed;top:20px;right:20px;background:#1a1a2e;border:1px solid #333;color:#ffc832;padding:8px 14px;border-radius:8px;cursor:pointer;z-index:101;font-size:0.85em}
+        .sidebar a{color:#3c82ff;text-decoration:none;display:block;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+        .sidebar a:hover{color:#5a9aff}
+        .sidebar .vid{color:#ff5a3c}
+        .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}
+        .overlay.open{display:block}
+        .diagram{background:#0d1117;border:1px solid #333;border-radius:12px;padding:20px;margin:20px 0;text-align:center;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:2;color:#888}
+        .diagram .hl{color:#3c82ff;font-weight:600}
+        .diagram .green{color:#32cd64}
+        .diagram .orange{color:#ff5a3c}
+        .diagram .gold{color:#ffc832}
+        .diagram .arrow{color:#555}
+        .pyodide-status{text-align:center;padding:10px;color:#888;font-size:0.85em}
+        .pyodide-status.ready{color:#32cd64}
+        .pyodide-status.loading{color:#ffc832}
+        .pyodide-status.error{color:#ff5a3c}
+        .demo-box{background:#0d1117;border:2px solid #3c82ff;border-radius:12px;padding:20px;margin:20px 0}
+        .nav-bottom{display:flex;justify-content:space-between;align-items:center;margin:40px 0 20px;padding:20px 0;border-top:1px solid #333}
+        .scaling-chart{width:100%;height:250px;position:relative;background:#0a0a15;border-radius:8px;margin:15px 0;border:1px solid #333}
+        @media(max-width:768px){.container{padding:12px}h1{font-size:1.8em}.phase{padding:20px}.sidebar{width:280px;right:-280px}}
+    </style>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()">📚 Go Deeper</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <h3>📚 Go Deeper</h3>
+    <p style="font-size:0.85em;color:#888;margin-bottom:15px">Reference modules & papers</p>
+    <h4 style="color:#3c82ff;margin:15px 0 8px">Theory Modules</h4>
+    <a href="../module-05-scaling-laws/">📈 05: Scaling Laws</a>
+    <a href="../module-08-mixture-of-experts/">🧩 08: Mixture of Experts</a>
+    <h4 style="color:#ff5a3c;margin:15px 0 8px">Papers</h4>
+    <a class="vid" href="https://arxiv.org/abs/2001.08361" target="_blank">📄 Kaplan et al. — Scaling Laws (2020)</a>
+    <a class="vid" href="https://arxiv.org/abs/2203.15556" target="_blank">📄 Chinchilla — Training Compute-Optimal LLMs (2022)</a>
+    <a class="vid" href="https://arxiv.org/abs/1701.06538" target="_blank">📄 Shazeer — MoE Layer (2017)</a>
+    <h4 style="color:#ffc832;margin:20px 0 8px">Build Series</h4>
+    <a href="../build-07-see/">← BUILD-07: Let It See</a>
+    <a href="../build-08-scale/" style="color:#ffc832">→ BUILD-08: Let It Scale (you are here)</a>
+    <a href="../build-09-safe/">→ BUILD-09: Let It Stay Safe</a>
+</div>
+
+<div class="container">
+    <h1>📈 BUILD-08: Let It Scale</h1>
+    <p class="subtitle">Make models bigger, cheaper, and smarter — without going broke</p>
+    
+    <div class="progress-label">Progress: <span id="progress-text">0 / 6 exercises</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+
+    <!-- ============ HIT THE WALL ============ -->
+    <div class="phase phase-wall">
+        <span class="phase-tag tag-wall">🧱 Hit the Wall</span>
+        <h2>It Works… But the Bill Is Insane</h2>
+        <pre style="color:#ff5a3c">
+Monthly AI API costs:
+  January:    $47
+  February:   $183
+  March:      $612
+  April:    $2,340   ← "Why is this so expensive?!"
+
+Usage breakdown:
+  "What time is it in Tokyo?"    → GPT-4  ($0.03)
+  "Summarize this 50-page PDF"   → GPT-4  ($0.85)
+  "Write a novel chapter"        → GPT-4  ($1.20)
+  "Hi"                           → GPT-4  ($0.01)
+
+Every question goes to the most expensive model.
+Even "Hi" costs money.
+        </pre>
+        <p>Your agent works, but it's using a sledgehammer for every nail. A simple greeting costs the same infrastructure as a PhD-level analysis. You need to understand <em>how</em> models scale, <em>when</em> bigger is worth it, and <em>how</em> to be smart about which model handles which request.</p>
+    </div>
+
+    <!-- ============ LEARN THE THEORY ============ -->
+    <div class="phase phase-theory">
+        <span class="phase-tag tag-theory">📘 Learn the Theory</span>
+        <h2>Scaling Laws, Chinchilla, and Mixture of Experts</h2>
+        
+        <h3>The Power Law: Bigger Models = Lower Loss (But Less Each Time)</h3>
+        <p>In 2020, researchers at OpenAI discovered something remarkable: <strong>every time you 10× the model size, loss drops by the same percentage.</strong> Like compound interest, but for intelligence.</p>
+        <p>Bigger model = lower loss, but with <strong>diminishing returns</strong>. Doubling from 1B to 2B parameters helps more than doubling from 100B to 200B. The first jump is huge; each subsequent jump is smaller.</p>
+
+        <div class="demo-box">
+            <canvas id="scalingChart" width="600" height="250" style="width:100%;border-radius:8px"></canvas>
+            <p style="text-align:center;font-size:0.8em;color:#888;margin-top:5px">Loss vs. model size — the curve never reaches zero, but keeps improving</p>
+        </div>
+
+        <p>This is called a <strong>power law</strong>. The formal equation is <code>L(N) = (Nc/N)^α</code> — but forget the formula. The intuition is what matters: <em>there's a smooth, predictable relationship between how big your model is and how good it is.</em> No magic thresholds. Just a curve.</p>
+
+        <h3>The Chinchilla Insight</h3>
+        <p>The original scaling paper (Kaplan et al., 2020) said: <strong>make the model bigger</strong> to get better results. Spend your compute budget on more parameters.</p>
+        <p>Then in 2022, DeepMind trained "Chinchilla" and discovered something surprising:</p>
+        
+        <div class="diagram">
+            <span class="orange">Kaplan said:</span> make the model bigger.<br>
+            <span class="green">Chinchilla said:</span> wait — spend half that compute on more data instead.<br><br>
+            <span class="arrow">A 70B model trained on 1.4T tokens beats</span><br>
+            <span class="arrow">a 280B model trained on 300B tokens.</span><br><br>
+            <span class="gold">Same compute budget. 4× smaller model. Better results.</span>
+        </div>
+
+        <p>The insight: model size and training data need to scale <em>together</em>. A giant model trained on too little data is wasteful. A small model trained on tons of data is also wasteful. There's a sweet spot — and for any compute budget, Chinchilla tells you exactly where it is.</p>
+
+        <div class="demo-box">
+            <canvas id="chinchillaChart" width="600" height="200" style="width:100%;border-radius:8px"></canvas>
+            <p style="text-align:center;font-size:0.8em;color:#888;margin-top:5px">Chinchilla optimal: balance model size and data for your compute budget</p>
+        </div>
+
+        <h3>Model Routing: Use the Right Tool for the Job</h3>
+        <p><strong>You don't use a Ferrari to go to the grocery store.</strong> Simple question → cheap model. Hard question → expensive model.</p>
+        <p>This is called <strong>model routing</strong>. A small, fast classifier looks at the incoming request and decides: is this a "hi, how are you?" (send to the $0.001 model) or a "debug this distributed systems race condition" (send to the $0.03 model)?</p>
+
+        <div class="diagram">
+            <span class="orange">User message</span> <span class="arrow">→</span> <span class="hl">[ Router ]</span><br><br>
+            <span class="arrow">Simple?</span> → <span class="green">Small model (fast, cheap)</span> 🚗<br>
+            <span class="arrow">Medium?</span> → <span class="gold">Medium model (balanced)</span> 🚙<br>
+            <span class="arrow">Hard?</span> → <span class="orange">Large model (powerful, expensive)</span> 🏎️<br><br>
+            <span class="arrow">90% of requests are simple → 90% savings</span>
+        </div>
+
+        <h3>Mixture of Experts (MoE): 8× the Knowledge, 2× the Cost</h3>
+        <p>Imagine <strong>8 specialists in a room</strong>. For each question, you only ask the 2 who know the most about it. You get the benefit of 8 brains, but only pay for 2 to think about each question.</p>
+        <p>That's MoE. Instead of one giant feed-forward layer, you have 8 smaller "expert" layers. A <strong>router</strong> (a tiny neural network) looks at each token and picks the top 2 experts for it.</p>
+
+        <div class="diagram">
+            <span class="orange">Token: "photosynthesis"</span><br>
+            <span class="arrow">↓ Router picks top 2 experts</span><br><br>
+            <span class="hl">Expert 1: Biology</span> ✅ (weight: 0.7)<br>
+            <span class="green">Expert 2: Chemistry</span> ✅ (weight: 0.3)<br>
+            <span class="arrow">Expert 3: History ❌</span><br>
+            <span class="arrow">Expert 4: Code ❌</span><br>
+            <span class="arrow">Expert 5: Math ❌</span><br>
+            <span class="arrow">Expert 6: Legal ❌</span><br>
+            <span class="arrow">Expert 7: Creative ❌</span><br>
+            <span class="arrow">Expert 8: Language ❌</span><br><br>
+            <span class="gold">Output = 0.7 × Biology(token) + 0.3 × Chemistry(token)</span><br><br>
+            <span class="arrow">8 experts total, but only 2 run per token.<br>Total parameters: 8×. Active parameters per token: 2×.</span>
+        </div>
+
+        <p>The router is what people call a <strong>gating network</strong> — it's just a small linear layer followed by softmax (you know both of those). It outputs weights for each expert, and you keep only the top K. The rest get multiplied by zero — they don't compute anything.</p>
+
+        <p>This is how models like Mixtral (8×7B) work: 8 copies of a 7B expert, but only 2 active at a time. Total parameters: 47B. Active parameters: ~13B. You get near-47B quality at near-13B cost.</p>
+    </div>
+
+    <!-- ============ BUILD THE SOLUTION ============ -->
+    <div class="phase phase-build">
+        <span class="phase-tag tag-build">🔨 Build the Solution</span>
+        <h2>Exercises</h2>
+        <p id="pyodide-status" class="pyodide-status loading">⏳ Loading Python environment (Pyodide)...</p>
+
+        <!-- Exercise 1: Scaling Law Simulation -->
+        <div class="exercise" id="ex1">
+            <span class="exercise-num">1</span><h3>Simulate the Power Law</h3>
+            <p>Implement the scaling law: <code>loss = (Nc / N) ^ alpha</code> where N is model size, Nc is a constant, and alpha controls how fast loss drops. Observe diminishing returns.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_1.py</span></div>
+                <textarea class="code" id="code1">import math
+
+def scaling_law(n_params, n_critical=1e10, alpha=0.076):
+    """Compute expected loss given model size.
+    
+    loss = (n_critical / n_params) ^ alpha
+    
+    Args:
+        n_params: number of parameters (e.g. 1e9 for 1B)
+        n_critical: scaling constant (where loss = 1.0)
+        alpha: power law exponent
+    
+    Returns: expected loss (float)
+    """
+    # YOUR CODE HERE
+    pass
+
+def compute_improvement(size_from, size_to, n_critical=1e10, alpha=0.076):
+    """Compute % improvement in loss when scaling from size_from to size_to.
+    
+    Returns: percentage improvement (positive = better)
+    """
+    # YOUR CODE HERE
+    pass
+
+# Test basic scaling
+sizes = [1e8, 1e9, 1e10, 1e11, 1e12]
+labels = ["100M", "1B", "10B", "100B", "1T"]
+
+print("Model Size → Loss")
+print("-" * 35)
+prev_loss = None
+for size, label in zip(sizes, labels):
+    loss = scaling_law(size)
+    delta = ""
+    if prev_loss:
+        pct = (prev_loss - loss) / prev_loss * 100
+        delta = f"  ({pct:.1f}% better)"
+    print(f"  {label:>5} params → loss = {loss:.4f}{delta}")
+    prev_loss = loss
+
+# Verify diminishing returns
+imp_1 = compute_improvement(1e9, 2e9)   # 1B → 2B
+imp_2 = compute_improvement(100e9, 200e9) # 100B → 200B
+
+print(f"\nDoubling from 1B→2B:     {imp_1:.2f}% improvement")
+print(f"Doubling from 100B→200B: {imp_2:.2f}% improvement")
+assert imp_1 > imp_2, "Doubling small model should help more than doubling large model"
+print("✅ Diminishing returns confirmed!")
+
+# Verify power law shape
+loss_small = scaling_law(1e8)
+loss_big = scaling_law(1e12)
+assert loss_small > loss_big, "Bigger model should have lower loss"
+assert loss_big > 0, "Loss should never reach 0"
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(1)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(1)">↺ Reset</button>
+            </div>
+            <div class="output" id="output1">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 2: Chinchilla Optimal -->
+        <div class="exercise" id="ex2">
+            <span class="exercise-num">2</span><h3>Find the Chinchilla-Optimal Split</h3>
+            <p>Given a fixed compute budget (measured in FLOPs), find the optimal balance between model size and training data. Chinchilla's rule: tokens ≈ 20 × parameters.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_2.py</span></div>
+                <textarea class="code" id="code2">import math
+
+def estimate_flops(n_params, n_tokens):
+    """Rough estimate: FLOPs ≈ 6 * N * D
+    where N = parameters, D = tokens.
+    (Each token requires ~6 FLOPs per parameter in a transformer)
+    """
+    return 6 * n_params * n_tokens
+
+def chinchilla_optimal(compute_budget_flops):
+    """Given a compute budget in FLOPs, find the optimal model size and token count.
+    
+    Chinchilla rule of thumb:
+    - FLOPs ≈ 6 * N * D  (where N = params, D = tokens)
+    - Optimal ratio: D ≈ 20 * N
+    
+    Substituting: FLOPs ≈ 6 * N * 20N = 120 * N²
+    So: N = sqrt(FLOPs / 120)
+    And: D = 20 * N
+    
+    Returns: (optimal_params, optimal_tokens)
+    """
+    # YOUR CODE HERE
+    pass
+
+def compare_allocations(compute_flops, allocations):
+    """Compare different param/token splits for the same compute.
+    
+    allocations: list of (name, n_params, n_tokens)
+    
+    Simplified loss model:
+    loss = (10/N)^0.076 + (10/D)^0.076
+    (both model size AND data contribute to loss)
+    
+    Returns: list of (name, loss, flops_used) sorted by loss
+    """
+    # YOUR CODE HERE
+    pass
+
+# Test: What's optimal for GPT-3 scale compute?
+# GPT-3: 175B params, 300B tokens → FLOPs ≈ 6 * 175e9 * 300e9 = 3.15e23
+gpt3_flops = estimate_flops(175e9, 300e9)
+print(f"GPT-3 used: {gpt3_flops:.2e} FLOPs")
+
+opt_n, opt_d = chinchilla_optimal(gpt3_flops)
+print(f"\nChinchilla-optimal for same compute:")
+print(f"  Model size: {opt_n/1e9:.1f}B parameters")
+print(f"  Tokens:     {opt_d/1e9:.1f}B tokens")
+print(f"  Ratio:      {opt_d/opt_n:.0f} tokens per parameter")
+
+assert abs(opt_d / opt_n - 20) < 0.1, "Should have ~20 tokens per param"
+opt_flops = estimate_flops(opt_n, opt_d)
+assert abs(opt_flops - gpt3_flops) / gpt3_flops < 0.01, "Should use same compute"
+
+# Compare GPT-3's actual allocation vs Chinchilla-optimal
+allocations = [
+    ("GPT-3 (actual)", 175e9, 300e9),
+    ("Chinchilla-optimal", opt_n, opt_d),
+    ("Too big model", 500e9, 105e9),
+    ("Too much data", 10e9, 5250e9),
+]
+
+print("\nComparing allocations:")
+print("-" * 55)
+results = compare_allocations(gpt3_flops, allocations)
+for name, loss, flops in results:
+    print(f"  {name:<25} loss={loss:.4f}  FLOPs={flops:.2e}")
+
+# Chinchilla-optimal should win
+assert results[0][0] == "Chinchilla-optimal", f"Chinchilla should have lowest loss, got {results[0][0]}"
+print("\n✅ Chinchilla-optimal wins: balance model size and data!")
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(2)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(2)">↺ Reset</button>
+            </div>
+            <div class="output" id="output2">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 3: Model Router -->
+        <div class="exercise" id="ex3">
+            <span class="exercise-num">3</span><h3>Build a Model Router</h3>
+            <p>Route incoming requests to the cheapest model that can handle them. Simple questions go to the small model. Hard questions go to the big model. Most requests are simple — this saves a fortune.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_3.py</span></div>
+                <textarea class="code" id="code3">class ModelRouter:
+    """Route requests to the appropriate model based on complexity.
+    
+    Models (cheapest to most expensive):
+    - "small":  fast, cheap ($0.001/req), good for greetings, simple Q&A
+    - "medium": balanced ($0.01/req), good for summaries, analysis
+    - "large":  powerful ($0.03/req), good for complex reasoning, code, math
+    
+    Routing rules (implement these):
+    - If message is < 20 chars → "small" (probably a greeting)
+    - If message contains math/code keywords → "large"
+    - If message asks for analysis/summary/comparison → "medium"
+    - If message has a question mark and > 100 chars → "large" (complex question)
+    - Default → "small"
+    """
+    
+    COSTS = {"small": 0.001, "medium": 0.01, "large": 0.03}
+    
+    def __init__(self):
+        self.history = []  # list of {"message": ..., "model": ..., "cost": ...}
+    
+    def route(self, message):
+        """Determine which model to use.
+        Returns: "small", "medium", or "large"
+        """
+        # YOUR CODE HERE
+        pass
+    
+    def process(self, message):
+        """Route and record the request.
+        Returns: dict with "model", "cost", and simulated "response"
+        """
+        model = self.route(message)
+        cost = self.COSTS[model]
+        self.history.append({"message": message, "model": model, "cost": cost})
+        
+        responses = {
+            "small": f"[{model}] Quick answer to: {message[:30]}...",
+            "medium": f"[{model}] Analyzed: {message[:30]}...",
+            "large": f"[{model}] Deep reasoning about: {message[:30]}...",
+        }
+        return {"model": model, "cost": cost, "response": responses[model]}
+    
+    def total_cost(self):
+        return sum(h["cost"] for h in self.history)
+    
+    def cost_breakdown(self):
+        """Returns dict of model → (count, total_cost)"""
+        breakdown = {}
+        for h in self.history:
+            m = h["model"]
+            if m not in breakdown:
+                breakdown[m] = [0, 0.0]
+            breakdown[m][0] += 1
+            breakdown[m][1] += h["cost"]
+        return breakdown
+
+# Test
+router = ModelRouter()
+
+test_messages = [
+    "Hi",
+    "Hello there!",
+    "What's 2+2?",
+    "Can you summarize this article about climate change and its effects on marine ecosystems?",
+    "Write a Python function to implement quicksort with detailed comments explaining the algorithm",
+    "Thanks!",
+    "Compare and contrast the economic policies of the US and EU regarding tech regulation",
+    "Debug this race condition in my distributed system: when two threads access the shared counter simultaneously, the final count is sometimes less than expected. Here's the code...",
+    "Good morning",
+    "What is the meaning of life, the universe, and everything, and how does quantum mechanics relate to consciousness?",
+]
+
+print("Routing decisions:")
+print("-" * 65)
+for msg in test_messages:
+    result = router.process(msg)
+    print(f"  [{result['model']:>6}] ${result['cost']:.3f}  {msg[:55]}{'...' if len(msg)>55 else ''}")
+
+# Compare costs: all-large vs routed
+all_large_cost = len(test_messages) * 0.03
+routed_cost = router.total_cost()
+savings = (1 - routed_cost / all_large_cost) * 100
+
+print(f"\nAll-large cost:  ${all_large_cost:.3f}")
+print(f"Routed cost:     ${routed_cost:.3f}")
+print(f"Savings:         {savings:.0f}%")
+
+breakdown = router.cost_breakdown()
+print("\nBreakdown:")
+for model in ["small", "medium", "large"]:
+    if model in breakdown:
+        count, cost = breakdown[model]
+        print(f"  {model}: {count} requests, ${cost:.3f}")
+
+# Verify routing logic
+assert router.route("Hi") == "small", "Simple greeting should route to small"
+assert router.route("Write Python code for quicksort") == "large", "Code request should route to large"
+assert savings > 30, f"Should save at least 30%, got {savings:.0f}%"
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(3)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(3)">↺ Reset</button>
+            </div>
+            <div class="output" id="output3">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 4: MoE Gating -->
+        <div class="exercise" id="ex4">
+            <span class="exercise-num">4</span><h3>Build a Mixture of Experts Router</h3>
+            <p>Implement the gating mechanism: a small network that decides which experts handle each token. It's just a linear layer → softmax → top-K selection. You know all these pieces.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_4.py</span></div>
+                <textarea class="code" id="code4">import math, random
+random.seed(42)
+
+def softmax(logits):
+    mx = max(logits)
+    exps = [math.exp(l - mx) for l in logits]
+    s = sum(exps)
+    return [e/s for e in exps]
+
+def dot(a, b):
+    return sum(x*y for x,y in zip(a,b))
+
+class MoELayer:
+    """Mixture of Experts layer.
+    
+    - num_experts: total number of expert networks (e.g. 8)
+    - top_k: how many experts to use per token (e.g. 2)
+    - embed_dim: dimension of input embeddings
+    - expert_dim: hidden dimension of each expert
+    
+    Each expert is a simple linear layer: output = W_expert @ input
+    The gating network is: gate_logits = W_gate @ input → softmax → top-K
+    """
+    
+    def __init__(self, num_experts, top_k, embed_dim, expert_dim):
+        self.num_experts = num_experts
+        self.top_k = top_k
+        self.embed_dim = embed_dim
+        
+        # Gating network: [num_experts x embed_dim]
+        self.W_gate = [[random.gauss(0, 0.5) for _ in range(embed_dim)]
+                        for _ in range(num_experts)]
+        
+        # Expert networks: each is [expert_dim x embed_dim]
+        self.experts = [
+            [[random.gauss(0, 0.1) for _ in range(embed_dim)]
+             for _ in range(expert_dim)]
+            for _ in range(num_experts)
+        ]
+    
+    def gate(self, token_embedding):
+        """Compute gating weights for a token.
+        1. Compute logits = W_gate @ token_embedding (one score per expert)
+        2. Apply softmax to get probabilities
+        3. Select top_k experts with highest probability
+        4. Re-normalize the top_k weights to sum to 1
+        
+        Returns: list of (expert_index, weight) tuples, length = top_k
+        """
+        # YOUR CODE HERE
+        pass
+    
+    def expert_forward(self, expert_idx, token_embedding):
+        """Run one expert on a token.
+        output = expert_matrix @ token_embedding
+        """
+        W = self.experts[expert_idx]
+        return [dot(row, token_embedding) for row in W]
+    
+    def forward(self, token_embedding):
+        """Process one token through MoE:
+        1. Get gating decisions (which experts, what weights)
+        2. Run selected experts
+        3. Combine outputs: weighted sum of expert outputs
+        
+        Returns: output embedding
+        """
+        # YOUR CODE HERE
+        pass
+
+# Test
+moe = MoELayer(num_experts=8, top_k=2, embed_dim=4, expert_dim=4)
+
+# Create test tokens
+tokens = [
+    [1.0, 0.0, 0.0, 0.0],  # Token A
+    [0.0, 1.0, 0.0, 0.0],  # Token B
+    [0.0, 0.0, 1.0, 0.0],  # Token C
+]
+
+print("MoE Routing Decisions:")
+print("-" * 50)
+for i, tok in enumerate(tokens):
+    gates = moe.gate(tok)
+    output = moe.forward(tok)
+    
+    expert_str = ", ".join(f"Expert {idx} ({w:.2f})" for idx, w in gates)
+    print(f"  Token {i}: {expert_str}")
+    
+    # Verify top_k experts selected
+    assert len(gates) == 2, f"Should select top-2 experts, got {len(gates)}"
+    
+    # Verify weights sum to ~1
+    weight_sum = sum(w for _, w in gates)
+    assert abs(weight_sum - 1.0) < 0.01, f"Weights should sum to 1, got {weight_sum}"
+    
+    # Verify output dimension
+    assert len(output) == 4, f"Output should be dim 4, got {len(output)}"
+
+# Different tokens should sometimes route to different experts
+gates_A = moe.gate(tokens[0])
+gates_B = moe.gate(tokens[1])
+experts_A = set(idx for idx, _ in gates_A)
+experts_B = set(idx for idx, _ in gates_B)
+print(f"\nToken A experts: {experts_A}")
+print(f"Token B experts: {experts_B}")
+# At least some tokens should use different experts
+print(f"Same experts? {experts_A == experts_B}")
+
+# Count total vs active parameters
+total_params = 8 * 4 * 4  # 8 experts, each 4x4
+active_params = 2 * 4 * 4  # only 2 active
+gate_params = 8 * 4  # gating network
+print(f"\nTotal expert params: {total_params}")
+print(f"Active per token:   {active_params}")
+print(f"Gating params:      {gate_params}")
+print(f"Efficiency: {total_params/active_params:.0f}× knowledge, {active_params/active_params:.0f}× compute")
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(4)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(4)">↺ Reset</button>
+            </div>
+            <div class="output" id="output4">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 5: Load Balancing -->
+        <div class="exercise" id="ex5">
+            <span class="exercise-num">5</span><h3>MoE Load Balancing</h3>
+            <p>A common problem: the router learns to send everything to the same 2 experts, ignoring the rest. Implement a load-balancing penalty that encourages even distribution.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_5.py</span></div>
+                <textarea class="code" id="code5">import math
+
+def compute_load_balance_loss(routing_decisions, num_experts):
+    """Compute how unevenly experts are used.
+    
+    routing_decisions: list of lists of (expert_idx, weight) from processing a batch
+    
+    Ideal: each expert is used equally often.
+    If we have 8 experts and 100 tokens with top-2, each expert should
+    handle 100*2/8 = 25 tokens.
+    
+    Compute:
+    1. Count how many tokens each expert handles
+    2. Compute the fraction for each expert: count_i / total_assignments
+    3. Ideal fraction = 1 / num_experts
+    4. Loss = sum of (fraction_i - ideal)^2
+       This is 0 when perfectly balanced.
+    
+    Returns: (loss, expert_counts dict)
+    """
+    # YOUR CODE HERE
+    pass
+
+def add_noise_to_gates(gate_logits, noise_scale=0.1):
+    """Add random noise to gate logits before softmax.
+    This prevents the router from always picking the same experts.
+    
+    noisy_logit_i = logit_i + noise_i
+    where noise_i is uniform random in [-noise_scale, noise_scale]
+    
+    Returns: noisy logits
+    """
+    import random
+    # YOUR CODE HERE
+    pass
+
+# Test: Perfectly balanced routing
+balanced_routing = [
+    [(0, 0.6), (1, 0.4)],  # token 0 → experts 0,1
+    [(2, 0.5), (3, 0.5)],  # token 1 → experts 2,3
+    [(4, 0.7), (5, 0.3)],  # token 2 → experts 4,5
+    [(6, 0.6), (7, 0.4)],  # token 3 → experts 6,7
+    [(0, 0.5), (1, 0.5)],  # token 4 → experts 0,1
+    [(2, 0.6), (3, 0.4)],  # token 5 → experts 2,3
+    [(4, 0.5), (5, 0.5)],  # token 6 → experts 4,5
+    [(6, 0.7), (7, 0.3)],  # token 7 → experts 6,7
+]
+
+# Unbalanced: everything goes to experts 0 and 1
+unbalanced_routing = [
+    [(0, 0.6), (1, 0.4)] for _ in range(8)
+]
+
+bal_loss, bal_counts = compute_load_balance_loss(balanced_routing, 8)
+unbal_loss, unbal_counts = compute_load_balance_loss(unbalanced_routing, 8)
+
+print("Balanced routing:")
+print(f"  Expert usage: {bal_counts}")
+print(f"  Balance loss: {bal_loss:.6f}")
+
+print("\nUnbalanced routing (all → experts 0,1):")
+print(f"  Expert usage: {unbal_counts}")
+print(f"  Balance loss: {unbal_loss:.6f}")
+
+assert bal_loss < unbal_loss, "Balanced should have lower loss"
+print(f"\n✅ Unbalanced loss is {unbal_loss/bal_loss:.1f}× higher — penalty works!")
+
+# Test noise
+logits = [1.0, 0.5, 0.3, -0.2]
+import random
+random.seed(42)
+noisy = add_noise_to_gates(logits, 0.1)
+assert len(noisy) == len(logits), "Should preserve length"
+assert noisy != logits, "Noise should change values"
+# Noise should be small
+for o, n in zip(logits, noisy):
+    assert abs(o - n) <= 0.1 + 1e-9, f"Noise too large: {abs(o-n)}"
+print("✅ Gate noise working — prevents expert collapse")
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(5)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(5)">↺ Reset</button>
+            </div>
+            <div class="output" id="output5">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 6: Cost Optimizer -->
+        <div class="exercise" id="ex6">
+            <span class="exercise-num">6</span><h3>Full Cost Optimization Pipeline</h3>
+            <p>Combine everything: given a stream of requests, route them optimally, track costs, and compare against the naive "always use the best model" approach.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_6.py</span></div>
+                <textarea class="code" id="code6">import math
+
+class CostOptimizer:
+    """Complete model routing and cost optimization system.
+    
+    Models available:
+    - "tiny":   $0.0001/1K tokens, max quality 0.5
+    - "small":  $0.001/1K tokens,  max quality 0.7
+    - "medium": $0.01/1K tokens,   max quality 0.9
+    - "large":  $0.10/1K tokens,   max quality 1.0
+    
+    Quality threshold: minimum acceptable quality for each request.
+    Route to the CHEAPEST model that meets the quality threshold.
+    """
+    
+    MODELS = {
+        "tiny":   {"cost_per_1k": 0.0001, "max_quality": 0.5},
+        "small":  {"cost_per_1k": 0.001,  "max_quality": 0.7},
+        "medium": {"cost_per_1k": 0.01,   "max_quality": 0.9},
+        "large":  {"cost_per_1k": 0.10,   "max_quality": 1.0},
+    }
+    
+    def __init__(self):
+        self.log = []
+    
+    def estimate_complexity(self, message):
+        """Estimate the quality threshold needed for this message.
+        
+        Returns: float between 0.0 and 1.0
+        
+        Heuristics:
+        - Very short (<15 chars) → 0.3 (greeting)
+        - Contains code/math/debug keywords → 0.95 (needs best model)
+        - Contains analyze/compare/summarize → 0.8 (needs good model)
+        - Has question mark + long (>80 chars) → 0.7
+        - Default → 0.5
+        """
+        # YOUR CODE HERE
+        pass
+    
+    def estimate_tokens(self, message):
+        """Rough token estimate: ~1 token per 4 characters."""
+        return max(1, len(message) // 4)
+    
+    def route(self, quality_needed):
+        """Find the cheapest model that meets the quality threshold.
+        
+        Returns: model name (string)
+        """
+        # YOUR CODE HERE
+        # Sort models by cost, pick the cheapest one where max_quality >= quality_needed
+        pass
+    
+    def process(self, message):
+        """Process a message: estimate complexity, route, compute cost.
+        
+        Returns: dict with "model", "cost", "quality_needed", "tokens"
+        """
+        quality = self.estimate_complexity(message)
+        model = self.route(quality)
+        tokens = self.estimate_tokens(message)
+        cost = (tokens / 1000) * self.MODELS[model]["cost_per_1k"]
+        
+        entry = {"message": message[:50], "model": model, "cost": cost,
+                 "quality_needed": quality, "tokens": tokens}
+        self.log.append(entry)
+        return entry
+    
+    def total_cost(self):
+        return sum(e["cost"] for e in self.log)
+    
+    def naive_cost(self):
+        """What it would cost if everything went to 'large'."""
+        return sum((e["tokens"]/1000) * self.MODELS["large"]["cost_per_1k"] for e in self.log)
+
+# Test
+optimizer = CostOptimizer()
+
+requests = [
+    "Hi!",
+    "Hello, how are you?",
+    "What's the weather like?",
+    "Summarize the key findings from the quarterly earnings report and identify trends",
+    "Write a recursive Python implementation of merge sort with full comments",
+    "Thanks!",
+    "Good morning",
+    "Analyze the trade-offs between microservices and monolith architectures for a startup",
+    "Debug this async race condition: two coroutines share a dict without locks",
+    "Ok",
+    "Can you compare React vs Vue vs Svelte for a small team building a dashboard?",
+    "Please write a mathematical proof that the square root of 2 is irrational",
+    "Bye!",
+    "What is 2+2?",
+    "Explain quantum entanglement in terms a 10-year-old would understand, with analogies",
+]
+
+print("Request Routing:")
+print("-" * 75)
+for msg in requests:
+    result = optimizer.process(msg)
+    print(f"  [{result['model']:>6}] q={result['quality_needed']:.1f} ${result['cost']:.6f}  {msg[:50]}")
+
+smart_cost = optimizer.total_cost()
+naive_cost = optimizer.naive_cost()
+savings = (1 - smart_cost / naive_cost) * 100
+
+print(f"\n{'='*40}")
+print(f"Smart routing total:  ${smart_cost:.6f}")
+print(f"Naive (all large):    ${naive_cost:.6f}")
+print(f"Savings:              {savings:.0f}%")
+
+# Verify
+assert savings > 50, f"Should save >50%, got {savings:.0f}%"
+assert optimizer.route(0.3) == "tiny", "Low quality should use tiny"
+assert optimizer.route(0.95) == "large", "High quality should use large"
+
+# Breakdown
+model_counts = {}
+for e in optimizer.log:
+    m = e["model"]
+    model_counts[m] = model_counts.get(m, 0) + 1
+print(f"\nModel usage: {model_counts}")
+print(f"✅ {savings:.0f}% cost savings with smart routing!")
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(6)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(6)">↺ Reset</button>
+            </div>
+            <div class="output" id="output6">Output will appear here...</div>
+        </div>
+    </div>
+
+    <!-- ============ THE PAYOFF ============ -->
+    <div class="phase phase-payoff">
+        <span class="phase-tag tag-payoff">🏆 The Payoff</span>
+        <h2>You Just Made AI Affordable</h2>
+        <div class="diagram">
+            <span class="orange">Scaling Laws</span> → <span class="arrow">Know when bigger is worth it</span><br>
+            <span class="hl">Chinchilla</span> → <span class="arrow">Balance model size and data</span><br>
+            <span class="green">Model Routing</span> → <span class="arrow">Right model for each request</span><br>
+            <span class="gold">MoE</span> → <span class="arrow">8× knowledge at 2× cost</span><br><br>
+            <span class="arrow">Intelligence isn't just about making models bigger.<br>It's about making them smarter about when and how to think.</span>
+        </div>
+        <p>Model routing is how OpenClaw's <code>model</code> config works — you can set different models for different tasks. MoE is how Mixtral, GPT-4, and most frontier models actually work under the hood. And scaling laws are why the industry keeps making bigger models: the curve keeps going down.</p>
+    </div>
+
+    <div class="nav-bottom">
+        <a href="../build-07-see/" class="btn btn-nav" style="background:rgba(255,255,255,0.08);color:#ccc">← Let It See</a>
+        <a href="../build-09-safe/" class="btn btn-nav">Let It Stay Safe →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<script>
+let pyodide = null;
+const TOTAL_EX = 6;
+const progress = new Set(JSON.parse(localStorage.getItem('build08-progress') || '[]'));
+const originalCode = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+    for (let i = 1; i <= TOTAL_EX; i++) originalCode[i] = document.getElementById('code' + i).value;
+    updateProgress();
+    drawScalingChart();
+    drawChinchillaChart();
+});
+
+function drawScalingChart() {
+    const canvas = document.getElementById('scalingChart');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = '#0a0a15';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Axes
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(60, 20);
+    ctx.lineTo(60, h - 30);
+    ctx.lineTo(w - 20, h - 30);
+    ctx.stroke();
+    
+    // Labels
+    ctx.fillStyle = '#888';
+    ctx.font = '11px SF Mono, monospace';
+    ctx.fillText('Loss', 10, 20);
+    ctx.fillText('Model Size →', w/2 - 30, h - 8);
+    
+    const sizes = ['100M', '1B', '10B', '100B', '1T'];
+    sizes.forEach((s, i) => {
+        const x = 60 + (i / (sizes.length-1)) * (w - 100);
+        ctx.fillText(s, x - 10, h - 15);
+    });
+    
+    // Power law curve
+    ctx.strokeStyle = '#3c82ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
+        const x = 60 + t * (w - 100);
+        const loss = Math.pow(1 / (0.01 + t * 10), 0.076);
+        const y = 20 + (1 - (loss - 0.65) / 0.35) * (h - 60);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    
+    // Annotation
+    ctx.fillStyle = '#ffc832';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Diminishing returns →', w/2 + 50, 60);
+}
+
+function drawChinchillaChart() {
+    const canvas = document.getElementById('chinchillaChart');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = '#0a0a15';
+    ctx.fillRect(0, 0, w, h);
+    
+    ctx.fillStyle = '#888';
+    ctx.font = '11px SF Mono, monospace';
+    ctx.fillText('Model Size →', w/2 - 30, h - 5);
+    ctx.fillText('Tokens →', 10, 15);
+    
+    // Optimal frontier line
+    ctx.strokeStyle = '#32cd64';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(40, h - 30);
+    ctx.lineTo(w - 30, 30);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#32cd64';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Chinchilla-optimal line', w/2 + 50, h/2 - 20);
+    
+    // GPT-3 (too big, too little data)
+    ctx.beginPath();
+    ctx.arc(w - 80, h - 60, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff5a3c';
+    ctx.fill();
+    ctx.fillText('GPT-3', w - 75, h - 45);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#888';
+    ctx.fillText('(too big for its data)', w - 75, h - 32);
+    
+    // Chinchilla (on the line)
+    ctx.beginPath();
+    ctx.arc(w/2 - 20, h/2 + 10, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#32cd64';
+    ctx.fill();
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Chinchilla', w/2 - 15, h/2 + 30);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#888';
+    ctx.fillText('(optimal balance)', w/2 - 15, h/2 + 43);
+}
+
+async function loadPyodideEnv() {
+    try {
+        pyodide = await loadPyodide();
+        document.getElementById('pyodide-status').textContent = '✅ Python environment ready';
+        document.getElementById('pyodide-status').className = 'pyodide-status ready';
+    } catch (e) {
+        document.getElementById('pyodide-status').textContent = '❌ Failed to load Python.';
+        document.getElementById('pyodide-status').className = 'pyodide-status error';
+    }
+}
+loadPyodideEnv();
+
+async function runCode(n) {
+    if (!pyodide) { alert('Python is still loading...'); return; }
+    const code = document.getElementById('code' + n).value;
+    const out = document.getElementById('output' + n);
+    out.className = 'output'; out.textContent = 'Running...';
+    try {
+        pyodide.runPython(`import sys, io; sys.stdout = io.StringIO(); sys.stderr = io.StringIO()`);
+        await pyodide.runPythonAsync(code);
+        const stdout = pyodide.runPython('sys.stdout.getvalue()');
+        const stderr = pyodide.runPython('sys.stderr.getvalue()');
+        const output = stdout + (stderr ? '\n' + stderr : '');
+        out.textContent = output || '(no output)';
+        if (output.includes('PASS')) {
+            out.className = 'output success';
+            progress.add(n);
+            localStorage.setItem('build08-progress', JSON.stringify([...progress]));
+            updateProgress();
+        }
+    } catch (e) { out.textContent = e.message; out.className = 'output error'; }
+}
+
+function resetCode(n) {
+    document.getElementById('code' + n).value = originalCode[n];
+    document.getElementById('output' + n).textContent = 'Output will appear here...';
+    document.getElementById('output' + n).className = 'output';
+}
+
+function updateProgress() {
+    const done = progress.size;
+    document.getElementById('progress-text').textContent = `${done} / ${TOTAL_EX} exercises`;
+    document.getElementById('progress-bar').style.width = `${(done / TOTAL_EX) * 100}%`;
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+}
+</script>
+</body>
+</html>

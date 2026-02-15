@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>Mixture of Experts - The Art of Selective Computation</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #1b2438 100%);
+            color: #e1e1e1;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .act { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .act.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            text-align: center; font-size: 2.5em; margin-bottom: 0.3em;
+            background: linear-gradient(45deg, #f7b733, #fc4a1a, #a855f7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { text-align: center; color: #888; font-size: 1.1em; margin-bottom: 2em; }
+        h2 { color: #a855f7; margin: 1.5em 0 0.8em; font-size: 1.8em; }
+        h3 { color: #f7b733; margin: 1.2em 0 0.8em; }
+        .nav-bar {
+            display: flex; justify-content: center; gap: 10px; margin: 20px 0 30px;
+            position: sticky; top: 0; z-index: 100; padding: 15px 0;
+            background: rgba(26, 26, 26, 0.95); backdrop-filter: blur(10px);
+        }
+        .nav-btn {
+            padding: 10px 24px; border: 2px solid #a855f7; background: transparent;
+            color: #a855f7; border-radius: 25px; cursor: pointer; font-size: 1em;
+            transition: all 0.3s;
+        }
+        .nav-btn:hover, .nav-btn.active { background: #a855f7; color: #1a1a1a; }
+        .card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px; padding: 25px; margin: 20px 0;
+        }
+        .card.highlight { border-color: #a855f7; }
+        .card.warn { border-color: #fc4a1a; }
+        button {
+            padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 1em; transition: all 0.2s; margin: 5px;
+        }
+        .btn-primary { background: #a855f7; color: #fff; font-weight: 600; }
+        .btn-primary:hover { background: #9333ea; transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #e1e1e1; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+        .quote-box {
+            border-left: 4px solid #a855f7; padding: 15px 20px; margin: 20px 0;
+            background: rgba(168,85,247,0.08); border-radius: 0 10px 10px 0;
+            font-style: italic;
+        }
+        .quote-box .attribution { font-style: normal; color: #888; margin-top: 8px; font-size: 0.9em; }
+
+        /* Router Visualization */
+        .router-viz { position: relative; margin: 30px 0; }
+        .token-input-area { text-align: center; margin: 20px 0; }
+        .token-input-area input {
+            background: rgba(255,255,255,0.1); border: 2px solid #a855f7; color: #fff;
+            padding: 12px 20px; border-radius: 10px; font-size: 1.1em; width: 300px;
+            text-align: center; outline: none;
+        }
+        .token-input-area input::placeholder { color: #666; }
+        .token-input-area input:focus { border-color: #f7b733; }
+        .router-canvas { width: 100%; height: 420px; border-radius: 12px; background: rgba(0,0,0,0.3); }
+        .expert-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0;
+        }
+        @media (max-width: 600px) { .expert-grid { grid-template-columns: repeat(2, 1fr); } }
+        .expert-box {
+            padding: 15px; border-radius: 12px; text-align: center;
+            border: 2px solid rgba(255,255,255,0.1); transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+        .expert-box.active { transform: scale(1.05); box-shadow: 0 0 20px rgba(168,85,247,0.4); }
+        .expert-box .expert-name { font-weight: 600; font-size: 0.95em; }
+        .expert-box .expert-weight {
+            font-size: 1.4em; font-weight: 700; margin-top: 5px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .expert-box .expert-bar {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+            background: rgba(255,255,255,0.1); border-radius: 0 0 10px 10px;
+        }
+        .expert-box .expert-bar-fill {
+            height: 100%; border-radius: 0 0 10px 10px; transition: width 0.4s ease;
+        }
+        .stats-row {
+            display: flex; justify-content: center; gap: 30px; margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .stat-item { text-align: center; }
+        .stat-value {
+            font-size: 1.8em; font-weight: 700; color: #f7b733;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .stat-label { color: #888; font-size: 0.85em; }
+
+        /* Load Balance View */
+        .balance-bars { display: flex; align-items: flex-end; gap: 8px; height: 180px; margin: 20px 0; justify-content: center; }
+        .balance-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .balance-bar {
+            width: 40px; border-radius: 6px 6px 0 0; transition: height 0.5s ease, background 0.5s ease;
+            min-height: 4px;
+        }
+        .balance-label { font-size: 0.75em; color: #888; }
+        .balance-pct { font-size: 0.7em; color: #aaa; font-family: monospace; }
+
+        /* Code Editor / Puzzles */
+        .puzzle-container { margin: 25px 0; }
+        .puzzle-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .puzzle-num {
+            background: #a855f7; color: #fff; padding: 4px 14px; border-radius: 15px;
+            font-weight: 600; font-size: 0.9em;
+        }
+        .code-editor {
+            width: 100%; min-height: 200px; background: #0d1117; color: #c9d1d9;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            padding: 15px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em; line-height: 1.5; resize: vertical; tab-size: 4;
+            outline: none;
+        }
+        .code-editor:focus { border-color: #a855f7; }
+        .output-area {
+            background: #0d1117; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 15px; margin-top: 10px;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em;
+            min-height: 60px; white-space: pre-wrap; color: #8b949e;
+        }
+        .output-area.success { border-color: #2ea043; color: #56d364; }
+        .output-area.error { border-color: #fc4a1a; color: #fc4a1a; }
+        .pyodide-status { text-align: center; padding: 10px; color: #888; font-size: 0.9em; }
+
+        /* Timeline */
+        .timeline { position: relative; margin: 30px 0; padding-left: 30px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+            width: 3px; background: linear-gradient(to bottom, #a855f7, #f7b733, #fc4a1a);
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative; margin-bottom: 30px; padding-left: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -25px; top: 6px;
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 3px solid #a855f7; background: #1a1a1a;
+        }
+        .timeline-year {
+            font-weight: 700; color: #f7b733; font-size: 1.1em;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .timeline-title { font-weight: 600; color: #e1e1e1; margin: 4px 0; }
+        .timeline-desc { color: #999; font-size: 0.95em; }
+        .paper-tag {
+            display: inline-block; background: rgba(168,85,247,0.15); color: #a855f7;
+            padding: 2px 10px; border-radius: 10px; font-size: 0.8em; margin-top: 5px;
+        }
+
+        /* Insight callout */
+        .insight {
+            background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(247,183,51,0.1));
+            border: 1px solid rgba(168,85,247,0.3); border-radius: 12px;
+            padding: 20px; margin: 25px 0;
+        }
+        .insight h4 { color: #f7b733; margin-bottom: 8px; }
+
+        /* Toggle */
+        .toggle-group { display: flex; gap: 0; border-radius: 8px; overflow: hidden; margin: 15px 0; justify-content: center; }
+        .toggle-btn {
+            padding: 8px 18px; background: rgba(255,255,255,0.05); color: #888;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active { background: #a855f7; color: #fff; border-color: #a855f7; }
+        .toggle-btn:first-child { border-radius: 8px 0 0 8px; }
+        .toggle-btn:last-child { border-radius: 0 8px 8px 0; }
+
+        /* Animations */
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes routeFlow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .flowing { animation: routeFlow 0.5s linear infinite; }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            .container { padding: 12px; }
+            .nav-btn { padding: 8px 16px; font-size: 0.85em; }
+            .stats-row { gap: 15px; }
+            .stat-value { font-size: 1.3em; }
+            .balance-bar { width: 28px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧠 Mixture of Experts</h1>
+    <p class="subtitle">8× the parameters. 2× the compute. All of the intelligence.</p>
+
+    <div class="nav-bar">
+        <button class="nav-btn active" onclick="showAct(1)">⚡ Explore</button>
+        <button class="nav-btn" onclick="showAct(2)">🔨 Build</button>
+        <button class="nav-btn" onclick="showAct(3)">📜 Connect</button>
+    </div>
+
+    <!-- ==================== ACT 1: THE EXPLORABLE ==================== -->
+    <div class="act active" id="act1">
+        <h2>⚡ The Router's Choice</h2>
+        <p>In a Mixture of Experts layer, every token gets routed to only the <strong>best 2 out of 8 experts</strong>. The router — a tiny gating network — decides which experts are most relevant. Most experts stay dark. That's the whole trick.</p>
+
+        <div class="card highlight">
+            <h3>Type a word — watch it route</h3>
+            <div class="token-input-area">
+                <input type="text" id="tokenInput" placeholder="Try: math, poetry, code, love..." autocomplete="off">
+            </div>
+
+            <div id="routerVizArea">
+                <div class="expert-grid" id="expertGrid"></div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-value" id="statParams">8×</div>
+                    <div class="stat-label">Total Parameters</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statCompute">2×</div>
+                    <div class="stat-label">Compute Used</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statActive">2/8</div>
+                    <div class="stat-label">Experts Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statSaved">75%</div>
+                    <div class="stat-label">Compute Saved</div>
+                </div>
+            </div>
+
+            <div class="insight">
+                <h4>💡 The Key Insight</h4>
+                <p>A Mixtral 8×7B model has <strong>46.7B parameters</strong> total but only uses <strong>~12.9B per token</strong> — because only 2 of 8 experts fire. It matches GPT-3.5 quality at a fraction of the inference cost.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Load Balancing View</h3>
+            <p>After routing many tokens, how evenly are experts utilized? Good routing distributes load. Bad routing creates "expert collapse" — one expert hogs all the work.</p>
+
+            <div class="toggle-group">
+                <div class="toggle-btn active" onclick="setBalanceMode('balanced')">✅ Balanced</div>
+                <div class="toggle-btn" onclick="setBalanceMode('collapsed')">💀 Collapsed</div>
+                <div class="toggle-btn" onclick="setBalanceMode('live')">📊 Live</div>
+            </div>
+
+            <div class="balance-bars" id="balanceBars"></div>
+            <div id="balanceCaption" style="text-align:center; color:#888; font-size:0.9em; margin-top:8px;"></div>
+        </div>
+
+        <div class="card">
+            <h3>Why Not Just Use a Bigger Dense Model?</h3>
+            <p>A dense model uses <em>every</em> parameter for <em>every</em> token. Double the parameters = double the compute. MoE breaks this link:</p>
+            <table style="width:100%; margin:15px 0; border-collapse:collapse;">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <th style="text-align:left; padding:8px; color:#888;">Model</th>
+                    <th style="text-align:right; padding:8px; color:#888;">Total Params</th>
+                    <th style="text-align:right; padding:8px; color:#888;">Active Params</th>
+                    <th style="text-align:right; padding:8px; color:#888;">Type</th>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:8px;">LLaMA 2 70B</td>
+                    <td style="text-align:right; padding:8px;">70B</td>
+                    <td style="text-align:right; padding:8px; color:#fc4a1a;">70B</td>
+                    <td style="text-align:right; padding:8px;">Dense</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:8px;">Mixtral 8×7B</td>
+                    <td style="text-align:right; padding:8px;">46.7B</td>
+                    <td style="text-align:right; padding:8px; color:#2ea043;">12.9B</td>
+                    <td style="text-align:right; padding:8px;">MoE</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px;">DeepSeek V3</td>
+                    <td style="text-align:right; padding:8px;">671B</td>
+                    <td style="text-align:right; padding:8px; color:#2ea043;">37B</td>
+                    <td style="text-align:right; padding:8px;">MoE</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== ACT 2: THE BUILD ==================== -->
+    <div class="act" id="act2">
+        <h2>🔨 Build Your Own MoE</h2>
+        <p>Four puzzles that walk you through the core mechanics of Mixture of Experts, from gating to load balancing.</p>
+        <div class="pyodide-status" id="pyodideStatus">⏳ Loading Python runtime...</div>
+
+        <!-- Puzzle 1: Gating Network -->
+        <div class="puzzle-container">
+            <div class="puzzle-header">
+                <span class="puzzle-num">Puzzle 1 / 4</span>
+                <span style="color:#888;">Gating Network</span>
+            </div>
+            <div class="card">
+                <h3>The Router: Softmax Gating</h3>
+                <p>The router is a simple linear layer followed by softmax. Given a token's hidden state, it produces a probability distribution over all experts. Implement the gating function.</p>
+                <textarea class="code-editor" id="code1" spellcheck="false">import numpy as np
+
+def gating_network(token_hidden, expert_weights):
+    """
+    Compute router probabilities for each expert.
+    
+    Args:
+        token_hidden: shape (d_model,) — the token's representation
+        expert_weights: shape (num_experts, d_model) — each row is an expert's gate weight
+    
+    Returns:
+        probs: shape (num_experts,) — probability distribution over experts (sums to 1)
+    
+    Steps:
+        1. Compute scores = expert_weights @ token_hidden  (dot product per expert)
+        2. Apply softmax: exp(scores) / sum(exp(scores))
+        Hint: subtract max(scores) before exp for numerical stability
+    """
+    # YOUR CODE HERE
+    scores = expert_weights @ token_hidden
+    # Apply softmax with numerical stability
+    scores = scores - np.max(scores)  # stability trick
+    exp_scores = np.exp(scores)
+    probs = exp_scores / np.sum(exp_scores)
+    return probs</textarea>
+                <button class="btn-primary" onclick="runPuzzle(1)">▶ Run</button>
+                <button class="btn-secondary" onclick="resetPuzzle(1)">↺ Reset</button>
+                <div class="output-area" id="output1"></div>
+            </div>
+        </div>
+
+        <!-- Puzzle 2: Top-K Routing -->
+        <div class="puzzle-container">
+            <div class="puzzle-header">
+                <span class="puzzle-num">Puzzle 2 / 4</span>
+                <span style="color:#888;">Top-K Routing</span>
+            </div>
+            <div class="card">
+                <h3>Sparse Selection: Pick the Top 2</h3>
+                <p>We don't use all experts — we pick the top K (usually 2) and renormalize their weights so they sum to 1. All other experts get weight 0.</p>
+                <textarea class="code-editor" id="code2" spellcheck="false">import numpy as np
+
+def top_k_routing(probs, k=2):
+    """
+    Select top-k experts and renormalize their weights.
+    
+    Args:
+        probs: shape (num_experts,) — full probability distribution from gating
+        k: number of experts to select
+    
+    Returns:
+        routing_weights: shape (num_experts,) — sparse vector, only k nonzero entries
+        selected_experts: list of k expert indices
+    
+    Steps:
+        1. Find indices of top-k values in probs
+        2. Create a zero vector of same size
+        3. Copy the top-k probabilities into it
+        4. Renormalize so the k values sum to 1
+    """
+    # YOUR CODE HERE
+    selected_experts = list(np.argsort(probs)[-k:])
+    routing_weights = np.zeros_like(probs)
+    for idx in selected_experts:
+        routing_weights[idx] = probs[idx]
+    routing_weights = routing_weights / np.sum(routing_weights)
+    return routing_weights, sorted(selected_experts)</textarea>
+                <button class="btn-primary" onclick="runPuzzle(2)">▶ Run</button>
+                <button class="btn-secondary" onclick="resetPuzzle(2)">↺ Reset</button>
+                <div class="output-area" id="output2"></div>
+            </div>
+        </div>
+
+        <!-- Puzzle 3: Sparse MoE Forward Pass -->
+        <div class="puzzle-container">
+            <div class="puzzle-header">
+                <span class="puzzle-num">Puzzle 3 / 4</span>
+                <span style="color:#888;">Sparse MoE Forward</span>
+            </div>
+            <div class="card">
+                <h3>The Forward Pass: Weighted Expert Mix</h3>
+                <p>Each selected expert processes the token independently, then we combine their outputs using the routing weights.</p>
+                <textarea class="code-editor" id="code3" spellcheck="false">import numpy as np
+
+def sparse_moe_forward(token, routing_weights, expert_outputs):
+    """
+    Combine expert outputs using sparse routing weights.
+    
+    Args:
+        token: shape (d_model,) — input token (for reference)
+        routing_weights: shape (num_experts,) — sparse weights (mostly zeros, k nonzero)
+        expert_outputs: list of arrays, each shape (d_model,) — output from each expert
+    
+    Returns:
+        combined: shape (d_model,) — weighted sum of active expert outputs
+    
+    The formula: output = sum(routing_weights[i] * expert_outputs[i]) for active experts
+    Only compute for experts with nonzero weight (that's the sparse part!)
+    """
+    # YOUR CODE HERE
+    combined = np.zeros_like(expert_outputs[0])
+    for i, weight in enumerate(routing_weights):
+        if weight > 0:
+            combined += weight * expert_outputs[i]
+    return combined</textarea>
+                <button class="btn-primary" onclick="runPuzzle(3)">▶ Run</button>
+                <button class="btn-secondary" onclick="resetPuzzle(3)">↺ Reset</button>
+                <div class="output-area" id="output3"></div>
+            </div>
+        </div>
+
+        <!-- Puzzle 4: Load Balancing Loss -->
+        <div class="puzzle-container">
+            <div class="puzzle-header">
+                <span class="puzzle-num">Puzzle 4 / 4</span>
+                <span style="color:#888;">Load Balancing</span>
+            </div>
+            <div class="card">
+                <h3>The Balancing Act: Auxiliary Loss</h3>
+                <p>Without encouragement, routers collapse — sending everything to one or two "favorite" experts. The load balancing loss penalizes this by comparing actual usage to average router probability per expert.</p>
+                <textarea class="code-editor" id="code4" spellcheck="false">import numpy as np
+
+def load_balancing_loss(router_probs, expert_assignments, num_experts=8):
+    """
+    Compute the auxiliary load balancing loss.
+    
+    Args:
+        router_probs: shape (num_tokens, num_experts) — router probabilities for each token
+        expert_assignments: shape (num_tokens,) — which expert each token was routed to (top-1)
+        num_experts: number of experts
+    
+    Returns:
+        loss: scalar — the load balancing loss (lower = more balanced)
+    
+    Steps:
+        1. f_i = fraction of tokens assigned to expert i  (count / num_tokens)
+        2. p_i = mean router probability for expert i  (mean of router_probs[:, i])
+        3. loss = num_experts * sum(f_i * p_i) for all experts
+    
+    Perfect balance → each f_i = 1/num_experts, loss ≈ 1.0
+    Total collapse → one f_i = 1.0, loss = num_experts (= 8.0)
+    """
+    # YOUR CODE HERE
+    num_tokens = len(expert_assignments)
+    loss = 0.0
+    for i in range(num_experts):
+        f_i = np.sum(expert_assignments == i) / num_tokens
+        p_i = np.mean(router_probs[:, i])
+        loss += f_i * p_i
+    loss *= num_experts
+    return loss</textarea>
+                <button class="btn-primary" onclick="runPuzzle(4)">▶ Run</button>
+                <button class="btn-secondary" onclick="resetPuzzle(4)">↺ Reset</button>
+                <div class="output-area" id="output4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ACT 3: THE CONNECTION ==================== -->
+    <div class="act" id="act3">
+        <h2>📜 The 30-Year Lineage</h2>
+        <p>Mixture of Experts is one of the oldest ideas in machine learning. It took three decades to become the dominant architecture for frontier models.</p>
+
+        <div class="quote-box">
+            "The capacity of a model to absorb information increases with its number of parameters."
+            <div class="attribution">— Shazeer et al., 2017</div>
+        </div>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-year">1991</div>
+                <div class="timeline-title">Adaptive Mixtures of Local Experts</div>
+                <div class="timeline-desc">Robert Jacobs, Michael Jordan, Steven Nowlan, and Geoffrey Hinton introduce the idea: a gating network learns to partition the input space, routing different inputs to specialized "expert" sub-networks. Each expert becomes good at a subset of the problem. The key insight — <em>divide and conquer</em> via learned routing — would echo for 30 years.</div>
+                <span class="paper-tag">📄 Paper #30 — Jacobs et al.</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">1994</div>
+                <div class="timeline-title">Hierarchical Mixtures of Experts</div>
+                <div class="timeline-desc">Jordan and Jacobs extend MoE with tree-structured routing — multiple levels of gating that recursively split the problem. This creates a soft decision tree where different branches specialize in different data regimes. Beautiful in theory, hard to scale.</div>
+                <span class="paper-tag">📄 Paper #31 — Jordan & Jacobs</span>
+            </div>
+
+            <div class="timeline-item" style="opacity:0.5">
+                <div class="timeline-year">1994–2016</div>
+                <div class="timeline-title">The Quiet Years</div>
+                <div class="timeline-desc">MoE mostly hibernates. Deep learning takes over, but dense models rule. The idea waits for hardware and scale to catch up.</div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2017</div>
+                <div class="timeline-title">Outrageously Large Neural Networks</div>
+                <div class="timeline-desc">Noam Shazeer and the Google Brain team resurrect MoE for the deep learning era. They insert a <em>Sparsely-Gated MoE Layer</em> between stacked LSTM layers, scaling to <strong>137 billion parameters</strong> — 1000× larger than previous models — with only modest compute increase. The gating network adds learnable noise to encourage exploration, and a load-balancing loss keeps experts evenly utilized. This paper proved MoE works at scale.</div>
+                <span class="paper-tag">📄 Paper #17 — Shazeer et al.</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2020</div>
+                <div class="timeline-title">GShard: Scaling to 600B</div>
+                <div class="timeline-desc">Google scales MoE to Transformers with GShard — a 600-billion parameter model using top-2 routing across 2048 experts distributed across many chips. Key innovation: automatic sharding that lets experts live on different devices, turning the "embarrassingly parallel" nature of MoE into a distributed systems advantage.</div>
+                <span class="paper-tag">📄 Paper #29 — Lepikhin et al.</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2021</div>
+                <div class="timeline-title">Switch Transformers</div>
+                <div class="timeline-desc">William Fedus, Barret Zoph, and Noam Shazeer simplify MoE radically: route each token to just <strong>one expert</strong> instead of two. Counterintuitive, but it works — simpler routing, less communication overhead, and they scale to <strong>1.6 trillion parameters</strong>. The lesson: sometimes less routing is more.</div>
+                <span class="paper-tag">📄 Paper #18 — Fedus et al.</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2022</div>
+                <div class="timeline-title">Sparse Upcycling</div>
+                <div class="timeline-desc">Instead of training MoE from scratch, Komatsuzaki et al. show you can <em>convert</em> a pretrained dense model into an MoE by duplicating its FFN layers into experts and training a router on top. A shortcut that reuses all the knowledge already learned.</div>
+                <span class="paper-tag">📄 Paper #20 — Komatsuzaki et al.</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2024</div>
+                <div class="timeline-title">Mixtral of Experts</div>
+                <div class="timeline-desc">Mistral AI releases Mixtral 8×7B as open-source — 8 experts per layer, top-2 routing, 46.7B total parameters but only 12.9B active per token. It matches or beats GPT-3.5 and LLaMA 2 70B on most benchmarks while being dramatically cheaper to run. MoE goes mainstream and open.</div>
+                <span class="paper-tag">📄 Paper #19 — Mistral AI</span>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">2024–25</div>
+                <div class="timeline-title">DeepSeek & the MoE Era</div>
+                <div class="timeline-desc">DeepSeek V2 and V3 push MoE further with <em>fine-grained experts</em> (more but smaller experts) and <em>shared experts</em> that always activate. DeepSeek V3: 671B total parameters, only 37B active. MoE is now the default architecture for frontier-scale models. The 1991 idea won.</div>
+            </div>
+        </div>
+
+        <div class="quote-box">
+            "We advance the current scale of language models by pre-training up to trillion parameter models."
+            <div class="attribution">— Fedus, Zoph & Shazeer, Switch Transformers, 2021</div>
+        </div>
+
+        <div class="insight">
+            <h4>🌊 The Deep Pattern</h4>
+            <p>MoE is the answer to a fundamental tension: <strong>capacity vs. cost</strong>. You want a model that has <em>seen</em> and <em>absorbed</em> as much knowledge as possible (more parameters = more capacity). But you don't want to pay for all those parameters on every single token. MoE decouples model capacity from inference cost. It's how you build a model that "knows everything" but only "thinks with" the relevant slice. Biology figured this out long ago — your brain has 86 billion neurons, but only a tiny fraction fire for any given thought.</p>
+        </div>
+
+        <div class="card">
+            <h3>The Architecture At a Glance</h3>
+            <p style="margin:15px 0; font-family:monospace; color:#aaa; font-size:0.9em; line-height:1.8;">
+                Input Token → Attention (shared) → <span style="color:#a855f7; font-weight:600;">Router</span> → picks top-K experts<br>
+                &nbsp;&nbsp;→ Expert 3: weight 0.62 <span style="color:#f7b733;">█████████</span><br>
+                &nbsp;&nbsp;→ Expert 7: weight 0.38 <span style="color:#f7b733;">█████</span><br>
+                &nbsp;&nbsp;→ Experts 0,1,2,4,5,6: <span style="color:#555;">dormant</span><br>
+                Output = 0.62 × Expert3(x) + 0.38 × Expert7(x)
+            </p>
+            <p style="color:#888; font-size:0.9em;">The attention layers are shared — it's the FFN (feed-forward) layers that get replicated into experts. Each transformer block has its own router and set of experts.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============ NAVIGATION ============
+function showAct(n) {
+    document.querySelectorAll('.act').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('act' + n).classList.add('active');
+    document.querySelectorAll('.nav-btn')[n - 1].classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============ EXPERT COLORS & DATA ============
+const EXPERT_COLORS = [
+    '#ff6b6b', '#4ecdc4', '#f7b733', '#a855f7',
+    '#45b7d1', '#96ceb4', '#ff8a5c', '#d4a5ff'
+];
+const EXPERT_NAMES = [
+    'Language', 'Math', 'Code', 'Science',
+    'Creative', 'Logic', 'Facts', 'Social'
+];
+
+// Deterministic hash for routing
+function hashToken(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+    }
+    return h;
+}
+
+function tokenToWeights(token) {
+    const t = token.toLowerCase().trim();
+    if (!t) return new Array(8).fill(1/8);
+    const h = hashToken(t);
+    const weights = [];
+    for (let i = 0; i < 8; i++) {
+        const seed = hashToken(t + '_' + i + '_salt');
+        weights.push(Math.abs(Math.sin(seed * 0.0001)) + 0.01);
+    }
+    // Bias based on word category
+    const categories = {
+        'Language': /^(word|grammar|sentence|language|speak|english|write|read|text|paragraph|essay|letter|book)$/i,
+        'Math': /^(math|calculus|algebra|number|equation|formula|integral|derivative|sum|multiply|pi|zero|infinity|theorem)$/i,
+        'Code': /^(code|python|javascript|function|loop|array|debug|compile|program|software|algorithm|class|variable|api|html|css)$/i,
+        'Science': /^(science|physics|chemistry|biology|atom|molecule|gravity|quantum|energy|cell|dna|evolution|experiment|hypothesis)$/i,
+        'Creative': /^(art|music|poem|poetry|song|dance|paint|draw|story|novel|creative|imagine|beauty|love|dream|color|flower|sunset)$/i,
+        'Logic': /^(logic|reason|proof|deduce|argue|premise|conclusion|therefore|syllogism|contradiction|fallacy|if|then|because)$/i,
+        'Facts': /^(history|fact|who|what|when|where|capital|president|country|year|date|war|king|queen|population|geography)$/i,
+        'Social': /^(hello|hi|thanks|please|sorry|friend|family|feel|emotion|happy|sad|angry|social|chat|talk|hey|yo|sup|lol)$/i
+    };
+    const order = ['Language', 'Math', 'Code', 'Science', 'Creative', 'Logic', 'Facts', 'Social'];
+    for (let i = 0; i < order.length; i++) {
+        if (categories[order[i]].test(t)) {
+            weights[i] *= 8;
+            // secondary boost to a related expert
+            weights[(i + 1) % 8] *= 2;
+        }
+    }
+    // Softmax
+    const maxW = Math.max(...weights);
+    const exps = weights.map(w => Math.exp(w - maxW));
+    const sumExp = exps.reduce((a, b) => a + b, 0);
+    return exps.map(e => e / sumExp);
+}
+
+// ============ EXPERT GRID SETUP ============
+function initExpertGrid() {
+    const grid = document.getElementById('expertGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+        const box = document.createElement('div');
+        box.className = 'expert-box';
+        box.id = 'expert-' + i;
+        box.style.borderColor = EXPERT_COLORS[i] + '33';
+        box.innerHTML = `
+            <div class="expert-name" style="color:${EXPERT_COLORS[i]}">${EXPERT_NAMES[i]}</div>
+            <div class="expert-weight" id="ew-${i}" style="color:${EXPERT_COLORS[i]}">—</div>
+            <div class="expert-bar"><div class="expert-bar-fill" id="eb-${i}" style="width:0%; background:${EXPERT_COLORS[i]}"></div></div>
+        `;
+        grid.appendChild(box);
+    }
+}
+
+function updateRouting(token) {
+    const weights = tokenToWeights(token);
+    // Find top 2
+    const indexed = weights.map((w, i) => ({ w, i }));
+    indexed.sort((a, b) => b.w - a.w);
+    const top2 = new Set([indexed[0].i, indexed[1].i]);
+    const top2sum = indexed[0].w + indexed[1].w;
+
+    for (let i = 0; i < 8; i++) {
+        const box = document.getElementById('expert-' + i);
+        const ew = document.getElementById('ew-' + i);
+        const eb = document.getElementById('eb-' + i);
+        const isActive = top2.has(i);
+
+        box.className = 'expert-box' + (isActive ? ' active' : '');
+        if (isActive) {
+            box.style.borderColor = EXPERT_COLORS[i];
+            box.style.background = EXPERT_COLORS[i] + '15';
+            const renorm = weights[i] / top2sum;
+            ew.textContent = (renorm * 100).toFixed(1) + '%';
+            eb.style.width = (renorm * 100) + '%';
+        } else {
+            box.style.borderColor = 'rgba(255,255,255,0.05)';
+            box.style.background = 'rgba(255,255,255,0.02)';
+            ew.textContent = '—';
+            ew.style.opacity = '0.3';
+            eb.style.width = '0%';
+        }
+    }
+
+    // Update live balance tracking
+    if (token.trim()) {
+        trackLiveBalance(indexed[0].i, indexed[1].i);
+    }
+}
+
+// ============ LOAD BALANCING ============
+let liveCounts = new Array(8).fill(0);
+let balanceMode = 'balanced';
+
+function initBalanceBars() {
+    const container = document.getElementById('balanceBars');
+    container.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+        const wrap = document.createElement('div');
+        wrap.className = 'balance-bar-wrap';
+        wrap.innerHTML = `
+            <div class="balance-pct" id="bpct-${i}">12.5%</div>
+            <div class="balance-bar" id="bbar-${i}" style="height:100px; background:${EXPERT_COLORS[i]}"></div>
+            <div class="balance-label">E${i}</div>
+        `;
+        container.appendChild(wrap);
+    }
+}
+
+function setBalanceMode(mode) {
+    balanceMode = mode;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    let pcts;
+    const caption = document.getElementById('balanceCaption');
+    if (mode === 'balanced') {
+        pcts = [12.8, 12.1, 13.2, 12.5, 12.0, 12.9, 12.3, 12.2];
+        caption.textContent = '✅ Healthy routing — all experts share the load roughly equally. Loss ≈ 1.0';
+    } else if (mode === 'collapsed') {
+        pcts = [62, 18, 5, 4, 3, 3, 3, 2];
+        caption.textContent = '💀 Expert collapse! Expert 0 hogs 62% of tokens. Others starve. Loss ≈ 5.1';
+    } else {
+        const total = liveCounts.reduce((a, b) => a + b, 0) || 1;
+        pcts = liveCounts.map(c => (c / total) * 100);
+        caption.textContent = liveCounts.reduce((a, b) => a + b, 0) === 0
+            ? '📊 Type words above to see live routing distribution'
+            : `📊 Live distribution from ${liveCounts.reduce((a, b) => a + b, 0)} routed tokens`;
+    }
+    updateBalanceBars(pcts);
+}
+
+function updateBalanceBars(pcts) {
+    const maxPct = Math.max(...pcts, 1);
+    for (let i = 0; i < 8; i++) {
+        const bar = document.getElementById('bbar-' + i);
+        const pctLabel = document.getElementById('bpct-' + i);
+        const h = (pcts[i] / maxPct) * 160;
+        bar.style.height = Math.max(4, h) + 'px';
+        pctLabel.textContent = pcts[i].toFixed(1) + '%';
+        // Color: green if balanced, red if over-represented
+        if (pcts[i] > 25) {
+            bar.style.background = '#fc4a1a';
+        } else {
+            bar.style.background = EXPERT_COLORS[i];
+        }
+    }
+}
+
+function trackLiveBalance(e1, e2) {
+    liveCounts[e1]++;
+    liveCounts[e2]++;
+    if (balanceMode === 'live') {
+        setBalanceMode('live');
+    }
+}
+
+// ============ PYODIDE & PUZZLES ============
+let pyodide = null;
+const SOLUTIONS = {};
+const DEFAULTS = {};
+
+const TESTS = {
+    1: `
+import numpy as np
+np.random.seed(42)
+token = np.random.randn(16)
+weights = np.random.randn(8, 16)
+probs = gating_network(token, weights)
+assert probs.shape == (8,), f"Expected shape (8,), got {probs.shape}"
+assert abs(sum(probs) - 1.0) < 1e-6, f"Probs should sum to 1, got {sum(probs)}"
+assert all(p >= 0 for p in probs), "All probabilities should be >= 0"
+# Check correctness
+scores = weights @ token
+scores = scores - np.max(scores)
+expected = np.exp(scores) / np.sum(np.exp(scores))
+assert np.allclose(probs, expected, atol=1e-6), "Values don't match expected softmax"
+print("✅ Gating network works!")
+print(f"   Router probs: [{', '.join(f'{p:.3f}' for p in probs)}]")
+print(f"   Sum: {sum(probs):.6f}")
+print(f"   Top expert: #{np.argmax(probs)} ({EXPERT_NAMES[np.argmax(probs)]}) with {probs[np.argmax(probs)]:.1%}")
+`,
+    2: `
+import numpy as np
+probs = np.array([0.05, 0.15, 0.30, 0.02, 0.08, 0.10, 0.25, 0.05])
+rw, sel = top_k_routing(probs, k=2)
+assert len(sel) == 2, f"Should select 2 experts, got {len(sel)}"
+assert 2 in sel and 6 in sel, f"Should pick experts 2 and 6, got {sel}"
+assert abs(sum(rw) - 1.0) < 1e-6, f"Weights should sum to 1, got {sum(rw)}"
+assert sum(rw > 0) == 2, f"Exactly 2 nonzero weights expected, got {sum(rw > 0)}"
+print("✅ Top-K routing works!")
+print(f"   Selected experts: {sel}")
+print(f"   Routing weights: [{', '.join(f'{w:.3f}' for w in rw)}]")
+print(f"   Expert {sel[0]}: {rw[sel[0]]:.1%}, Expert {sel[1]}: {rw[sel[1]]:.1%}")
+# Edge case
+probs2 = np.array([0.9, 0.05, 0.02, 0.01, 0.01, 0.005, 0.004, 0.001])
+rw2, sel2 = top_k_routing(probs2, k=2)
+assert 0 in sel2, "Expert 0 should be selected with 0.9 probability"
+print(f"   Edge case (dominant expert): {sel2} → weights renormalized to {rw2[sel2[0]]:.1%}, {rw2[sel2[1]]:.1%}")
+`,
+    3: `
+import numpy as np
+np.random.seed(42)
+token = np.random.randn(16)
+routing_weights = np.array([0.0, 0.0, 0.55, 0.0, 0.0, 0.0, 0.45, 0.0])
+expert_outputs = [np.random.randn(16) for _ in range(8)]
+result = sparse_moe_forward(token, routing_weights, expert_outputs)
+expected = 0.55 * expert_outputs[2] + 0.45 * expert_outputs[6]
+assert result.shape == (16,), f"Expected shape (16,), got {result.shape}"
+assert np.allclose(result, expected, atol=1e-6), "Output doesn't match weighted sum of experts 2 and 6"
+print("✅ Sparse MoE forward pass works!")
+print(f"   Active experts: 2 (weight 0.55) and 6 (weight 0.45)")
+print(f"   Output norm: {np.linalg.norm(result):.4f}")
+print(f"   Only computed 2/8 experts — 75% compute saved!")
+`,
+    4: `
+import numpy as np
+np.random.seed(42)
+# Balanced case
+num_tokens = 800
+balanced_assignments = np.array([i % 8 for i in range(num_tokens)])
+balanced_probs = np.ones((num_tokens, 8)) / 8 + np.random.randn(num_tokens, 8) * 0.01
+balanced_probs = np.abs(balanced_probs)
+balanced_probs = balanced_probs / balanced_probs.sum(axis=1, keepdims=True)
+loss_balanced = load_balancing_loss(balanced_probs, balanced_assignments)
+print(f"   Balanced routing loss: {loss_balanced:.4f} (ideal ≈ 1.0)")
+assert 0.8 < loss_balanced < 1.3, f"Balanced loss should be near 1.0, got {loss_balanced}"
+
+# Collapsed case
+collapsed_assignments = np.zeros(num_tokens, dtype=int)  # all to expert 0
+collapsed_probs = np.zeros((num_tokens, 8))
+collapsed_probs[:, 0] = 0.9
+collapsed_probs[:, 1:] = 0.1 / 7
+loss_collapsed = load_balancing_loss(collapsed_probs, collapsed_assignments)
+print(f"   Collapsed routing loss: {loss_collapsed:.4f} (bad → ~7.2)")
+assert loss_collapsed > 5.0, f"Collapsed loss should be high, got {loss_collapsed}"
+
+print(f"\\n✅ Load balancing loss works!")
+print(f"   Balanced: {loss_balanced:.3f} vs Collapsed: {loss_collapsed:.3f}")
+print(f"   The {loss_collapsed/loss_balanced:.1f}× difference drives the router toward even distribution")
+`
+};
+
+async function initPyodide() {
+    const status = document.getElementById('pyodideStatus');
+    try {
+        pyodide = await loadPyodide();
+        await pyodide.loadPackage('numpy');
+        status.innerHTML = '✅ Python ready — NumPy loaded';
+        status.style.color = '#4ecdc4';
+    } catch (e) {
+        status.innerHTML = '⚠️ Python failed to load. Puzzles may not run. <button class="btn-secondary" onclick="initPyodide()" style="font-size:0.8em">Retry</button>';
+        status.style.color = '#fc4a1a';
+    }
+}
+
+// Store defaults
+document.addEventListener('DOMContentLoaded', () => {
+    for (let i = 1; i <= 4; i++) {
+        DEFAULTS[i] = document.getElementById('code' + i).value;
+    }
+});
+
+function resetPuzzle(n) {
+    document.getElementById('code' + n).value = DEFAULTS[n];
+    document.getElementById('output' + n).textContent = '';
+    document.getElementById('output' + n).className = 'output-area';
+}
+
+const EXPERT_NAMES_PY = JSON.stringify(EXPERT_NAMES);
+
+async function runPuzzle(n) {
+    if (!pyodide) {
+        document.getElementById('output' + n).textContent = '⏳ Python still loading, please wait...';
+        return;
+    }
+    const code = document.getElementById('code' + n).value;
+    const output = document.getElementById('output' + n);
+    output.textContent = '⏳ Running...';
+    output.className = 'output-area';
+
+    try {
+        pyodide.runPython(`
+import sys, io
+sys.stdout = io.StringIO()
+EXPERT_NAMES = ${EXPERT_NAMES_PY}
+`);
+        pyodide.runPython(code);
+        pyodide.runPython(TESTS[n]);
+        const stdout = pyodide.runPython('sys.stdout.getvalue()');
+        output.textContent = stdout;
+        output.className = 'output-area success';
+    } catch (e) {
+        output.textContent = '❌ ' + e.message;
+        output.className = 'output-area error';
+    }
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    initExpertGrid();
+    initBalanceBars();
+    setBalanceMode('balanced');
+
+    document.getElementById('tokenInput').addEventListener('input', (e) => {
+        updateRouting(e.target.value);
+    });
+
+    // Preload some routing for visual appeal
+    updateRouting('');
+});
+
+// Tab key in textareas
+document.addEventListener('keydown', (e) => {
+    if (e.target.classList.contains('code-editor') && e.key === 'Tab') {
+        e.preventDefault();
+        const ta = e.target;
+        const start = ta.selectionStart;
+        ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(ta.selectionEnd);
+        ta.selectionStart = ta.selectionEnd = start + 4;
+    }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js" onload="initPyodide()"></script>
+</body>
+</html>

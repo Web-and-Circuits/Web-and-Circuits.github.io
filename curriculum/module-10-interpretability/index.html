@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 10: What Do They Actually Know?</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#14141f;--surface2:#1e1e2e;--accent:#ff6b35;--accent2:#e8c547;--accent3:#7c5cbf;--text:#e0e0e0;--dim:#888;--green:#4ec9b0;--red:#f44;--blue:#569cd6;--gold:#ffd700;--bridge:#ff4500}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.hero{text-align:center;padding:60px 20px 40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(255,69,0,.08),transparent 70%);pointer-events:none}
+.mod-num{font-size:.9rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);margin:10px 0;background:linear-gradient(135deg,#ff6b35,#ff4500,#e8c547);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{color:var(--dim);font-size:1.1rem;max-width:600px;margin:0 auto}
+
+/* Navigation */
+.act-nav{display:flex;justify-content:center;gap:8px;padding:20px;position:sticky;top:0;z-index:100;background:rgba(10,10,15,.9);backdrop-filter:blur(10px)}
+.act-nav button{padding:10px 20px;border:1px solid #333;border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:.9rem;transition:.2s}
+.act-nav button:hover,.act-nav button.active{border-color:var(--accent);color:var(--accent);background:rgba(255,107,53,.1)}
+
+/* Sections */
+.act{display:none;padding:30px 0 60px}
+.act.visible{display:block}
+.act-header{text-align:center;margin-bottom:40px}
+.act-header h2{font-size:1.8rem;margin-bottom:8px}
+.act-header p{color:var(--dim)}
+.card{background:var(--surface);border:1px solid #222;border-radius:12px;padding:24px;margin-bottom:24px}
+.card h3{color:var(--accent2);margin-bottom:12px;font-size:1.2rem}
+
+/* Network Visualization */
+#network-viz{position:relative;width:100%;height:420px;background:var(--surface);border-radius:12px;border:1px solid #222;overflow:hidden}
+#net-canvas{width:100%;height:100%}
+.input-row{display:flex;gap:10px;margin-top:16px}
+.input-row input{flex:1;padding:12px 16px;background:var(--surface2);border:1px solid #333;border-radius:8px;color:var(--text);font-size:1rem}
+.input-row input:focus{outline:none;border-color:var(--accent)}
+.feature-readout{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.feature-bar{background:var(--surface2);border-radius:6px;padding:8px 12px;position:relative;overflow:hidden}
+.feature-bar .fill{position:absolute;left:0;top:0;height:100%;border-radius:6px;transition:width .4s ease,background .4s;z-index:0}
+.feature-bar .label{position:relative;z-index:1;font-size:.85rem;display:flex;justify-content:space-between}
+.feature-bar .label .val{font-weight:700}
+
+/* Golden Gate highlight */
+.gg-highlight{border:2px solid var(--bridge)!important;box-shadow:0 0 20px rgba(255,69,0,.3)}
+.gg-badge{display:inline-block;background:var(--bridge);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* Platonic Representation */
+#platonic-viz{height:400px;position:relative}
+#plat-canvas{width:100%;height:100%}
+.concept-picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
+.concept-btn{padding:8px 16px;border:1px solid #333;border-radius:20px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:.85rem;transition:.2s}
+.concept-btn:hover,.concept-btn.active{border-color:var(--accent3);color:var(--accent3);background:rgba(124,92,191,.15)}
+.similarity-score{text-align:center;margin-top:16px;font-size:1.3rem;color:var(--accent2)}
+
+/* Code Editor */
+.puzzle{margin-bottom:32px}
+.puzzle-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.puzzle-num{background:var(--accent3);color:#fff;padding:4px 12px;border-radius:12px;font-size:.8rem}
+.puzzle-status{font-size:.85rem}
+.code-wrap{position:relative;border-radius:8px;overflow:hidden;border:1px solid #333}
+.code-wrap textarea{width:100%;min-height:220px;padding:16px;background:#1a1a2e;color:#d4d4d4;border:none;font-family:'Fira Code',monospace;font-size:.85rem;resize:vertical;tab-size:4;line-height:1.5}
+.code-wrap textarea:focus{outline:none}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.2s}
+.btn-run{background:var(--green);color:#000}.btn-run:hover{background:#5ddbc5}
+.btn-reset{background:#333;color:var(--text)}.btn-reset:hover{background:#444}
+.btn-hint{background:transparent;color:var(--accent2);border:1px solid var(--accent2)}.btn-hint:hover{background:rgba(232,197,71,.1)}
+.output-box{margin-top:10px;padding:14px;background:#0d0d1a;border-radius:8px;font-family:monospace;font-size:.85rem;white-space:pre-wrap;max-height:200px;overflow-y:auto;border:1px solid #222}
+.output-box.success{border-color:var(--green)}
+.output-box.error{border-color:var(--red)}
+.hint-box{margin-top:10px;padding:12px;background:rgba(232,197,71,.08);border:1px solid rgba(232,197,71,.2);border-radius:8px;font-size:.9rem;display:none}
+
+/* Papers */
+.paper-card{background:var(--surface);border:1px solid #222;border-radius:12px;padding:28px;margin-bottom:24px;border-left:4px solid var(--accent)}
+.paper-card h3{font-size:1.3rem;margin-bottom:4px}
+.paper-meta{color:var(--dim);font-size:.85rem;margin-bottom:16px}
+blockquote{border-left:3px solid var(--accent2);padding:12px 16px;margin:16px 0;background:rgba(232,197,71,.05);border-radius:0 8px 8px 0;font-style:italic;color:var(--accent2)}
+.key-ideas{list-style:none;padding:0}
+.key-ideas li{padding:8px 0;padding-left:24px;position:relative}
+.key-ideas li::before{content:'→';position:absolute;left:0;color:var(--accent)}
+.connection-box{background:linear-gradient(135deg,rgba(255,69,0,.1),rgba(124,92,191,.1));border:1px solid rgba(255,107,53,.3);border-radius:12px;padding:28px;margin-top:32px}
+.connection-box h3{color:var(--accent);margin-bottom:12px}
+
+/* Responsive */
+@media(max-width:600px){
+  .hero{padding:40px 16px 24px}
+  .act-nav{gap:4px;padding:12px}
+  .act-nav button{padding:8px 12px;font-size:.8rem}
+  .card{padding:16px}
+  .feature-readout{grid-template-columns:1fr}
+  #network-viz,#platonic-viz{height:300px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="mod-num">Module 10</div>
+  <h1>What Do They Actually Know?</h1>
+  <p class="sub">Interpretability &amp; the quest to understand what neural networks learn — from individual features to universal representations</p>
+</div>
+
+<nav class="act-nav">
+  <button class="active" onclick="showAct(0)">🔬 Explore</button>
+  <button onclick="showAct(1)">🔨 Build</button>
+  <button onclick="showAct(2)">📄 Connect</button>
+</nav>
+
+<div class="container">
+
+<!-- ========== ACT 1: EXPLORE ========== -->
+<section class="act visible" id="act-0">
+  <div class="act-header">
+    <h2>🔬 Act 1: The Explorable</h2>
+    <p>Peer inside the black box — see what features a neural network finds</p>
+  </div>
+
+  <div class="card">
+    <h3>🌉 Feature Activation Explorer</h3>
+    <p style="color:var(--dim);margin-bottom:16px">Type anything below. Watch which <strong>features</strong> light up in the network. One special feature responds to a very specific concept...</p>
+    <div id="network-viz"><canvas id="net-canvas"></canvas></div>
+    <div class="input-row">
+      <input type="text" id="feature-input" placeholder="Try: Golden Gate Bridge, sunset, cat, San Francisco..." autocomplete="off">
+    </div>
+    <div class="feature-readout" id="feature-readout"></div>
+  </div>
+
+  <div class="card" style="margin-top:32px">
+    <h3>🌐 The Platonic Representation Hypothesis</h3>
+    <p style="color:var(--dim);margin-bottom:16px">Two models — one trained on <strong>images</strong>, one on <strong>text</strong> — learn surprisingly similar internal representations. Pick a concept and watch their hidden spaces align.</p>
+    <div id="platonic-viz" style="background:var(--surface);border-radius:12px;border:1px solid #222"><canvas id="plat-canvas"></canvas></div>
+    <div class="concept-picker" id="concept-picker"></div>
+    <div class="similarity-score" id="sim-score"></div>
+  </div>
+</section>
+
+<!-- ========== ACT 2: BUILD ========== -->
+<section class="act" id="act-1">
+  <div class="act-header">
+    <h2>🔨 Act 2: The Build</h2>
+    <p>Four puzzles exploring interpretability techniques</p>
+  </div>
+  <div id="pyodide-status" style="text-align:center;padding:16px;color:var(--dim)">Loading Python runtime...</div>
+  <div id="puzzles"></div>
+</section>
+
+<!-- ========== ACT 3: CONNECT ========== -->
+<section class="act" id="act-2">
+  <div class="act-header">
+    <h2>📄 Act 3: The Connection</h2>
+    <p>Two papers, two big questions about what models know</p>
+  </div>
+
+  <div class="paper-card" style="border-left-color:var(--bridge)">
+    <h3>🌉 Scaling Monosemanticity</h3>
+    <div class="paper-meta">Templeton et al., 2024 · Anthropic · Paper #23</div>
+    <blockquote>"We successfully extracted millions of features from the middle layer of Claude 3 Sonnet... many of which are highly interpretable."</blockquote>
+    <p>The team trained <strong>sparse autoencoders</strong> on Claude 3 Sonnet's activations and found individual features corresponding to specific, interpretable concepts — including a now-famous feature that fires for anything related to the <strong style="color:var(--bridge)">Golden Gate Bridge</strong>.</p>
+    <h4 style="margin-top:20px;color:var(--accent2)">Key Ideas</h4>
+    <ul class="key-ideas">
+      <li><strong>Superposition:</strong> Neural networks pack more concepts than they have neurons by encoding features as directions in activation space, not individual neurons.</li>
+      <li><strong>Sparse Autoencoders (SAEs):</strong> By training an autoencoder with a sparsity penalty, you can decompose superposed activations into interpretable features.</li>
+      <li><strong>The Golden Gate Bridge Experiment:</strong> When researchers artificially amplified the bridge feature, Claude became obsessed — relating everything back to the bridge. This proved the feature was causally linked to the concept.</li>
+      <li><strong>Safety Implications:</strong> If we can find features for deception, manipulation, or dangerous knowledge, we can monitor or steer them. This is <em>mechanistic interpretability</em> — Anthropic's core safety bet.</li>
+      <li><strong>Scale matters:</strong> Larger SAEs find more specific features. A small SAE might have "bridges." A large one distinguishes the Golden Gate Bridge from the Brooklyn Bridge.</li>
+    </ul>
+  </div>
+
+  <div class="paper-card" style="border-left-color:var(--accent3)">
+    <h3>🌐 The Platonic Representation Hypothesis</h3>
+    <div class="paper-meta">Huh et al., 2024 · MIT · Paper #21</div>
+    <blockquote>"Neural networks, trained with different objectives on different data and modalities, are converging to a shared statistical model of reality."</blockquote>
+    <p>A language model trained on text and a vision model trained on images develop <strong>strikingly similar</strong> internal representations — as if they're both discovering the same underlying structure of reality.</p>
+    <h4 style="margin-top:20px;color:var(--accent2)">Key Ideas</h4>
+    <ul class="key-ideas">
+      <li><strong>Convergent Representations:</strong> Using metrics like CKA and mutual nearest neighbors, different models' hidden spaces are becoming more aligned as they scale up.</li>
+      <li><strong>The "Platonic Ideal":</strong> There may be a unique, optimal representation of reality that all sufficiently capable models converge toward — a statistical "Platonic form."</li>
+      <li><strong>Cross-Modal Alignment:</strong> A vision model and a language model, never seeing each other's data, learn representations where "dog" maps to similar regions in both hidden spaces.</li>
+      <li><strong>Scale drives convergence:</strong> Bigger models trained on more data are <em>more</em> similar to each other, not less. They're all finding the same structure.</li>
+      <li><strong>Philosophical implications:</strong> If models converge on a shared reality model, it constrains what they can represent — potentially making alignment easier (or revealing fundamental limits).</li>
+    </ul>
+  </div>
+
+  <div class="connection-box">
+    <h3>🔗 The Connection: Interpretability → Safety</h3>
+    <p style="margin-bottom:16px">These two papers tell a unified story about AI safety:</p>
+    <p><strong style="color:var(--bridge)">Scaling Monosemanticity</strong> says: <em>"We can look inside and find what models know."</em> Individual features correspond to concepts we can name, measure, and even manipulate. If a model learns deception, we might find the deception feature.</p>
+    <p style="margin-top:12px"><strong style="color:var(--accent3)">The Platonic Representation Hypothesis</strong> says: <em>"What models know converges to something real."</em> Models aren't learning arbitrary patterns — they're discovering the structure of reality itself. This means interpretability findings might generalize across models.</p>
+    <p style="margin-top:16px;color:var(--accent2)"><strong>Together:</strong> If all models converge to similar representations, and we can interpret those representations, then understanding one model helps us understand <em>all</em> models. This is Anthropic's bet — that mechanistic interpretability can scale to make AI systems fundamentally safer, not just better-behaved on the surface.</p>
+    <p style="margin-top:16px;color:var(--dim)">The question isn't whether models learn real things. They do. The question is whether we can understand what they've learned <em>fast enough</em> to keep up.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+// ============ ACT NAVIGATION ============
+const acts = document.querySelectorAll('.act');
+const navBtns = document.querySelectorAll('.act-nav button');
+function showAct(i){
+  acts.forEach((a,j)=>{a.classList.toggle('visible',j===i)});
+  navBtns.forEach((b,j)=>{b.classList.toggle('active',j===i)});
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(i===1&&!window._pyodideLoading) loadPyodide();
+}
+
+// ============ ACT 1: FEATURE EXPLORER ============
+const FEATURES = [
+  {name:'🌉 Golden Gate Bridge',keywords:['golden gate','bridge','san francisco','bay','suspension','fog','california','sf','golden','gate','span','tower','cable','marin','sausalito','presidio','ggb'],color:'#ff4500',special:true},
+  {name:'🐱 Cat/Feline',keywords:['cat','kitten','feline','meow','purr','whiskers','paw','tabby','persian'],color:'#4ec9b0'},
+  {name:'🌅 Sunset/Light',keywords:['sunset','sunrise','light','glow','dawn','dusk','orange','sky','horizon','golden hour','sun'],color:'#e8c547'},
+  {name:'🏔️ Geography',keywords:['mountain','river','ocean','lake','city','country','island','continent','valley','desert'],color:'#569cd6'},
+  {name:'🍕 Food',keywords:['food','eat','cook','pizza','sushi','bread','cake','meal','restaurant','hungry','delicious'],color:'#c586c0'},
+  {name:'📚 Language',keywords:['word','read','write','book','story','poem','sentence','grammar','language','text'],color:'#9cdcfe'},
+  {name:'🔢 Numbers',keywords:['number','math','count','equation','calculate','sum','zero','infinity','algebra','geometry'],color:'#dcdcaa'},
+  {name:'😊 Emotion',keywords:['happy','sad','love','anger','fear','joy','emotion','feel','mood','excited','beautiful'],color:'#f48771'},
+];
+
+const canvas = document.getElementById('net-canvas');
+const ctx = canvas.getContext('2d');
+let netW, netH, neurons = [], connections = [], activations = new Float32Array(FEATURES.length);
+
+function initNetwork(){
+  const r = canvas.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+  netW = r.width; netH = r.height;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  neurons = [];
+  const layers = [6, 10, 12, 10, FEATURES.length];
+  const lx = layers.map((_,i) => 60 + i*(netW-120)/(layers.length-1));
+  layers.forEach((n,li) => {
+    for(let i=0;i<n;i++){
+      const y = netH/2 + (i - (n-1)/2) * Math.min(32, (netH-60)/n);
+      neurons.push({x:lx[li],y,layer:li,idx:i,act:0});
+    }
+  });
+
+  connections = [];
+  for(let li=0;li<layers.length-1;li++){
+    const from = neurons.filter(n=>n.layer===li);
+    const to = neurons.filter(n=>n.layer===li+1);
+    from.forEach(f => to.forEach(t => {
+      connections.push({from:f,to:t,w:Math.random()*.6+.2});
+    }));
+  }
+}
+
+function drawNetwork(){
+  ctx.clearRect(0,0,netW,netH);
+  // connections
+  connections.forEach(c => {
+    const a = Math.max(c.from.act, c.to.act);
+    ctx.strokeStyle = a > .1 ? `rgba(255,107,53,${a*.5})` : 'rgba(255,255,255,.04)';
+    ctx.lineWidth = a > .1 ? a*2 : .5;
+    ctx.beginPath(); ctx.moveTo(c.from.x,c.from.y); ctx.lineTo(c.to.x,c.to.y); ctx.stroke();
+  });
+  // neurons
+  neurons.forEach(n => {
+    const r = 5 + n.act * 6;
+    const isOutput = n.layer === 4;
+    let col = `rgba(255,255,255,${.15 + n.act*.85})`;
+    if(isOutput && n.act > .1){
+      col = FEATURES[n.idx]?.color || col;
+    }
+    if(isOutput && FEATURES[n.idx]?.special && n.act > .3){
+      ctx.shadowBlur = 20; ctx.shadowColor = '#ff4500';
+    }
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+  // labels
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+  const labels = ['Input','Hidden 1','Hidden 2','Hidden 3','Features'];
+  const layers = [0,1,2,3,4];
+  layers.forEach(li => {
+    const n = neurons.find(n=>n.layer===li);
+    if(n) ctx.fillText(labels[li], n.x, netH - 8);
+  });
+}
+
+function activateFeatures(text){
+  const t = text.toLowerCase();
+  FEATURES.forEach((f,i) => {
+    let score = 0;
+    f.keywords.forEach(k => {
+      if(t.includes(k)) score += k.length > 4 ? .6 : .35;
+    });
+    activations[i] = Math.min(score, 1);
+  });
+
+  // propagate back through network for visual effect
+  neurons.forEach(n => {
+    if(n.layer === 4) {n.act = activations[n.idx]; return;}
+    n.act = 0;
+  });
+  // backward glow
+  for(let li=3;li>=0;li--){
+    const layerNeurons = neurons.filter(n=>n.layer===li);
+    layerNeurons.forEach(n => {
+      let sum = 0, count = 0;
+      connections.filter(c=>c.from===n).forEach(c=>{sum+=c.to.act*c.w;count++});
+      n.act = count ? Math.min(sum/count * 1.5, 1) : 0;
+      if(text.length > 0 && n.act < .05) n.act = Math.random()*.08;
+    });
+  }
+
+  drawNetwork();
+  renderFeatureBars();
+}
+
+function renderFeatureBars(){
+  const el = document.getElementById('feature-readout');
+  el.innerHTML = FEATURES.map((f,i) => {
+    const v = activations[i];
+    const gg = f.special && v > .3;
+    return `<div class="feature-bar ${gg?'gg-highlight':''}">
+      <div class="fill" style="width:${v*100}%;background:${f.color}${v>.1?'40':'10'}"></div>
+      <div class="label"><span>${f.name}${gg?'<span class=gg-badge>FIRING!</span>':''}</span><span class="val">${(v*100).toFixed(0)}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+const featureInput = document.getElementById('feature-input');
+featureInput.addEventListener('input', e => activateFeatures(e.target.value));
+
+// ============ ACT 1: PLATONIC REPRESENTATION ============
+const CONCEPTS = ['dog','car','tree','music','fire','ocean','king','happy','house','star'];
+const platCanvas = document.getElementById('plat-canvas');
+const platCtx = platCanvas.getContext('2d');
+let platW, platH, selectedConcept = null, animT = 0;
+
+// Generate deterministic pseudo-random points for each concept in both model spaces
+function seededRand(s){return function(){s=Math.sin(s)*10000;return s-Math.floor(s)}}
+
+const modelPoints = {};
+CONCEPTS.forEach((c,ci) => {
+  const r1 = seededRand(ci*137+42);
+  const r2 = seededRand(ci*251+99);
+  // Vision model points (cluster)
+  const vCx = r1()*.6+.2, vCy = r1()*.6+.2;
+  // Language model points - similar but offset (showing convergence)
+  const lCx = vCx + (r2()-.5)*.15, lCy = vCy + (r2()-.5)*.15;
+  modelPoints[c] = {
+    vision: Array.from({length:8},()=>({x:vCx+(r1()-.5)*.08, y:vCy+(r1()-.5)*.08})),
+    language: Array.from({length:8},()=>({x:lCx+(r2()-.5)*.08, y:lCy+(r2()-.5)*.08})),
+  };
+});
+
+function initPlatonic(){
+  const r = platCanvas.getBoundingClientRect();
+  platCanvas.width = r.width * devicePixelRatio;
+  platCanvas.height = r.height * devicePixelRatio;
+  platW = r.width; platH = r.height;
+  platCtx.scale(devicePixelRatio, devicePixelRatio);
+
+  // Concept buttons
+  document.getElementById('concept-picker').innerHTML = CONCEPTS.map(c =>
+    `<button class="concept-btn" onclick="selectConcept('${c}')">${c}</button>`
+  ).join('');
+  drawPlatonic();
+}
+
+function selectConcept(c){
+  selectedConcept = c;
+  document.querySelectorAll('.concept-btn').forEach(b => b.classList.toggle('active', b.textContent===c));
+  animT = 0;
+  animatePlatonic();
+}
+
+function drawPlatonic(t=1){
+  platCtx.clearRect(0,0,platW,platH);
+  const hw = platW/2, pad=40;
+
+  // Labels
+  platCtx.fillStyle='rgba(255,255,255,.4)'; platCtx.font='bold 13px system-ui'; platCtx.textAlign='center';
+  platCtx.fillText('Vision Model', hw/2, 24);
+  platCtx.fillText('Language Model', hw + hw/2, 24);
+
+  // Divider
+  platCtx.strokeStyle='rgba(255,255,255,.1)'; platCtx.setLineDash([4,4]);
+  platCtx.beginPath(); platCtx.moveTo(hw,30); platCtx.lineTo(hw,platH-10); platCtx.stroke();
+  platCtx.setLineDash([]);
+
+  // Draw all concept clusters (dim)
+  CONCEPTS.forEach(c => {
+    const d = modelPoints[c];
+    const isSel = c === selectedConcept;
+    const alpha = isSel ? .9 : .15;
+    const r = isSel ? 5 : 3;
+
+    // Vision side
+    d.vision.forEach(p => {
+      platCtx.fillStyle = isSel ? `rgba(78,201,176,${alpha})` : `rgba(255,255,255,${alpha})`;
+      platCtx.beginPath(); platCtx.arc(pad + p.x*(hw-pad*2), 40+p.y*(platH-60), r, 0, Math.PI*2); platCtx.fill();
+    });
+    // Language side
+    d.language.forEach(p => {
+      platCtx.fillStyle = isSel ? `rgba(124,92,191,${alpha})` : `rgba(255,255,255,${alpha})`;
+      platCtx.beginPath(); platCtx.arc(hw+pad + p.x*(hw-pad*2), 40+p.y*(platH-60), r, 0, Math.PI*2); platCtx.fill();
+    });
+
+    // Connection lines for selected
+    if(isSel && t > 0){
+      for(let i=0;i<d.vision.length;i++){
+        const vx = pad + d.vision[i].x*(hw-pad*2);
+        const vy = 40 + d.vision[i].y*(platH-60);
+        const lx = hw+pad + d.language[i].x*(hw-pad*2);
+        const ly = 40 + d.language[i].y*(platH-60);
+        const prog = Math.min(t, 1);
+        platCtx.strokeStyle = `rgba(232,197,71,${.3*prog})`;
+        platCtx.lineWidth = 1;
+        platCtx.beginPath();
+        platCtx.moveTo(vx, vy);
+        platCtx.lineTo(vx + (lx-vx)*prog, vy + (ly-vy)*prog);
+        platCtx.stroke();
+      }
+    }
+  });
+
+  // Similarity score
+  if(selectedConcept){
+    const d = modelPoints[selectedConcept];
+    let totalDist = 0;
+    d.vision.forEach((v,i)=>{
+      const l = d.language[i];
+      totalDist += Math.sqrt((v.x-l.x)**2+(v.y-l.y)**2);
+    });
+    const sim = Math.max(0, 1 - totalDist/d.vision.length * 5);
+    document.getElementById('sim-score').innerHTML = `Representation Similarity (CKA): <strong style="color:var(--accent2)">${(sim*100*Math.min(t,1)).toFixed(1)}%</strong>`;
+  }
+}
+
+let platAnim;
+function animatePlatonic(){
+  cancelAnimationFrame(platAnim);
+  function step(){
+    animT += .02;
+    drawPlatonic(animT);
+    if(animT < 1.2) platAnim = requestAnimationFrame(step);
+  }
+  step();
+}
+
+// ============ ACT 2: PYTHON PUZZLES ============
+const PUZZLES = [
+  {
+    title: 'Sparse Autoencoder',
+    desc: 'Compress neural activations into sparse, interpretable features. The key insight from Scaling Monosemanticity: use an overcomplete basis with a sparsity penalty.',
+    starter: `import numpy as np
+
+# Simulated neural network activations (100 samples, 8 dimensions)
+np.random.seed(42)
+activations = np.random.randn(100, 8)
+
+# TODO: Build a simple sparse autoencoder
+# 1. Create weight matrices for encoder (8 -> 16) and decoder (16 -> 8)
+# 2. Encode: hidden = ReLU(activations @ W_enc + b_enc)
+# 3. Apply L1 sparsity penalty to hidden activations
+# 4. Decode: reconstructed = hidden @ W_dec + b_dec
+# 5. Print the sparsity (fraction of zeros) and reconstruction error
+
+W_enc = np.random.randn(8, 16) * 0.1
+b_enc = np.zeros(16)
+W_dec = np.random.randn(16, 8) * 0.1
+b_dec = np.zeros(8)
+
+def relu(x):
+    return np.maximum(0, x)
+
+# YOUR CODE: encode, apply threshold for sparsity, decode
+hidden = relu(activations @ W_enc + b_enc)
+
+# Apply sparsity: zero out small activations (threshold = 0.5)
+sparse_hidden = hidden * (hidden > 0.5)
+
+reconstructed = sparse_hidden @ W_dec + b_dec
+
+sparsity = np.mean(sparse_hidden == 0)
+recon_error = np.mean((activations - reconstructed) ** 2)
+print(f"Sparsity: {sparsity:.1%}")
+print(f"Reconstruction Error: {recon_error:.4f}")
+print(f"Active features per sample: {np.mean(np.sum(sparse_hidden > 0, axis=1)):.1f}")`,
+    solution: `Sparsity:`,
+    hint: 'The key idea: ReLU + a threshold creates sparsity. Most features should be zero for any given input. Try adjusting the threshold.'
+  },
+  {
+    title: 'Feature Activation Analysis',
+    desc: 'Find which inputs maximally activate a specific feature — this is how researchers identified the Golden Gate Bridge feature.',
+    starter: `import numpy as np
+
+# Simulated feature detector for "bridge-related" concepts
+np.random.seed(42)
+inputs = [
+    "The Golden Gate Bridge spans the bay",
+    "Cats sleep on warm surfaces",
+    "The bridge was built in 1937",
+    "Neural networks learn features",
+    "San Francisco fog rolls in",
+    "Suspension bridges are engineering marvels",
+    "Python is a programming language",
+    "The bay area has great weather",
+    "Brooklyn Bridge in New York",
+    "Machine learning is fascinating"
+]
+
+# Simulated activation values for "Feature #7821" (bridge-related)
+# In real research, these come from running inputs through the SAE
+feature_activations = np.array([0.92, 0.01, 0.85, 0.03, 0.45, 0.88, 0.02, 0.31, 0.78, 0.05])
+
+# TODO: Find the top-3 maximally activating inputs
+# 1. Sort inputs by activation value (descending)
+# 2. Print the top 3 with their activation values
+# 3. Compute the mean activation and std
+# 4. Identify which inputs are > 2 std above mean (strongly activating)
+
+top_indices = np.argsort(feature_activations)[::-1][:3]
+print("=== Top 3 Maximally Activating Inputs for Feature #7821 ===")
+for i, idx in enumerate(top_indices):
+    print(f"{i+1}. [{feature_activations[idx]:.2f}] {inputs[idx]}")
+
+mean_act = np.mean(feature_activations)
+std_act = np.std(feature_activations)
+print(f"\\nMean activation: {mean_act:.3f}")
+print(f"Std deviation: {std_act:.3f}")
+print(f"Threshold (mean + 2*std): {mean_act + 2*std_act:.3f}")
+
+print("\\n=== Strongly Activating Inputs (>2σ above mean) ===")
+for i, act in enumerate(feature_activations):
+    if act > mean_act + 2 * std_act:
+        print(f"  [{act:.2f}] {inputs[i]}")`,
+    solution: `Top 3`,
+    hint: 'np.argsort gives indices that would sort the array. Use [::-1] to reverse for descending order.'
+  },
+  {
+    title: 'CKA Similarity',
+    desc: 'Compute Centered Kernel Alignment between two models\' representations — the key metric from the Platonic Representation Hypothesis.',
+    starter: `import numpy as np
+
+def centering_matrix(n):
+    """Create centering matrix H = I - 1/n * 11^T"""
+    return np.eye(n) - np.ones((n, n)) / n
+
+def linear_CKA(X, Y):
+    """Compute Linear CKA between representations X and Y.
+    
+    CKA = ||Y^T X||_F^2 / (||X^T X||_F * ||Y^T Y||_F)
+    
+    where X and Y are centered.
+    """
+    # TODO: Implement linear CKA
+    # 1. Center X and Y using the centering matrix
+    # 2. Compute HSIC(X,Y) = ||Y^T X||_F^2 / (n-1)^2
+    # 3. Normalize: CKA = HSIC(X,Y) / sqrt(HSIC(X,X) * HSIC(Y,Y))
+    
+    n = X.shape[0]
+    H = centering_matrix(n)
+    
+    # Center the representations
+    X_c = H @ X
+    Y_c = H @ Y
+    
+    # HSIC using linear kernel
+    hsic_xy = np.linalg.norm(Y_c.T @ X_c, 'fro') ** 2
+    hsic_xx = np.linalg.norm(X_c.T @ X_c, 'fro') ** 2
+    hsic_yy = np.linalg.norm(Y_c.T @ Y_c, 'fro') ** 2
+    
+    return hsic_xy / np.sqrt(hsic_xx * hsic_yy)
+
+# Test: similar representations should have high CKA
+np.random.seed(42)
+n_samples = 50
+
+# Model A representations (e.g., vision model)
+X = np.random.randn(n_samples, 64)
+
+# Model B: similar structure + noise (e.g., language model)  
+rotation = np.random.randn(64, 32)  # Different dimensionality!
+Y_similar = X @ rotation + np.random.randn(n_samples, 32) * 0.3
+
+# Model C: completely random
+Y_random = np.random.randn(n_samples, 32)
+
+print(f"CKA(Vision, Language) = {linear_CKA(X, Y_similar):.4f}")
+print(f"CKA(Vision, Random)   = {linear_CKA(X, Y_random):.4f}")
+print(f"CKA(Vision, Vision)   = {linear_CKA(X, X):.4f}")
+print()
+print("✓ Similar models → high CKA" if linear_CKA(X, Y_similar) > 0.5 else "✗ Check your implementation")
+print("✓ Random models → low CKA" if linear_CKA(X, Y_random) < 0.3 else "✗ Check your implementation")`,
+    solution: `CKA(Vision, Language)`,
+    hint: 'CKA is scale and rotation invariant — that\'s why it can compare models with different dimensionalities. The Frobenius norm ||A||_F = sqrt(sum of squared elements).'
+  },
+  {
+    title: 'Linear Probing',
+    desc: 'Train a linear classifier on hidden states to detect a concept. If a linear probe works, the concept is linearly encoded in the representation.',
+    starter: `import numpy as np
+
+np.random.seed(42)
+
+# Simulated hidden states from a language model
+# 200 samples, 32-dimensional hidden states
+n = 200
+d = 32
+
+# The model has implicitly learned "sentiment"
+# Positive sentiment is encoded as a direction in hidden space
+sentiment_direction = np.random.randn(d)
+sentiment_direction /= np.linalg.norm(sentiment_direction)
+
+# Generate hidden states with sentiment signal
+labels = np.array([1]*100 + [0]*100)  # 1=positive, 0=negative
+hidden_states = np.random.randn(n, d) * 0.5
+hidden_states[:100] += sentiment_direction * 2   # positive
+hidden_states[100:] -= sentiment_direction * 2   # negative
+
+# Shuffle
+perm = np.random.permutation(n)
+hidden_states = hidden_states[perm]
+labels = labels[perm]
+
+# Split train/test
+X_train, X_test = hidden_states[:160], hidden_states[160:]
+y_train, y_test = labels[:160], labels[160:]
+
+# TODO: Train a linear probe (logistic regression via gradient descent)
+# 1. Initialize weights w and bias b
+# 2. For each step: compute sigmoid(X @ w + b), then gradient, then update
+# 3. Report accuracy on test set
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
+
+w = np.zeros(d)
+b = 0.0
+lr = 0.1
+
+for step in range(200):
+    # Forward
+    logits = X_train @ w + b
+    preds = sigmoid(logits)
+    
+    # Gradient (binary cross-entropy)
+    error = preds - y_train
+    grad_w = X_train.T @ error / len(y_train)
+    grad_b = np.mean(error)
+    
+    # Update
+    w -= lr * grad_w
+    b -= lr * grad_b
+
+# Evaluate
+test_preds = (sigmoid(X_test @ w + b) > 0.5).astype(int)
+accuracy = np.mean(test_preds == y_test)
+print(f"Probe Accuracy: {accuracy:.1%}")
+print(f"Learned direction alignment: {np.abs(np.dot(w/np.linalg.norm(w), sentiment_direction)):.4f}")
+print()
+if accuracy > 0.9:
+    print("✓ The concept IS linearly encoded — a simple probe can find it!")
+else:
+    print("✗ Low accuracy — check your gradient computation")`,
+    solution: `Probe Accuracy:`,
+    hint: 'Logistic regression: sigmoid(Xw + b), binary cross-entropy gradient is just (prediction - label). The key insight: if a LINEAR probe works, the concept is represented as a direction.'
+  }
+];
+
+function renderPuzzles(){
+  document.getElementById('puzzles').innerHTML = PUZZLES.map((p,i) => `
+    <div class="puzzle card" id="puzzle-${i}">
+      <div class="puzzle-header">
+        <div><span class="puzzle-num">Puzzle ${i+1}</span> <strong>${p.title}</strong></div>
+        <span class="puzzle-status" id="status-${i}">⏳ Not run</span>
+      </div>
+      <p style="color:var(--dim);margin-bottom:12px">${p.desc}</p>
+      <div class="code-wrap">
+        <textarea id="code-${i}" spellcheck="false">${p.starter}</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-run" onclick="runPuzzle(${i})">▶ Run</button>
+        <button class="btn btn-reset" onclick="resetPuzzle(${i})">↺ Reset</button>
+        <button class="btn btn-hint" onclick="toggleHint(${i})">💡 Hint</button>
+      </div>
+      <div class="hint-box" id="hint-${i}">${p.hint}</div>
+      <div class="output-box" id="output-${i}"></div>
+    </div>
+  `).join('');
+}
+
+function toggleHint(i){
+  const h = document.getElementById(`hint-${i}`);
+  h.style.display = h.style.display==='block'?'none':'block';
+}
+
+function resetPuzzle(i){
+  document.getElementById(`code-${i}`).value = PUZZLES[i].starter;
+  document.getElementById(`output-${i}`).textContent = '';
+  document.getElementById(`output-${i}`).className = 'output-box';
+  document.getElementById(`status-${i}`).textContent = '⏳ Not run';
+}
+
+// Pyodide
+let pyodide = null;
+window._pyodideLoading = false;
+
+async function loadPyodide(){
+  window._pyodideLoading = true;
+  const status = document.getElementById('pyodide-status');
+  try {
+    status.textContent = 'Loading Python runtime (Pyodide)...';
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+    document.head.appendChild(script);
+    await new Promise((res,rej)=>{script.onload=res;script.onerror=rej});
+    pyodide = await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'});
+    await pyodide.loadPackage('numpy');
+    status.textContent = '✅ Python ready! Solve the puzzles below.';
+    status.style.color = 'var(--green)';
+  } catch(e){
+    status.textContent = '❌ Failed to load Python. Check your connection.';
+    status.style.color = 'var(--red)';
+  }
+}
+
+async function runPuzzle(i){
+  if(!pyodide){document.getElementById(`output-${i}`).textContent='Python still loading...';return}
+  const code = document.getElementById(`code-${i}`).value;
+  const out = document.getElementById(`output-${i}`);
+  const stat = document.getElementById(`status-${i}`);
+  try {
+    pyodide.runPython(`import io,sys;sys.stdout=io.StringIO()`);
+    pyodide.runPython(code);
+    const result = pyodide.runPython('sys.stdout.getvalue()');
+    out.textContent = result || '(no output)';
+    const pass = result.includes(PUZZLES[i].solution);
+    out.className = `output-box ${pass?'success':''}`;
+    stat.textContent = pass ? '✅ Solved!' : '🔄 Running...';
+  } catch(e){
+    out.textContent = e.message;
+    out.className = 'output-box error';
+    stat.textContent = '❌ Error';
+  }
+}
+
+// ============ INIT ============
+function init(){
+  initNetwork();
+  activateFeatures('');
+  initPlatonic();
+  renderPuzzles();
+}
+
+window.addEventListener('resize', ()=>{
+  initNetwork(); activateFeatures(featureInput.value);
+  initPlatonic();
+});
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

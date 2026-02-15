@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-04: Make It Talk</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#4ecdc4,#6b8aff,#ffa502);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:620px;margin:0 auto}
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise textarea{width:100%;min-height:200px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.85rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+.equation{text-align:center;padding:1rem;margin:1rem 0;background:rgba(0,0,0,.2);border-radius:8px;font-family:'Georgia',serif;font-size:1.1rem;color:#c0c0e0;letter-spacing:.03em}
+.equation .small{font-size:.85rem;color:#888;margin-top:.25rem}
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+h3{color:#8aaeff;margin:1.5rem 0 .75rem}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#4ecdc4;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+@media(max-width:600px){.hero h1{font-size:1.7rem}.phase{padding:1.25rem}.exercise textarea{min-height:140px;font-size:.82rem}}
+
+/* Chat demo styles */
+.chat-demo{background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem;margin:1.25rem 0;max-height:300px;overflow-y:auto}
+.chat-msg{margin:.5rem 0;padding:.5rem .75rem;border-radius:8px;max-width:80%;font-size:.9rem}
+.chat-msg.user{background:#1a3a5a;margin-left:auto;text-align:right;color:#8ac4ff}
+.chat-msg.bot{background:#1a2a1a;color:#8aff8a}
+.chat-msg.system{background:#2a2a1a;color:#ffa502;font-size:.8rem;text-align:center;max-width:100%;font-style:italic}
+.chat-msg .sender{font-size:.72rem;color:#666;margin-bottom:2px}
+
+/* Diagram styles */
+.diagram{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:1.25rem 0;font-family:monospace;font-size:.85rem;line-height:1.8}
+.diagram .arrow{color:#4ecdc4}
+.diagram .label{color:#ffa502}
+.diagram .note{color:#666;font-style:italic}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Loading Pyodide…</p></div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 4 of 10</div>
+  <h1>💬 Make It Talk</h1>
+  <div class="subtitle">Your bot generates text. But it's trapped inside a Python script. Let's connect it to the outside world — so real people can chat with it in real time.</div>
+</div>
+
+<div class="container">
+
+<div class="progress-text"><span id="progress-count">0</span> / 6 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2>🧱 Hit the Wall</h2>
+
+  <p>Your bot from BUILD-02 can generate text. You type something in, it predicts the next tokens, out comes a response. But here's the problem: it only works if you run the Python script yourself, on your own computer, one message at a time.</p>
+
+  <p style="margin-top:1rem">What if Alice wants to talk to the bot from her phone? And Bob wants to talk to it from his laptop — at the same time? And neither of them has Python installed?</p>
+
+  <p style="margin-top:1rem">You need three things:</p>
+
+  <ol style="margin:1rem 0 0 1.5rem;color:#ccc">
+    <li><strong>A way for people to connect</strong> without installing anything</li>
+    <li><strong>Instant back-and-forth</strong> — not "send a request, wait, get a response"</li>
+    <li><strong>Separate conversations</strong> — Alice's chat shouldn't bleed into Bob's</li>
+  </ol>
+
+  <div class="insight" style="border-color:#5a2a1a;background:rgba(255,80,50,.1)">
+    <strong style="color:#ff6b4a">The core question:</strong> How do you turn a Python script into something anyone can talk to, from anywhere, instantly?
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- LEARN THE THEORY -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Learn the Theory</h2>
+
+  <h3>What's a Server?</h3>
+
+  <p>A <strong>server</strong> is just a program that sits and waits for connections. Think of it like a receptionist at a front desk — they don't go out looking for people. They sit there, and when someone walks up, they help them.</p>
+
+  <p style="margin-top:.75rem">Every server listens at a specific <strong>address</strong> — like an apartment number in a building. The building is your computer. The apartment number (called a "port") is just a number between 1 and 65535. When you type <code>localhost:8080</code> in your browser, you're saying: "Go to my own computer (localhost), knock on door 8080."</p>
+
+  <h3>HTTP: Sending Letters</h3>
+
+  <p>The most common way to talk to a server is <strong>HTTP</strong> — the same thing your browser uses to load web pages. Think of HTTP like <strong>sending letters</strong>:</p>
+
+  <ol style="margin:.5rem 0 0 1.5rem;color:#ccc">
+    <li>You write a letter (your message) and send it to the server's address</li>
+    <li>The server reads it, thinks about it, writes a reply</li>
+    <li>You get the reply back</li>
+    <li>Connection closes. Done.</li>
+  </ol>
+
+  <p style="margin-top:.75rem">This works fine for loading web pages (request a page → get a page). But for a <em>chat</em>, it's awkward. You'd have to send a new letter every time you want to check if the bot has a response. That's like mailing someone and then driving to the post office every 5 seconds to check for a reply.</p>
+
+  <h3>WebSockets: A Phone Call</h3>
+
+  <p>A <strong>WebSocket</strong> is like a <strong>phone call</strong>. You dial once, the connection stays open, and both sides can talk whenever they want — instantly, no waiting.</p>
+
+  <div class="diagram">
+    <div><span class="label">HTTP (letters):</span></div>
+    <div>&nbsp;&nbsp;Alice <span class="arrow">──request──→</span> Server</div>
+    <div>&nbsp;&nbsp;Alice <span class="arrow">←──response──</span> Server</div>
+    <div>&nbsp;&nbsp;<span class="note">(connection closes)</span></div>
+    <div>&nbsp;&nbsp;Alice <span class="arrow">──request──→</span> Server</div>
+    <div>&nbsp;&nbsp;Alice <span class="arrow">←──response──</span> Server</div>
+    <div>&nbsp;&nbsp;<span class="note">(connection closes again)</span></div>
+    <div style="margin-top:.75rem"><span class="label">WebSocket (phone call):</span></div>
+    <div>&nbsp;&nbsp;Alice <span class="arrow">══════════════</span> Server</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">←→ instant both ways ←→</span></div>
+    <div>&nbsp;&nbsp;<span class="note">(stays connected until someone hangs up)</span></div>
+  </div>
+
+  <p>This is perfect for a chatbot. The user connects once, and messages flow freely in both directions. The bot can even <em>stream</em> its response word by word — no waiting for the whole answer.</p>
+
+  <h3>Session Keys: Who's Who?</h3>
+
+  <p>Now imagine Alice and Bob are both connected. Alice says "Tell me about dogs." Bob says "What's the capital of France?" The server gets both messages — but how does it know which conversation is which?</p>
+
+  <p style="margin-top:.75rem"><strong>Give each conversation a unique ID.</strong> That's it. When Alice first connects, the server creates a random string — something like <code>"sess_a7x9m2"</code> — and associates it with Alice. Every message Alice sends includes that ID. Bob gets his own: <code>"sess_k3p8n1"</code>.</p>
+
+  <div class="insight">
+    <strong>A session key is just a name tag.</strong> The server uses it to look up: "Ah, sess_a7x9m2 — that's Alice. Her conversation history is about dogs. Let me continue where we left off."
+  </div>
+
+  <p>Without session keys, every message would be like talking to someone with amnesia. With them, each user gets their own persistent conversation.</p>
+
+  <h3>Putting It All Together</h3>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-size:.9rem">
+    <div style="color:#8aaeff;font-weight:600;margin-bottom:.5rem">The architecture of every chatbot:</div>
+    <div style="padding-left:1rem;color:#ccc">
+      <div>1. <strong>Server</strong> starts and listens on a port (the receptionist sits at the desk)</div>
+      <div>2. <strong>User connects</strong> via WebSocket (picks up the phone)</div>
+      <div>3. <strong>Session created</strong> with a unique ID (gets a name tag)</div>
+      <div>4. <strong>Messages flow</strong> back and forth instantly (the conversation)</div>
+      <div>5. <strong>Server looks up session</strong> to find conversation history (remembers context)</div>
+      <div>6. <strong>Bot generates response</strong> using the history (does its thinking)</div>
+      <div>7. <strong>Response streams back</strong> word by word (talks back)</div>
+    </div>
+  </div>
+
+  <p>That's the whole thing. A server, an always-on connection, and name tags. Let's build it.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- BUILD THE SOLUTION -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2>🔨 Build the Solution</h2>
+  <p>Six exercises. By the end, you've built a multi-user chat server with sessions and streaming.</p>
+
+  <!-- Ex 1: Build a basic server -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header">
+      <span class="ex-num">01</span>
+      <span class="ex-title">Build a Server — The Receptionist</span>
+      <span class="ex-check" id="check-ex1">○</span>
+    </div>
+    <div class="ex-desc">A server is just a program that waits for connections and responds. Let's build the simplest possible one: it receives a message and echoes it back.</div>
+    <textarea id="code-ex1">
+# We can't run a real network server in the browser,
+# but we can simulate the exact same logic.
+# The concepts are identical — only the transport differs.
+
+class SimpleServer:
+    """The simplest possible server.
+    
+    It listens for messages and sends back responses.
+    Think: receptionist at a desk.
+    """
+    def __init__(self, address, port):
+        self.address = address  # Which building (usually "localhost" = your own computer)
+        self.port = port        # Which door number
+        self.running = False
+    
+    def start(self):
+        self.running = True
+        print(f"Server listening at {self.address}:{self.port}")
+        print(f"(That means: on this computer, door #{self.port})")
+        print("Waiting for connections...")
+    
+    def handle_message(self, message):
+        """When a message arrives, what do we do with it?"""
+        print(f"\n  📨 Received: '{message}'")
+        response = f"You said: {message}"
+        print(f"  📤 Sending back: '{response}'")
+        return response
+    
+    def stop(self):
+        self.running = False
+        print("\nServer stopped.")
+
+# Start our server
+server = SimpleServer("localhost", 8080)
+server.start()
+
+# Simulate some messages arriving
+test_messages = [
+    "Hello!",
+    "What's 2 + 2?",
+    "Tell me a joke",
+]
+
+for msg in test_messages:
+    response = server.handle_message(msg)
+
+server.stop()
+
+print("\n→ That's a server! It waits for messages and responds.")
+print("  In real code, the messages come over the network.")
+print("  But the logic is identical: receive → process → respond.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Ex 2: HTTP vs WebSocket -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header">
+      <span class="ex-num">02</span>
+      <span class="ex-title">HTTP vs WebSocket — Letters vs Phone Calls</span>
+      <span class="ex-check" id="check-ex2">○</span>
+    </div>
+    <div class="ex-desc">Simulate both styles. See why HTTP (letters) is wasteful for chat and WebSocket (phone call) is perfect.</div>
+    <textarea id="code-ex2">
+import time
+
+class HTTPStyle:
+    """HTTP: like sending letters.
+    Each message = new connection → request → response → disconnect.
+    """
+    def __init__(self):
+        self.request_count = 0
+    
+    def send_message(self, message):
+        # Step 1: Open connection (costs time!)
+        self.request_count += 1
+        connect_ms = 50  # simulated network handshake
+        
+        # Step 2: Send request
+        # Step 3: Wait for response
+        response = f"Reply to: {message}"
+        
+        # Step 4: Connection closes
+        return response, connect_ms
+
+class WebSocketStyle:
+    """WebSocket: like a phone call.
+    Connect once. Send/receive freely. No overhead per message.
+    """
+    def __init__(self):
+        self.connected = False
+        self.message_count = 0
+    
+    def connect(self):
+        connect_ms = 50  # one-time cost
+        self.connected = True
+        return connect_ms
+    
+    def send_message(self, message):
+        if not self.connected:
+            raise Exception("Not connected! Call connect() first.")
+        self.message_count += 1
+        overhead_ms = 1  # tiny! connection already open
+        response = f"Reply to: {message}"
+        return response, overhead_ms
+
+# Simulate 10 messages with each style
+messages = [f"Message {i+1}" for i in range(10)]
+
+print("=== HTTP Style (Letters) ===")
+http = HTTPStyle()
+total_http_ms = 0
+for msg in messages:
+    response, ms = http.send_message(msg)
+    total_http_ms += ms
+print(f"  {len(messages)} messages sent")
+print(f"  {http.request_count} connections opened and closed")
+print(f"  Total connection overhead: {total_http_ms}ms")
+
+print(f"\n=== WebSocket Style (Phone Call) ===")
+ws = WebSocketStyle()
+total_ws_ms = ws.connect()
+print(f"  Connected once ({total_ws_ms}ms)")
+for msg in messages:
+    response, ms = ws.send_message(msg)
+    total_ws_ms += ms
+print(f"  {len(messages)} messages sent")
+print(f"  1 connection, stays open")
+print(f"  Total connection overhead: {total_ws_ms}ms")
+
+print(f"\n=== Comparison ===")
+print(f"  HTTP:      {total_http_ms}ms overhead for {len(messages)} messages")
+print(f"  WebSocket: {total_ws_ms}ms overhead for {len(messages)} messages")
+print(f"  WebSocket is {total_http_ms/total_ws_ms:.0f}× less wasteful!")
+print(f"\n→ For a chat app, WebSocket wins. Connect once, talk freely.")
+print(f"  Plus: the server can PUSH messages to you without you asking.")
+print(f"  HTTP can't do that — you'd have to keep checking.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Ex 3: Session keys -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Session Keys — Name Tags for Conversations</span>
+      <span class="ex-check" id="check-ex3">○</span>
+    </div>
+    <div class="ex-desc">Alice and Bob both talk to the bot. Without session keys, their conversations get mixed up. Add sessions to fix it.</div>
+    <textarea id="code-ex3">
+import random, string
+
+def make_session_id():
+    """Generate a random session ID. Like a name tag."""
+    chars = string.ascii_lowercase + string.digits
+    return "sess_" + "".join(random.choice(chars) for _ in range(6))
+
+class ChatServer:
+    """A chat server that tracks who's who using session keys."""
+    
+    def __init__(self):
+        self.sessions = {}  # session_id → conversation history
+    
+    def connect(self, username):
+        """New user connects → gets a unique session ID."""
+        session_id = make_session_id()
+        self.sessions[session_id] = {
+            "username": username,
+            "history": []
+        }
+        print(f"  ✅ {username} connected → session: {session_id}")
+        return session_id
+    
+    def receive_message(self, session_id, message):
+        """A message arrives. Which conversation does it belong to?"""
+        if session_id not in self.sessions:
+            return "❌ Unknown session! Who are you?"
+        
+        session = self.sessions[session_id]
+        username = session["username"]
+        session["history"].append({"role": "user", "content": message})
+        
+        # Bot generates a response based on THIS user's history
+        history_len = len(session["history"])
+        response = f"Hi {username}! (message #{history_len // 2 + 1} in YOUR conversation)"
+        session["history"].append({"role": "assistant", "content": response})
+        
+        return response
+    
+    def show_sessions(self):
+        print(f"\n  Active sessions: {len(self.sessions)}")
+        for sid, data in self.sessions.items():
+            msgs = len(data["history"])
+            print(f"    {sid} → {data['username']} ({msgs} messages)")
+
+# Simulate Alice and Bob both connecting
+random.seed(42)
+server = ChatServer()
+
+print("=== Users Connect ===")
+alice_id = server.connect("Alice")
+bob_id = server.connect("Bob")
+
+print("\n=== Conversation ===")
+# Alice and Bob take turns — their messages arrive interleaved
+conversation = [
+    (alice_id, "Alice", "Tell me about dogs"),
+    (bob_id,   "Bob",   "What's the capital of France?"),
+    (alice_id, "Alice", "What breeds are good with kids?"),
+    (bob_id,   "Bob",   "How about Germany?"),
+    (alice_id, "Alice", "Thanks! One more — are poodles hypoallergenic?"),
+]
+
+for session_id, name, message in conversation:
+    print(f"\n  [{name}] sends: '{message}'")
+    response = server.receive_message(session_id, message)
+    print(f"  [Bot → {name}]: {response}")
+
+server.show_sessions()
+
+print("\n→ Alice talked about dogs. Bob talked about capitals.")
+print("  The session key kept them separate — no cross-contamination.")
+print("  Without it, the bot would mix up dogs and capitals!")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex3')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex3">The session ID is just a random string. The server uses it as a key into a dictionary of conversations. Each user gets their own history.</div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Ex 4: Token streaming -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header">
+      <span class="ex-num">04</span>
+      <span class="ex-title">Streaming — Words Appearing One by One</span>
+      <span class="ex-check" id="check-ex4">○</span>
+    </div>
+    <div class="ex-desc">Instead of waiting for the whole response, stream it token by token. This is why ChatGPT's text appears word by word.</div>
+    <textarea id="code-ex4">
+import time
+
+def generate_tokens(prompt):
+    """Simulate a language model generating tokens one at a time.
+    
+    In a real model, each token takes ~20-50ms to generate.
+    The key insight: we don't need to wait for ALL tokens
+    before sending the first one.
+    """
+    # Pretend our model generates this response to any prompt
+    response_tokens = ["The", " answer", " to", " your", " question",
+                       " is", " that", " it", " depends", " on",
+                       " the", " context", "."]
+    
+    for token in response_tokens:
+        time.sleep(0.01)  # simulated generation time (fast for demo)
+        yield token  # yield = send this token immediately, keep going
+
+def non_streaming(prompt):
+    """Old way: wait for everything, then show it all at once."""
+    start = time.time()
+    
+    # Collect ALL tokens first
+    all_tokens = list(generate_tokens(prompt))
+    full_response = "".join(all_tokens)
+    
+    elapsed = (time.time() - start) * 1000
+    return full_response, elapsed
+
+def streaming(prompt):
+    """New way: show each token as it arrives."""
+    start = time.time()
+    tokens_received = []
+    times = []
+    
+    for token in generate_tokens(prompt):
+        tokens_received.append(token)
+        elapsed = (time.time() - start) * 1000
+        times.append(elapsed)
+    
+    return tokens_received, times
+
+# Compare!
+prompt = "What's the meaning of life?"
+
+print("=== Non-Streaming (old way) ===")
+print(f"User: {prompt}")
+response, total_ms = non_streaming(prompt)
+print(f"(waiting {total_ms:.0f}ms...)")
+print(f"Bot: {response}")
+print(f"Time to first word: {total_ms:.0f}ms (had to wait for everything!)")
+
+print(f"\n=== Streaming (new way) ===")
+print(f"User: {prompt}")
+tokens, times = streaming(prompt)
+print("Bot: ", end="")
+for i, (token, t) in enumerate(zip(tokens, times)):
+    print(token, end="")
+print()
+print(f"Time to first word: {times[0]:.0f}ms ← instant!")
+print(f"Time to last word:  {times[-1]:.0f}ms")
+
+print(f"\n=== Why Streaming Matters ===")
+print(f"Non-streaming: user waits {total_ms:.0f}ms seeing NOTHING, then gets everything")
+print(f"Streaming:     user sees first word in {times[0]:.0f}ms, rest flows in naturally")
+print(f"\nFor a 500-token response at 30ms/token, that's:")
+print(f"  Non-streaming: 15 seconds of blank screen, then BOOM")
+print(f"  Streaming: first word in 30ms, steady flow for 15 seconds")
+print(f"  Same total time, but streaming FEELS instant.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Ex 5: Full chat server -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header">
+      <span class="ex-num">05</span>
+      <span class="ex-title">Build the Full Chat Server</span>
+      <span class="ex-check" id="check-ex5">○</span>
+    </div>
+    <div class="ex-desc">Combine everything: server + WebSocket-style connections + sessions + streaming. This is the architecture behind every AI chat app.</div>
+    <textarea id="code-ex5">
+import random, string, time
+
+def make_session_id():
+    return "sess_" + "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
+
+def bot_generate(history):
+    """Simulate a bot generating a response based on conversation history."""
+    last_msg = history[-1]["content"] if history else ""
+    
+    # Simple pattern matching (your LLM would go here)
+    if "weather" in last_msg.lower():
+        tokens = ["It's", " currently", " sunny", " and", " 72°F", "."]
+    elif "name" in last_msg.lower():
+        tokens = ["I'm", " your", " AI", " assistant", "!", " Nice", " to", " meet", " you", "."]
+    elif "joke" in last_msg.lower():
+        tokens = ["Why", " did", " the", " AI", " cross", " the", " road", "?", 
+                  " To", " get", " to", " the", " other", " dataset", "!"]
+    else:
+        tokens = ["That's", " an", " interesting", " question", ".", " Let", " me", " think", "..."]
+    
+    for token in tokens:
+        yield token
+
+class FullChatServer:
+    """The complete chat server: connections + sessions + streaming."""
+    
+    def __init__(self, port=8080):
+        self.port = port
+        self.sessions = {}
+        self.connections = {}  # session_id → connection state
+    
+    def start(self):
+        print(f"🟢 Chat server running on localhost:{self.port}")
+        print(f"   Waiting for connections...\n")
+    
+    def handle_connect(self, username):
+        """New WebSocket connection → create session."""
+        sid = make_session_id()
+        self.sessions[sid] = {"user": username, "history": []}
+        self.connections[sid] = {"connected": True, "connected_at": time.time()}
+        print(f"  📱 {username} connected (session: {sid})")
+        return sid
+    
+    def handle_message(self, session_id, message):
+        """Message arrives → look up session → generate streaming response."""
+        session = self.sessions[session_id]
+        user = session["user"]
+        
+        # Add user message to this session's history
+        session["history"].append({"role": "user", "content": message})
+        
+        # Generate response (streaming!)
+        print(f"\n  💬 [{user}]: {message}")
+        print(f"  🤖 [Bot → {user}]: ", end="")
+        
+        full_response = ""
+        for token in bot_generate(session["history"]):
+            print(token, end="", flush=True)
+            full_response += token
+        print()
+        
+        # Save bot response to session history
+        session["history"].append({"role": "assistant", "content": full_response})
+        return full_response
+    
+    def handle_disconnect(self, session_id):
+        user = self.sessions[session_id]["user"]
+        self.connections[session_id]["connected"] = False
+        print(f"\n  📴 {user} disconnected (session preserved for reconnection)")
+    
+    def status(self):
+        active = sum(1 for c in self.connections.values() if c["connected"])
+        total_msgs = sum(len(s["history"]) for s in self.sessions.values())
+        print(f"\n  📊 Server status: {active} active connections, {len(self.sessions)} sessions, {total_msgs} total messages")
+
+# Run the simulation!
+random.seed(42)
+server = FullChatServer(port=8080)
+server.start()
+
+# Alice and Bob connect
+alice = server.handle_connect("Alice")
+bob = server.handle_connect("Bob")
+
+# Interleaved conversation
+server.handle_message(alice, "What's the weather like?")
+server.handle_message(bob, "Tell me a joke!")
+server.handle_message(alice, "What's your name?")
+server.handle_message(bob, "What's the meaning of life?")
+
+# Bob disconnects, Alice keeps chatting
+server.handle_disconnect(bob)
+server.handle_message(alice, "One more question about the weather")
+
+server.status()
+
+print("\n→ Two users, separate sessions, streaming responses.")
+print("  This is the architecture behind ChatGPT, Claude, and OpenClaw.")
+print("  Server + WebSocket + Sessions + Streaming = chat app.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Ex 6: Rate limiting and queue -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Rate Limiting — Don't Let Anyone Hog the Bot</span>
+      <span class="ex-check" id="check-ex6">○</span>
+    </div>
+    <div class="ex-desc">What if one user sends 100 messages per second? You need to be fair. Add rate limiting: each user gets N messages per minute.</div>
+    <textarea id="code-ex6">
+import time
+
+class RateLimiter:
+    """Limits how fast each user can send messages.
+    
+    Like a bouncer at a club: "You just went in 2 seconds ago.
+    Wait a bit before going again."
+    
+    We use a simple approach: each user gets a bucket of tokens.
+    Each message costs one token. Tokens refill over time.
+    """
+    def __init__(self, max_per_minute=5):
+        self.max_per_minute = max_per_minute
+        self.buckets = {}  # session_id → {"tokens": N, "last_refill": time}
+    
+    def check(self, session_id, current_time):
+        """Can this user send a message right now?"""
+        if session_id not in self.buckets:
+            self.buckets[session_id] = {
+                "tokens": self.max_per_minute,
+                "last_refill": current_time
+            }
+        
+        bucket = self.buckets[session_id]
+        
+        # Refill tokens based on elapsed time
+        elapsed = current_time - bucket["last_refill"]
+        refill = elapsed * (self.max_per_minute / 60)  # tokens per second
+        bucket["tokens"] = min(self.max_per_minute, bucket["tokens"] + refill)
+        bucket["last_refill"] = current_time
+        
+        # Check if they have a token to spend
+        if bucket["tokens"] >= 1:
+            bucket["tokens"] -= 1
+            return True, bucket["tokens"]
+        else:
+            wait_seconds = (1 - bucket["tokens"]) / (self.max_per_minute / 60)
+            return False, wait_seconds
+    
+# Simulate: Alice sends messages at a normal pace, 
+# Spammy Bob sends 10 messages instantly
+limiter = RateLimiter(max_per_minute=5)
+
+print("Rate limit: 5 messages per minute per user\n")
+
+# Alice: normal user, sends every 15 seconds
+print("=== Alice (normal user) ===")
+for i in range(6):
+    t = i * 15  # every 15 seconds
+    allowed, info = limiter.check("alice", t)
+    status = f"✅ Allowed ({info:.1f} tokens left)" if allowed else f"🔴 Blocked! Wait {info:.1f}s"
+    print(f"  t={t:>3d}s  Message {i+1}: {status}")
+
+print()
+
+# Bob: sends 10 messages in 2 seconds
+print("=== Spammy Bob (sends 10 messages in 2 seconds) ===")
+for i in range(10):
+    t = i * 0.2  # every 0.2 seconds
+    allowed, info = limiter.check("bob", t)
+    status = f"✅ Allowed ({info:.1f} left)" if allowed else f"🔴 Blocked! Wait {info:.1f}s"
+    print(f"  t={t:>4.1f}s  Message {i+1}: {status}")
+
+print()
+print("→ Alice sends at a reasonable pace — never blocked.")
+print("  Bob tries to spam — gets cut off after 5 messages.")
+print("  Fair for everyone. The bot serves real users, not spammers.")
+print("\n  This is called a 'token bucket' rate limiter.")
+print("  Every real API uses some version of this.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+</div>
+
+<!-- THE PAYOFF -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p><strong>Your bot can now talk to anyone, from anywhere, in real time.</strong></p>
+  <p style="margin-top:1rem;color:#aaa">A <strong>server</strong> listens for connections (the receptionist).<br>
+  <strong>WebSockets</strong> keep the connection alive (the phone call).<br>
+  <strong>Session keys</strong> separate conversations (the name tags).<br>
+  <strong>Streaming</strong> sends words as they're generated (feels instant).<br>
+  <strong>Rate limiting</strong> keeps things fair (the bouncer).</p>
+  <p style="margin-top:1rem;color:#888;font-size:.9rem">This is the exact architecture behind ChatGPT, Claude, and OpenClaw. The AI brain is one piece; the networking that connects it to humans is another. You just built the second piece.</p>
+  <p style="margin-top:1.5rem;font-size:1rem">But your bot can only <em>talk</em>. It can't actually <em>do</em> anything.<br>
+  <strong><a href="../build-05-act/">BUILD-05: Let It Act →</a></strong></p>
+</div>
+
+<!-- GO DEEPER -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../oc-02-sessions/">OC-02: Sessions</a>
+      <span class="label"> — How OpenClaw manages sessions in practice</span>
+    </li>
+    <li>
+      <a href="../oc-04-channels/">OC-04: Channels</a>
+      <span class="label"> — Discord, Slack, WhatsApp — many channels, one bot</span>
+    </li>
+    <li>
+      <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API">📄 MDN: WebSocket API</a>
+      <span class="label"> — The real WebSocket specification</span>
+    </li>
+    <li>
+      <a href="https://en.wikipedia.org/wiki/Token_bucket">📄 Token Bucket Algorithm</a>
+      <span class="label"> — The rate limiting pattern used by AWS, Stripe, and more</span>
+    </li>
+  </ul>
+</div>
+
+<div class="nav-footer">
+  <a href="../build-03-window/">← BUILD-03: Give It a Window</a>
+  <a href="../build-05-act/">BUILD-05: Let It Act →</a>
+</div>
+
+</div>
+
+<script>
+const defaults={};
+document.querySelectorAll('textarea').forEach(ta=>{defaults[ta.id]=ta.value});
+const STORAGE_KEY='build-04-talk-progress';
+let completed=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+
+function updateProgress(){
+  const total=6,done=Object.keys(completed).length;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  for(let i=1;i<=total;i++){
+    const el=document.getElementById('check-ex'+i);
+    if(completed['ex'+i]){el.textContent='✓';el.classList.add('done')}
+    else{el.textContent='○';el.classList.remove('done')}
+  }
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(completed));
+}
+function markComplete(id){completed[id]=true;updateProgress()}
+function toggleHint(id){document.getElementById('hint-'+id)?.classList.toggle('visible')}
+function resetExercise(id){document.getElementById('code-'+id).value=defaults['code-'+id];document.getElementById('output-'+id).classList.remove('visible')}
+
+let pyodide=null;
+async function initPyodide(){
+  try{pyodide=await loadPyodide();document.getElementById('loading').classList.add('hidden')}
+  catch(e){document.getElementById('loading').innerHTML='<p style="color:#ff6b4a">Failed to load Pyodide.</p>'}
+}
+async function runExercise(id){
+  if(!pyodide){alert('Pyodide still loading…');return}
+  const code=document.getElementById('code-'+id).value;
+  const output=document.getElementById('output-'+id);
+  output.classList.add('visible');output.textContent='Running…';
+  try{
+    pyodide.runPython(`import io,sys;_stdout=io.StringIO();sys.stdout=_stdout`);
+    pyodide.runPython(code);
+    const result=pyodide.runPython('_stdout.getvalue()');
+    output.textContent=result||'(no output)';output.style.color='#e0e0e0';
+    if(result&&result.trim().length>0)markComplete(id);
+  }catch(e){output.textContent='❌ Error:\n'+e.message;output.style.color='#ff6b4a'}
+}
+
+const s=document.createElement('script');
+s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+s.onload=initPyodide;document.head.appendChild(s);
+updateProgress();
+</script>
+</body>
+</html>

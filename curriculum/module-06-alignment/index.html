@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 06: Teaching Models to Follow Instructions</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--surface:#131829;--surface2:#1a2035;--border:#2a3050;--text:#e0e4f0;--dim:#8090b0;--accent:#4ecdc4;--accent2:#ff6b9d;--accent3:#ffd93d;--accent4:#6c5ce7;--success:#2ecc71;--code-bg:#0d1117;--radius:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:20px}
+h1{font-size:clamp(1.8rem,5vw,2.8rem);text-align:center;margin:40px 0 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.5rem;color:var(--accent);margin:40px 0 20px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+h3{font-size:1.15rem;color:var(--accent3);margin:20px 0 12px}
+.subtitle{text-align:center;color:var(--dim);font-size:1.1rem;margin-bottom:40px}
+.paper-tag{display:inline-block;background:var(--accent4);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+
+/* Navigation */
+.act-nav{display:flex;gap:8px;justify-content:center;margin:30px 0;flex-wrap:wrap}
+.act-btn{padding:10px 24px;border:2px solid var(--border);background:var(--surface);color:var(--dim);border-radius:var(--radius);cursor:pointer;font-size:.95rem;transition:.2s}
+.act-btn.active{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.act-btn:hover{border-color:var(--accent);color:var(--accent)}
+.act{display:none}.act.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:20px 0}
+.quote{border-left:3px solid var(--accent2);padding:12px 16px;margin:16px 0;background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;font-style:italic;color:var(--dim)}
+.quote cite{display:block;margin-top:8px;font-style:normal;font-size:.8rem;color:var(--accent2)}
+
+/* Pipeline visualization */
+.pipeline{display:flex;gap:0;align-items:center;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.pipe-stage{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:16px 20px;text-align:center;min-width:140px;cursor:pointer;transition:.3s;position:relative}
+.pipe-stage.active{border-color:var(--accent);box-shadow:0 0 20px rgba(78,205,196,.2)}
+.pipe-stage.done{border-color:var(--success);opacity:.7}
+.pipe-stage h4{font-size:.9rem;margin-bottom:4px}
+.pipe-stage p{font-size:.75rem;color:var(--dim)}
+.pipe-arrow{font-size:1.5rem;color:var(--dim);padding:0 8px}
+
+/* Stage panels */
+.stage-panel{display:none;margin-top:20px}.stage-panel.active{display:block}
+.stage-btn{padding:10px 28px;border:none;border-radius:var(--radius);cursor:pointer;font-size:.95rem;margin:8px 4px;transition:.2s}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+
+/* SFT demo */
+.sft-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:600px){.sft-compare{grid-template-columns:1fr}.pipeline{flex-direction:column}.pipe-arrow{transform:rotate(90deg)}}
+.sft-box{background:var(--surface2);border-radius:var(--radius);padding:16px;border:2px solid var(--border)}
+.sft-box.bad{border-color:#e74c3c}.sft-box.good{border-color:var(--success)}
+.sft-box h4{font-size:.85rem;margin-bottom:8px}
+.sft-box .prompt{color:var(--accent3);font-size:.85rem;margin-bottom:8px}
+.sft-box .output{font-size:.9rem;color:var(--dim);white-space:pre-wrap}
+
+/* Preference labeling */
+.pref-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:600px){.pref-pair{grid-template-columns:1fr}}
+.pref-option{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:.3s}
+.pref-option:hover{border-color:var(--accent);transform:translateY(-2px)}
+.pref-option.chosen{border-color:var(--success);background:rgba(46,204,113,.08)}
+.pref-option.rejected{border-color:#e74c3c;opacity:.5}
+.pref-option .label{font-size:.75rem;color:var(--dim);margin-bottom:6px}
+.pref-prompt{color:var(--accent3);font-size:.9rem;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:8px}
+.progress-bar{height:6px;background:var(--surface2);border-radius:3px;margin:12px 0;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+.pref-counter{text-align:center;color:var(--dim);font-size:.85rem;margin:8px 0}
+
+/* Reward model viz */
+.reward-bars{margin:16px 0}
+.reward-bar{display:flex;align-items:center;gap:10px;margin:6px 0}
+.reward-bar .text{flex:0 0 200px;font-size:.8rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reward-bar .bar{flex:1;height:20px;background:var(--surface2);border-radius:10px;overflow:hidden;position:relative}
+.reward-bar .bar-fill{height:100%;border-radius:10px;transition:width 1s}
+.reward-bar .score{flex:0 0 50px;text-align:right;font-size:.85rem;font-weight:600}
+
+/* KL penalty animation */
+.kl-viz{text-align:center;margin:20px 0}
+.kl-canvas{background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);max-width:100%}
+
+/* DPO shortcut */
+.dpo-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:20px 0}
+@media(max-width:600px){.dpo-compare{grid-template-columns:1fr;text-align:center}}
+.dpo-box{background:var(--surface2);border-radius:var(--radius);padding:20px;text-align:center}
+.dpo-arrow{font-size:2rem;color:var(--accent)}
+.dpo-eq{background:var(--code-bg);padding:16px;border-radius:var(--radius);font-family:'Courier New',monospace;color:var(--accent3);margin:16px 0;overflow-x:auto;font-size:.9rem;text-align:center}
+
+/* Puzzles */
+.puzzle{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:24px 0}
+.puzzle h3{color:var(--accent3);margin-bottom:4px}
+.puzzle .desc{color:var(--dim);font-size:.9rem;margin-bottom:16px}
+.code-area{width:100%;min-height:200px;background:var(--code-bg);color:#e6edf3;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:.85rem;resize:vertical;tab-size:4;line-height:1.5}
+.puzzle-output{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:12px;font-family:'Courier New',monospace;font-size:.85rem;color:var(--dim);min-height:60px;white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.puzzle-status{margin-top:8px;padding:8px 14px;border-radius:8px;font-size:.9rem;display:none}
+.puzzle-status.pass{display:block;background:rgba(46,204,113,.12);color:var(--success);border:1px solid rgba(46,204,113,.3)}
+.puzzle-status.fail{display:block;background:rgba(231,76,60,.12);color:#e74c3c;border:1px solid rgba(231,76,60,.3)}
+.run-btn{padding:8px 24px;background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;margin-top:10px}
+.run-btn:hover{opacity:.85}
+.run-btn:disabled{opacity:.4;cursor:wait}
+.hint-btn{padding:6px 16px;background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.8rem;margin-left:8px}
+.hint{display:none;margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;color:var(--dim);font-size:.85rem;border-left:3px solid var(--accent3)}
+
+/* Timeline */
+.timeline{position:relative;margin:30px 0;padding-left:30px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin:24px 0}
+.tl-item::before{content:'';position:absolute;left:-24px;top:6px;width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.tl-item.highlight::before{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.tl-item .year{color:var(--accent);font-weight:700;font-size:.85rem}
+.tl-item .tl-title{font-weight:600;margin:2px 0}
+.tl-item .tl-desc{color:var(--dim);font-size:.9rem}
+
+/* Finding callout */
+.finding{background:linear-gradient(135deg,rgba(78,205,196,.08),rgba(108,92,231,.08));border:1px solid var(--accent);border-radius:var(--radius);padding:20px;margin:20px 0;text-align:center}
+.finding .big{font-size:1.8rem;font-weight:800;color:var(--accent);margin:8px 0}
+.finding .sub{color:var(--dim);font-size:.9rem}
+
+/* Loading */
+.pyodide-loading{text-align:center;padding:20px;color:var(--dim)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎯 Teaching Models to Follow Instructions</h1>
+<p class="subtitle">From raw prediction machines to helpful assistants — RLHF & DPO</p>
+
+<nav class="act-nav">
+  <button class="act-btn active" onclick="showAct(0)">Act 1: The Explorable</button>
+  <button class="act-btn" onclick="showAct(1)">Act 2: The Build</button>
+  <button class="act-btn" onclick="showAct(2)">Act 3: The Connection</button>
+</nav>
+
+<!-- ===================== ACT 1 ===================== -->
+<section class="act active" id="act0">
+<h2>🔬 The RLHF Pipeline</h2>
+<p>GPT-3 can write anything — but it doesn't <em>want</em> to help you. It just predicts the next token. How do we teach it to be <em>useful</em>? Three steps.</p>
+
+<div class="pipeline">
+  <div class="pipe-stage active" id="ps0" onclick="showStage(0)"><h4>Step 1</h4><p>Supervised Fine-Tuning</p></div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-stage" id="ps1" onclick="showStage(1)"><h4>Step 2</h4><p>Reward Model</p></div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-stage" id="ps2" onclick="showStage(2)"><h4>Step 3</h4><p>PPO / RLHF</p></div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-stage" id="ps3" onclick="showStage(3)" style="border-style:dashed"><h4>Shortcut</h4><p>DPO</p></div>
+</div>
+
+<!-- Stage 0: SFT -->
+<div class="stage-panel active" id="stage0">
+<div class="card">
+<h3>Step 1: Supervised Fine-Tuning (SFT)</h3>
+<p>First, collect examples of <em>good</em> prompt-response pairs from human demonstrators. Fine-tune the base model on these.</p>
+
+<div id="sft-demo"></div>
+<div style="text-align:center;margin-top:16px">
+  <button class="stage-btn btn-primary" onclick="nextSFT()">Next Example →</button>
+  <button class="stage-btn btn-primary" onclick="showStage(1)">Continue to Step 2 →</button>
+</div>
+</div>
+</div>
+
+<!-- Stage 1: Reward Model / Preference Labeling -->
+<div class="stage-panel" id="stage1">
+<div class="card">
+<h3>Step 2: Train a Reward Model</h3>
+<p>SFT is good but limited — we can't write demos for everything. Instead, it's easier to <strong>judge</strong> outputs than write perfect ones. Your turn: <em>you</em> are the human labeler.</p>
+
+<div id="pref-area">
+  <div class="pref-counter">Comparison <span id="pref-num">1</span> of 6</div>
+  <div class="progress-bar"><div class="progress-fill" id="pref-progress" style="width:0%"></div></div>
+  <div class="pref-prompt" id="pref-prompt"></div>
+  <div class="pref-pair" id="pref-pair"></div>
+</div>
+<div id="pref-done" style="display:none">
+  <p style="color:var(--success);font-weight:600;text-align:center;margin:16px 0">✅ You just created training data for a reward model!</p>
+  <p style="color:var(--dim);font-size:.9rem">Your preferences teach the reward model to score outputs. Better outputs → higher scores. Here's what your reward model learned:</p>
+  <div class="reward-bars" id="reward-bars"></div>
+  <div style="text-align:center;margin-top:16px">
+    <button class="stage-btn btn-primary" onclick="showStage(2)">Continue to Step 3 →</button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Stage 2: PPO -->
+<div class="stage-panel" id="stage2">
+<div class="card">
+<h3>Step 3: Reinforcement Learning (PPO)</h3>
+<p>Now use the reward model to train the policy. But there's a catch: we can't let the model drift too far from the SFT model or it'll find "reward hacks." The <strong>KL penalty</strong> keeps it close.</p>
+<p style="margin-top:10px;color:var(--dim);font-size:.9rem"><strong>Objective:</strong> maximize reward − β × KL(π ∥ π_SFT)</p>
+
+<div class="kl-viz">
+  <canvas id="klCanvas" class="kl-canvas" width="700" height="320"></canvas>
+</div>
+<div style="text-align:center">
+  <button class="stage-btn btn-primary" id="ppo-btn" onclick="runPPO()">▶ Run PPO Training</button>
+  <button class="stage-btn btn-secondary" onclick="showStage(3)">See the Shortcut →</button>
+</div>
+</div>
+</div>
+
+<!-- Stage 3: DPO -->
+<div class="stage-panel" id="stage3">
+<div class="card">
+<h3>🔑 The Shortcut: Direct Preference Optimization</h3>
+<p>Rafailov et al. (2023) realized something elegant: you don't <em>need</em> a separate reward model. The reward is <strong>implicit in the policy itself</strong>.</p>
+
+<div class="dpo-compare">
+  <div class="dpo-box">
+    <h4 style="color:var(--accent2)">RLHF (3 steps)</h4>
+    <p style="font-size:.85rem;color:var(--dim);margin-top:8px">1. SFT → 2. Train reward model → 3. PPO against reward model</p>
+    <p style="font-size:.75rem;color:var(--dim);margin-top:6px">Complex, unstable, expensive</p>
+  </div>
+  <div class="dpo-arrow">→</div>
+  <div class="dpo-box" style="border:2px solid var(--accent)">
+    <h4 style="color:var(--accent)">DPO (1 step)</h4>
+    <p style="font-size:.85rem;color:var(--dim);margin-top:8px">1. SFT → 2. Optimize preferences directly</p>
+    <p style="font-size:.75rem;color:var(--dim);margin-top:6px">Simple, stable, same result</p>
+  </div>
+</div>
+
+<div class="dpo-eq">L_DPO = −𝔼 [ log σ( β · log π(y_w|x)/π_ref(y_w|x) − β · log π(y_l|x)/π_ref(y_l|x) ) ]</div>
+
+<div class="quote">"DPO optimizes the same objective as existing RLHF algorithms (reward maximization with a KL-divergence constraint) but is simple to implement and straightforward to train."<cite>— Rafailov et al., "Direct Preference Optimization" (2023)</cite></div>
+
+<p style="margin-top:16px;color:var(--dim);font-size:.9rem"><strong>Key insight:</strong> For any reward function, there's an optimal policy. DPO inverts this — given an optimal policy, you can recover the reward. So just optimize the policy directly on preference data. No reward model needed.</p>
+</div>
+</div>
+</section>
+
+<!-- ===================== ACT 2 ===================== -->
+<section class="act" id="act1">
+<h2>🔨 Build: RLHF & DPO from Scratch</h2>
+<p>Four puzzles. All run in your browser via Pyodide — no setup needed.</p>
+<div id="pyodide-status" class="pyodide-loading"><span class="spinner"></span>Loading Python runtime...</div>
+
+<!-- Puzzle 1 -->
+<div class="puzzle" id="puzzle1">
+<h3>Puzzle 1: Simulate Preference Data</h3>
+<p class="desc">Given a prompt with two model outputs, encode human preferences as (chosen, rejected) pairs. Fill in <code>create_preference_pair</code>.</p>
+<textarea class="code-area" id="code1">import json
+
+def create_preference_pair(prompt, output_a, output_b, preferred):
+    """
+    Create a preference pair for RLHF training.
+    
+    Args:
+        prompt: the user's question
+        output_a: first model output
+        output_b: second model output  
+        preferred: 'A' or 'B' — which the human preferred
+    
+    Returns:
+        dict with keys: 'prompt', 'chosen', 'rejected'
+    """
+    # YOUR CODE HERE
+    pass
+
+# Test it
+pair = create_preference_pair(
+    "What is 2+2?",
+    "The answer is 4.",
+    "Two plus two equals fish.",
+    "A"
+)
+print(json.dumps(pair, indent=2))
+
+# More tests
+pair2 = create_preference_pair(
+    "Write a haiku about coding",
+    "Bugs everywhere here\nI should have been a farmer\nStack overflow saves",
+    "Silent keys clicking\nLogic flows like mountain streams\nCode compiles at dawn",
+    "B"
+)
+print(json.dumps(pair2, indent=2))
+print("chosen is B:", pair2["chosen"] == "Silent keys clicking\nLogic flows like mountain streams\nCode compiles at dawn")
+</textarea>
+<div><button class="run-btn" onclick="runPuzzle(1)">▶ Run</button><button class="hint-btn" onclick="toggleHint(1)">💡 Hint</button></div>
+<div class="hint" id="hint1">If preferred == 'A', then chosen = output_a and rejected = output_b. Vice versa for 'B'.</div>
+<div class="puzzle-output" id="out1"></div>
+<div class="puzzle-status" id="status1"></div>
+</div>
+
+<!-- Puzzle 2 -->
+<div class="puzzle" id="puzzle2">
+<h3>Puzzle 2: Train a Reward Model</h3>
+<p class="desc">Train a simple linear reward model on preference features using gradient descent. The reward model learns: r(x) = w · x, where higher reward = better output.</p>
+<textarea class="code-area" id="code2">import numpy as np
+np.random.seed(42)
+
+# Each output has 4 features: [helpfulness, accuracy, safety, fluency]
+# Preference pairs: (chosen_features, rejected_features)
+data = [
+    (np.array([0.9, 0.8, 1.0, 0.7]), np.array([0.3, 0.2, 0.1, 0.8])),
+    (np.array([0.7, 0.9, 0.8, 0.9]), np.array([0.6, 0.3, 0.9, 0.4])),
+    (np.array([0.8, 0.7, 0.9, 0.6]), np.array([0.2, 0.8, 0.2, 0.7])),
+    (np.array([0.9, 0.9, 0.7, 0.8]), np.array([0.4, 0.5, 0.3, 0.3])),
+    (np.array([0.6, 0.8, 0.9, 0.9]), np.array([0.5, 0.2, 0.4, 0.6])),
+]
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+def train_reward_model(data, lr=0.5, epochs=200):
+    """
+    Train weights w so that w·chosen > w·rejected for each pair.
+    Use the Bradley-Terry loss: L = -log(sigmoid(r(chosen) - r(rejected)))
+    
+    Returns: trained weights (np array of shape 4)
+    """
+    w = np.zeros(4)
+    
+    for epoch in range(epochs):
+        for chosen, rejected in data:
+            # YOUR CODE: compute gradient and update w
+            # Hint: d/dw[-log(sigmoid(w·c - w·r))] = -(1 - sigmoid(w·c - w·r)) * (c - r)
+            pass
+    
+    return w
+
+w = train_reward_model(data)
+print("Learned weights:", np.round(w, 3))
+print("Feature names: [helpfulness, accuracy, safety, fluency]")
+
+# Verify: chosen should score higher than rejected for all pairs
+all_correct = True
+for i, (c, r) in enumerate(data):
+    sc, sr = w @ c, w @ r
+    correct = sc > sr
+    all_correct = all_correct and correct
+    print(f"Pair {i+1}: chosen={sc:.2f} > rejected={sr:.2f} ? {correct}")
+print(f"\nAll preferences satisfied: {all_correct}")
+</textarea>
+<div><button class="run-btn" onclick="runPuzzle(2)">▶ Run</button><button class="hint-btn" onclick="toggleHint(2)">💡 Hint</button></div>
+<div class="hint" id="hint2">The gradient is: <code>grad = -(1 - sigmoid(w @ chosen - w @ rejected)) * (chosen - rejected)</code>. Update: <code>w -= lr * grad</code></div>
+<div class="puzzle-output" id="out2"></div>
+<div class="puzzle-status" id="status2"></div>
+</div>
+
+<!-- Puzzle 3 -->
+<div class="puzzle" id="puzzle3">
+<h3>Puzzle 3: Compute the DPO Loss</h3>
+<p class="desc">Implement the DPO loss. The key insight: instead of training a reward model, we optimize the policy directly using preference pairs.</p>
+<textarea class="code-area" id="code3">import numpy as np
+
+def dpo_loss(pi_chosen, pi_ref_chosen, pi_rejected, pi_ref_rejected, beta=0.1):
+    """
+    Compute DPO loss for a single preference pair.
+    
+    The DPO loss is:
+      -log(sigmoid(beta * log(pi_chosen/pi_ref_chosen) - beta * log(pi_rejected/pi_ref_rejected)))
+    
+    Args:
+        pi_chosen: policy probability of chosen response
+        pi_ref_chosen: reference policy probability of chosen response
+        pi_rejected: policy probability of rejected response
+        pi_ref_rejected: reference policy probability of rejected response
+        beta: temperature parameter (controls deviation from reference)
+    
+    Returns: scalar loss value
+    """
+    # YOUR CODE HERE
+    pass
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+# Test cases
+# Case 1: Policy already prefers chosen — loss should be low
+loss1 = dpo_loss(0.8, 0.5, 0.2, 0.5, beta=0.1)
+print(f"Policy prefers chosen: loss = {loss1:.4f}")
+
+# Case 2: Policy prefers rejected — loss should be high
+loss2 = dpo_loss(0.2, 0.5, 0.8, 0.5, beta=0.1)
+print(f"Policy prefers rejected: loss = {loss2:.4f}")
+
+# Case 3: Policy matches reference — loss should be moderate
+loss3 = dpo_loss(0.5, 0.5, 0.5, 0.5, beta=0.1)
+print(f"Policy matches reference: loss = {loss3:.4f}")
+
+print(f"\nLoss ordering correct: {loss1 < loss3 < loss2}")
+print(f"Moderate loss ≈ log(2) ≈ 0.6931: {abs(loss3 - 0.6931) < 0.01}")
+</textarea>
+<div><button class="run-btn" onclick="runPuzzle(3)">▶ Run</button><button class="hint-btn" onclick="toggleHint(3)">💡 Hint</button></div>
+<div class="hint" id="hint3">Compute <code>log_ratio_chosen = np.log(pi_chosen / pi_ref_chosen)</code>, same for rejected. Then <code>-np.log(sigmoid(beta * (log_ratio_chosen - log_ratio_rejected)))</code></div>
+<div class="puzzle-output" id="out3"></div>
+<div class="puzzle-status" id="status3"></div>
+</div>
+
+<!-- Puzzle 4 -->
+<div class="puzzle" id="puzzle4">
+<h3>Puzzle 4: RLHF vs DPO — Same Destination</h3>
+<p class="desc">Both RLHF and DPO should converge to similar policies. Run the simulation to see!</p>
+<textarea class="code-area" id="code4">import numpy as np
+np.random.seed(42)
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+# Simple 1D scenario: policy outputs probability of "good" response
+# Preference data: good response preferred 80% of the time
+n_pairs = 100
+preferences = np.random.random(n_pairs) < 0.8  # True = good preferred
+
+# --- RLHF: train reward model, then optimize policy ---
+def rlhf_train(preferences, beta=1.0, lr=0.1, epochs=50):
+    """
+    1. Train reward model: r_good, r_bad (two scalar parameters)
+    2. Optimize policy: pi = sigmoid(theta), maximize r - beta*KL
+    
+    Fill in the policy optimization step.
+    Returns: list of pi values over training
+    """
+    # Step 1: Train reward model
+    r_good, r_bad = 0.0, 0.0
+    for _ in range(200):
+        for pref in preferences:
+            if pref:  # good preferred
+                grad = 1 - sigmoid(r_good - r_bad)
+                r_good += 0.05 * grad
+                r_bad -= 0.05 * grad
+            else:
+                grad = 1 - sigmoid(r_bad - r_good)
+                r_bad += 0.05 * grad
+                r_good -= 0.05 * grad
+    
+    # Step 2: Optimize policy against reward model
+    theta = 0.0  # policy parameter: pi = sigmoid(theta)
+    pi_ref = 0.5  # reference policy
+    history = []
+    
+    for _ in range(epochs):
+        pi = sigmoid(theta)
+        # Expected reward: pi * r_good + (1-pi) * r_bad
+        # KL penalty: pi*log(pi/pi_ref) + (1-pi)*log((1-pi)/(1-pi_ref))
+        # YOUR CODE: compute gradient of (reward - beta * KL) w.r.t. theta
+        reward_grad = (r_good - r_bad) * pi * (1 - pi)
+        kl_grad = (np.log(pi / pi_ref + 1e-10) - np.log((1 - pi) / (1 - pi_ref) + 1e-10) + 1) * pi * (1 - pi)
+        # (Simplified: the important thing is the direction)
+        theta += lr * (reward_grad - beta * kl_grad)
+        history.append(sigmoid(theta))
+    
+    return history
+
+# --- DPO: optimize directly on preferences ---
+def dpo_train(preferences, beta=1.0, lr=0.1, epochs=50):
+    """
+    Optimize policy directly on preferences without reward model.
+    Returns: list of pi values over training
+    """
+    theta = 0.0
+    theta_ref = 0.0  # frozen reference
+    history = []
+    
+    for _ in range(epochs):
+        pi = sigmoid(theta)
+        pi_ref = sigmoid(theta_ref)
+        
+        # Process mini-batch of preferences
+        grad = 0.0
+        for pref in preferences[:20]:
+            if pref:  # good response preferred
+                log_ratio_good = np.log(pi + 1e-10) - np.log(pi_ref + 1e-10)
+                log_ratio_bad = np.log(1-pi + 1e-10) - np.log(1-pi_ref + 1e-10)
+            else:
+                log_ratio_good = np.log(1-pi + 1e-10) - np.log(1-pi_ref + 1e-10)
+                log_ratio_bad = np.log(pi + 1e-10) - np.log(pi_ref + 1e-10)
+            
+            s = sigmoid(beta * (log_ratio_good - log_ratio_bad))
+            grad += (1 - s) * beta * pi * (1 - pi)
+        
+        theta += lr * grad / 20
+        history.append(sigmoid(theta))
+    
+    return history
+
+rlhf_h = rlhf_train(preferences)
+dpo_h = dpo_train(preferences)
+
+print("Training complete!")
+print(f"RLHF final policy (P(good)): {rlhf_h[-1]:.4f}")
+print(f"DPO  final policy (P(good)): {dpo_h[-1]:.4f}")
+print(f"Difference: {abs(rlhf_h[-1] - dpo_h[-1]):.4f}")
+print(f"\nBoth converge to similar policies: {abs(rlhf_h[-1] - dpo_h[-1]) < 0.15}")
+
+# Print convergence
+print("\nConvergence over epochs:")
+for i in range(0, len(rlhf_h), 10):
+    print(f"  Epoch {i:3d}: RLHF={rlhf_h[i]:.3f}  DPO={dpo_h[i]:.3f}")
+</textarea>
+<div><button class="run-btn" onclick="runPuzzle(4)">▶ Run</button><button class="hint-btn" onclick="toggleHint(4)">💡 Hint</button></div>
+<div class="hint" id="hint4">This one's pre-filled — just read through the code and run it. Both methods should converge to P(good) ≈ 0.7-0.9, showing they optimize the same objective.</div>
+<div class="puzzle-output" id="out4"></div>
+<div class="puzzle-status" id="status4"></div>
+</div>
+</section>
+
+<!-- ===================== ACT 3 ===================== -->
+<section class="act" id="act2">
+<h2>🌊 The Connection: From GPT-3 to ChatGPT</h2>
+
+<p>RLHF wasn't just a research curiosity — it was <em>the</em> breakthrough that turned language models into the assistants billions of people use today.</p>
+
+<div class="timeline">
+  <div class="tl-item">
+    <div class="year">2020</div>
+    <div class="tl-title">GPT-3 (175B) <span class="paper-tag">Brown et al.</span></div>
+    <div class="tl-desc">Massive, capable, but raw. Ask it a question and you might get an essay, a hallucination, or something offensive. It doesn't <em>want</em> to help — it just predicts tokens.</div>
+  </div>
+  <div class="tl-item highlight">
+    <div class="year">2022</div>
+    <div class="tl-title">InstructGPT (1.3B–175B) <span class="paper-tag">Paper #11</span></div>
+    <div class="tl-desc">The RLHF breakthrough. Ouyang et al. apply the 3-step pipeline: SFT → Reward Model → PPO. The results are stunning.</div>
+  </div>
+  <div class="tl-item highlight">
+    <div class="year">Nov 2022</div>
+    <div class="tl-title">ChatGPT</div>
+    <div class="tl-desc">RLHF at scale. Same pipeline, better data, bigger models. The world changes overnight. 100M users in 2 months.</div>
+  </div>
+  <div class="tl-item highlight">
+    <div class="year">2023</div>
+    <div class="tl-title">DPO <span class="paper-tag">Paper #12</span></div>
+    <div class="tl-desc">Rafailov et al. show you can skip the reward model entirely. Same objective, radically simpler. Quickly adopted across the industry.</div>
+  </div>
+  <div class="tl-item">
+    <div class="year">2024–</div>
+    <div class="tl-title">The Alignment Era</div>
+    <div class="tl-desc">RLHF/DPO variants become standard. Every major lab uses preference learning. The question shifts from "can we align models?" to "how well?"</div>
+  </div>
+</div>
+
+<div class="finding">
+  <div class="sub">InstructGPT's stunning finding:</div>
+  <div class="big">1.3B &gt; 175B</div>
+  <div class="sub">A 1.3B parameter InstructGPT model is preferred by humans over the 175B GPT-3</div>
+</div>
+
+<div class="quote">"Our 1.3B parameter InstructGPT model outputs are preferred to the 175B GPT-3 outputs... This demonstrates that alignment is not just about scale."<cite>— Ouyang et al., "Training language models to follow instructions with human feedback" (2022)</cite></div>
+
+<div class="quote">"Labelers significantly prefer InstructGPT outputs over outputs from GPT-3, as well as over outputs from GPT-3 when prompted to be helpful, harmless, and honest."<cite>— Ouyang et al. (2022)</cite></div>
+
+<div class="card" style="margin-top:30px">
+<h3>The InstructGPT Pipeline <span class="paper-tag">Paper #11</span></h3>
+<p style="color:var(--dim);font-size:.9rem;margin-bottom:16px">The exact three steps you explored in Act 1:</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+  <div style="background:var(--surface2);padding:14px 18px;border-radius:10px;text-align:center;flex:1;min-width:140px;border-top:3px solid var(--accent)">
+    <div style="font-size:1.5rem">📝</div>
+    <div style="font-weight:600;font-size:.9rem">Step 1: SFT</div>
+    <div style="color:var(--dim);font-size:.8rem;margin-top:4px">13K demonstrations from 40 contractors</div>
+  </div>
+  <div style="background:var(--surface2);padding:14px 18px;border-radius:10px;text-align:center;flex:1;min-width:140px;border-top:3px solid var(--accent2)">
+    <div style="font-size:1.5rem">⚖️</div>
+    <div style="font-weight:600;font-size:.9rem">Step 2: Reward Model</div>
+    <div style="color:var(--dim);font-size:.8rem;margin-top:4px">33K comparisons ranked by labelers</div>
+  </div>
+  <div style="background:var(--surface2);padding:14px 18px;border-radius:10px;text-align:center;flex:1;min-width:140px;border-top:3px solid var(--accent3)">
+    <div style="font-size:1.5rem">🎯</div>
+    <div style="font-weight:600;font-size:.9rem">Step 3: PPO</div>
+    <div style="color:var(--dim);font-size:.8rem;margin-top:4px">31K prompts, optimize vs reward model</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h3>DPO: The Elegant Shortcut <span class="paper-tag">Paper #12</span></h3>
+<div class="quote">"DPO optimizes the same objective as existing RLHF algorithms but is simple to implement and straightforward to train. Intuitively, the DPO update increases the relative log probability of preferred to dispreferred responses, but it incorporates a dynamic, per-sample importance weight that prevents the model from degenerating."<cite>— Rafailov et al. (2023)</cite></div>
+
+<p style="margin-top:16px;color:var(--dim)"><strong>The mathematical insight:</strong> For any reward function r, the optimal policy is:</p>
+<div class="dpo-eq">π*(y|x) = (1/Z) · π_ref(y|x) · exp(r(y,x) / β)</div>
+<p style="color:var(--dim);font-size:.9rem;margin-top:8px">Invert this to recover the reward from the policy:</p>
+<div class="dpo-eq">r(y,x) = β · log(π*(y|x) / π_ref(y|x)) + β · log Z</div>
+<p style="color:var(--dim);font-size:.9rem;margin-top:8px">Substitute into the Bradley-Terry preference model and the partition function Z cancels. <strong>No reward model needed.</strong></p>
+</div>
+
+<div class="card" style="text-align:center;margin-top:30px;background:linear-gradient(135deg,var(--surface),var(--surface2))">
+<h3 style="color:var(--accent)">The Takeaway</h3>
+<p style="color:var(--dim);font-size:1rem;margin-top:8px;max-width:600px;margin-left:auto;margin-right:auto">
+Raw capability isn't enough. <strong>Alignment</strong> — teaching models <em>what</em> humans want — is what turned GPT-3 into ChatGPT. RLHF made it possible. DPO made it simple. Both rely on the same beautiful idea: <em>learning from human preferences.</em>
+</p>
+</div>
+</section>
+</div>
+
+<script>
+// ===================== NAVIGATION =====================
+function showAct(i){
+  document.querySelectorAll('.act').forEach((a,j)=>{a.classList.toggle('active',j===i)});
+  document.querySelectorAll('.act-btn').forEach((b,j)=>{b.classList.toggle('active',j===i)});
+  if(i===1&&!window.pyodideReady)loadPyodide();
+  if(i===0)drawKL();
+}
+function showStage(i){
+  document.querySelectorAll('.pipe-stage').forEach((s,j)=>{
+    s.classList.toggle('active',j===i);
+    s.classList.toggle('done',j<i);
+  });
+  document.querySelectorAll('.stage-panel').forEach((p,j)=>{p.classList.toggle('active',j===i)});
+  if(i===0)loadSFTDemo();
+  if(i===1)loadPrefPair();
+  if(i===2)drawKL();
+}
+
+// ===================== SFT DEMO =====================
+const sftExamples=[
+  {prompt:"Explain quantum computing simply",
+   bad:"Quantum computing utilizes qubits which exist in superposition states enabling parallel computation through entanglement and interference patterns in Hilbert space with decoherence times measured in microseconds for superconducting transmon architectures...",
+   good:"Think of regular computers as working with light switches — each is on or off. Quantum computers use special switches called qubits that can be both on AND off at the same time. This lets them try many solutions simultaneously, making them incredibly fast for certain problems."},
+  {prompt:"What's a good recipe for pasta?",
+   bad:"Pasta. Pasta is a food. It is made from wheat. Italy is a country. The GDP of Italy is $2.1 trillion. Rome was founded in 753 BC. Julius Caesar was assassinated on the Ides of March...",
+   good:"Here's a quick garlic butter pasta:\n\n1. Boil pasta until al dente (8-10 min)\n2. Melt 3 tbsp butter, add 4 minced garlic cloves\n3. Toss pasta in the garlic butter\n4. Add parmesan, red pepper flakes, and fresh parsley\n\nReady in 15 minutes!"},
+  {prompt:"Write me a poem about the ocean",
+   bad:"I cannot write poems because I am an AI language model trained by [COMPANY]. However, I can tell you that the ocean covers approximately 71% of the Earth's surface. The Pacific Ocean is the largest ocean. The Mariana Trench is 36,000 feet deep. Fish live in the ocean.",
+   good:"Salt-kissed winds carry whispers far,\nWhere waves compose their endless song.\nBeneath the pale and patient star,\nThe tides pull memories along.\n\nIn depths where sunlight dares not reach,\nOld secrets sleep in coral beds —\nWhile children laugh upon the beach,\nThe ocean dreams of what's ahead."}
+];
+let sftIdx=0;
+function loadSFTDemo(){
+  const e=sftExamples[sftIdx%sftExamples.length];
+  document.getElementById('sft-demo').innerHTML=`
+    <div class="sft-compare">
+      <div class="sft-box bad"><h4 style="color:#e74c3c">❌ Base Model (GPT-3)</h4><div class="prompt">Prompt: "${e.prompt}"</div><div class="output">${e.bad}</div></div>
+      <div class="sft-box good"><h4 style="color:var(--success)">✅ After SFT</h4><div class="prompt">Prompt: "${e.prompt}"</div><div class="output">${e.good}</div></div>
+    </div>`;
+}
+function nextSFT(){sftIdx++;loadSFTDemo()}
+loadSFTDemo();
+
+// ===================== PREFERENCE LABELING =====================
+const prefData=[
+  {prompt:"How do I fix a leaky faucet?",
+   a:"Turn off the water supply under the sink. Remove the faucet handle (usually a screw under a cap). Replace the worn washer or O-ring inside — they're cheap at any hardware store. Reassemble and test. If it still leaks, the valve seat might need replacing.",
+   b:"A leaky faucet is a common household plumbing issue that can result in significant water waste over time. The Environmental Protection Agency estimates that household leaks can waste nearly 10,000 gallons of water per year. Plumbing has a rich history dating back to ancient Rome.",
+   better:"a"},
+  {prompt:"Is it safe to eat raw cookie dough?",
+   a:"Yes! Cookie dough is delicious and millions of people eat it every day without any problems. Don't listen to the haters.",
+   b:"Traditional cookie dough has two risks: raw eggs (salmonella) and raw flour (E. coli). For safe snacking, use heat-treated flour (bake at 350°F for 5 min) and pasteurized eggs, or skip eggs entirely. Many stores now sell 'edible cookie dough' made this way.",
+   better:"b"},
+  {prompt:"Explain why the sky is blue",
+   a:"Sunlight contains all colors. When it hits our atmosphere, shorter blue wavelengths scatter more than longer red ones (this is called Rayleigh scattering). So when you look up, you see scattered blue light coming from all directions. At sunset, light travels through more atmosphere, so even blue scatters away — leaving reds and oranges.",
+   b:"The sky is blue because of the way light interacts with the atmosphere. It has to do with scattering. Blue light scatters more. That's why the sky is blue.",
+   better:"a"},
+  {prompt:"How can I make my laptop faster?",
+   a:"Throw it away and buy a new one. Old laptops are garbage.",
+   b:"Quick wins: 1) Close unused browser tabs (each uses RAM). 2) Uninstall apps you don't use. 3) Disable startup programs (Task Manager → Startup tab). 4) If it's really slow, upgrading to an SSD is the single biggest improvement — usually $30-50 and makes it feel brand new.",
+   better:"b"},
+  {prompt:"What's the meaning of life?",
+   a:"This is a profound question that philosophers have debated for millennia. Existentialists like Sartre argued we create our own meaning. Aristotle pointed to eudaimonia — flourishing through virtue. Religious traditions offer their own answers. Perhaps the most honest answer: it's deeply personal, and the search itself might be the point.",
+   b:"42. That's the answer from Hitchhiker's Guide to the Galaxy. But seriously, nobody knows. Just try to be happy I guess.",
+   better:"a"},
+  {prompt:"Help me write an email declining a job offer",
+   a:"Subject: Regarding the [Position] Offer\n\nDear [Name],\n\nThank you so much for offering me the [Position] role. I genuinely enjoyed learning about your team and the work you're doing.\n\nAfter careful consideration, I've decided to pursue a different opportunity that aligns more closely with my current goals. This was not an easy decision.\n\nI have great respect for your organization and hope our paths cross again. Thank you for your time and consideration.\n\nBest regards,\n[Your name]",
+   b:"Just tell them you don't want the job. Something like 'Hey, I'm not taking the job, thanks though.' Keep it simple, don't overthink it.",
+   better:"a"},
+];
+let prefIdx=0,prefDone=false;
+function loadPrefPair(){
+  if(prefDone)return;
+  if(prefIdx>=prefData.length){finishPrefs();return}
+  const p=prefData[prefIdx];
+  document.getElementById('pref-num').textContent=prefIdx+1;
+  document.getElementById('pref-progress').style.width=((prefIdx)/prefData.length*100)+'%';
+  document.getElementById('pref-prompt').innerHTML=`<strong>Prompt:</strong> "${p.prompt}"`;
+  document.getElementById('pref-pair').innerHTML=`
+    <div class="pref-option" onclick="pickPref('a')"><div class="label">Response A</div>${p.a.replace(/\n/g,'<br>')}</div>
+    <div class="pref-option" onclick="pickPref('b')"><div class="label">Response B</div>${p.b.replace(/\n/g,'<br>')}</div>`;
+}
+function pickPref(choice){
+  if(prefDone)return;
+  const opts=document.querySelectorAll('#pref-pair .pref-option');
+  const better=prefData[prefIdx].better;
+  opts[0].classList.add(choice==='a'?'chosen':'rejected');
+  opts[1].classList.add(choice==='b'?'chosen':'rejected');
+  opts[0].style.pointerEvents='none';opts[1].style.pointerEvents='none';
+  setTimeout(()=>{prefIdx++;loadPrefPair()},800);
+}
+function finishPrefs(){
+  prefDone=true;
+  document.getElementById('pref-area').style.display='none';
+  document.getElementById('pref-done').style.display='block';
+  document.getElementById('pref-progress').style.width='100%';
+  // Show reward bars
+  const items=[
+    {text:'Detailed, actionable advice',score:.92},
+    {text:'Acknowledges nuance',score:.85},
+    {text:'Accurate & honest',score:.88},
+    {text:'Polite & professional',score:.80},
+    {text:'Vague hand-waving',score:.25},
+    {text:'Off-topic rambling',score:.15},
+    {text:'Dismissive one-liners',score:.18},
+  ];
+  document.getElementById('reward-bars').innerHTML=items.map(it=>{
+    const c=it.score>.5?'var(--accent)':'#e74c3c';
+    return `<div class="reward-bar"><span class="text">${it.text}</span><div class="bar"><div class="bar-fill" style="width:${it.score*100}%;background:${c}"></div></div><span class="score" style="color:${c}">${it.score.toFixed(2)}</span></div>`;
+  }).join('');
+}
+loadPrefPair();
+
+// ===================== KL / PPO VISUALIZATION =====================
+function drawKL(step){
+  const canvas=document.getElementById('klCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // Draw distributions
+  const s=window.ppoStep||0;
+  function gauss(x,mu,sig){return Math.exp(-0.5*((x-mu)/sig)**2)/(sig*Math.sqrt(2*Math.PI))}
+  // Reference (SFT) distribution
+  ctx.strokeStyle='#555';ctx.lineWidth=2;ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  for(let i=0;i<W;i++){const x=(i/W)*6-3;const y=gauss(x,0,1);ctx.lineTo(i,H-40-y*200)}
+  ctx.stroke();ctx.setLineDash([]);
+  // Policy distribution (shifts toward higher reward)
+  const shift=Math.min(s*0.08,1.2);
+  const spread=1+Math.min(s*0.005,0.15);
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=3;
+  ctx.beginPath();
+  for(let i=0;i<W;i++){const x=(i/W)*6-3;const y=gauss(x,shift,spread);ctx.lineTo(i,H-40-y*200)}
+  ctx.stroke();
+  // Reward gradient (background)
+  for(let i=0;i<W;i++){
+    const alpha=Math.max(0,Math.min(.12,(i/W-.2)*.2));
+    ctx.fillStyle=`rgba(78,205,196,${alpha})`;
+    ctx.fillRect(i,0,1,H-35);
+  }
+  // KL penalty zone
+  if(shift>0.3){
+    ctx.fillStyle='rgba(231,76,60,0.06)';
+    const klStart=W*(0.5+shift/6);
+    ctx.fillRect(klStart,0,W-klStart,H-35);
+  }
+  // Labels
+  ctx.fillStyle='#8090b0';ctx.font='13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('← Low Reward',80,H-10);
+  ctx.fillText('High Reward →',W-100,H-10);
+  ctx.fillStyle='#555';ctx.fillText('π_SFT (reference)',W/2-80,30);
+  ctx.fillStyle='#4ecdc4';ctx.fillText(`π_θ (policy, step ${s})`,W/2+100,30);
+  if(shift>0.3){ctx.fillStyle='rgba(231,76,60,0.6)';ctx.fillText('KL penalty zone',W-100,50)}
+  // Stats
+  ctx.fillStyle='#e0e4f0';ctx.textAlign='left';ctx.font='12px monospace';
+  ctx.fillText(`Reward: ${(shift*2.5).toFixed(2)}  |  KL: ${(shift**2*0.8).toFixed(2)}  |  Objective: ${(shift*2.5-shift**2*0.8).toFixed(2)}`,20,H-10);
+}
+function runPPO(){
+  window.ppoStep=0;
+  const btn=document.getElementById('ppo-btn');
+  btn.disabled=true;btn.textContent='Training...';
+  const iv=setInterval(()=>{
+    window.ppoStep++;
+    drawKL();
+    if(window.ppoStep>=30){clearInterval(iv);btn.disabled=false;btn.textContent='▶ Run Again'}
+  },120);
+}
+drawKL();
+
+// ===================== PYODIDE =====================
+let pyodideReady=false,pyodide=null;
+async function loadPyodide(){
+  if(pyodideReady)return;
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+  s.onload=async()=>{
+    pyodide=await globalThis.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'});
+    await pyodide.loadPackage('numpy');
+    pyodideReady=true;
+    document.getElementById('pyodide-status').innerHTML='✅ Python ready! NumPy loaded.';
+    document.getElementById('pyodide-status').style.color='var(--success)';
+  };
+  document.head.appendChild(s);
+}
+async function runPuzzle(n){
+  if(!pyodideReady){loadPyodide();return}
+  const code=document.getElementById('code'+n).value;
+  const out=document.getElementById('out'+n);
+  const status=document.getElementById('status'+n);
+  const btn=document.querySelector(`#puzzle${n} .run-btn`);
+  btn.disabled=true;btn.textContent='Running...';
+  out.textContent='';status.className='puzzle-status';
+  try{
+    pyodide.runPython(`import io,sys;sys.stdout=io.StringIO();sys.stderr=io.StringIO()`);
+    pyodide.runPython(code);
+    const stdout=pyodide.runPython('sys.stdout.getvalue()');
+    const stderr=pyodide.runPython('sys.stderr.getvalue()');
+    out.textContent=stdout+(stderr?'\n⚠️ '+stderr:'');
+    // Check correctness
+    const pass=checkPuzzle(n,stdout);
+    status.className='puzzle-status '+(pass?'pass':'fail');
+    status.textContent=pass?'✅ All checks passed!':'❌ Not quite — check the output and try again.';
+  }catch(e){
+    out.textContent='Error: '+e.message;
+    status.className='puzzle-status fail';
+    status.textContent='❌ Runtime error — check your code.';
+  }
+  btn.disabled=false;btn.textContent='▶ Run';
+}
+function checkPuzzle(n,out){
+  if(n===1)return out.includes('"chosen": "The answer is 4."')&&out.includes('chosen is B: True');
+  if(n===2)return out.includes('All preferences satisfied: True');
+  if(n===3)return out.includes('Loss ordering correct: True')&&out.includes('0.6931');
+  if(n===4)return out.includes('Both converge to similar policies: True');
+  return false;
+}
+function toggleHint(n){const h=document.getElementById('hint'+n);h.style.display=h.style.display==='block'?'none':'block'}
+</script>
+</body>
+</html>

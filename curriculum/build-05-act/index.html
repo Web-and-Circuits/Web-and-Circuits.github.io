@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>BUILD-05: Let It Act</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e0;line-height:1.7;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+a{color:#4ecdc4}
+.hero{text-align:center;padding:3rem 1.5rem 2rem;background:linear-gradient(135deg,#0a0a1a,#1a1a3a,#0a0a1a);border-bottom:1px solid #333}
+.hero .series{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.15em;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffa502,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.hero .subtitle{color:#999;font-size:1.1rem;max-width:620px;margin:0 auto}
+.phase{margin:2.5rem 0;padding:2rem;border-radius:12px;border:1px solid}
+.phase-wall{background:linear-gradient(135deg,rgba(255,80,50,.08),rgba(255,160,50,.05));border-color:#5a2a1a}
+.phase-wall h2{color:#ff6b4a;margin-bottom:1rem}
+.phase-theory{background:linear-gradient(135deg,rgba(50,80,255,.08),rgba(100,150,255,.05));border-color:#1a2a5a}
+.phase-theory h2{color:#6b8aff;margin-bottom:1rem}
+.phase-build{background:linear-gradient(135deg,rgba(50,200,100,.08),rgba(80,255,120,.05));border-color:#1a4a2a}
+.phase-build h2{color:#4ecdc4;margin-bottom:1rem}
+.phase-payoff{background:linear-gradient(135deg,rgba(200,150,50,.08),rgba(255,200,80,.05));border-color:#4a3a1a;text-align:center;font-size:1.15rem}
+.phase-payoff h2{color:#ffa502;margin-bottom:1rem}
+.exercise{background:rgba(0,0,0,.3);border:1px solid #2a2a3a;border-radius:8px;margin:1.5rem 0;padding:1.25rem}
+.exercise .ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer}
+.exercise .ex-num{font-size:.8rem;font-family:monospace;color:#4ecdc4;background:#1a3a2a;padding:2px 10px;border-radius:10px}
+.exercise .ex-title{font-weight:600;flex:1;margin-left:.75rem}
+.exercise .ex-check{font-size:1.2rem;cursor:pointer;user-select:none}
+.exercise .ex-check.done{color:#4ecdc4}
+.exercise .ex-desc{color:#aaa;font-size:.92rem;margin-bottom:1rem}
+.exercise textarea{width:100%;min-height:200px;background:#111;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:12px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:.85rem;resize:vertical;tab-size:4}
+.exercise textarea:focus{outline:none;border-color:#4ecdc4}
+.exercise .btn-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.exercise button{padding:8px 16px;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .15s}
+.btn-run{background:#1a5a3a;color:#4ecdc4}.btn-run:hover{background:#2a7a4a}
+.btn-reset{background:#333;color:#999}.btn-reset:hover{background:#444}
+.btn-hint{background:#2a2a4a;color:#8a8acc}.btn-hint:hover{background:#3a3a5a}
+.exercise .output{background:#0a0a0f;border:1px solid #222;border-radius:6px;padding:12px;margin-top:.75rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;min-height:40px;max-height:300px;overflow-y:auto;display:none}
+.exercise .output.visible{display:block}
+.exercise .hint{display:none;background:#1a1a3a;border:1px solid #2a2a5a;border-radius:6px;padding:10px;margin-top:.5rem;font-size:.88rem;color:#aaa}
+.exercise .hint.visible{display:block}
+.go-deeper{background:#0d0d1a;border:1px solid #1a1a3a;border-radius:10px;padding:1.5rem;margin:2rem 0}
+.go-deeper h3{color:#8a8acc;margin-bottom:.75rem;font-size:1rem}
+.go-deeper ul{list-style:none;padding:0}
+.go-deeper li{padding:.4rem 0;font-size:.92rem;border-bottom:1px solid #151525}
+.go-deeper li:last-child{border:none}
+.go-deeper li .label{color:#666;font-size:.8rem}
+.progress-bar{background:#1a1a2a;border-radius:20px;height:8px;margin:1.5rem 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#44bd60);border-radius:20px;transition:width .5s;width:0}
+.progress-text{text-align:center;color:#666;font-size:.85rem;margin-bottom:1.5rem}
+.insight{background:rgba(78,205,196,.08);border:1px solid #1a4a4a;border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.95rem}
+.insight strong{color:#4ecdc4}
+h3{color:#8aaeff;margin:1.5rem 0 .75rem}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;border-top:1px solid #1a1a2a;margin-top:2rem}
+.nav-footer a{color:#4ecdc4;text-decoration:none;font-size:.95rem}
+.nav-footer a:hover{text-decoration:underline}
+#loading{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#ff6b6b;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{margin-top:1rem;color:#666}
+@media(max-width:600px){.hero h1{font-size:1.7rem}.phase{padding:1.25rem}.exercise textarea{min-height:140px;font-size:.82rem}}
+
+/* ReAct loop diagram */
+.react-loop{background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1.5rem;margin:1.25rem 0;font-size:.92rem}
+.react-step{padding:.5rem .75rem;margin:.4rem 0;border-radius:6px;border-left:3px solid}
+.react-step.think{background:rgba(107,138,255,.1);border-color:#6b8aff;color:#8aaeff}
+.react-step.act{background:rgba(255,165,2,.1);border-color:#ffa502;color:#ffc832}
+.react-step.observe{background:rgba(78,205,196,.1);border-color:#4ecdc4;color:#6eddd4}
+.react-step.respond{background:rgba(80,200,120,.1);border-color:#50c878;color:#70e898}
+.react-step .step-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Loading Pyodide…</p></div>
+
+<div class="hero">
+  <div class="series">Build Your Own OpenClaw · Module 5 of 10</div>
+  <h1>⚡ Let It Act</h1>
+  <div class="subtitle">Your bot can talk. But it can't DO anything — it can't check the weather, search the web, or send an email. Let's give it hands.</div>
+</div>
+
+<div class="container">
+
+<div class="progress-text"><span id="progress-count">0</span> / 8 exercises complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================ -->
+<!-- HIT THE WALL -->
+<!-- ============================================ -->
+<div class="phase phase-wall">
+  <h2>🧱 Hit the Wall</h2>
+
+  <p>Ask your bot: <em>"What's the weather in Richmond?"</em></p>
+
+  <p style="margin-top:.75rem">It'll say something like: <em>"The weather in Richmond is likely pleasant this time of year..."</em></p>
+
+  <p style="margin-top:.75rem"><strong>It has no idea.</strong> It's guessing. It's making up a plausible-sounding answer based on patterns in its training data. It has never checked the weather. It <em>can't</em> check the weather. It's a text-in, text-out machine with no connection to the outside world.</p>
+
+  <div class="insight" style="border-color:#5a2a1a;background:rgba(255,80,50,.1)">
+    <strong style="color:#ff6b4a">The problem:</strong> Your bot SAYS it's sunny, but it has no idea. What if it could actually CHECK?
+  </div>
+
+  <p style="margin-top:1rem">What if, when you ask about the weather, the bot could:</p>
+  <ol style="margin:.5rem 0 0 1.5rem;color:#ccc">
+    <li>Recognize "I need to check the weather"</li>
+    <li>Actually call a weather service</li>
+    <li>Read the result</li>
+    <li>Give you a real answer</li>
+  </ol>
+
+  <p style="margin-top:1rem">Let's walk through exactly how that works, step by step, with a real example. Then we'll build it.</p>
+
+  <h3 style="color:#ff6b4a">One Complete Example</h3>
+
+  <div class="react-loop">
+    <div style="color:#888;margin-bottom:.5rem;font-size:.85rem">User asks: <strong style="color:#e0e0e0">"What's the weather in Richmond?"</strong></div>
+
+    <div class="react-step think">
+      <div class="step-label">🧠 Think</div>
+      "The user wants weather info for Richmond. I don't know the weather — I need to check. I have a weather tool available."
+    </div>
+
+    <div class="react-step act">
+      <div class="step-label">🔧 Act</div>
+      Calls: <code>weather_tool("Richmond")</code>
+    </div>
+
+    <div class="react-step observe">
+      <div class="step-label">👁️ Observe</div>
+      Result comes back: <code>{"temp": "67°F", "condition": "partly cloudy", "humidity": "45%"}</code>
+    </div>
+
+    <div class="react-step respond">
+      <div class="step-label">💬 Respond</div>
+      "It's 67°F and partly cloudy in Richmond right now, with 45% humidity."
+    </div>
+  </div>
+
+  <p style="margin-top:1rem">That's it. Four steps: think → act → observe → respond. The bot decided it needed information, called a tool to get it, read the result, and gave a real answer instead of making one up.</p>
+
+  <p style="margin-top:.75rem"><strong>This pattern has a name: ReAct.</strong> Reasoning + Acting. It was introduced in a 2022 paper, and it's how every modern AI assistant uses tools — including ChatGPT, Claude, and OpenClaw.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- LEARN THE THEORY -->
+<!-- ============================================ -->
+<div class="phase phase-theory">
+  <h2>📐 Learn the Theory</h2>
+
+  <h3>What IS a Tool?</h3>
+
+  <p>A tool is just a function the bot can call. Nothing fancy. It's a piece of code that does something specific and returns a result.</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-size:.9rem;color:#ccc">
+    <div style="color:#ffa502;font-weight:600;margin-bottom:.5rem">Examples of tools:</div>
+    <div style="padding-left:1rem">
+      <div>• <code>weather_tool("Richmond")</code> → returns current weather</div>
+      <div>• <code>search_tool("best pizza NYC")</code> → returns search results</div>
+      <div>• <code>calculator_tool("sqrt(144)")</code> → returns 12</div>
+      <div>• <code>send_email("alice@example.com", "Meeting at 3pm")</code> → sends email</div>
+      <div>• <code>read_file("/data/report.csv")</code> → returns file contents</div>
+    </div>
+  </div>
+
+  <p>Each tool needs a <strong>description</strong> so the bot knows when to use it. You give the bot a menu: "Here are the tools you have. Here's what each one does. Here's what information each one needs."</p>
+
+  <h3>JSON: A Form with Labeled Fields</h3>
+
+  <p>When the bot calls a tool, it needs to structure the request in a way the tool can understand. We use <strong>JSON</strong> for this — it's just a structured way to write data, like a form with labeled fields.</p>
+
+  <p style="margin-top:.75rem">Instead of a messy sentence like "check the weather in Richmond in Fahrenheit," JSON looks like:</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-family:monospace;font-size:.88rem">
+    <div style="color:#666">// A JSON object — just labeled fields</div>
+    <div>{</div>
+    <div>&nbsp;&nbsp;<span style="color:#ff6b6b">"tool"</span>: <span style="color:#ffa502">"weather"</span>,</div>
+    <div>&nbsp;&nbsp;<span style="color:#ff6b6b">"city"</span>: <span style="color:#ffa502">"Richmond"</span>,</div>
+    <div>&nbsp;&nbsp;<span style="color:#ff6b6b">"units"</span>: <span style="color:#ffa502">"fahrenheit"</span></div>
+    <div>}</div>
+  </div>
+
+  <p>That's it. Curly braces, field names in quotes, values in quotes (or numbers). Every label has a colon, every field is separated by a comma. If you can read a form, you can read JSON.</p>
+
+  <h3>The ReAct Loop</h3>
+
+  <p>We already walked through one example. Now let's see the general pattern:</p>
+
+  <div class="react-loop">
+    <div class="react-step think">
+      <div class="step-label">🧠 Think (Reasoning)</div>
+      The bot reads the user's message and decides: "Do I need a tool for this? Which one? What information do I need to give it?"
+    </div>
+    <div class="react-step act">
+      <div class="step-label">🔧 Act</div>
+      The bot outputs a structured tool call (JSON). The system catches this, runs the tool, and feeds the result back.
+    </div>
+    <div class="react-step observe">
+      <div class="step-label">👁️ Observe</div>
+      The tool's result is added to the conversation. The bot reads it like any other message.
+    </div>
+    <div class="react-step respond">
+      <div class="step-label">💬 Respond (or loop again)</div>
+      The bot can now answer with real data. Or — if it needs MORE info — it goes back to Think and calls another tool.
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>Key insight:</strong> The bot doesn't "run" the tools itself. It just says <em>"I want to call weather_tool with city=Richmond."</em> The system around it actually runs the function and gives back the result. The bot is like a manager delegating tasks.
+  </div>
+
+  <h3>How Does the Bot Know What Tools Exist?</h3>
+
+  <p>You tell it! In the system prompt, you include a "tool menu" — a list of available tools with descriptions:</p>
+
+  <div style="background:#111;border-radius:8px;padding:1rem;margin:1rem 0;font-size:.88rem;color:#ccc;font-family:monospace">
+    <div style="color:#666">You have these tools available:</div>
+    <div style="margin-top:.5rem"><span style="color:#ffa502">weather</span>(<span style="color:#ff6b6b">city</span>: string) → Get current weather for a city</div>
+    <div><span style="color:#ffa502">search</span>(<span style="color:#ff6b6b">query</span>: string) → Search the web</div>
+    <div><span style="color:#ffa502">calculator</span>(<span style="color:#ff6b6b">expression</span>: string) → Evaluate a math expression</div>
+    <div style="margin-top:.5rem;color:#666">When you need to use a tool, output a JSON object with "tool" and its arguments.</div>
+  </div>
+
+  <p>That's the whole trick. The bot reads this menu, and when a user's question requires one of these tools, it knows to call it. No special architecture — just instructions in the prompt.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- BUILD THE SOLUTION -->
+<!-- ============================================ -->
+<div class="phase phase-build">
+  <h2>🔨 Build the Solution</h2>
+  <p>Eight exercises. By the end, your bot can use tools, chain multiple tool calls, and handle errors gracefully.</p>
+
+  <!-- Ex 1: Define tools -->
+  <div class="exercise" id="ex1">
+    <div class="ex-header">
+      <span class="ex-num">01</span>
+      <span class="ex-title">Define Your First Tools</span>
+      <span class="ex-check" id="check-ex1">○</span>
+    </div>
+    <div class="ex-desc">A tool is just a function with a description. Define three tools: weather, calculator, and search.</div>
+    <textarea id="code-ex1">
+import json, math
+
+# A tool is: a function + a description of what it does.
+# The description tells the bot WHEN to use it.
+
+def weather_tool(city):
+    """Check the current weather for a city."""
+    # In production, this would call a real weather API.
+    # We'll simulate it with fake but realistic data.
+    fake_weather = {
+        "richmond": {"temp": 67, "condition": "partly cloudy", "humidity": 45},
+        "new york":  {"temp": 52, "condition": "rainy", "humidity": 78},
+        "san francisco": {"temp": 61, "condition": "foggy", "humidity": 82},
+    }
+    city_lower = city.lower()
+    if city_lower in fake_weather:
+        w = fake_weather[city_lower]
+        return {"city": city, "temp_f": w["temp"], "condition": w["condition"], "humidity": w["humidity"]}
+    return {"error": f"No weather data for {city}"}
+
+def calculator_tool(expression):
+    """Evaluate a math expression. Supports +, -, *, /, sqrt, pow, etc."""
+    try:
+        # Safe evaluation with math functions available
+        allowed = {"sqrt": math.sqrt, "pow": pow, "abs": abs, "round": round,
+                   "pi": math.pi, "e": math.e}
+        result = eval(expression, {"__builtins__": {}}, allowed)
+        return {"expression": expression, "result": result}
+    except Exception as e:
+        return {"error": str(e)}
+
+def search_tool(query):
+    """Search the web and return relevant results."""
+    # Simulated search results
+    return {"query": query, "results": [
+        f"Result 1: Information about {query}",
+        f"Result 2: More details on {query}",
+        f"Result 3: {query} - Wikipedia",
+    ]}
+
+# The tool registry: what the bot sees
+TOOLS = {
+    "weather": {
+        "function": weather_tool,
+        "description": "Get current weather for a city",
+        "parameters": {"city": "string - the city name"}
+    },
+    "calculator": {
+        "function": calculator_tool,
+        "description": "Evaluate a math expression",
+        "parameters": {"expression": "string - math expression like '2+2' or 'sqrt(144)'"}
+    },
+    "search": {
+        "function": search_tool,
+        "description": "Search the web for information",
+        "parameters": {"query": "string - what to search for"}
+    }
+}
+
+# Test each tool
+print("=== Testing our tools ===\n")
+
+result = weather_tool("Richmond")
+print(f"weather_tool('Richmond'):")
+print(f"  → {json.dumps(result)}\n")
+
+result = calculator_tool("sqrt(144) + 10")
+print(f"calculator_tool('sqrt(144) + 10'):")
+print(f"  → {json.dumps(result)}\n")
+
+result = search_tool("best pizza NYC")
+print(f"search_tool('best pizza NYC'):")
+print(f"  → {json.dumps(result)}\n")
+
+# Show the tool menu (what the bot would see)
+print("=== Tool Menu (what the bot sees) ===\n")
+for name, tool in TOOLS.items():
+    params = ", ".join(f"{k}: {v}" for k, v in tool["parameters"].items())
+    print(f"  {name}({params})")
+    print(f"    → {tool['description']}\n")
+
+print("→ Three tools defined. Each is just a Python function.")
+print("  The bot reads the menu and knows when to call each one.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex1')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex1')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex1"></div>
+  </div>
+
+  <!-- Ex 2: Parse tool calls from bot output -->
+  <div class="exercise" id="ex2">
+    <div class="ex-header">
+      <span class="ex-num">02</span>
+      <span class="ex-title">Parse Tool Calls — Understanding JSON</span>
+      <span class="ex-check" id="check-ex2">○</span>
+    </div>
+    <div class="ex-desc">When the bot decides to use a tool, it outputs a JSON object. We need to parse it and figure out which tool to call with what arguments.</div>
+    <textarea id="code-ex2">
+import json
+
+def parse_tool_call(bot_output):
+    """Parse a tool call from the bot's output.
+    
+    The bot outputs something like:
+    {"tool": "weather", "args": {"city": "Richmond"}}
+    
+    We need to:
+    1. Find the JSON in the output
+    2. Extract the tool name
+    3. Extract the arguments
+    """
+    # Try to find JSON in the output
+    # (Bot might output some text before/after the JSON)
+    start = bot_output.find('{')
+    end = bot_output.rfind('}') + 1
+    
+    if start == -1 or end == 0:
+        return None  # No JSON found — bot is just talking normally
+    
+    json_str = bot_output[start:end]
+    
+    try:
+        parsed = json.loads(json_str)
+        if "tool" in parsed:
+            return {
+                "tool": parsed["tool"],
+                "args": parsed.get("args", {})
+            }
+        return None  # Has JSON but not a tool call
+    except json.JSONDecodeError:
+        return None  # Invalid JSON
+
+# Test with different bot outputs
+test_outputs = [
+    # Bot decides to call a tool
+    'I need to check the weather. {"tool": "weather", "args": {"city": "Richmond"}}',
+    
+    # Bot calls the calculator
+    '{"tool": "calculator", "args": {"expression": "sqrt(144) + 10"}}',
+    
+    # Bot just talks normally (no tool call)
+    "The capital of France is Paris. It's a beautiful city!",
+    
+    # Bot calls search
+    'Let me search for that. {"tool": "search", "args": {"query": "best Italian restaurant NYC"}}',
+]
+
+print("=== Parsing Bot Outputs ===\n")
+for output in test_outputs:
+    result = parse_tool_call(output)
+    preview = output[:60] + "..." if len(output) > 60 else output
+    print(f"Bot said: \"{preview}\"")
+    if result:
+        print(f"  → Tool call detected!")
+        print(f"    Tool: {result['tool']}")
+        print(f"    Args: {json.dumps(result['args'])}")
+    else:
+        print(f"  → No tool call. Just regular text.")
+    print()
+
+print("→ We can now tell when the bot wants to use a tool")
+print("  vs. when it's just talking normally.")
+print("  The JSON is like a structured form — easy to parse.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex2')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex2')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex2"></div>
+  </div>
+
+  <!-- Ex 3: Execute a tool call -->
+  <div class="exercise" id="ex3">
+    <div class="ex-header">
+      <span class="ex-num">03</span>
+      <span class="ex-title">Execute Tool Calls — Run the Function, Get the Result</span>
+      <span class="ex-check" id="check-ex3">○</span>
+    </div>
+    <div class="ex-desc">Connect the parser to the tools. When the bot asks for a tool, actually run it and return the result.</div>
+    <textarea id="code-ex3">
+import json, math
+
+# Tools from Exercise 1
+def weather_tool(city):
+    fake = {"richmond": {"temp": 67, "condition": "partly cloudy", "humidity": 45},
+            "new york": {"temp": 52, "condition": "rainy", "humidity": 78}}
+    data = fake.get(city.lower())
+    if data: return {"city": city, **data}
+    return {"error": f"No weather data for {city}"}
+
+def calculator_tool(expression):
+    try:
+        result = eval(expression, {"__builtins__": {}}, {"sqrt": math.sqrt, "pow": pow, "pi": math.pi})
+        return {"expression": expression, "result": result}
+    except Exception as e:
+        return {"error": str(e)}
+
+def search_tool(query):
+    return {"query": query, "results": [f"Info about {query}", f"More on {query}"]}
+
+TOOLS = {"weather": weather_tool, "calculator": calculator_tool, "search": search_tool}
+
+def execute_tool_call(tool_name, args):
+    """Run a tool and return its result.
+    
+    This is the bridge between "the bot wants to do something"
+    and "actually doing it."
+    """
+    if tool_name not in TOOLS:
+        return {"error": f"Unknown tool: {tool_name}"}
+    
+    try:
+        func = TOOLS[tool_name]
+        result = func(**args)  # Call the function with the arguments
+        return {"status": "success", "tool": tool_name, "result": result}
+    except Exception as e:
+        return {"status": "error", "tool": tool_name, "error": str(e)}
+
+# Simulate the full flow: bot output → parse → execute → result
+bot_outputs = [
+    '{"tool": "weather", "args": {"city": "Richmond"}}',
+    '{"tool": "calculator", "args": {"expression": "sqrt(144) + 10"}}',
+    '{"tool": "search", "args": {"query": "Italian restaurants NYC"}}',
+    '{"tool": "nonexistent", "args": {}}',  # Unknown tool
+]
+
+print("=== Full Tool Execution Flow ===\n")
+
+for bot_output in bot_outputs:
+    # Parse
+    start = bot_output.find('{')
+    end = bot_output.rfind('}') + 1
+    parsed = json.loads(bot_output[start:end])
+    tool_name = parsed["tool"]
+    args = parsed.get("args", {})
+    
+    print(f"Bot requests: {tool_name}({json.dumps(args)})")
+    
+    # Execute
+    result = execute_tool_call(tool_name, args)
+    
+    if result["status"] == "success":
+        print(f"  ✅ Result: {json.dumps(result['result'])}")
+    else:
+        print(f"  ❌ Error: {result['error']}")
+    print()
+
+print("→ The bot says what it wants. We run the function. Feed the result back.")
+print("  The bot never runs code itself — it delegates, like a manager.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex3')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex3')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex3"></div>
+  </div>
+
+  <!-- Ex 4: The ReAct loop -->
+  <div class="exercise" id="ex4">
+    <div class="ex-header">
+      <span class="ex-num">04</span>
+      <span class="ex-title">The Full ReAct Loop — Think, Act, Observe, Respond</span>
+      <span class="ex-check" id="check-ex4">○</span>
+    </div>
+    <div class="ex-desc">Wire it all together. The bot thinks about the question, calls a tool, observes the result, and gives a real answer.</div>
+    <textarea id="code-ex4">
+import json, math
+
+# Tools
+def weather_tool(city):
+    fake = {"richmond": {"temp": 67, "condition": "partly cloudy", "humidity": 45},
+            "new york": {"temp": 52, "condition": "rainy", "humidity": 78},
+            "san francisco": {"temp": 61, "condition": "foggy", "humidity": 82}}
+    data = fake.get(city.lower())
+    if data: return {"city": city, **data}
+    return {"error": f"No weather data for {city}"}
+
+def calculator_tool(expression):
+    try:
+        result = eval(expression, {"__builtins__": {}}, {"sqrt": math.sqrt, "pow": pow, "pi": math.pi})
+        return {"expression": expression, "result": result}
+    except Exception as e:
+        return {"error": str(e)}
+
+TOOLS = {"weather": weather_tool, "calculator": calculator_tool}
+
+def simulate_bot_thinking(user_message, tool_result=None):
+    """Simulate what the bot would output.
+    
+    In production, this calls the actual LLM.
+    Here we use simple rules to demonstrate the pattern.
+    """
+    msg = user_message.lower()
+    
+    if tool_result is not None:
+        # Bot has a tool result — now it can give a real answer
+        r = tool_result
+        if "temp" in r:
+            return f"It's {r['temp']}°F and {r['condition']} in {r['city']}, with {r['humidity']}% humidity."
+        if "result" in r:
+            return f"The answer is {r['result']}."
+        return f"Here's what I found: {json.dumps(r)}"
+    
+    # No tool result yet — does the bot need a tool?
+    if "weather" in msg:
+        # Extract city (simple heuristic)
+        for city in ["richmond", "new york", "san francisco"]:
+            if city in msg:
+                return json.dumps({"tool": "weather", "args": {"city": city.title()}})
+        return json.dumps({"tool": "weather", "args": {"city": "Richmond"}})
+    
+    if any(op in msg for op in ["calculate", "what's", "sqrt", "how much"]):
+        if "sqrt" in msg:
+            return json.dumps({"tool": "calculator", "args": {"expression": "sqrt(144)"}})
+        if "+" in msg or "*" in msg:
+            return json.dumps({"tool": "calculator", "args": {"expression": "2 + 2"}})
+    
+    # No tool needed — just respond directly
+    return "I can help with that! I know about weather and math."
+
+def react_loop(user_message, max_steps=3):
+    """The ReAct loop: Think → Act → Observe → Respond.
+    
+    This is the core of every tool-using AI agent.
+    """
+    print(f"👤 User: {user_message}")
+    print(f"{'─'*50}")
+    
+    for step in range(max_steps):
+        # THINK: Bot generates output
+        bot_output = simulate_bot_thinking(user_message)
+        
+        # Check if it's a tool call
+        try:
+            parsed = json.loads(bot_output)
+            if "tool" in parsed:
+                tool_name = parsed["tool"]
+                args = parsed.get("args", {})
+                
+                print(f"🧠 Think: I need to use the {tool_name} tool")
+                print(f"🔧 Act:   {tool_name}({json.dumps(args)})")
+                
+                # EXECUTE the tool
+                func = TOOLS[tool_name]
+                result = func(**args)
+                
+                print(f"👁️ Observe: {json.dumps(result)}")
+                
+                # RESPOND with real data
+                response = simulate_bot_thinking(user_message, result)
+                print(f"💬 Respond: {response}")
+                return response
+        except (json.JSONDecodeError, KeyError):
+            pass
+        
+        # No tool call — just a direct response
+        print(f"💬 Respond: {bot_output}")
+        return bot_output
+    
+    return "I wasn't able to figure that out."
+
+# Run the loop with different questions!
+print("=== ReAct Loop Demo ===\n")
+
+react_loop("What's the weather in Richmond?")
+print()
+react_loop("What's the weather in New York?")
+print()
+react_loop("Calculate sqrt(144)")
+print()
+react_loop("Tell me a joke")  # No tool needed
+
+print("\n→ Four questions. Three needed tools, one didn't.")
+print("  The bot DECIDED whether to use a tool each time.")
+print("  This is the ReAct pattern: Reasoning + Acting.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex4')">▶ Run</button>
+      <button class="btn-hint" onclick="toggleHint('ex4')">💡 Hint</button>
+      <button class="btn-reset" onclick="resetExercise('ex4')">↺ Reset</button>
+    </div>
+    <div class="hint" id="hint-ex4">The loop: bot generates output → we check if it's a tool call → if yes, run the tool, feed result back → bot gives final answer using real data.</div>
+    <div class="output" id="output-ex4"></div>
+  </div>
+
+  <!-- Ex 5: Multi-step tool chains -->
+  <div class="exercise" id="ex5">
+    <div class="ex-header">
+      <span class="ex-num">05</span>
+      <span class="ex-title">Tool Chains — When One Tool Isn't Enough</span>
+      <span class="ex-check" id="check-ex5">○</span>
+    </div>
+    <div class="ex-desc">Sometimes the bot needs to call multiple tools. "What's the weather in the city where the Eiffel Tower is?" → search first, then weather.</div>
+    <textarea id="code-ex5">
+import json, math
+
+# Expanded tool set
+def weather_tool(city):
+    fake = {"richmond": {"temp": 67, "condition": "partly cloudy"},
+            "paris": {"temp": 58, "condition": "clear skies"},
+            "tokyo": {"temp": 72, "condition": "humid"}}
+    data = fake.get(city.lower())
+    if data: return {"city": city, **data}
+    return {"error": f"No data for {city}"}
+
+def search_tool(query):
+    # Simulate search results
+    if "eiffel tower" in query.lower():
+        return {"answer": "The Eiffel Tower is located in Paris, France."}
+    if "tallest building" in query.lower():
+        return {"answer": "The Burj Khalifa in Dubai is the tallest building at 828m."}
+    return {"answer": f"Various results for: {query}"}
+
+def calculator_tool(expression):
+    try:
+        result = eval(expression, {"__builtins__": {}}, {"sqrt": math.sqrt, "pow": pow})
+        return {"result": result}
+    except: return {"error": "Invalid expression"}
+
+TOOLS = {"weather": weather_tool, "search": search_tool, "calculator": calculator_tool}
+
+def execute(tool_name, args):
+    return TOOLS[tool_name](**args)
+
+def multi_step_agent(question):
+    """An agent that can chain multiple tool calls.
+    
+    The conversation builds up:
+    1. User question
+    2. Bot thinks → calls tool 1
+    3. Tool 1 result added to context
+    4. Bot thinks again → calls tool 2 (using info from tool 1!)
+    5. Tool 2 result added
+    6. Bot gives final answer
+    """
+    print(f"👤 User: {question}")
+    print(f"{'─'*55}")
+    
+    context = [question]  # Build up context as we go
+    
+    # Step 1: Search for the location
+    if "eiffel tower" in question.lower():
+        print(f"\n  Step 1:")
+        print(f"  🧠 Think: I need to find where the Eiffel Tower is first")
+        result1 = execute("search", {"query": "where is the Eiffel Tower"})
+        print(f"  🔧 Act:   search('where is the Eiffel Tower')")
+        print(f"  👁️ Observe: {result1['answer']}")
+        context.append(f"Search result: {result1['answer']}")
+        
+        # Step 2: Now get weather for that city
+        print(f"\n  Step 2:")
+        print(f"  🧠 Think: Now I know it's Paris. Let me check the weather there.")
+        result2 = execute("weather", {"city": "Paris"})
+        print(f"  🔧 Act:   weather('Paris')")
+        print(f"  👁️ Observe: {json.dumps(result2)}")
+        
+        print(f"\n  💬 Final: The Eiffel Tower is in Paris. The weather there is {result2['temp']}°F and {result2['condition']}.")
+    
+    elif "convert" in question.lower() or "meters" in question.lower():
+        print(f"\n  Step 1:")
+        print(f"  🧠 Think: I need the height of the tallest building first")
+        result1 = execute("search", {"query": "tallest building height"})
+        print(f"  🔧 Act:   search('tallest building height')")
+        print(f"  👁️ Observe: {result1['answer']}")
+        
+        print(f"\n  Step 2:")
+        print(f"  🧠 Think: 828 meters. Let me convert to feet.")
+        result2 = execute("calculator", {"expression": "828 * 3.281"})
+        print(f"  🔧 Act:   calculator('828 * 3.281')")
+        print(f"  👁️ Observe: {json.dumps(result2)}")
+        
+        print(f"\n  💬 Final: The Burj Khalifa is 828m ({result2['result']:.0f} feet) tall.")
+    
+    else:
+        result = execute("weather", {"city": "Richmond"})
+        print(f"  🔧 Act: weather('Richmond')")
+        print(f"  💬 Final: {json.dumps(result)}")
+
+# Demo: questions that need multiple tools
+print("=== Multi-Step Tool Chains ===\n")
+multi_step_agent("What's the weather where the Eiffel Tower is?")
+print()
+multi_step_agent("How tall is the tallest building in feet? Convert meters to feet.")
+
+print("\n\n→ Some questions need multiple tools in sequence.")
+print("  The bot uses the result of tool 1 to decide what to ask tool 2.")
+print("  This is 'tool chaining' — and it's how agents solve complex tasks.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex5')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex5')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex5"></div>
+  </div>
+
+  <!-- Ex 6: Error handling -->
+  <div class="exercise" id="ex6">
+    <div class="ex-header">
+      <span class="ex-num">06</span>
+      <span class="ex-title">Error Handling — When Tools Fail</span>
+      <span class="ex-check" id="check-ex6">○</span>
+    </div>
+    <div class="ex-desc">Tools fail. APIs go down. The bot asks for a city that doesn't exist. Good agents handle errors gracefully instead of crashing.</div>
+    <textarea id="code-ex6">
+import json
+
+def unreliable_weather(city):
+    """A weather tool that sometimes fails (like real APIs!)."""
+    import random
+    if random.random() < 0.3:  # 30% failure rate
+        raise ConnectionError("Weather API is temporarily unavailable")
+    
+    fake = {"richmond": {"temp": 67, "condition": "sunny"},
+            "paris": {"temp": 58, "condition": "cloudy"}}
+    data = fake.get(city.lower())
+    if data: return {"city": city, **data}
+    return {"error": f"Unknown city: {city}"}
+
+def safe_tool_call(tool_func, args, max_retries=2):
+    """Call a tool with error handling and retries.
+    
+    If the tool fails:
+    1. Catch the error (don't crash!)
+    2. Try again (APIs have intermittent failures)
+    3. If still failing, return a helpful error message
+    """
+    for attempt in range(max_retries + 1):
+        try:
+            result = tool_func(**args)
+            
+            # Check for application-level errors
+            if isinstance(result, dict) and "error" in result:
+                print(f"    ⚠️ Tool returned error: {result['error']}")
+                return result
+            
+            if attempt > 0:
+                print(f"    ✅ Succeeded on retry #{attempt}!")
+            return result
+            
+        except Exception as e:
+            print(f"    ❌ Attempt {attempt+1}/{max_retries+1} failed: {e}")
+            if attempt < max_retries:
+                print(f"    🔄 Retrying...")
+    
+    return {"error": f"Tool failed after {max_retries+1} attempts. Try again later."}
+
+# Test with various scenarios
+import random
+random.seed(42)
+
+print("=== Error Handling Demo ===\n")
+
+test_cases = [
+    ("Richmond", "Valid city, might hit API error"),
+    ("Paris", "Valid city, might hit API error"),
+    ("Atlantis", "Invalid city"),
+    ("Richmond", "Valid city, might hit API error"),
+    ("Richmond", "Valid city, might hit API error"),
+]
+
+for city, description in test_cases:
+    print(f"Calling weather('{city}') — {description}")
+    result = safe_tool_call(unreliable_weather, {"city": city})
+    if "error" not in result:
+        print(f"    → {result['temp']}°F, {result['condition']} in {result['city']}")
+    else:
+        print(f"    → Error: {result['error']}")
+    print()
+
+print("→ Tools fail in the real world. APIs go down, cities don't exist,")
+print("  networks time out. A good agent handles this gracefully:")
+print("  retry on transient errors, report clear messages on permanent ones.")
+print("  Never crash. Never give the user a stack trace.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex6')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex6')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex6"></div>
+  </div>
+
+  <!-- Ex 7: Tool permission system -->
+  <div class="exercise" id="ex7">
+    <div class="ex-header">
+      <span class="ex-num">07</span>
+      <span class="ex-title">Permissions — Not All Tools Are Safe</span>
+      <span class="ex-check" id="check-ex7">○</span>
+    </div>
+    <div class="ex-desc">Reading the weather is harmless. Sending an email or deleting files is dangerous. Add a permission system: some tools need human approval before running.</div>
+    <textarea id="code-ex7">
+import json
+
+# Tools with different risk levels
+def read_weather(city):
+    return {"temp": 67, "condition": "sunny", "city": city}
+
+def send_email(to, subject, body):
+    return {"status": "sent", "to": to, "subject": subject}
+
+def delete_file(path):
+    return {"status": "deleted", "path": path}
+
+def search_web(query):
+    return {"results": [f"Result for: {query}"]}
+
+# Permission levels
+TOOL_PERMISSIONS = {
+    "weather":     {"level": "safe",      "description": "Read-only, no side effects"},
+    "search":      {"level": "safe",      "description": "Read-only web search"},
+    "send_email":  {"level": "confirm",   "description": "Sends external communication"},
+    "delete_file": {"level": "dangerous", "description": "Destructive, irreversible"},
+}
+
+TOOLS = {
+    "weather": read_weather,
+    "search": search_web,
+    "send_email": send_email,
+    "delete_file": delete_file,
+}
+
+def check_permission(tool_name, auto_approve_safe=True):
+    """Check if a tool call should be allowed.
+    
+    safe:      Run automatically, no need to ask
+    confirm:   Ask the user first ("Bot wants to send an email. Allow?")
+    dangerous: Block by default, require explicit opt-in
+    """
+    perm = TOOL_PERMISSIONS.get(tool_name, {"level": "dangerous"})
+    level = perm["level"]
+    
+    if level == "safe" and auto_approve_safe:
+        return True, "auto-approved (safe)"
+    elif level == "confirm":
+        # In production, this would prompt the user
+        # Simulating: user approves emails but would see a prompt
+        return True, "user approved (would show confirmation dialog)"
+    elif level == "dangerous":
+        return False, f"BLOCKED: {perm['description']} — requires explicit opt-in"
+    return False, "unknown permission level"
+
+# Simulate tool calls with permission checks
+test_calls = [
+    ("weather", {"city": "Richmond"}),
+    ("search",  {"query": "pizza near me"}),
+    ("send_email", {"to": "alice@example.com", "subject": "Meeting", "body": "See you at 3pm"}),
+    ("delete_file", {"path": "/important/data.csv"}),
+]
+
+print("=== Permission System ===\n")
+
+for tool_name, args in test_calls:
+    perm = TOOL_PERMISSIONS[tool_name]
+    allowed, reason = check_permission(tool_name)
+    
+    print(f"🔧 {tool_name}({json.dumps(args, indent=None)[:50]}...)")
+    print(f"   Level: {perm['level']}")
+    print(f"   {'✅' if allowed else '🔴'} {reason}")
+    
+    if allowed:
+        result = TOOLS[tool_name](**args)
+        print(f"   Result: {json.dumps(result)[:60]}")
+    print()
+
+print("→ Not all tools are created equal.")
+print("  Safe tools (read-only) run automatically.")
+print("  Risky tools (send email) need confirmation.")
+print("  Dangerous tools (delete files) are blocked by default.")
+print("\n  This is exactly how OpenClaw's tool permission system works.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex7')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex7')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex7"></div>
+  </div>
+
+  <!-- Ex 8: Build the complete agent -->
+  <div class="exercise" id="ex8">
+    <div class="ex-header">
+      <span class="ex-num">08</span>
+      <span class="ex-title">The Complete Agent — Everything Together</span>
+      <span class="ex-check" id="check-ex8">○</span>
+    </div>
+    <div class="ex-desc">Combine tools + ReAct loop + error handling + permissions into one complete agent. This is the architecture of every AI assistant.</div>
+    <textarea id="code-ex8">
+import json, math
+
+# === TOOL DEFINITIONS ===
+def weather(city):
+    fake = {"richmond": {"temp": 67, "condition": "partly cloudy"},
+            "paris": {"temp": 58, "condition": "clear"}}
+    data = fake.get(city.lower())
+    if data: return {"city": city, **data}
+    return {"error": f"No data for {city}"}
+
+def calc(expression):
+    try:
+        result = eval(expression, {"__builtins__": {}}, {"sqrt": math.sqrt, "pow": pow, "pi": math.pi})
+        return {"result": round(result, 4)}
+    except Exception as e: return {"error": str(e)}
+
+def search(query):
+    if "capital" in query.lower() and "france" in query.lower():
+        return {"answer": "Paris"}
+    return {"answer": f"Results for: {query}"}
+
+TOOLS = {"weather": weather, "calculator": calc, "search": search}
+PERMISSIONS = {"weather": "safe", "calculator": "safe", "search": "safe"}
+
+# === THE AGENT ===
+class Agent:
+    def __init__(self, tools, permissions, max_steps=5):
+        self.tools = tools
+        self.permissions = permissions
+        self.max_steps = max_steps
+    
+    def decide_action(self, user_msg, context):
+        """Simulate the LLM deciding what to do.
+        In production, this is the actual LLM call.
+        """
+        msg = user_msg.lower()
+        
+        # If we already have tool results, generate final answer
+        if context:
+            last = context[-1]
+            if "temp" in str(last):
+                r = last
+                return {"type": "answer", "text": f"It's {r.get('temp', '?')}°F and {r.get('condition', '?')} in {r.get('city', '?')}."}
+            if "result" in str(last):
+                return {"type": "answer", "text": f"The answer is {last.get('result', '?')}."}
+            if "answer" in str(last):
+                # Chain: search result → use it
+                answer = last.get("answer", "")
+                if answer.lower() in ["paris", "tokyo", "richmond"]:
+                    return {"type": "tool_call", "tool": "weather", "args": {"city": answer}}
+                return {"type": "answer", "text": f"I found: {answer}"}
+        
+        # Decide which tool to use
+        if "weather" in msg:
+            for city in ["richmond", "paris"]:
+                if city in msg: return {"type": "tool_call", "tool": "weather", "args": {"city": city.title()}}
+            return {"type": "tool_call", "tool": "weather", "args": {"city": "Richmond"}}
+        
+        if "capital" in msg:
+            return {"type": "tool_call", "tool": "search", "args": {"query": msg}}
+        
+        if any(w in msg for w in ["calculate", "sqrt", "what is"]):
+            return {"type": "tool_call", "tool": "calculator", "args": {"expression": "sqrt(144)"}}
+        
+        return {"type": "answer", "text": "I can help with weather, math, and search!"}
+    
+    def run(self, user_message):
+        """The ReAct loop: Think → Act → Observe → (loop or Respond)"""
+        print(f"👤 {user_message}")
+        print(f"{'─'*50}")
+        
+        context = []
+        
+        for step in range(self.max_steps):
+            action = self.decide_action(user_message, context)
+            
+            if action["type"] == "answer":
+                print(f"💬 {action['text']}")
+                return action["text"]
+            
+            if action["type"] == "tool_call":
+                tool = action["tool"]
+                args = action["args"]
+                
+                # Permission check
+                perm = self.permissions.get(tool, "dangerous")
+                if perm == "dangerous":
+                    print(f"🔴 Blocked: {tool} is not allowed")
+                    return "Sorry, I can't do that."
+                
+                print(f"🧠 Think → need {tool}")
+                print(f"🔧 Act   → {tool}({json.dumps(args)})")
+                
+                # Execute with error handling
+                try:
+                    result = self.tools[tool](**args)
+                    print(f"👁️ See   → {json.dumps(result)}")
+                    
+                    if "error" in result:
+                        return f"Sorry, there was an issue: {result['error']}"
+                    
+                    context.append(result)
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    return f"Sorry, something went wrong: {e}"
+        
+        return "I got stuck in a loop. Please try rephrasing."
+
+# Run it!
+agent = Agent(TOOLS, PERMISSIONS)
+
+print("=== Complete Agent Demo ===\n")
+
+questions = [
+    "What's the weather in Richmond?",
+    "What's the weather in the capital of France?",  # Needs search → then weather
+    "Calculate sqrt(144)",
+    "Tell me a joke",  # No tool needed
+]
+
+for q in questions:
+    agent.run(q)
+    print()
+
+print("═"*50)
+print("\n🎉 You just built a complete tool-using AI agent!")
+print("  • Tools: functions the bot can call")
+print("  • ReAct: think → act → observe → respond")
+print("  • Error handling: graceful failures")
+print("  • Permissions: safe vs dangerous tools")
+print("\n  This is the architecture of ChatGPT, Claude, and OpenClaw.")
+</textarea>
+    <div class="btn-row">
+      <button class="btn-run" onclick="runExercise('ex8')">▶ Run</button>
+      <button class="btn-reset" onclick="resetExercise('ex8')">↺ Reset</button>
+    </div>
+    <div class="output" id="output-ex8"></div>
+  </div>
+</div>
+
+<!-- THE PAYOFF -->
+<div class="phase phase-payoff">
+  <h2>🎯 The Payoff</h2>
+  <p><strong>Your bot can now DO things in the real world.</strong></p>
+  <p style="margin-top:1rem;color:#aaa">
+    <strong>Tools</strong> are just functions with descriptions.<br>
+    <strong>JSON</strong> is just a form with labeled fields.<br>
+    <strong>ReAct</strong> is just: think → act → observe → respond.<br>
+    <strong>Permissions</strong> keep dangerous tools on a leash.
+  </p>
+  <p style="margin-top:1rem;color:#888;font-size:.9rem">This is how Claude searches the web, writes code, and manages files. The LLM decides <em>what</em> to do; the tool system <em>does</em> it. The LLM is the brain; the tools are the hands.</p>
+  <p style="margin-top:1.5rem;font-size:1rem">But your bot forgets everything between conversations.<br>
+  <strong><a href="../build-06-remember/">BUILD-06: Make It Remember →</a></strong></p>
+</div>
+
+<!-- GO DEEPER -->
+<div class="go-deeper">
+  <h3>📚 Go Deeper</h3>
+  <ul>
+    <li>
+      <a href="../oc-05-tools/">OC-05: Tools</a>
+      <span class="label"> — How OpenClaw's tool system works in practice</span>
+    </li>
+    <li>
+      <a href="https://arxiv.org/abs/2210.03629">📄 Yao et al. 2022 — "ReAct: Synergizing Reasoning and Acting"</a>
+      <span class="label"> — The paper that introduced the ReAct pattern</span>
+    </li>
+    <li>
+      <a href="https://platform.openai.com/docs/guides/function-calling">📄 OpenAI Function Calling Guide</a>
+      <span class="label"> — How GPT-4 implements tool use</span>
+    </li>
+    <li>
+      <a href="https://docs.anthropic.com/en/docs/build-with-claude/tool-use">📄 Anthropic Tool Use Guide</a>
+      <span class="label"> — How Claude implements tool use</span>
+    </li>
+  </ul>
+</div>
+
+<div class="nav-footer">
+  <a href="../build-04-talk/">← BUILD-04: Make It Talk</a>
+  <a href="../build-06-remember/">BUILD-06: Make It Remember →</a>
+</div>
+
+</div>
+
+<script>
+const defaults={};
+document.querySelectorAll('textarea').forEach(ta=>{defaults[ta.id]=ta.value});
+const STORAGE_KEY='build-05-act-progress';
+let completed=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+
+function updateProgress(){
+  const total=8,done=Object.keys(completed).length;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  for(let i=1;i<=total;i++){
+    const el=document.getElementById('check-ex'+i);
+    if(completed['ex'+i]){el.textContent='✓';el.classList.add('done')}
+    else{el.textContent='○';el.classList.remove('done')}
+  }
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(completed));
+}
+function markComplete(id){completed[id]=true;updateProgress()}
+function toggleHint(id){document.getElementById('hint-'+id)?.classList.toggle('visible')}
+function resetExercise(id){document.getElementById('code-'+id).value=defaults['code-'+id];document.getElementById('output-'+id).classList.remove('visible')}
+
+let pyodide=null;
+async function initPyodide(){
+  try{pyodide=await loadPyodide();document.getElementById('loading').classList.add('hidden')}
+  catch(e){document.getElementById('loading').innerHTML='<p style="color:#ff6b4a">Failed to load Pyodide.</p>'}
+}
+async function runExercise(id){
+  if(!pyodide){alert('Pyodide still loading…');return}
+  const code=document.getElementById('code-'+id).value;
+  const output=document.getElementById('output-'+id);
+  output.classList.add('visible');output.textContent='Running…';
+  try{
+    pyodide.runPython(`import io,sys;_stdout=io.StringIO();sys.stdout=_stdout`);
+    pyodide.runPython(code);
+    const result=pyodide.runPython('_stdout.getvalue()');
+    output.textContent=result||'(no output)';output.style.color='#e0e0e0';
+    if(result&&result.trim().length>0)markComplete(id);
+  }catch(e){output.textContent='❌ Error:\n'+e.message;output.style.color='#ff6b4a'}
+}
+
+const s=document.createElement('script');
+s.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+s.onload=initPyodide;document.head.appendChild(s);
+updateProgress();
+</script>
+</body>
+</html>

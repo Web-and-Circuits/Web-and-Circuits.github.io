@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>Module 13: Train Your Own — Capstone Project</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%);
+            color: #e1e1e1; line-height: 1.6; min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            text-align: center; font-size: 2.4em; margin-bottom: 0.3em;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { text-align: center; color: #aaa; font-size: 1.1em; margin-bottom: 2em; }
+        h2 { color: #4ecdc4; margin: 1.5em 0 0.8em; font-size: 1.6em; }
+        h3 { color: #ff6b6b; margin: 1.2em 0 0.6em; font-size: 1.2em; }
+        h4 { color: #ccc; margin: 1em 0 0.5em; }
+        p, li { margin-bottom: 0.5em; }
+        ul, ol { padding-left: 1.5em; }
+        a { color: #4ecdc4; }
+        code {
+            background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace; font-size: 0.9em;
+        }
+        pre {
+            background: rgba(0,0,0,0.4); border: 1px solid #444; border-radius: 8px;
+            padding: 16px; overflow-x: auto; margin: 1em 0; font-size: 0.85em;
+            font-family: 'SF Mono', Monaco, monospace; color: #ddd; line-height: 1.5;
+        }
+        .card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 24px; margin: 1.5em 0;
+        }
+        .highlight-card {
+            background: rgba(78,205,196,0.08); border: 2px solid rgba(78,205,196,0.3);
+            border-radius: 12px; padding: 24px; margin: 1.5em 0;
+        }
+        .connect-back {
+            background: rgba(255,107,107,0.08); border-left: 4px solid #ff6b6b;
+            border-radius: 0 12px 12px 0; padding: 20px; margin: 1.5em 0;
+        }
+        .connect-back h4 { color: #ff6b6b; margin-top: 0; }
+        button {
+            background: linear-gradient(135deg, #4ecdc4, #44b09e);
+            color: #1a1a1a; border: none; border-radius: 8px;
+            padding: 10px 20px; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(78,205,196,0.3); }
+        button:active { transform: translateY(0); }
+        button.secondary {
+            background: rgba(255,255,255,0.1); color: #e1e1e1; border: 1px solid #555;
+        }
+        button.secondary:hover { background: rgba(255,255,255,0.15); box-shadow: none; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        input[type="text"], input[type="number"], textarea, select {
+            background: rgba(255,255,255,0.08); border: 1px solid #555; border-radius: 8px;
+            padding: 10px 14px; color: #e1e1e1; font-size: 15px; width: 100%;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #4ecdc4; }
+        textarea { min-height: 100px; resize: vertical; }
+        select option { background: #2a2a2a; }
+        .tab-bar {
+            display: flex; gap: 0; margin: 2em 0 0; border-bottom: 2px solid #444;
+        }
+        .tab-btn {
+            flex: 1; padding: 14px 8px; background: rgba(255,255,255,0.03);
+            border: 1px solid #444; border-bottom: none; border-radius: 8px 8px 0 0;
+            color: #888; font-size: 1em; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; text-align: center;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.06); color: #bbb; }
+        .tab-btn.active {
+            background: rgba(78,205,196,0.1); color: #4ecdc4;
+            border-color: #4ecdc4; border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        .progress-bar {
+            width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+            border-radius: 4px; overflow: hidden; margin: 8px 0;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #4ecdc4, #44b09e);
+            border-radius: 4px; transition: width 0.5s ease;
+        }
+        canvas { border-radius: 8px; max-width: 100%; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+        .step-indicator {
+            display: flex; gap: 8px; margin: 1em 0; flex-wrap: wrap;
+        }
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 2px solid #555;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8em; font-weight: 700; transition: all 0.3s;
+        }
+        .step-dot.done { background: #4ecdc4; border-color: #4ecdc4; color: #1a1a1a; }
+        .step-dot.current { border-color: #4ecdc4; color: #4ecdc4; }
+        .bbox-demo {
+            position: relative; width: 100%; max-width: 500px; margin: 1em auto;
+            background: #2a2a3a; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3;
+        }
+        .bbox-demo canvas { width: 100%; height: 100%; display: block; }
+        .chip {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.85em; margin: 2px; background: rgba(78,205,196,0.15);
+            border: 1px solid rgba(78,205,196,0.3); color: #4ecdc4;
+        }
+        .chip.selected { background: #4ecdc4; color: #1a1a1a; }
+        .celebration {
+            display: none; text-align: center; padding: 60px 20px;
+            animation: fadeIn 0.8s ease;
+        }
+        .celebration.active { display: block; }
+        .celebration h1 { font-size: 3em; margin-bottom: 0.5em; }
+        .celebration .emoji { font-size: 4em; margin: 0.3em; }
+        .confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999;
+        }
+        .compare-table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+        .compare-table th, .compare-table td {
+            padding: 10px 14px; border: 1px solid #444; text-align: left;
+        }
+        .compare-table th { background: rgba(78,205,196,0.1); color: #4ecdc4; }
+        .compare-table td { background: rgba(255,255,255,0.03); }
+        .cost-result {
+            font-size: 1.4em; color: #4ecdc4; font-weight: 700;
+            text-align: center; padding: 20px; margin: 1em 0;
+            background: rgba(78,205,196,0.08); border-radius: 12px;
+        }
+        .security-tier {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            margin: 6px 0; border-radius: 8px; background: rgba(255,255,255,0.03);
+            border: 1px solid #444;
+        }
+        .tier-badge {
+            width: 40px; height: 40px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; font-weight: 700;
+        }
+        .tier-high { background: #ff6b6b33; color: #ff6b6b; border: 1px solid #ff6b6b55; }
+        .tier-med { background: #ffd93d33; color: #ffd93d; border: 1px solid #ffd93d55; }
+        .tier-low { background: #4ecdc433; color: #4ecdc4; border: 1px solid #4ecdc455; }
+        .architecture-map {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 1em 0;
+        }
+        .arch-block {
+            padding: 12px 18px; border-radius: 8px; text-align: center;
+            border: 2px solid #555; background: rgba(255,255,255,0.03);
+            cursor: pointer; transition: all 0.2s; min-width: 120px;
+        }
+        .arch-block:hover { border-color: #888; }
+        .arch-block.selected { border-color: #4ecdc4; background: rgba(78,205,196,0.1); }
+        .arch-block .block-icon { font-size: 1.5em; }
+        .arch-block .block-label { font-size: 0.8em; color: #aaa; margin-top: 4px; }
+        .chunk-viz {
+            display: flex; flex-wrap: wrap; gap: 6px; margin: 1em 0;
+        }
+        .chunk-box {
+            padding: 8px 12px; border-radius: 6px; font-size: 0.8em;
+            border: 1px solid #555; background: rgba(255,255,255,0.05);
+            max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; transition: all 0.3s;
+        }
+        .chunk-box.highlighted {
+            border-color: #4ecdc4; background: rgba(78,205,196,0.15);
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- INTRO -->
+    <div id="intro">
+        <h1>🎓 Module 13: Train Your Own</h1>
+        <p class="subtitle">Capstone — Apply everything you've built to a real project</p>
+
+        <div class="highlight-card">
+            <h3>You've built it all.</h3>
+            <p>Over 10 modules you constructed: a language model, attention, context management, a gateway, tool use, memory (RAG), vision, scaling/routing, security, and automation.</p>
+            <p>Now it's time to <strong>use it</strong>. Pick your project and build something real.</p>
+        </div>
+
+        <h2>Choose Your Path</h2>
+        <p>Each project applies different modules from your journey. Pick what excites you most — there's no wrong answer.</p>
+
+        <div class="grid-2" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="card" style="cursor:pointer; text-align:center; transition: all 0.2s;" onclick="selectProject('a')" id="pick-a">
+                <div style="font-size:2.5em; margin-bottom:8px;">🥏</div>
+                <h3 style="color:#4ecdc4; margin:0;">Disc Finder</h3>
+                <p style="font-size:0.9em; color:#aaa; margin-top:8px;">Train a vision model to find disc golf discs in photos. Computer vision + edge deployment.</p>
+            </div>
+            <div class="card" style="cursor:pointer; text-align:center; transition: all 0.2s;" onclick="selectProject('b')" id="pick-b">
+                <div style="font-size:2.5em; margin-bottom:8px;">📚</div>
+                <h3 style="color:#4ecdc4; margin:0;">Q&A Bot</h3>
+                <p style="font-size:0.9em; color:#aaa; margin-top:8px;">Build an AI that answers questions about any text. RAG + fine-tuning + hybrid.</p>
+            </div>
+            <div class="card" style="cursor:pointer; text-align:center; transition: all 0.2s;" onclick="selectProject('c')" id="pick-c">
+                <div style="font-size:2.5em; margin-bottom:8px;">🤖</div>
+                <h3 style="color:#4ecdc4; margin:0;">Your Agent</h3>
+                <p style="font-size:0.9em; color:#aaa; margin-top:8px;">Design a personal AI agent from scratch. Architecture + cost + security + deployment.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT TABS (shown after selection) -->
+    <div id="project-area" class="hidden">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:0.5em;">
+            <button class="secondary" onclick="backToIntro()" style="padding:6px 14px; font-size:0.85em;">← Back</button>
+            <h1 id="project-title" style="font-size:1.8em; text-align:left; flex:1;"></h1>
+        </div>
+        <div id="project-subtitle" class="subtitle" style="text-align:left;"></div>
+
+        <!-- ==================== PROJECT A: DISC FINDER ==================== -->
+        <div id="project-a" class="tab-content">
+            <div class="step-indicator" id="steps-a">
+                <div class="step-dot current" data-step="1">1</div>
+                <div class="step-dot" data-step="2">2</div>
+                <div class="step-dot" data-step="3">3</div>
+                <div class="step-dot" data-step="4">4</div>
+                <div class="step-dot" data-step="5">5</div>
+                <div class="step-dot" data-step="6">6</div>
+            </div>
+
+            <!-- Step 1: Dataset -->
+            <div class="a-step" id="a-step-1">
+                <h2>Step 1: Build Your Dataset</h2>
+                <div class="card">
+                    <p>Object detection needs <strong>labeled images</strong> — photos where you've drawn boxes around the thing you want to find.</p>
+                    <h4>What you need:</h4>
+                    <ul>
+                        <li><strong>200–500 photos</strong> of disc golf discs</li>
+                        <li>Variety matters: grass, dirt, trees, water, snow, shade, partial occlusion</li>
+                        <li>Different disc colors, sizes, angles</li>
+                        <li>Include <strong>hard negatives</strong> — frisbees, plates, round rocks</li>
+                    </ul>
+                    <h4>Data sources:</h4>
+                    <ul>
+                        <li>Your phone camera (best — matches deployment target)</li>
+                        <li>Disc golf forums & social media (with permission)</li>
+                        <li>Synthetic augmentation: flip, rotate, adjust brightness</li>
+                    </ul>
+                </div>
+                <div class="highlight-card">
+                    <h4>💡 Why 200–500?</h4>
+                    <p>YOLO-nano uses a <strong>pretrained backbone</strong> (already knows edges, textures, shapes from ImageNet). You're only teaching the detection head "what a disc looks like." Transfer learning means you need 10–100× fewer images than training from scratch.</p>
+                </div>
+
+                <h3>Interactive: Dataset Composition</h3>
+                <div class="card">
+                    <p>Design your dataset split:</p>
+                    <div class="grid-2">
+                        <div>
+                            <label>Total images: <strong id="a-total-imgs">300</strong></label>
+                            <input type="range" min="100" max="800" value="300" oninput="updateDatasetViz(this.value)" style="width:100%; margin:8px 0;">
+                        </div>
+                        <div>
+                            <label>Train / Val / Test split:</label>
+                            <div style="margin-top:8px;">
+                                <div class="progress-bar" style="height:24px; border-radius:6px; display:flex; overflow:hidden;">
+                                    <div id="a-train-bar" style="width:70%; background:#4ecdc4; display:flex; align-items:center; justify-content:center; font-size:0.8em; font-weight:600; color:#1a1a1a;">70% Train</div>
+                                    <div id="a-val-bar" style="width:15%; background:#ffd93d; display:flex; align-items:center; justify-content:center; font-size:0.8em; font-weight:600; color:#1a1a1a;">15% Val</div>
+                                    <div id="a-test-bar" style="width:15%; background:#ff6b6b; display:flex; align-items:center; justify-content:center; font-size:0.8em; font-weight:600; color:#1a1a1a;">15% Test</div>
+                                </div>
+                                <p style="font-size:0.85em; color:#aaa; margin-top:6px;" id="a-split-info">210 train · 45 val · 45 test</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="advanceStep('a', 2)">Next: Labeling →</button>
+            </div>
+
+            <!-- Step 2: Labeling -->
+            <div class="a-step hidden" id="a-step-2">
+                <h2>Step 2: Label Your Data</h2>
+                <div class="card">
+                    <p>For each image, you draw a <strong>bounding box</strong> around every disc and assign the class label "disc".</p>
+                    <table class="compare-table">
+                        <tr><th>Tool</th><th>Cost</th><th>Best For</th></tr>
+                        <tr><td><strong>Roboflow</strong></td><td>Free tier (10K images)</td><td>Quick start, auto-augmentation, hosted training</td></tr>
+                        <tr><td><strong>Label Studio</strong></td><td>Free (open source)</td><td>Self-hosted, full control, team labeling</td></tr>
+                        <tr><td><strong>CVAT</strong></td><td>Free (open source)</td><td>Advanced annotation, video support</td></tr>
+                    </table>
+                    <h4>Output format (YOLO):</h4>
+                    <pre>// One .txt file per image
+// class_id  center_x  center_y  width  height  (all normalized 0-1)
+0 0.52 0.48 0.15 0.12</pre>
+                    <p style="font-size:0.9em; color:#aaa;">Each line = one disc. Coordinates are relative to image dimensions so they work at any resolution.</p>
+                </div>
+
+                <h3>Try It: Draw a Bounding Box</h3>
+                <div class="card">
+                    <p>Click and drag to draw a box around the disc:</p>
+                    <div class="bbox-demo" id="bbox-demo">
+                        <canvas id="bbox-canvas" width="500" height="375"></canvas>
+                    </div>
+                    <p id="bbox-label" style="text-align:center; font-size:0.9em; color:#aaa; margin-top:8px;">Click and drag on the image above</p>
+                    <pre id="bbox-output" style="text-align:center; display:none;">0 <span id="bbox-coords"></span></pre>
+                </div>
+                <button onclick="advanceStep('a', 3)">Next: Model Choice →</button>
+            </div>
+
+            <!-- Step 3: Model Choice -->
+            <div class="a-step hidden" id="a-step-3">
+                <h2>Step 3: Why YOLO-nano?</h2>
+                <div class="card">
+                    <p>You're deploying to a <strong>phone</strong>. That means:</p>
+                    <ul>
+                        <li>≤ 10MB model size</li>
+                        <li>≤ 30ms inference (real-time camera)</li>
+                        <li>No GPU required</li>
+                    </ul>
+                </div>
+                <table class="compare-table">
+                    <tr><th>Model</th><th>Params</th><th>Size</th><th>Speed (phone)</th><th>mAP</th></tr>
+                    <tr><td>YOLOv8-nano</td><td><strong>3.2M</strong></td><td>6.2 MB</td><td>~25ms ✅</td><td>37.3</td></tr>
+                    <tr><td>YOLOv8-small</td><td>11.2M</td><td>22 MB</td><td>~60ms</td><td>44.9</td></tr>
+                    <tr><td>YOLOv8-medium</td><td>25.9M</td><td>52 MB</td><td>~180ms</td><td>50.2</td></tr>
+                    <tr><td>DETR (ViT-based)</td><td>41M</td><td>160 MB</td><td>~500ms ❌</td><td>42.0</td></tr>
+                </table>
+                <div class="highlight-card">
+                    <h4>Architecture in 30 seconds</h4>
+                    <p><strong>Backbone</strong> (pretrained on ImageNet): extracts features from the image — edges, textures, shapes. This is frozen during fine-tuning.</p>
+                    <p><strong>Neck</strong> (Feature Pyramid Network): combines features at different scales — finds small discs AND big discs.</p>
+                    <p><strong>Head</strong> (detection): predicts bounding boxes + confidence scores. <em>This</em> is what you train.</p>
+                    <pre>Image → [Backbone 🧊] → [Neck] → [Head 🔥] → Boxes + Scores
+         frozen        trainable   trainable</pre>
+                </div>
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Module 7 — Vision</h4>
+                    <p>ViT from Module 7 taught you how images become tokens via patch embedding. YOLO uses a similar idea — the backbone processes the image in a grid of cells, each responsible for detecting objects in its region. Same intuition: <em>divide the image into pieces, process each piece, combine.</em></p>
+                </div>
+                <button onclick="advanceStep('a', 4)">Next: Training →</button>
+            </div>
+
+            <!-- Step 4: Training -->
+            <div class="a-step hidden" id="a-step-4">
+                <h2>Step 4: Fine-Tuning Loop</h2>
+                <div class="card">
+                    <pre># The actual training code is just a few lines:
+from ultralytics import YOLO
+
+model = YOLO('yolov8n.pt')  # Load pretrained nano
+results = model.train(
+    data='disc-dataset/data.yaml',
+    epochs=100,
+    imgsz=640,
+    batch=16,
+    freeze=10,    # Freeze first 10 backbone layers
+    lr0=0.01,
+    device='cpu'  # or 'cuda' if you have a GPU
+)</pre>
+                    <h4>What happens each epoch:</h4>
+                    <ol>
+                        <li>Load batch of 16 images + labels</li>
+                        <li>Forward pass: predict bounding boxes</li>
+                        <li>Compute loss: box regression + objectness + classification</li>
+                        <li>Backward pass: update only unfrozen weights</li>
+                        <li>Validate on held-out set → track mAP</li>
+                    </ol>
+                </div>
+
+                <h3>Interactive: Watch Training</h3>
+                <div class="card">
+                    <p>Click "Train" to simulate 100 epochs of fine-tuning:</p>
+                    <canvas id="train-chart-a" width="600" height="300" style="width:100%; background:rgba(0,0,0,0.3);"></canvas>
+                    <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+                        <button onclick="runTrainingA()" id="train-btn-a">▶ Train</button>
+                        <span style="font-size:0.9em; color:#aaa;" id="train-status-a">Ready</span>
+                    </div>
+                    <div style="display:flex; gap:20px; margin-top:12px; font-size:0.9em;">
+                        <span>🔴 <span style="color:#ff6b6b;">Training Loss</span></span>
+                        <span>🟢 <span style="color:#4ecdc4;">Validation mAP</span></span>
+                    </div>
+                </div>
+                <button onclick="advanceStep('a', 5)">Next: Inference Demo →</button>
+            </div>
+
+            <!-- Step 5: Inference Demo -->
+            <div class="a-step hidden" id="a-step-5">
+                <h2>Step 5: See It Work</h2>
+                <div class="card">
+                    <p>Your trained model runs inference: image in → bounding boxes out.</p>
+                    <div class="bbox-demo" id="inference-demo">
+                        <canvas id="inference-canvas" width="500" height="375"></canvas>
+                    </div>
+                    <div style="text-align:center; margin-top:12px;">
+                        <button onclick="runInferenceDemo()">🔍 Run Detection</button>
+                    </div>
+                    <p id="inference-result" style="text-align:center; font-size:0.9em; color:#aaa; margin-top:8px;"></p>
+                </div>
+                <div class="highlight-card">
+                    <h4>What happens under the hood:</h4>
+                    <ol>
+                        <li>Image resized to 640×640</li>
+                        <li>Backbone extracts feature maps at 3 scales</li>
+                        <li>Head predicts ~8400 candidate boxes</li>
+                        <li><strong>Non-Max Suppression (NMS)</strong>: keep only the best, remove overlaps</li>
+                        <li>Output: 1-3 boxes with confidence > 0.5</li>
+                    </ol>
+                </div>
+                <button onclick="advanceStep('a', 6)">Next: Deployment →</button>
+            </div>
+
+            <!-- Step 6: Deployment -->
+            <div class="a-step hidden" id="a-step-6">
+                <h2>Step 6: Deploy to Your Phone</h2>
+                <div class="card">
+                    <pre># Export to ONNX for cross-platform deployment
+model.export(format='onnx', imgsz=640, simplify=True)
+
+# Or export to CoreML for iOS
+model.export(format='coreml')
+
+# Or export to TFLite for Android
+model.export(format='tflite')</pre>
+                    <h4>Deployment options:</h4>
+                    <table class="compare-table">
+                        <tr><th>Target</th><th>Format</th><th>Framework</th></tr>
+                        <tr><td>iOS</td><td>CoreML (.mlmodel)</td><td>Vision framework</td></tr>
+                        <tr><td>Android</td><td>TFLite (.tflite)</td><td>TensorFlow Lite</td></tr>
+                        <tr><td>Any (web/edge)</td><td>ONNX (.onnx)</td><td>ONNX Runtime</td></tr>
+                        <tr><td>Raspberry Pi</td><td>NCNN</td><td>ncnn framework</td></tr>
+                    </table>
+                </div>
+                <div class="highlight-card">
+                    <h4>📱 The full pipeline</h4>
+                    <pre>Phone camera → capture frame → preprocess (resize, normalize)
+→ ONNX Runtime inference (~25ms) → NMS → draw bounding boxes
+→ display on screen → next frame</pre>
+                    <p>At 25ms per frame, you get <strong>40 FPS</strong> — smooth real-time detection.</p>
+                </div>
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Your Full Journey</h4>
+                    <ul>
+                        <li><strong>Module 7 (Vision)</strong>: Patch embeddings → YOLO's grid-based detection</li>
+                        <li><strong>Module 8 (Scaling)</strong>: Why nano works — the right model for the right hardware</li>
+                        <li><strong>Module 2 (Attention)</strong>: YOLO's neck uses attention-like feature fusion</li>
+                    </ul>
+                </div>
+                <button onclick="completeProject('a')">🎓 Complete Project A</button>
+            </div>
+        </div>
+
+        <!-- ==================== PROJECT B: Q&A BOT ==================== -->
+        <div id="project-b" class="tab-content">
+            <div class="step-indicator" id="steps-b">
+                <div class="step-dot current" data-step="1">1</div>
+                <div class="step-dot" data-step="2">2</div>
+                <div class="step-dot" data-step="3">3</div>
+            </div>
+
+            <!-- Step 1: RAG Approach -->
+            <div class="b-step" id="b-step-1">
+                <h2>Approach 1: RAG (No Training Needed)</h2>
+                <div class="card">
+                    <p>The simplest path: chunk the text, embed it, store vectors, retrieve relevant chunks, generate an answer. <strong>No model training at all.</strong></p>
+                    <pre>Text → Chunk → Embed → Vector Store → Query → Retrieve → Generate</pre>
+                </div>
+
+                <h3>Interactive: Build a RAG Pipeline</h3>
+                <div class="card">
+                    <h4>1. Paste your text:</h4>
+                    <textarea id="rag-input" placeholder="Paste a paragraph or chapter here... (or click 'Load Sample')" rows="4"></textarea>
+                    <button onclick="loadSampleText()" class="secondary" style="margin-top:8px;">Load Sample Text</button>
+
+                    <h4 style="margin-top:1.5em;">2. Chunk it:</h4>
+                    <div style="display:flex; gap:12px; align-items:center; margin-bottom:8px;">
+                        <label>Chunk size: <strong id="chunk-size-label">200</strong> chars</label>
+                        <input type="range" min="50" max="500" value="200" style="flex:1;" oninput="document.getElementById('chunk-size-label').textContent=this.value">
+                    </div>
+                    <button onclick="chunkText()">Split into Chunks</button>
+                    <div class="chunk-viz" id="chunk-viz"></div>
+
+                    <h4 style="margin-top:1.5em;">3. Embed & Store:</h4>
+                    <button onclick="embedChunks()" id="embed-btn" disabled>Embed Chunks → Vector Store</button>
+                    <div id="embed-result" style="margin-top:8px;"></div>
+
+                    <h4 style="margin-top:1.5em;">4. Query:</h4>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="rag-query" placeholder="Ask a question about the text..." style="flex:1;">
+                        <button onclick="ragQuery()" id="rag-query-btn" disabled>Ask</button>
+                    </div>
+                    <div id="rag-answer" style="margin-top:12px;"></div>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Module 6 — RAG</h4>
+                    <p>This is exactly what you built in Module 6. Chunk → embed → retrieve → generate. The difference? Now you're building it for a <em>specific use case</em>, not just understanding the concept.</p>
+                </div>
+                <button onclick="advanceStep('b', 2)">Next: Fine-Tuning with LoRA →</button>
+            </div>
+
+            <!-- Step 2: Fine-Tune with LoRA -->
+            <div class="b-step hidden" id="b-step-2">
+                <h2>Approach 2: Fine-Tune with LoRA</h2>
+                <div class="card">
+                    <p>Instead of retrieving context at query time, we <strong>bake knowledge into the model</strong> by fine-tuning on Q&A pairs generated from the chapters.</p>
+                    <h4>Why LoRA?</h4>
+                    <p>A 1.5B parameter model has 1,500,000,000 weights. Fine-tuning all of them needs 12GB+ of memory and risks catastrophic forgetting. <strong>LoRA</strong> (Low-Rank Adaptation) adds tiny adapter matrices alongside the frozen weights:</p>
+                    <pre>Original:  W (1.5B params) → frozen 🧊
+LoRA:      W + A×B (15M params) → trained 🔥
+
+A: d × r matrix  (e.g., 2048 × 8)
+B: r × d matrix  (e.g., 8 × 2048)
+
+Total trainable: ~1% of original model</pre>
+                </div>
+
+                <h3>Interactive: LoRA Rank Explorer</h3>
+                <div class="card">
+                    <div class="grid-2">
+                        <div>
+                            <label>Model: <strong>Qwen2.5-1.5B</strong></label><br>
+                            <label>Hidden dim (d): <strong>2048</strong></label><br>
+                            <label style="margin-top:8px; display:block;">LoRA rank (r): <strong id="lora-rank-label">8</strong></label>
+                            <input type="range" min="1" max="64" value="8" oninput="updateLoRA(this.value)" style="width:100%; margin:8px 0;">
+                        </div>
+                        <div id="lora-stats">
+                            <p>Trainable params: <strong id="lora-params">15.7M</strong></p>
+                            <p>% of total: <strong id="lora-pct">1.05%</strong></p>
+                            <p>VRAM needed: <strong id="lora-vram">~4 GB</strong></p>
+                            <div class="progress-bar" style="height:20px; margin-top:8px;">
+                                <div id="lora-bar" class="progress-fill" style="width:1.05%; background:linear-gradient(90deg, #4ecdc4, #ff6b6b);"></div>
+                            </div>
+                            <p style="font-size:0.8em; color:#aaa;">Green = trainable, rest = frozen</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Training Visualization</h3>
+                <div class="card">
+                    <p>Fine-tuning on 500 Q&A pairs generated from your chapters:</p>
+                    <canvas id="train-chart-b" width="600" height="250" style="width:100%; background:rgba(0,0,0,0.3);"></canvas>
+                    <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+                        <button onclick="runTrainingB()" id="train-btn-b">▶ Train LoRA</button>
+                        <span style="font-size:0.9em; color:#aaa;" id="train-status-b">Ready</span>
+                    </div>
+                    <div id="training-samples" style="margin-top:16px;"></div>
+                </div>
+
+                <h3>RAG vs Fine-Tune: Side by Side</h3>
+                <div class="card">
+                    <table class="compare-table">
+                        <tr><th></th><th>RAG</th><th>Fine-Tune (LoRA)</th></tr>
+                        <tr><td><strong>Training needed?</strong></td><td>No</td><td>Yes (1-2 hours)</td></tr>
+                        <tr><td><strong>New content?</strong></td><td>Just add to vector store</td><td>Retrain needed</td></tr>
+                        <tr><td><strong>Accuracy</strong></td><td>Good (depends on retrieval)</td><td>Great (knowledge internalized)</td></tr>
+                        <tr><td><strong>Hallucination</strong></td><td>Lower (grounded in chunks)</td><td>Higher (may confabulate)</td></tr>
+                        <tr><td><strong>Latency</strong></td><td>Higher (embed + search + generate)</td><td>Lower (direct generation)</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>Embedding API + LLM API</td><td>GPU time for training</td></tr>
+                    </table>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Modules 2, 6, 8</h4>
+                    <p><strong>Module 2 (Attention)</strong>: The attention mechanism you built is exactly what makes the model understand your question and find the answer in context.</p>
+                    <p><strong>Module 6 (RAG)</strong>: You already built the retrieval pipeline. LoRA is the complementary approach.</p>
+                    <p><strong>Module 8 (Scaling)</strong>: That's why we use Qwen2.5-1.5B, not a 70B model. Right-sizing matters — a 1.5B model fine-tuned on your data often beats a 70B generic model for your specific task.</p>
+                </div>
+                <button onclick="advanceStep('b', 3)">Next: Hybrid Approach →</button>
+            </div>
+
+            <!-- Step 3: Hybrid -->
+            <div class="b-step hidden" id="b-step-3">
+                <h2>Approach 3: Hybrid (Best of Both)</h2>
+                <div class="card">
+                    <p>The real-world answer is almost always a hybrid:</p>
+                    <pre>Query → Embed → Retrieve top-k chunks (RAG)
+              ↓
+      Fine-tuned model generates answer
+      using retrieved chunks as context</pre>
+                    <ul>
+                        <li>RAG ensures the model has <strong>up-to-date, grounded context</strong></li>
+                        <li>Fine-tuning ensures the model <strong>knows how to use that context</strong> for your domain</li>
+                        <li>Best accuracy, lowest hallucination</li>
+                    </ul>
+                </div>
+
+                <h3>Interactive: Hybrid Pipeline Simulator</h3>
+                <div class="card">
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <input type="text" id="hybrid-query" placeholder="Ask about the text you loaded earlier..." style="flex:1;">
+                        <button onclick="hybridQuery()">🔍 Hybrid Query</button>
+                    </div>
+                    <div id="hybrid-steps" class="hidden">
+                        <div class="card" id="hybrid-step-1" style="border-left:3px solid #4ecdc4; margin:8px 0; padding:12px;">
+                            <strong>Step 1: Embed query</strong>
+                            <p style="font-size:0.85em; color:#aaa;" id="hybrid-embed-info"></p>
+                        </div>
+                        <div class="card" id="hybrid-step-2" style="border-left:3px solid #ffd93d; margin:8px 0; padding:12px; opacity:0.3;">
+                            <strong>Step 2: Retrieve chunks (RAG)</strong>
+                            <div id="hybrid-chunks"></div>
+                        </div>
+                        <div class="card" id="hybrid-step-3" style="border-left:3px solid #ff6b6b; margin:8px 0; padding:12px; opacity:0.3;">
+                            <strong>Step 3: Generate answer (fine-tuned model)</strong>
+                            <p id="hybrid-answer" style="font-size:0.95em;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: The Full Stack</h4>
+                    <p>Your hybrid bot uses nearly every module you've built:</p>
+                    <ul>
+                        <li><strong>Module 1 (Language Model)</strong>: The base model that generates text</li>
+                        <li><strong>Module 2 (Attention)</strong>: How the model attends to retrieved context</li>
+                        <li><strong>Module 3 (Context)</strong>: Managing chunk size within the context window</li>
+                        <li><strong>Module 6 (RAG)</strong>: The retrieval pipeline</li>
+                        <li><strong>Module 8 (Scaling)</strong>: Choosing the right model size</li>
+                    </ul>
+                </div>
+                <button onclick="completeProject('b')">🎓 Complete Project B</button>
+            </div>
+        </div>
+
+        <!-- ==================== PROJECT C: YOUR AGENT ==================== -->
+        <div id="project-c" class="tab-content">
+            <div class="step-indicator" id="steps-c">
+                <div class="step-dot current" data-step="1">1</div>
+                <div class="step-dot" data-step="2">2</div>
+                <div class="step-dot" data-step="3">3</div>
+                <div class="step-dot" data-step="4">4</div>
+                <div class="step-dot" data-step="5">5</div>
+            </div>
+
+            <!-- Step 1: Define Purpose -->
+            <div class="c-step" id="c-step-1">
+                <h2>Step 1: Define Your Agent</h2>
+                <div class="card">
+                    <p>Every good agent starts with a clear purpose. Answer these questions:</p>
+
+                    <h4>What does your agent do?</h4>
+                    <textarea id="agent-purpose" placeholder="e.g., 'Monitors my email, summarizes important messages, drafts replies, and manages my calendar'" rows="3"></textarea>
+
+                    <h4>Who uses it?</h4>
+                    <select id="agent-user">
+                        <option value="">Select...</option>
+                        <option value="just-me">Just me (personal assistant)</option>
+                        <option value="team">My team (shared tool)</option>
+                        <option value="customers">External users / customers</option>
+                    </select>
+
+                    <h4>How often does it run?</h4>
+                    <select id="agent-frequency">
+                        <option value="">Select...</option>
+                        <option value="on-demand">On demand (I ask, it responds)</option>
+                        <option value="periodic">Periodic (checks every N minutes)</option>
+                        <option value="always-on">Always on (monitors & reacts)</option>
+                    </select>
+
+                    <h4>What's the stakes level?</h4>
+                    <select id="agent-stakes">
+                        <option value="">Select...</option>
+                        <option value="low">Low (entertainment, info lookup)</option>
+                        <option value="medium">Medium (scheduling, drafts for review)</option>
+                        <option value="high">High (sends messages, makes purchases, controls systems)</option>
+                    </select>
+                </div>
+                <button onclick="advanceStep('c', 2)">Next: Architecture →</button>
+            </div>
+
+            <!-- Step 2: Architecture -->
+            <div class="c-step hidden" id="c-step-2">
+                <h2>Step 2: Pick Your Architecture</h2>
+                <div class="card">
+                    <p>Which capabilities does your agent need? Click to toggle:</p>
+                    <div class="architecture-map" id="arch-map">
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="1" data-name="Language Model">
+                            <div class="block-icon">🧠</div>
+                            <div><strong>Language</strong></div>
+                            <div class="block-label">Module 1</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="2" data-name="Attention">
+                            <div class="block-icon">🎯</div>
+                            <div><strong>Attention</strong></div>
+                            <div class="block-label">Module 2</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="3" data-name="Context">
+                            <div class="block-icon">📏</div>
+                            <div><strong>Context</strong></div>
+                            <div class="block-label">Module 3</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="4" data-name="Gateway">
+                            <div class="block-icon">🚪</div>
+                            <div><strong>Gateway</strong></div>
+                            <div class="block-label">Module 4</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="5" data-name="Tool Use">
+                            <div class="block-icon">🔧</div>
+                            <div><strong>Tools</strong></div>
+                            <div class="block-label">Module 5</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="6" data-name="Memory (RAG)">
+                            <div class="block-icon">💾</div>
+                            <div><strong>Memory</strong></div>
+                            <div class="block-label">Module 6</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="7" data-name="Vision">
+                            <div class="block-icon">👁️</div>
+                            <div><strong>Vision</strong></div>
+                            <div class="block-label">Module 7</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="8" data-name="Scaling">
+                            <div class="block-icon">📈</div>
+                            <div><strong>Scaling</strong></div>
+                            <div class="block-label">Module 8</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="9" data-name="Security">
+                            <div class="block-icon">🔒</div>
+                            <div><strong>Security</strong></div>
+                            <div class="block-label">Module 9</div>
+                        </div>
+                        <div class="arch-block" onclick="toggleArch(this)" data-module="10" data-name="Automation">
+                            <div class="block-icon">⚡</div>
+                            <div><strong>Automation</strong></div>
+                            <div class="block-label">Module 10</div>
+                        </div>
+                    </div>
+                    <div id="arch-summary" style="margin-top:16px;"></div>
+                </div>
+                <button onclick="advanceStep('c', 3)">Next: Cost Estimation →</button>
+            </div>
+
+            <!-- Step 3: Cost Estimation -->
+            <div class="c-step hidden" id="c-step-3">
+                <h2>Step 3: How Much Will It Cost?</h2>
+                <div class="card">
+                    <div class="grid-2">
+                        <div>
+                            <h4>Model</h4>
+                            <select id="cost-model" onchange="updateCost()">
+                                <option value="gpt4o-mini" data-in="0.15" data-out="0.60">GPT-4o-mini ($0.15/1M in)</option>
+                                <option value="gpt4o" data-in="2.50" data-out="10.00">GPT-4o ($2.50/1M in)</option>
+                                <option value="claude-sonnet" data-in="3.00" data-out="15.00">Claude Sonnet ($3/1M in)</option>
+                                <option value="claude-opus" data-in="15.00" data-out="75.00">Claude Opus ($15/1M in)</option>
+                                <option value="local-7b" data-in="0" data-out="0">Local 7B (free, needs GPU)</option>
+                                <option value="local-1.5b" data-in="0" data-out="0">Local 1.5B (free, CPU ok)</option>
+                            </select>
+
+                            <h4>Messages per day</h4>
+                            <input type="number" id="cost-msgs" value="50" min="1" max="10000" onchange="updateCost()">
+
+                            <h4>Avg tokens per message</h4>
+                            <input type="number" id="cost-tokens" value="500" min="50" max="10000" onchange="updateCost()">
+                        </div>
+                        <div>
+                            <h4>Tools per message</h4>
+                            <input type="number" id="cost-tools" value="2" min="0" max="20" onchange="updateCost()">
+
+                            <h4>RAG lookups per message</h4>
+                            <input type="number" id="cost-rag" value="1" min="0" max="10" onchange="updateCost()">
+
+                            <h4>Embedding API</h4>
+                            <select id="cost-embed" onchange="updateCost()">
+                                <option value="0.02">OpenAI ada-002 ($0.02/1M)</option>
+                                <option value="0">Local embeddings (free)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="cost-result" id="cost-result">
+                        $0.00 / day &nbsp;·&nbsp; $0.00 / month
+                    </div>
+                    <div id="cost-breakdown" style="font-size:0.85em; color:#aaa; text-align:center;"></div>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Module 8 — Scaling</h4>
+                    <p>Module 8 taught you that bigger isn't always better. A fine-tuned 1.5B model costs <strong>$0/month</strong> to run on a laptop, while GPT-4o at 50 messages/day costs ~$4/month. The right choice depends on your accuracy needs vs. budget.</p>
+                </div>
+                <button onclick="advanceStep('c', 4)">Next: Security Audit →</button>
+            </div>
+
+            <!-- Step 4: Security -->
+            <div class="c-step hidden" id="c-step-4">
+                <h2>Step 4: Security Audit</h2>
+                <div class="card">
+                    <p>Your agent needs access to things. More access = more risk. Let's design trust tiers.</p>
+
+                    <div class="security-tier">
+                        <div class="tier-badge tier-low">R</div>
+                        <div>
+                            <strong>Read-Only</strong>
+                            <p style="font-size:0.85em; color:#aaa; margin:0;">Can read data but never modify. Safe by default.</p>
+                        </div>
+                    </div>
+                    <div class="security-tier">
+                        <div class="tier-badge tier-med">A</div>
+                        <div>
+                            <strong>Act with Approval</strong>
+                            <p style="font-size:0.85em; color:#aaa; margin:0;">Can draft actions, but a human must approve before execution.</p>
+                        </div>
+                    </div>
+                    <div class="security-tier">
+                        <div class="tier-badge tier-high">X</div>
+                        <div>
+                            <strong>Execute Autonomously</strong>
+                            <p style="font-size:0.85em; color:#aaa; margin:0;">Full autonomy. Only for low-stakes, well-tested actions.</p>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top:1.5em;">Assign trust levels to your agent's capabilities:</h4>
+                    <div id="security-audit">
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R">R</option><option value="A" selected>A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Read emails</strong></div>
+                        </div>
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R">R</option><option value="A" selected>A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Send emails</strong></div>
+                        </div>
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R" selected>R</option><option value="A">A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Browse the web</strong></div>
+                        </div>
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R">R</option><option value="A" selected>A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Modify calendar</strong></div>
+                        </div>
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R">R</option><option value="A">A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Execute code / shell commands</strong></div>
+                        </div>
+                        <div class="security-tier">
+                            <select class="sec-select" style="width:60px;padding:6px;" onchange="updateSecuritySummary()">
+                                <option value="R">R</option><option value="A">A</option><option value="X">X</option>
+                            </select>
+                            <div><strong>Make purchases / payments</strong></div>
+                        </div>
+                    </div>
+                    <div id="security-summary" style="margin-top:16px;"></div>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: Module 9 — Security</h4>
+                    <p>Module 9 taught you about prompt injection, trust boundaries, and the principle of least privilege. Your security audit applies those principles: <em>never give more access than needed, always require approval for high-stakes actions.</em></p>
+                </div>
+                <button onclick="advanceStep('c', 5)">Next: Deployment Plan →</button>
+            </div>
+
+            <!-- Step 5: Deployment -->
+            <div class="c-step hidden" id="c-step-5">
+                <h2>Step 5: Where Does It Run?</h2>
+                <div class="card">
+                    <table class="compare-table">
+                        <tr><th></th><th>Local Laptop</th><th>VPS ($5-20/mo)</th><th>Cloud (AWS/GCP)</th></tr>
+                        <tr><td><strong>Always on?</strong></td><td>No (sleeps)</td><td>Yes ✅</td><td>Yes ✅</td></tr>
+                        <tr><td><strong>GPU?</strong></td><td>Maybe (Apple Silicon)</td><td>No (usually)</td><td>Yes ($$$)</td></tr>
+                        <tr><td><strong>Privacy</strong></td><td>Best ✅</td><td>Good</td><td>Depends on provider</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>$0</td><td>$5-20/mo</td><td>$20-200+/mo</td></tr>
+                        <tr><td><strong>Best for</strong></td><td>Personal, dev</td><td>Small always-on agent</td><td>Production, scaling</td></tr>
+                    </table>
+                </div>
+
+                <h3>Your Agent's Blueprint</h3>
+                <div class="card" id="blueprint-card">
+                    <p style="color:#aaa;">Complete all steps to generate your agent blueprint...</p>
+                </div>
+
+                <div class="connect-back">
+                    <h4>🔗 Connect Back: ALL 10 Modules</h4>
+                    <p>Your personal agent is the synthesis of everything you've learned:</p>
+                    <ol>
+                        <li><strong>Language Model</strong> — the brain that generates responses</li>
+                        <li><strong>Attention</strong> — how it understands your requests in context</li>
+                        <li><strong>Context/Compaction</strong> — managing conversation history within token limits</li>
+                        <li><strong>Gateway</strong> — the API layer that routes requests to models</li>
+                        <li><strong>Tool Use (ReAct)</strong> — calling external APIs, reading files, running code</li>
+                        <li><strong>Memory (RAG)</strong> — remembering past conversations and documents</li>
+                        <li><strong>Vision</strong> — understanding images and screenshots</li>
+                        <li><strong>Scaling/Routing</strong> — choosing the right model for each task</li>
+                        <li><strong>Security</strong> — trust tiers, sandboxing, approval workflows</li>
+                        <li><strong>Automation</strong> — running on schedules, reacting to events</li>
+                    </ol>
+                    <p><strong>You didn't just learn about AI. You built it, piece by piece, and now you can design your own.</strong></p>
+                </div>
+                <button onclick="completeProject('c')">🎓 Complete Project C</button>
+            </div>
+        </div>
+
+        <!-- ==================== CELEBRATION ==================== -->
+        <div class="celebration" id="celebration">
+            <canvas class="confetti-canvas" id="confetti-canvas"></canvas>
+            <div class="emoji">🎓</div>
+            <h1>You did it.</h1>
+            <p style="font-size:1.2em; color:#aaa; max-width:600px; margin:0 auto 2em;">
+                You started with a simple prediction game. You built attention from scratch. You wired up tools, memory, vision, security, and automation.
+                And now you've applied it all to a real project.
+            </p>
+            <p style="font-size:1.1em; margin-bottom:2em;">
+                <strong>You understand how AI works — not as a consumer, but as a builder.</strong>
+            </p>
+            <div class="card" style="max-width:500px; margin:0 auto; text-align:left;">
+                <h3 style="text-align:center;">What's Next?</h3>
+                <ul>
+                    <li>🥏 <strong>Disc Finder</strong>: Collect real images, train on Roboflow, deploy to your phone</li>
+                    <li>📚 <strong>Q&A Bot</strong>: Try it on your own textbooks with a real embedding API</li>
+                    <li>🤖 <strong>Your Agent</strong>: Start building with OpenClaw, LangChain, or from scratch</li>
+                </ul>
+            </div>
+            <div style="margin-top:3em;">
+                <button onclick="backToIntro()" class="secondary">← Back to Projects</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentProject = null;
+const projectSteps = { a: 1, b: 1, c: 1 };
+const projectMaxSteps = { a: 6, b: 3, c: 5 };
+let ragChunks = [];
+let ragEmbeddings = [];
+let trainingAnimA = null;
+let trainingAnimB = null;
+
+// ==================== NAVIGATION ====================
+function selectProject(id) {
+    currentProject = id;
+    document.getElementById('intro').classList.add('hidden');
+    document.getElementById('project-area').classList.remove('hidden');
+    document.getElementById('celebration').classList.remove('active');
+
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('project-' + id).classList.add('active');
+
+    const titles = { a: '🥏 Project A: Disc Finder', b: '📚 Project B: Q&A Bot', c: '🤖 Project C: Your Agent' };
+    const subs = {
+        a: 'Train a computer vision model to find disc golf discs in photos',
+        b: 'Build an AI that answers questions about any text you give it',
+        c: 'Design the architecture for your own personal AI agent'
+    };
+    document.getElementById('project-title').textContent = titles[id];
+    document.getElementById('project-subtitle').textContent = subs[id];
+
+    if (id === 'a') initBBoxDemo();
+    if (id === 'c') updateCost();
+}
+
+function backToIntro() {
+    document.getElementById('intro').classList.remove('hidden');
+    document.getElementById('project-area').classList.add('hidden');
+    document.getElementById('celebration').classList.remove('active');
+}
+
+function advanceStep(project, step) {
+    projectSteps[project] = step;
+    const prefix = project;
+    // Hide all steps
+    document.querySelectorAll('.' + prefix + '-step').forEach(s => s.classList.add('hidden'));
+    document.getElementById(prefix + '-step-' + step).classList.remove('hidden');
+    // Update dots
+    document.querySelectorAll('#steps-' + prefix + ' .step-dot').forEach(d => {
+        const s = parseInt(d.dataset.step);
+        d.classList.remove('done', 'current');
+        if (s < step) d.classList.add('done');
+        if (s === step) d.classList.add('current');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function completeProject(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('celebration').classList.add('active');
+    launchConfetti();
+}
+
+// ==================== PROJECT A: DATASET VIZ ====================
+function updateDatasetViz(val) {
+    document.getElementById('a-total-imgs').textContent = val;
+    const train = Math.round(val * 0.7);
+    const valN = Math.round(val * 0.15);
+    const test = val - train - valN;
+    document.getElementById('a-split-info').textContent = `${train} train · ${valN} val · ${test} test`;
+}
+
+// ==================== PROJECT A: BBOX DEMO ====================
+function initBBoxDemo() {
+    const canvas = document.getElementById('bbox-canvas');
+    const ctx = canvas.getContext('2d');
+    // Draw a simulated scene
+    ctx.fillStyle = '#3a5a3a'; ctx.fillRect(0, 0, 500, 375); // grass
+    // Some texture
+    for (let i = 0; i < 200; i++) {
+        ctx.fillStyle = `rgba(${40+Math.random()*40},${70+Math.random()*50},${30+Math.random()*30},0.5)`;
+        ctx.fillRect(Math.random()*500, Math.random()*375, 3+Math.random()*8, 2+Math.random()*4);
+    }
+    // Tree trunk
+    ctx.fillStyle = '#5a3a2a'; ctx.fillRect(380, 80, 25, 200);
+    ctx.fillStyle = '#2a6a2a'; ctx.beginPath(); ctx.arc(392, 70, 60, 0, Math.PI*2); ctx.fill();
+    // Disc
+    ctx.fillStyle = '#e84040';
+    ctx.beginPath(); ctx.ellipse(230, 210, 30, 22, 0.2, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ff6666'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(230, 210, 30, 22, 0.2, 0, Math.PI*2); ctx.stroke();
+    // Inner ring
+    ctx.strokeStyle = '#cc3030'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(230, 210, 15, 11, 0.2, 0, Math.PI*2); ctx.stroke();
+
+    // Drag to draw bbox
+    let drawing = false, sx, sy;
+    canvas.onmousedown = canvas.ontouchstart = (e) => {
+        e.preventDefault();
+        const r = canvas.getBoundingClientRect();
+        const t = e.touches ? e.touches[0] : e;
+        sx = (t.clientX - r.left) * (500 / r.width);
+        sy = (t.clientY - r.top) * (375 / r.height);
+        drawing = true;
+    };
+    canvas.onmousemove = canvas.ontouchmove = (e) => {
+        if (!drawing) return;
+        e.preventDefault();
+        const r = canvas.getBoundingClientRect();
+        const t = e.touches ? e.touches[0] : e;
+        const ex = (t.clientX - r.left) * (500 / r.width);
+        const ey = (t.clientY - r.top) * (375 / r.height);
+        // Redraw
+        initBBoxDemoRedraw(ctx);
+        ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+        ctx.strokeRect(sx, sy, ex-sx, ey-sy);
+        ctx.setLineDash([]);
+    };
+    canvas.onmouseup = canvas.ontouchend = (e) => {
+        if (!drawing) return;
+        drawing = false;
+        const r = canvas.getBoundingClientRect();
+        const t = e.changedTouches ? e.changedTouches[0] : e;
+        const ex = (t.clientX - r.left) * (500 / r.width);
+        const ey = (t.clientY - r.top) * (375 / r.height);
+        const cx = ((Math.min(sx,ex) + Math.max(sx,ex)) / 2 / 500).toFixed(4);
+        const cy = ((Math.min(sy,ey) + Math.max(sy,ey)) / 2 / 375).toFixed(4);
+        const w = (Math.abs(ex-sx) / 500).toFixed(4);
+        const h = (Math.abs(ey-sy) / 375).toFixed(4);
+        document.getElementById('bbox-coords').textContent = `${cx} ${cy} ${w} ${h}`;
+        document.getElementById('bbox-output').style.display = 'block';
+        document.getElementById('bbox-label').textContent = '✅ YOLO format: class center_x center_y width height';
+        // Draw final box
+        initBBoxDemoRedraw(ctx);
+        ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 2;
+        ctx.strokeRect(Math.min(sx,ex), Math.min(sy,ey), Math.abs(ex-sx), Math.abs(ey-sy));
+        ctx.fillStyle = 'rgba(78,205,196,0.1)';
+        ctx.fillRect(Math.min(sx,ex), Math.min(sy,ey), Math.abs(ex-sx), Math.abs(ey-sy));
+        ctx.fillStyle = '#4ecdc4'; ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('disc 0.95', Math.min(sx,ex), Math.min(sy,ey)-4);
+    };
+}
+
+function initBBoxDemoRedraw(ctx) {
+    ctx.fillStyle = '#3a5a3a'; ctx.fillRect(0, 0, 500, 375);
+    for (let i = 0; i < 200; i++) {
+        ctx.fillStyle = `rgba(${40+Math.random()*40},${70+Math.random()*50},${30+Math.random()*30},0.5)`;
+        ctx.fillRect(Math.random()*500, Math.random()*375, 3+Math.random()*8, 2+Math.random()*4);
+    }
+    ctx.fillStyle = '#5a3a2a'; ctx.fillRect(380, 80, 25, 200);
+    ctx.fillStyle = '#2a6a2a'; ctx.beginPath(); ctx.arc(392, 70, 60, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#e84040';
+    ctx.beginPath(); ctx.ellipse(230, 210, 30, 22, 0.2, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ff6666'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(230, 210, 30, 22, 0.2, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = '#cc3030'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(230, 210, 15, 11, 0.2, 0, Math.PI*2); ctx.stroke();
+}
+
+// ==================== PROJECT A: TRAINING CHART ====================
+function runTrainingA() {
+    const btn = document.getElementById('train-btn-a');
+    const status = document.getElementById('train-status-a');
+    btn.disabled = true;
+    const canvas = document.getElementById('train-chart-a');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    let epoch = 0;
+    const losses = [], maps = [];
+
+    function frame() {
+        epoch++;
+        // Simulated loss (exponential decay + noise)
+        const loss = 0.8 * Math.exp(-epoch * 0.04) + 0.05 + (Math.random() - 0.5) * 0.03;
+        const mAP = Math.min(0.85, 0.1 + 0.75 * (1 - Math.exp(-epoch * 0.05)) + (Math.random() - 0.5) * 0.02);
+        losses.push(loss); maps.push(mAP);
+        status.textContent = `Epoch ${epoch}/100 — Loss: ${loss.toFixed(3)} — mAP: ${mAP.toFixed(3)}`;
+
+        // Draw
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+        // Grid
+        for (let i = 0; i < 5; i++) {
+            const y = 20 + i * (H-40)/4;
+            ctx.beginPath(); ctx.moveTo(50, y); ctx.lineTo(W-10, y); ctx.stroke();
+        }
+        // Axes labels
+        ctx.fillStyle = '#666'; ctx.font = '11px sans-serif';
+        ctx.fillText('1.0', 20, 24); ctx.fillText('0.5', 20, (H-40)/2+20); ctx.fillText('0.0', 20, H-16);
+        ctx.fillText('Epoch', W/2-15, H-2);
+
+        // Loss line
+        ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2; ctx.beginPath();
+        for (let i = 0; i < losses.length; i++) {
+            const x = 50 + i * (W-60) / 100;
+            const y = 20 + (1 - losses[i]) * (H-40);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        // mAP line
+        ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 2; ctx.beginPath();
+        for (let i = 0; i < maps.length; i++) {
+            const x = 50 + i * (W-60) / 100;
+            const y = 20 + (1 - maps[i]) * (H-40);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        if (epoch < 100) {
+            trainingAnimA = requestAnimationFrame(frame);
+        } else {
+            status.textContent = `✅ Training complete — Final mAP: ${mAP.toFixed(3)}`;
+            btn.disabled = false;
+        }
+    }
+    if (trainingAnimA) cancelAnimationFrame(trainingAnimA);
+    losses.length = 0; maps.length = 0; epoch = 0;
+    frame();
+}
+
+// ==================== PROJECT A: INFERENCE DEMO ====================
+function runInferenceDemo() {
+    const canvas = document.getElementById('inference-canvas');
+    const ctx = canvas.getContext('2d');
+    // Draw scene
+    ctx.fillStyle = '#4a6a4a'; ctx.fillRect(0, 0, 500, 375);
+    for (let i = 0; i < 300; i++) {
+        ctx.fillStyle = `rgba(${50+Math.random()*40},${80+Math.random()*40},${40+Math.random()*30},0.4)`;
+        ctx.fillRect(Math.random()*500, Math.random()*375, 2+Math.random()*6, 2+Math.random()*4);
+    }
+    // A disc
+    ctx.fillStyle = '#3388ff';
+    ctx.beginPath(); ctx.ellipse(300, 180, 35, 26, -0.15, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#55aaff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(300, 180, 35, 26, -0.15, 0, Math.PI*2); ctx.stroke();
+    // Another disc partially hidden
+    ctx.fillStyle = '#ffaa22';
+    ctx.beginPath(); ctx.ellipse(120, 290, 28, 20, 0.3, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ffcc44'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(120, 290, 28, 20, 0.3, 0, Math.PI*2); ctx.stroke();
+
+    // Animate detection
+    let step = 0;
+    const detections = [
+        { x: 260, y: 150, w: 85, h: 65, conf: 0.94 },
+        { x: 87, y: 265, w: 70, h: 55, conf: 0.78 }
+    ];
+    function drawDetection() {
+        if (step >= detections.length) {
+            document.getElementById('inference-result').textContent =
+                `Found ${detections.length} discs — confidence: ${detections.map(d=>d.conf.toFixed(2)).join(', ')}`;
+            return;
+        }
+        const d = detections[step];
+        ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 3;
+        ctx.strokeRect(d.x, d.y, d.w, d.h);
+        ctx.fillStyle = 'rgba(78,205,196,0.15)';
+        ctx.fillRect(d.x, d.y, d.w, d.h);
+        // Label
+        ctx.fillStyle = '#4ecdc4'; ctx.font = 'bold 13px sans-serif';
+        const label = `disc ${d.conf.toFixed(2)}`;
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(d.x, d.y - 18, tw + 8, 18);
+        ctx.fillStyle = '#4ecdc4';
+        ctx.fillText(label, d.x + 4, d.y - 4);
+        step++;
+        setTimeout(drawDetection, 600);
+    }
+    document.getElementById('inference-result').textContent = 'Detecting...';
+    setTimeout(drawDetection, 300);
+}
+
+// ==================== PROJECT B: RAG DEMO ====================
+function loadSampleText() {
+    document.getElementById('rag-input').value = `Attention is a mechanism that allows a neural network to focus on specific parts of its input when producing each part of its output. In the Transformer architecture, attention works by computing three vectors for each token: a Query (what am I looking for?), a Key (what do I contain?), and a Value (what information do I carry). The attention score between two tokens is the dot product of the Query of one and the Key of the other, scaled by the square root of the dimension. These scores are passed through a softmax to create a probability distribution, then used to take a weighted sum of the Value vectors. Multi-head attention runs this process multiple times in parallel with different learned projections, allowing the model to attend to different types of relationships simultaneously. Self-attention, where the input attends to itself, is what gives Transformers their remarkable ability to capture long-range dependencies in text.`;
+}
+
+function chunkText() {
+    const text = document.getElementById('rag-input').value.trim();
+    if (!text) return alert('Please paste some text first!');
+    const size = parseInt(document.querySelector('#chunk-size-label').textContent);
+    ragChunks = [];
+    for (let i = 0; i < text.length; i += Math.floor(size * 0.8)) {
+        const end = Math.min(i + size, text.length);
+        ragChunks.push(text.slice(i, end));
+        if (end >= text.length) break;
+    }
+    const viz = document.getElementById('chunk-viz');
+    viz.innerHTML = ragChunks.map((c, i) =>
+        `<div class="chunk-box" id="chunk-${i}" title="${c.replace(/"/g,'&quot;')}">Chunk ${i+1}: "${c.slice(0,40)}..."</div>`
+    ).join('');
+    document.getElementById('embed-btn').disabled = false;
+}
+
+function embedChunks() {
+    // Simulate embedding
+    ragEmbeddings = ragChunks.map(() => {
+        const v = [];
+        for (let i = 0; i < 8; i++) v.push((Math.random() * 2 - 1).toFixed(3));
+        return v;
+    });
+    const res = document.getElementById('embed-result');
+    res.innerHTML = `<div class="highlight-card"><strong>✅ ${ragChunks.length} chunks embedded</strong> (simulated 384-dim vectors, showing first 8 dims)<br>` +
+        ragEmbeddings.map((e, i) => `<code style="font-size:0.75em;">Chunk ${i+1}: [${e.slice(0,4).join(', ')}, ...]</code>`).join('<br>') +
+        `</div>`;
+    document.getElementById('rag-query-btn').disabled = false;
+}
+
+function ragQuery() {
+    const query = document.getElementById('rag-query').value.trim();
+    if (!query || ragChunks.length === 0) return;
+
+    // Simulate: find best matching chunk by keyword overlap
+    const qWords = query.toLowerCase().split(/\s+/);
+    let bestIdx = 0, bestScore = 0;
+    ragChunks.forEach((c, i) => {
+        const cLower = c.toLowerCase();
+        let score = qWords.reduce((s, w) => s + (cLower.includes(w) ? 1 : 0), 0);
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+    });
+
+    // Highlight retrieved chunk
+    document.querySelectorAll('.chunk-box').forEach(b => b.classList.remove('highlighted'));
+    document.getElementById('chunk-' + bestIdx).classList.add('highlighted');
+
+    // Simulate answer generation
+    const chunk = ragChunks[bestIdx];
+    const sentences = chunk.split(/\.\s+/);
+    const relevant = sentences.filter(s =>
+        qWords.some(w => s.toLowerCase().includes(w))
+    );
+    const answer = relevant.length > 0
+        ? relevant[0] + '.'
+        : sentences[0] + '.';
+
+    document.getElementById('rag-answer').innerHTML = `
+        <div class="card" style="border-left:3px solid #4ecdc4;">
+            <strong>Retrieved chunk ${bestIdx + 1}</strong> (similarity: ${(0.7 + Math.random() * 0.25).toFixed(3)})<br>
+            <p style="font-size:0.85em; color:#aaa; margin:8px 0;">"${chunk.slice(0, 150)}..."</p>
+            <strong>Generated answer:</strong><br>
+            <p>${answer}</p>
+        </div>`;
+}
+
+// ==================== PROJECT B: LoRA ====================
+function updateLoRA(rank) {
+    rank = parseInt(rank);
+    document.getElementById('lora-rank-label').textContent = rank;
+    const d = 2048, layers = 24;
+    const params = 2 * d * rank * layers * 2; // 2 matrices per layer, Q and V
+    const pct = (params / 1.5e9 * 100);
+    const vram = 3 + pct * 0.5;
+    document.getElementById('lora-params').textContent = (params / 1e6).toFixed(1) + 'M';
+    document.getElementById('lora-pct').textContent = pct.toFixed(2) + '%';
+    document.getElementById('lora-vram').textContent = '~' + vram.toFixed(1) + ' GB';
+    document.getElementById('lora-bar').style.width = Math.min(pct * 3, 100) + '%';
+}
+
+function runTrainingB() {
+    const btn = document.getElementById('train-btn-b');
+    const status = document.getElementById('train-status-b');
+    btn.disabled = true;
+    const canvas = document.getElementById('train-chart-b');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    let epoch = 0;
+    const losses = [];
+    const sampleOutputs = [
+        { epoch: 10, q: "What is attention?", a: "Attention is... something with vectors and scores I think maybe neural." },
+        { epoch: 30, q: "What is attention?", a: "Attention computes Query, Key, Value vectors and uses dot products to find relevant tokens." },
+        { epoch: 60, q: "What is attention?", a: "Attention is a mechanism where each token computes Q, K, V vectors. The dot product of Q and K gives attention scores, which weight the V vectors to focus on relevant context." }
+    ];
+
+    function frame() {
+        epoch++;
+        const loss = 2.5 * Math.exp(-epoch * 0.06) + 0.3 + (Math.random() - 0.5) * 0.08;
+        losses.push(loss);
+        status.textContent = `Epoch ${epoch}/60 — Loss: ${loss.toFixed(3)}`;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+            const y = 15 + i * (H-30)/3;
+            ctx.beginPath(); ctx.moveTo(50, y); ctx.lineTo(W-10, y); ctx.stroke();
+        }
+        ctx.fillStyle = '#666'; ctx.font = '11px sans-serif';
+        ctx.fillText('3.0', 20, 20); ctx.fillText('0.0', 20, H-10);
+
+        ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2; ctx.beginPath();
+        for (let i = 0; i < losses.length; i++) {
+            const x = 50 + i * (W-60) / 60;
+            const y = 15 + (1 - losses[i] / 3) * (H-30);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Show sample outputs
+        const sample = sampleOutputs.filter(s => epoch >= s.epoch).pop();
+        if (sample) {
+            document.getElementById('training-samples').innerHTML = `
+                <div class="card" style="border-left:3px solid #ffd93d;">
+                    <strong>Sample output (epoch ${sample.epoch}):</strong><br>
+                    <p style="color:#aaa;">Q: ${sample.q}</p>
+                    <p>A: ${sample.a}</p>
+                </div>`;
+        }
+
+        if (epoch < 60) {
+            trainingAnimB = requestAnimationFrame(frame);
+        } else {
+            status.textContent = `✅ Training complete — Final loss: ${loss.toFixed(3)}`;
+            btn.disabled = false;
+        }
+    }
+    if (trainingAnimB) cancelAnimationFrame(trainingAnimB);
+    losses.length = 0; epoch = 0;
+    frame();
+}
+
+// ==================== PROJECT B: HYBRID ====================
+function hybridQuery() {
+    const query = document.getElementById('hybrid-query').value.trim();
+    if (!query) return;
+    const steps = document.getElementById('hybrid-steps');
+    steps.classList.remove('hidden');
+
+    // Animate steps
+    const s1 = document.getElementById('hybrid-step-1');
+    const s2 = document.getElementById('hybrid-step-2');
+    const s3 = document.getElementById('hybrid-step-3');
+    s1.style.opacity = '1'; s2.style.opacity = '0.3'; s3.style.opacity = '0.3';
+    document.getElementById('hybrid-embed-info').textContent = `Embedding: "${query}" → [0.234, -0.891, 0.445, ...]`;
+
+    setTimeout(() => {
+        s2.style.opacity = '1';
+        const chunks = ragChunks.length > 0 ? ragChunks : ['[No text loaded — go back to Step 1 and paste text first]'];
+        const bestChunk = chunks[0].slice(0, 120);
+        document.getElementById('hybrid-chunks').innerHTML =
+            `<p style="font-size:0.85em; color:#aaa; margin:4px 0;">Top match (similarity: ${(0.8+Math.random()*0.15).toFixed(3)}): "${bestChunk}..."</p>`;
+    }, 800);
+
+    setTimeout(() => {
+        s3.style.opacity = '1';
+        document.getElementById('hybrid-answer').innerHTML =
+            `<p style="color:#4ecdc4;">Based on the retrieved context, the fine-tuned model generates a more precise, domain-adapted answer compared to either RAG or fine-tuning alone.</p>`;
+    }, 1600);
+}
+
+// ==================== PROJECT C: ARCHITECTURE ====================
+const selectedModules = new Set();
+
+function toggleArch(el) {
+    el.classList.toggle('selected');
+    const mod = el.dataset.module;
+    if (selectedModules.has(mod)) selectedModules.delete(mod); else selectedModules.add(mod);
+    updateArchSummary();
+}
+
+function updateArchSummary() {
+    const s = document.getElementById('arch-summary');
+    if (selectedModules.size === 0) { s.innerHTML = ''; return; }
+    const names = [];
+    document.querySelectorAll('#arch-map .arch-block.selected').forEach(el => {
+        names.push(`Module ${el.dataset.module}: ${el.dataset.name}`);
+    });
+    s.innerHTML = `<div class="highlight-card"><strong>Your agent uses ${selectedModules.size}/10 modules:</strong><br>` +
+        names.map(n => `<span class="chip selected">${n}</span>`).join(' ') + `</div>`;
+}
+
+// ==================== PROJECT C: COST CALCULATOR ====================
+function updateCost() {
+    const sel = document.getElementById('cost-model');
+    const opt = sel.options[sel.selectedIndex];
+    const inCost = parseFloat(opt.dataset.in) || 0;
+    const outCost = parseFloat(opt.dataset.out) || 0;
+    const msgs = parseInt(document.getElementById('cost-msgs').value) || 0;
+    const tokens = parseInt(document.getElementById('cost-tokens').value) || 0;
+    const tools = parseInt(document.getElementById('cost-tools').value) || 0;
+    const rag = parseInt(document.getElementById('cost-rag').value) || 0;
+    const embedCost = parseFloat(document.getElementById('cost-embed').value) || 0;
+
+    // Input tokens = context + tool results, output = response
+    const inputTokens = tokens * (1 + tools * 0.5 + rag * 0.3); // tool calls add context
+    const outputTokens = tokens * 0.6;
+    const dailyIn = msgs * inputTokens / 1e6 * inCost;
+    const dailyOut = msgs * outputTokens / 1e6 * outCost;
+    const dailyEmbed = msgs * rag * 200 / 1e6 * embedCost; // ~200 tokens per embed
+    const daily = dailyIn + dailyOut + dailyEmbed;
+    const monthly = daily * 30;
+
+    document.getElementById('cost-result').innerHTML =
+        (daily === 0 ? '<span style="color:#4ecdc4;">$0.00 / day · $0.00 / month</span> <span style="font-size:0.7em;">(local model — free!)</span>' :
+        `$${daily.toFixed(2)} / day &nbsp;·&nbsp; $${monthly.toFixed(2)} / month`);
+
+    document.getElementById('cost-breakdown').textContent =
+        `Input: $${dailyIn.toFixed(3)}/day · Output: $${dailyOut.toFixed(3)}/day · Embedding: $${dailyEmbed.toFixed(4)}/day`;
+}
+
+// ==================== PROJECT C: SECURITY ====================
+function updateSecuritySummary() {
+    const selects = document.querySelectorAll('.sec-select');
+    let r = 0, a = 0, x = 0;
+    selects.forEach(s => { if(s.value==='R') r++; if(s.value==='A') a++; if(s.value==='X') x++; });
+    const summary = document.getElementById('security-summary');
+    let risk = 'Low';
+    let color = '#4ecdc4';
+    if (x >= 2) { risk = 'High ⚠️'; color = '#ff6b6b'; }
+    else if (x >= 1 || a >= 4) { risk = 'Medium'; color = '#ffd93d'; }
+
+    summary.innerHTML = `<div class="highlight-card">
+        <strong>Risk profile: <span style="color:${color};">${risk}</span></strong><br>
+        <span class="chip">${r} read-only</span>
+        <span class="chip">${a} approval-required</span>
+        <span class="chip" style="${x?'background:rgba(255,107,107,0.15);border-color:rgba(255,107,107,0.3);color:#ff6b6b;':''}">${x} autonomous</span>
+        ${x >= 2 ? '<p style="color:#ff6b6b; margin-top:8px;">⚠️ Multiple autonomous capabilities = higher attack surface. Consider requiring approval for at least some of these.</p>' : ''}
+    </div>`;
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const colors = ['#4ecdc4', '#ff6b6b', '#ffd93d', '#44b09e', '#ff9ff3', '#54a0ff'];
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random() * 300,
+            w: 4 + Math.random() * 6,
+            h: 8 + Math.random() * 10,
+            vx: (Math.random() - 0.5) * 3,
+            vy: 2 + Math.random() * 4,
+            rot: Math.random() * Math.PI * 2,
+            rotV: (Math.random() - 0.5) * 0.2,
+            color: colors[Math.floor(Math.random() * colors.length)]
+        });
+    }
+    let frame = 0;
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.rotV;
+            if (p.y < canvas.height + 50) alive = true;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            ctx.restore();
+        });
+        frame++;
+        if (alive && frame < 300) requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    animate();
+}
+
+// Init
+updateCost();
+updateSecuritySummary();
+</script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-04: Channels — OpenClaw Deep Dive</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--surface3:#22222e;--border:#2a2a3a;--text:#e0e0e8;--text2:#8888a0;--accent:#6c5ce7;--accent2:#a29bfe;--green:#00b894;--orange:#fdcb6e;--red:#e17055;--blue:#74b9ff;--pink:#fd79a8;--cyan:#81ecec;--yellow:#ffeaa7}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(180deg,#15152a 0%,var(--bg) 100%)}
+.hero .mod{font-size:.85rem;color:var(--accent2);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.hero h1{font-size:2.4rem;font-weight:700;margin-bottom:12px}
+.hero h1 span{color:var(--accent2)}
+.hero .sub{color:var(--text2);font-size:1.1rem;max-width:650px;margin:0 auto}
+.narrative{background:var(--surface);border-left:3px solid var(--accent);padding:16px 20px;margin:30px auto;max-width:800px;border-radius:0 8px 8px 0;color:var(--text2);font-style:italic}
+
+/* Navigation */
+.act-nav{display:flex;justify-content:center;gap:8px;padding:20px;flex-wrap:wrap;position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+.act-btn{padding:8px 20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.act-btn:hover,.act-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Sections */
+.act{padding:40px 0;display:none}
+.act.active{display:block}
+.act-header{text-align:center;margin-bottom:30px}
+.act-header h2{font-size:1.6rem;margin-bottom:6px}
+.act-header p{color:var(--text2)}
+.section-title{font-size:1.2rem;font-weight:600;margin:30px 0 15px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* Channel Cards */
+.channel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:20px 0}
+.ch-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;position:relative}
+.ch-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ch-card.selected{border-color:var(--accent);box-shadow:0 0 15px rgba(108,92,231,.2)}
+.ch-card .ch-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ch-card .ch-icon{font-size:1.4rem;width:32px;text-align:center}
+.ch-card .ch-name{font-weight:600;font-size:.95rem}
+.ch-card .ch-proto{font-size:.75rem;color:var(--text2);background:var(--surface3);padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px}
+.ch-card .ch-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ch-tag{font-size:.65rem;padding:2px 6px;border-radius:8px;background:var(--surface3);color:var(--text2)}
+.ch-tag.yes{background:rgba(0,184,148,.15);color:var(--green)}
+.ch-tag.no{background:rgba(225,112,85,.1);color:var(--red)}
+
+/* Routing Viz */
+.routing-viz{background:var(--surface);border-radius:12px;padding:20px;margin:20px 0;border:1px solid var(--border)}
+.route-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.route-controls select{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:.85rem}
+.route-controls label{color:var(--text2);font-size:.85rem}
+.route-pipeline{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:10px 0;min-height:120px}
+.route-step{flex:0 0 auto;min-width:130px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;position:relative;transition:all .4s;opacity:.3}
+.route-step.active{opacity:1;border-color:var(--accent);box-shadow:0 0 12px rgba(108,92,231,.15)}
+.route-step.done{opacity:.7;border-color:var(--green)}
+.route-step .step-num{font-size:.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.route-step .step-label{font-size:.8rem;font-weight:600;margin:4px 0}
+.route-step .step-detail{font-size:.7rem;color:var(--text2);margin-top:4px}
+.route-arrow{flex:0 0 30px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:1.2rem;opacity:.3;transition:opacity .4s}
+.route-arrow.active{opacity:1;color:var(--accent2)}
+.msg-preview{background:var(--surface3);border-radius:8px;padding:12px;margin-top:12px;font-family:'SF Mono',Monaco,monospace;font-size:.75rem;white-space:pre-wrap;max-height:200px;overflow-y:auto;color:var(--cyan)}
+.route-btn{background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:.85rem}
+.route-btn:hover{background:var(--accent2)}
+
+/* Multi-account */
+.multi-acct{background:var(--surface);border-radius:12px;padding:20px;margin:20px 0;border:1px solid var(--border)}
+.acct-diagram{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.acct-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acct-box{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:500;text-align:center;min-width:100px}
+.acct-channel{background:rgba(116,185,255,.15);color:var(--blue);border:1px solid rgba(116,185,255,.3)}
+.acct-gateway{background:rgba(108,92,231,.15);color:var(--accent2);border:1px solid rgba(108,92,231,.3)}
+.acct-agent{background:rgba(0,184,148,.15);color:var(--green);border:1px solid rgba(0,184,148,.3)}
+.acct-arrow{color:var(--text2);font-size:.8rem}
+.binding-rule{background:var(--surface2);border-radius:8px;padding:10px 14px;margin:4px 0;font-size:.8rem;border-left:3px solid var(--accent)}
+.binding-rule code{background:var(--surface3);padding:1px 5px;border-radius:3px;color:var(--cyan);font-size:.75rem}
+
+/* Capability Matrix */
+.cap-matrix{overflow-x:auto;margin:20px 0}
+.cap-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.cap-table th,.cap-table td{padding:8px 10px;border:1px solid var(--border);text-align:center}
+.cap-table th{background:var(--surface2);color:var(--text2);font-weight:500;position:sticky;top:0}
+.cap-table th:first-child,.cap-table td:first-child{text-align:left;font-weight:500;min-width:120px;position:sticky;left:0;background:var(--surface);z-index:1}
+.cap-table th:first-child{z-index:2;background:var(--surface2)}
+.cap-table tr:hover td{background:var(--surface2)}
+.cap-yes{color:var(--green)}
+.cap-no{color:var(--red);opacity:.4}
+.cap-partial{color:var(--orange)}
+.cap-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.cap-filter button{font-size:.75rem;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer}
+.cap-filter button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Exercises */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0}
+.exercise h3{font-size:1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.exercise .ex-num{background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.exercise .prompt{color:var(--text2);font-size:.85rem;margin-bottom:12px}
+.ex-area{width:100%;min-height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'SF Mono',Monaco,monospace;font-size:.8rem;resize:vertical}
+.ex-area:focus{outline:none;border-color:var(--accent)}
+.check-btn{margin-top:10px;background:var(--green);color:#000;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600}
+.check-btn:hover{opacity:.9}
+.feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.85rem;display:none}
+.feedback.correct{display:block;background:rgba(0,184,148,.1);color:var(--green);border:1px solid rgba(0,184,148,.3)}
+.feedback.wrong{display:block;background:rgba(225,112,85,.1);color:var(--red);border:1px solid rgba(225,112,85,.3)}
+.feedback.hint{display:block;background:rgba(253,203,110,.1);color:var(--orange);border:1px solid rgba(253,203,110,.3)}
+.raw-data{background:var(--surface3);border-radius:8px;padding:12px;font-family:'SF Mono',Monaco,monospace;font-size:.75rem;white-space:pre-wrap;color:var(--yellow);margin:10px 0;max-height:250px;overflow-y:auto}
+
+/* Act 3 */
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin:20px 0}
+.resource-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s}
+.resource-card:hover{border-color:var(--accent)}
+.resource-card h4{font-size:.9rem;margin-bottom:6px;color:var(--accent2)}
+.resource-card p{font-size:.8rem;color:var(--text2)}
+.resource-card a{color:var(--blue);text-decoration:none;font-size:.8rem}
+.resource-card a:hover{text-decoration:underline}
+.issue-list{margin:20px 0}
+.issue{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin:8px 0;cursor:pointer}
+.issue summary{font-size:.9rem;font-weight:500;color:var(--orange)}
+.issue .issue-body{margin-top:10px;font-size:.85rem;color:var(--text2)}
+.issue code{background:var(--surface3);padding:1px 5px;border-radius:3px;color:var(--cyan);font-size:.8rem}
+
+/* Responsive */
+@media(max-width:600px){
+  .hero h1{font-size:1.6rem}
+  .channel-grid{grid-template-columns:1fr}
+  .route-pipeline{flex-direction:column;align-items:center}
+  .route-arrow{transform:rotate(90deg)}
+  .resource-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="mod">Module OC-04</div>
+  <h1>🔌 <span>Channels</span></h1>
+  <p class="sub">How OpenClaw talks to the world. Every platform, one abstraction.</p>
+  <div class="narrative">
+    "The agent doesn't know or care whether it's talking to WhatsApp or Discord — it just sees messages and replies. Channels are the plugins that make that possible."
+  </div>
+</div>
+
+<nav class="act-nav">
+  <button class="act-btn active" onclick="showAct(0)">Act 1: Explore</button>
+  <button class="act-btn" onclick="showAct(1)">Act 2: Build</button>
+  <button class="act-btn" onclick="showAct(2)">Act 3: Connect</button>
+</nav>
+
+<!-- ════════════════ ACT 1: THE EXPLORABLE ════════════════ -->
+<div class="act active" id="act0">
+<div class="container">
+  <div class="act-header">
+    <h2>🗺️ The Channel Map</h2>
+    <p>13 channels, one unified interface. Click any card to explore.</p>
+  </div>
+
+  <div class="channel-grid" id="channelGrid"></div>
+
+  <!-- Channel Detail -->
+  <div id="channelDetail" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:20px;margin:20px 0">
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- Routing Visualization -->
+  <div class="section-title">📡 Message Routing — Trace a Message</div>
+  <div class="routing-viz">
+    <div class="route-controls">
+      <label>Source:</label>
+      <select id="routeChannel" onchange="resetRoute()">
+        <option value="telegram">Telegram</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="discord">Discord</option>
+        <option value="slack">Slack</option>
+        <option value="signal">Signal</option>
+        <option value="imessage">iMessage</option>
+        <option value="matrix">Matrix</option>
+        <option value="webchat">Webchat</option>
+      </select>
+      <label>Sender:</label>
+      <select id="routeSender">
+        <option value="alice">@alice</option>
+        <option value="bob">@bob</option>
+      </select>
+      <label>Context:</label>
+      <select id="routeContext">
+        <option value="group">Group: ai-study</option>
+        <option value="dm">Direct Message</option>
+      </select>
+      <button class="route-btn" onclick="startRoute()">▶ Trace Message</button>
+    </div>
+    <div class="route-pipeline" id="routePipeline"></div>
+    <div class="msg-preview" id="routePreview" style="display:none"></div>
+  </div>
+
+  <!-- Multi-Account -->
+  <div class="section-title">👥 Multi-Account Routing</div>
+  <div class="multi-acct">
+    <p style="color:var(--text2);font-size:.85rem;margin-bottom:14px">One gateway, multiple accounts. Each bound to different agents via rules.</p>
+    <div class="acct-diagram">
+      <div class="acct-row">
+        <div class="acct-box acct-channel">📱 WhatsApp #1<br><small>+1-555-WORK</small></div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-gateway">🌐 Gateway</div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-agent">🤖 Work Agent</div>
+      </div>
+      <div class="acct-row">
+        <div class="acct-box acct-channel">📱 WhatsApp #2<br><small>+1-555-HOME</small></div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-gateway">🌐 Gateway</div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-agent">🏠 Personal Agent</div>
+      </div>
+      <div class="acct-row">
+        <div class="acct-box acct-channel">✈️ Telegram Bot<br><small>@mybot</small></div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-gateway">🌐 Gateway</div>
+        <span class="acct-arrow">→</span>
+        <div class="acct-box acct-agent">🤖 Work Agent</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <strong style="font-size:.85rem">Binding Rules:</strong>
+      <div class="binding-rule">If <code>channel=whatsapp</code> AND <code>accountId=work-phone</code> → route to <code>agent:work</code></div>
+      <div class="binding-rule">If <code>channel=whatsapp</code> AND <code>accountId=home-phone</code> → route to <code>agent:personal</code></div>
+      <div class="binding-rule">If <code>channel=telegram</code> AND <code>group=ai-study</code> → route to <code>agent:work</code></div>
+      <div class="binding-rule">Default: route to <code>agent:main</code></div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="route-btn" onclick="simBinding()">▶ Simulate Inbound</button>
+      <select id="bindingSim" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:8px;font-size:.85rem;margin-left:6px">
+        <option value="wa-work">WhatsApp work-phone from @client</option>
+        <option value="wa-home">WhatsApp home-phone from @mom</option>
+        <option value="tg-group">Telegram @mybot in ai-study</option>
+        <option value="tg-dm">Telegram @mybot DM from @stranger</option>
+      </select>
+      <div id="bindingResult" style="margin-top:10px;font-size:.85rem;color:var(--green);display:none"></div>
+    </div>
+  </div>
+
+  <!-- Capability Matrix -->
+  <div class="section-title">⚡ Channel Capabilities</div>
+  <div class="cap-filter" id="capFilter"></div>
+  <div class="cap-matrix">
+    <table class="cap-table" id="capTable"></table>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ ACT 2: THE BUILD ════════════════ -->
+<div class="act" id="act1">
+<div class="container">
+  <div class="act-header">
+    <h2>🔧 Build Exercises</h2>
+    <p>Hands-on with channel configuration, normalization, routing, and formatting.</p>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="exercise">
+    <h3><span class="ex-num">1</span> Channel Config: Add a Telegram Bot</h3>
+    <div class="prompt">Write the JSON config to add a Telegram bot to OpenClaw. Include: bot token, allowed users, group bindings. The bot token is <code>7012345678:AAF...</code>, allow users <code>alice</code> and <code>bob</code>, bind group <code>ai-study</code> to agent <code>main</code>.</div>
+    <textarea class="ex-area" id="ex1" placeholder='{\n  "channels": {\n    "telegram": {\n      ...\n    }\n  }\n}'></textarea>
+    <button class="check-btn" onclick="checkEx(1)">Check Answer</button>
+    <div class="feedback" id="fb1"></div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise">
+    <h3><span class="ex-num">2</span> Message Normalization</h3>
+    <div class="prompt">Given this raw Telegram update, extract the fields OpenClaw needs. Write the normalized message object.</div>
+    <div class="raw-data">{
+  "update_id": 123456789,
+  "message": {
+    "message_id": 42,
+    "from": { "id": 98765, "first_name": "Alice", "username": "alice" },
+    "chat": { "id": -100123456, "title": "ai-study", "type": "supergroup" },
+    "date": 1707936000,
+    "text": "What's the best LLM for coding?",
+    "reply_to_message": {
+      "message_id": 41,
+      "from": { "id": 11111, "username": "mybot", "is_bot": true },
+      "text": "I can help with that!"
+    }
+  }
+}</div>
+    <textarea class="ex-area" id="ex2" placeholder='{\n  "channel": "telegram",\n  "sender": ...,\n  "text": ...,\n  ...\n}'></textarea>
+    <button class="check-btn" onclick="checkEx(2)">Check Answer</button>
+    <div class="feedback" id="fb2"></div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise">
+    <h3><span class="ex-num">3</span> Routing Rules</h3>
+    <div class="prompt">Given these channels and agents, determine which agent handles each message:</div>
+    <div class="raw-data">Agents:
+  agent:coder  — bindings: [telegram:ai-study, discord:dev-chat]
+  agent:personal — bindings: [whatsapp:*, telegram:DM]
+
+Messages:
+  A) Telegram group "ai-study" from @alice: "fix my code"
+  B) WhatsApp DM from @mom: "call me"
+  C) Telegram DM from @bob: "hello"
+  D) Discord #dev-chat from @charlie: "PR review?"
+  E) Discord #random from @dave: "lol"</div>
+    <textarea class="ex-area" id="ex3" placeholder="A → agent:?\nB → agent:?\nC → agent:?\nD → agent:?\nE → agent:?" style="min-height:80px"></textarea>
+    <button class="check-btn" onclick="checkEx(3)">Check Answer</button>
+    <div class="feedback" id="fb3"></div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise">
+    <h3><span class="ex-num">4</span> Reply Formatting</h3>
+    <div class="prompt">Given this markdown reply from the agent, reformat it for each platform:</div>
+    <div class="raw-data">## Top 3 LLMs for Coding
+
+| Model | Speed | Quality |
+|-------|-------|---------|
+| Claude | Fast | ⭐⭐⭐ |
+| GPT-4 | Medium | ⭐⭐⭐ |
+| Gemini | Fast | ⭐⭐ |
+
+Check out https://example.com/benchmarks for more details.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+      <div>
+        <label style="font-size:.8rem;color:var(--text2)">WhatsApp format:</label>
+        <textarea class="ex-area" id="ex4wa" style="min-height:100px" placeholder="No tables, no ## headers..."></textarea>
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:var(--text2)">Discord format:</label>
+        <textarea class="ex-area" id="ex4dc" style="min-height:100px" placeholder="Suppress link embeds..."></textarea>
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:var(--text2)">Telegram format:</label>
+        <textarea class="ex-area" id="ex4tg" style="min-height:100px" placeholder="HTML mode..."></textarea>
+      </div>
+    </div>
+    <button class="check-btn" onclick="checkEx(4)">Check Answer</button>
+    <div class="feedback" id="fb4"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ ACT 3: THE CONNECTION ════════════════ -->
+<div class="act" id="act2">
+<div class="container">
+  <div class="act-header">
+    <h2>🔗 Go Deeper</h2>
+    <p>Documentation, common issues, and platform-specific wisdom.</p>
+  </div>
+
+  <div class="section-title">📚 Channel Documentation</div>
+  <div class="resource-grid">
+    <div class="resource-card">
+      <h4>📱 WhatsApp (Baileys)</h4>
+      <p>Web socket protocol, QR auth or pairing code. Full media, reactions, polls. No inline buttons.</p>
+      <a href="https://github.com/niccolosottile/openclaw" target="_blank">OpenClaw Repo →</a>
+    </div>
+    <div class="resource-card">
+      <h4>✈️ Telegram (grammY)</h4>
+      <p>Bot HTTP API via grammY framework. Webhook or long-polling. Inline keyboards, HTML/Markdown formatting, polls.</p>
+      <a href="https://grammy.dev" target="_blank">grammY Docs →</a>
+    </div>
+    <div class="resource-card">
+      <h4>💬 Discord (discord.js)</h4>
+      <p>Gateway WebSocket + REST. Slash commands, threads, reactions, embeds. Rate limits apply.</p>
+      <a href="https://discord.js.org" target="_blank">discord.js Docs →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🔧 Slack (Bolt)</h4>
+      <p>Socket Mode or Events API. Threads, reactions, Block Kit for rich UI. App-level tokens.</p>
+      <a href="https://slack.dev/bolt-js" target="_blank">Bolt for JS →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🔒 Signal (signal-cli)</h4>
+      <p>Signal protocol via signal-cli. Requires phone number. Groups, reactions, media. No inline buttons.</p>
+      <a href="https://github.com/AsamK/signal-cli" target="_blank">signal-cli →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🍎 iMessage (BlueBubbles)</h4>
+      <p>Via BlueBubbles server on Mac. Requires Mac always-on. Tapbacks, media. Limited group features.</p>
+      <a href="https://bluebubbles.app" target="_blank">BlueBubbles →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🏢 Google Chat</h4>
+      <p>Google Workspace API. Spaces, threads, cards. Service account auth. Enterprise focus.</p>
+      <a href="https://developers.google.com/chat" target="_blank">Google Chat API →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🌐 Webchat</h4>
+      <p>Built-in WebSocket chat. No external dependencies. Full feature support. Great for testing.</p>
+    </div>
+    <div class="resource-card">
+      <h4>🔗 Matrix (matrix-js-sdk)</h4>
+      <p>Federated protocol. E2EE rooms, reactions, threads. Self-hosted or matrix.org.</p>
+      <a href="https://matrix.org" target="_blank">Matrix.org →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🏢 MS Teams</h4>
+      <p>Bot Framework. Adaptive Cards, channels, threads. Azure AD auth. Enterprise.</p>
+      <a href="https://learn.microsoft.com/en-us/microsoftteams/platform/" target="_blank">Teams Platform →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🟢 Line</h4>
+      <p>Messaging API. Rich menus, flex messages, push/reply. Webhook-based. Popular in Asia.</p>
+      <a href="https://developers.line.biz" target="_blank">Line Developers →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🟣 Nostr</h4>
+      <p>Decentralized protocol. NIP-04 DMs, relay-based. Keypair auth. Emerging platform.</p>
+      <a href="https://nostr.com" target="_blank">Nostr →</a>
+    </div>
+    <div class="resource-card">
+      <h4>🎮 Twitch (tmi.js)</h4>
+      <p>IRC-based chat. Channel messages only. Emotes, commands. No DMs, no media.</p>
+      <a href="https://tmijs.com" target="_blank">tmi.js →</a>
+    </div>
+  </div>
+
+  <div class="section-title">⚠️ Common Issues</div>
+  <div class="issue-list">
+    <details class="issue">
+      <summary>WhatsApp: QR Code Auth & Session Persistence</summary>
+      <div class="issue-body">
+        <p>WhatsApp uses Baileys (reverse-engineered Web protocol). Auth requires scanning a QR code or entering a pairing code. Sessions persist via <code>auth_info</code> files — if lost, re-auth required.</p>
+        <p style="margin-top:8px"><strong>Tips:</strong> Back up the auth folder. QR expires in ~60s. Multi-device supports up to 4 linked devices. Phone must stay online initially but can go offline after linking.</p>
+      </div>
+    </details>
+    <details class="issue">
+      <summary>Telegram: Webhook vs Long Polling</summary>
+      <div class="issue-body">
+        <p><strong>Long polling</strong> (default): bot polls Telegram servers. Simple, works behind NAT. Slightly higher latency.</p>
+        <p><strong>Webhook</strong>: Telegram pushes to your URL. Lower latency, requires HTTPS endpoint. Use <code>grammY</code>'s <code>webhookCallback()</code>.</p>
+        <p style="margin-top:8px">OpenClaw defaults to long polling. Switch to webhook in production for lower latency. Must set <code>TELEGRAM_WEBHOOK_URL</code>.</p>
+      </div>
+    </details>
+    <details class="issue">
+      <summary>Discord: Rate Limits & Gateway Intents</summary>
+      <div class="issue-body">
+        <p>Discord enforces strict rate limits: 50 requests/second globally, per-route limits vary. Hit a 429? Back off per the <code>retry_after</code> header.</p>
+        <p style="margin-top:8px"><strong>Gateway Intents</strong>: Must enable <code>MESSAGE_CONTENT</code> intent in Developer Portal for bots in 100+ servers. Without it, message content is empty.</p>
+      </div>
+    </details>
+    <details class="issue">
+      <summary>Signal: Phone Number Requirement</summary>
+      <div class="issue-body">
+        <p>Signal requires a real phone number. <code>signal-cli</code> registers via SMS/voice verification. Number can't be simultaneously used on Signal mobile app (unless using Signal's linked device feature).</p>
+        <p style="margin-top:8px">Consider a dedicated VoIP number. Some providers work, others are blocked by Signal.</p>
+      </div>
+    </details>
+    <details class="issue">
+      <summary>iMessage: Mac-Only & BlueBubbles Setup</summary>
+      <div class="issue-body">
+        <p>iMessage requires a Mac running BlueBubbles server 24/7. The Mac must be signed into iCloud with iMessage enabled. No official API — BlueBubbles uses AppleScript + private frameworks.</p>
+        <p style="margin-top:8px">Mac Mini is the common choice. Caffeinate to prevent sleep: <code>caffeinate -d -i -s</code></p>
+      </div>
+    </details>
+    <details class="issue">
+      <summary>Platform-Specific Formatting Rules</summary>
+      <div class="issue-body">
+        <p><strong>WhatsApp:</strong> No markdown tables, no headers. Use *bold*, _italic_, ~strikethrough~, ```code```. Lists with bullet emoji.</p>
+        <p><strong>Discord:</strong> Full markdown. Wrap URLs in <code>&lt;&gt;</code> to suppress embeds. Code blocks with syntax highlighting.</p>
+        <p><strong>Telegram:</strong> HTML mode preferred (<code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;code&gt;</code>). Or MarkdownV2 (escape special chars). No tables.</p>
+        <p><strong>Slack:</strong> mrkdwn (not markdown). *bold*, _italic_, ~strike~. <code>&lt;url|text&gt;</code> for links. Block Kit for structured content.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="section-title">🔗 Key Concepts</div>
+  <div class="resource-grid">
+    <div class="resource-card">
+      <h4>Message Routing</h4>
+      <p>Inbound → channel plugin → normalize → session key (channel + accountId + chatId) → find bound agent → process → reply → denormalize → send. Session key is the core routing primitive.</p>
+    </div>
+    <div class="resource-card">
+      <h4>Group Message Handling</h4>
+      <p>Groups use chatId (not senderId) for session. Mention detection varies by platform: @bot on Telegram, @role on Discord, keyword trigger on WhatsApp. Configurable per binding.</p>
+    </div>
+    <div class="resource-card">
+      <h4>The Broadcast System</h4>
+      <p>Send one message to multiple channels/groups. Uses <code>message broadcast</code> with target list. Respects per-channel formatting. Rate limits handled internally with queuing.</p>
+    </div>
+    <div class="resource-card">
+      <h4>Channel Plugin Architecture</h4>
+      <p>Each channel implements: <code>start()</code>, <code>stop()</code>, <code>send()</code>, <code>onMessage()</code>. Normalized message format is the contract. Plugins handle auth, connection, and protocol translation.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="text-align:center;padding:40px;color:var(--text2);font-size:.8rem">
+  OC-04: Channels — Part of the <a href="../" style="color:var(--accent2);text-decoration:none">OpenClaw Deep Dive</a> curriculum
+</div>
+
+<script>
+// ═══════════════ DATA ═══════════════
+const channels = [
+  {id:'whatsapp',name:'WhatsApp',icon:'📱',proto:'WebSocket (Baileys)',auth:'QR Code / Pairing',group:true,media:true,reactions:true,buttons:false,threads:false,voice:true,polls:true,receipts:true},
+  {id:'telegram',name:'Telegram',icon:'✈️',proto:'HTTP Bot API (grammY)',auth:'Bot Token',group:true,media:true,reactions:true,buttons:true,threads:true,voice:true,polls:true,receipts:true},
+  {id:'discord',name:'Discord',icon:'💬',proto:'Gateway WS + REST',auth:'Bot Token + OAuth2',group:true,media:true,reactions:true,buttons:true,threads:true,voice:false,polls:false,receipts:false},
+  {id:'slack',name:'Slack',icon:'🔧',proto:'Socket Mode / Events',auth:'App Token + Bot Token',group:true,media:true,reactions:true,buttons:true,threads:true,voice:false,polls:false,receipts:false},
+  {id:'signal',name:'Signal',icon:'🔒',proto:'Signal Protocol (CLI)',auth:'Phone Number + Verify',group:true,media:true,reactions:true,buttons:false,threads:false,voice:true,polls:false,receipts:true},
+  {id:'imessage',name:'iMessage',icon:'🍎',proto:'BlueBubbles API',auth:'iCloud + Mac Server',group:true,media:true,reactions:true,buttons:false,threads:false,voice:false,polls:false,receipts:true},
+  {id:'googlechat',name:'Google Chat',icon:'🏢',proto:'Google Workspace API',auth:'Service Account',group:true,media:true,reactions:true,buttons:true,threads:true,voice:false,polls:false,receipts:false},
+  {id:'webchat',name:'Webchat',icon:'🌐',proto:'WebSocket (built-in)',auth:'Session Token',group:false,media:true,reactions:true,buttons:true,threads:false,voice:true,polls:false,receipts:true},
+  {id:'matrix',name:'Matrix',icon:'🔗',proto:'Matrix CS API',auth:'Access Token',group:true,media:true,reactions:true,buttons:false,threads:true,voice:false,polls:true,receipts:true},
+  {id:'teams',name:'MS Teams',icon:'🏢',proto:'Bot Framework',auth:'Azure AD',group:true,media:true,reactions:true,buttons:true,threads:true,voice:false,polls:false,receipts:false},
+  {id:'line',name:'Line',icon:'🟢',proto:'Messaging API',auth:'Channel Token',group:true,media:true,reactions:false,buttons:true,threads:false,voice:true,polls:false,receipts:false},
+  {id:'nostr',name:'Nostr',icon:'🟣',proto:'NIP-04 / Relays',auth:'Keypair (nsec)',group:false,media:false,reactions:true,buttons:false,threads:false,voice:false,polls:false,receipts:false},
+  {id:'twitch',name:'Twitch',icon:'🎮',proto:'IRC (tmi.js)',auth:'OAuth Token',group:true,media:false,reactions:false,buttons:false,threads:false,voice:false,polls:false,receipts:false}
+];
+
+const capabilities = ['group','media','reactions','buttons','threads','voice','polls','receipts'];
+const capLabels = {group:'Groups',media:'Media',reactions:'Reactions',buttons:'Inline Buttons',threads:'Threads',voice:'Voice Messages',polls:'Polls',receipts:'Read Receipts'};
+
+// ═══════════════ INIT ═══════════════
+function init(){
+  renderChannelGrid();
+  renderCapMatrix();
+  renderCapFilters();
+  resetRoute();
+}
+
+// ═══════════════ NAV ═══════════════
+function showAct(n){
+  document.querySelectorAll('.act').forEach((a,i)=>{a.classList.toggle('active',i===n)});
+  document.querySelectorAll('.act-btn').forEach((b,i)=>{b.classList.toggle('active',i===n)});
+}
+
+// ═══════════════ CHANNEL GRID ═══════════════
+function renderChannelGrid(){
+  const g=document.getElementById('channelGrid');
+  g.innerHTML=channels.map(c=>`
+    <div class="ch-card" onclick="showChannelDetail('${c.id}')">
+      <div class="ch-head"><span class="ch-icon">${c.icon}</span><span class="ch-name">${c.name}</span></div>
+      <div class="ch-proto">${c.proto}</div>
+      <div class="ch-tags">
+        <span class="ch-tag">${c.auth}</span>
+        ${c.group?'<span class="ch-tag yes">Groups</span>':''}
+        ${c.media?'<span class="ch-tag yes">Media</span>':''}
+        ${c.reactions?'<span class="ch-tag yes">Reactions</span>':''}
+        ${c.buttons?'<span class="ch-tag yes">Buttons</span>':''}
+        ${!c.group?'<span class="ch-tag no">No Groups</span>':''}
+        ${!c.media?'<span class="ch-tag no">No Media</span>':''}
+      </div>
+    </div>`).join('');
+}
+
+function showChannelDetail(id){
+  const c=channels.find(x=>x.id===id);
+  const d=document.getElementById('channelDetail');
+  const caps=capabilities.map(k=>`<span class="ch-tag ${c[k]?'yes':'no'}">${c[k]?'✓':'✗'} ${capLabels[k]}</span>`).join(' ');
+  document.getElementById('detailContent').innerHTML=`
+    <h3>${c.icon} ${c.name}</h3>
+    <p style="color:var(--text2);margin:6px 0"><strong>Protocol:</strong> ${c.proto} · <strong>Auth:</strong> ${c.auth}</p>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${caps}</div>`;
+  d.style.display='block';
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══════════════ ROUTING VIZ ═══════════════
+const routeSteps=[
+  {num:'1',label:'Channel Plugin',getDetail:ch=>`${ch} receives raw message`},
+  {num:'2',label:'Normalize',getDetail:ch=>`Extract: sender, text, media, reply context → internal format`},
+  {num:'3',label:'Session Key',getDetail:(ch,ctx,sender)=>`${ch}:default:${ctx==='group'?'group-ai-study':sender}`},
+  {num:'4',label:'Agent Loop',getDetail:()=>`Find bound agent → build context → LLM call`},
+  {num:'5',label:'Reply',getDetail:()=>`Agent generates response markdown`},
+  {num:'6',label:'Denormalize',getDetail:ch=>{
+    const fmt={telegram:'HTML mode, inline keyboard',whatsapp:'*bold*, no tables, no headers',discord:'Markdown, suppress embeds with <>',slack:'mrkdwn, Block Kit',signal:'Plain text + media',imessage:'Plain text',matrix:'HTML or Markdown',webchat:'Full markdown'};
+    return `Format for ${ch}: ${fmt[ch]||'platform format'}`}},
+  {num:'7',label:'Send Back',getDetail:ch=>`${ch} plugin sends via platform API`}
+];
+
+let routeTimer=null;
+function resetRoute(){
+  clearTimeout(routeTimer);
+  const p=document.getElementById('routePipeline');
+  const ch=document.getElementById('routeChannel').value;
+  const ctx=document.getElementById('routeContext').value;
+  const sender=document.getElementById('routeSender').value;
+  p.innerHTML=routeSteps.map((s,i)=>`
+    <div class="route-step" id="rs${i}">
+      <div class="step-num">Step ${s.num}</div>
+      <div class="step-label">${s.label}</div>
+      <div class="step-detail">${s.getDetail(ch,ctx,sender)}</div>
+    </div>${i<routeSteps.length-1?'<div class="route-arrow" id="ra'+i+'">→</div>':''}`).join('');
+  document.getElementById('routePreview').style.display='none';
+}
+
+function startRoute(){
+  resetRoute();
+  const ch=document.getElementById('routeChannel').value;
+  const ctx=document.getElementById('routeContext').value;
+  const sender=document.getElementById('routeSender').value;
+  let step=0;
+  function advance(){
+    if(step>0){document.getElementById('rs'+(step-1)).classList.remove('active');document.getElementById('rs'+(step-1)).classList.add('done');if(step-1<routeSteps.length-1)document.getElementById('ra'+(step-1)).classList.add('active')}
+    if(step<routeSteps.length){document.getElementById('rs'+step).classList.add('active');step++;routeTimer=setTimeout(advance,800)}
+    else showRoutePreview(ch,ctx,sender);
+  }
+  advance();
+}
+
+function showRoutePreview(ch,ctx,sender){
+  const p=document.getElementById('routePreview');
+  const sessionKey=`${ch}:default:${ctx==='group'?'group-ai-study':sender}`;
+  p.textContent=`// Normalized internal message:\n{\n  channel: "${ch}",\n  accountId: "default",\n  sessionKey: "${sessionKey}",\n  sender: { id: "${sender}", name: "${sender}" },\n  chat: { id: "${ctx==='group'?'group-ai-study':sender}", type: "${ctx}" },\n  text: "What's the best LLM for coding?",\n  replyTo: null,\n  media: null,\n  timestamp: ${Date.now()}\n}`;
+  p.style.display='block';
+}
+
+// ═══════════════ BINDING SIM ═══════════════
+function simBinding(){
+  const v=document.getElementById('bindingSim').value;
+  const r=document.getElementById('bindingResult');
+  const results={
+    'wa-work':'✅ Match: channel=whatsapp + accountId=work-phone → <strong>agent:work</strong>',
+    'wa-home':'✅ Match: channel=whatsapp + accountId=home-phone → <strong>agent:personal</strong>',
+    'tg-group':'✅ Match: channel=telegram + group=ai-study → <strong>agent:work</strong>',
+    'tg-dm':'⚡ No specific binding → fallback to <strong>agent:main</strong> (default)'
+  };
+  r.innerHTML=results[v];r.style.display='block';
+}
+
+// ═══════════════ CAP MATRIX ═══════════════
+let activeFilters=new Set();
+function renderCapMatrix(){
+  const t=document.getElementById('capTable');
+  let html='<tr><th>Channel</th>'+capabilities.map(c=>`<th>${capLabels[c]}</th>`).join('')+'</tr>';
+  channels.forEach(ch=>{
+    if(activeFilters.size>0 && ![...activeFilters].every(f=>ch[f])) return;
+    html+=`<tr><td>${ch.icon} ${ch.name}</td>`+capabilities.map(c=>{
+      const v=ch[c];return`<td class="${v?'cap-yes':v===false?'cap-no':'cap-partial'}">${v?'✓':'✗'}</td>`}).join('')+'</tr>';
+  });
+  t.innerHTML=html;
+}
+
+function renderCapFilters(){
+  const f=document.getElementById('capFilter');
+  f.innerHTML='<span style="font-size:.8rem;color:var(--text2)">Filter:</span>'+capabilities.map(c=>
+    `<button onclick="toggleCapFilter('${c}',this)">${capLabels[c]}</button>`).join('');
+}
+
+function toggleCapFilter(c,btn){
+  if(activeFilters.has(c)){activeFilters.delete(c);btn.classList.remove('active')}
+  else{activeFilters.add(c);btn.classList.add('active')}
+  renderCapMatrix();
+}
+
+// ═══════════════ EXERCISES ═══════════════
+function checkEx(n){
+  const fb=document.getElementById('fb'+n);
+  if(n===1){
+    const v=document.getElementById('ex1').value.toLowerCase();
+    try{
+      const j=JSON.parse(document.getElementById('ex1').value);
+      const hasTg=j.channels?.telegram||j.telegram;
+      const cfg=hasTg||{};
+      const hasToken=JSON.stringify(cfg).includes('7012345678');
+      const hasAllow=JSON.stringify(cfg).includes('alice')&&JSON.stringify(cfg).includes('bob');
+      const hasGroup=JSON.stringify(cfg).includes('ai-study');
+      if(hasToken&&hasAllow&&hasGroup){fb.className='feedback correct';fb.textContent='✅ Correct! Token, allowlist, and group binding all present. In practice, the config goes in openclaw.json under channels.telegram.'}
+      else{fb.className='feedback hint';fb.textContent='⚠️ Partial — make sure you have: bot token (7012345678:AAF...), allowedUsers: ["alice","bob"], and group binding for ai-study → agent:main'}
+    }catch(e){
+      if(v.includes('7012345678')&&v.includes('alice')&&v.includes('ai-study')){fb.className='feedback hint';fb.textContent='⚠️ Content looks right but JSON is invalid. Check your syntax.'}
+      else{fb.className='feedback wrong';fb.textContent='❌ Need valid JSON with: bot token, allowed users [alice, bob], group ai-study bound to agent main.'}
+    }
+  }else if(n===2){
+    const v=document.getElementById('ex2').value.toLowerCase();
+    const needs=['telegram','alice','98765','-100123456','ai-study','what\'s the best','reply','41'];
+    const found=needs.filter(x=>v.includes(x));
+    if(found.length>=6){fb.className='feedback correct';fb.textContent='✅ Great normalization! Key fields: channel, sender (id+username), chat (id+title+type), text, replyTo (messageId of parent), timestamp.'}
+    else if(found.length>=3){fb.className='feedback hint';fb.textContent='⚠️ Partial — make sure you extract: channel="telegram", sender={id:98765, username:"alice"}, chat={id:-100123456, title:"ai-study", type:"supergroup"}, text, replyTo={messageId:41}, timestamp.'}
+    else{fb.className='feedback wrong';fb.textContent='❌ Extract the key fields from the raw Telegram update into OpenClaw\'s internal format. Look at: from, chat, text, reply_to_message.'}
+  }else if(n===3){
+    const v=document.getElementById('ex3').value.toLowerCase();
+    const correct=v.includes('coder')&&v.includes('personal')&&(v.includes('main')||v.includes('default')||v.includes('unmatched')||v.includes('none'));
+    // A→coder, B→personal, C→personal, D→coder, E→main/none
+    const aOk=/a[^a-z]*coder/.test(v);
+    const bOk=/b[^a-z]*personal/.test(v);
+    const cOk=/c[^a-z]*personal/.test(v);
+    const dOk=/d[^a-z]*coder/.test(v);
+    const eOk=/e[^a-z]*(main|default|none|unmatched|no match)/.test(v);
+    const score=[aOk,bOk,cOk,dOk,eOk].filter(Boolean).length;
+    if(score>=4){fb.className='feedback correct';fb.textContent='✅ '+(score===5?'Perfect!':'Almost! ')+'A→coder (telegram:ai-study), B→personal (whatsapp:*), C→personal (telegram:DM), D→coder (discord:dev-chat), E→no match/default agent (discord:random has no binding).'}
+    else if(score>=2){fb.className='feedback hint';fb.textContent='⚠️ Some correct. Remember: bindings match channel:target. whatsapp:* means all WhatsApp. telegram:DM means Telegram direct messages. discord:dev-chat only matches that channel, not #random.'}
+    else{fb.className='feedback wrong';fb.textContent='❌ Match each message against the binding rules. Format: A → agent:coder, B → agent:personal, etc.'}
+  }else if(n===4){
+    const wa=document.getElementById('ex4wa').value;
+    const dc=document.getElementById('ex4dc').value;
+    const tg=document.getElementById('ex4tg').value;
+    const checks=[];
+    if(wa&&!wa.includes('|')&&!wa.includes('##'))checks.push('WhatsApp ✓');
+    else if(wa)checks.push('WhatsApp: remove tables and ## headers');
+    if(dc&&(dc.includes('<http')||dc.includes('suppress')))checks.push('Discord ✓');
+    else if(dc)checks.push('Discord: wrap URLs in <> to suppress embeds');
+    if(tg&&(tg.includes('<b>')||tg.includes('<strong>')||tg.includes('html')))checks.push('Telegram ✓');
+    else if(tg)checks.push('Telegram: use HTML tags like <b>, <i>, <code>');
+    const ok=checks.filter(c=>c.includes('✓')).length;
+    if(ok===3){fb.className='feedback correct';fb.textContent='✅ All three formats correct! Each channel gets the same content, adapted to its capabilities.'}
+    else if(ok>0){fb.className='feedback hint';fb.textContent='⚠️ '+checks.join(' · ')}
+    else{fb.className='feedback wrong';fb.textContent='❌ Try formatting the table content for each platform. WhatsApp: bullet lists, *bold*. Discord: markdown + <url>. Telegram: <b>bold</b> HTML.'}
+  }
+  fb.style.display='block';
+}
+
+init();
+</script>
+</body>
+</html>

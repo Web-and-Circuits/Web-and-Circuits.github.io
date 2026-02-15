@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>Module 03: Positional Encoding & RoPE</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #1b2d69 100%);
+            color: #e1e1e1; line-height: 1.6; min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .act { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .act.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { text-align: center; font-size: 2.4em; margin-bottom: 0.3em;
+            background: linear-gradient(45deg, #f7971e, #ffd200);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .subtitle { text-align: center; color: #aaa; font-size: 1.1em; margin-bottom: 2em; }
+        h2 { color: #ffd200; margin: 1.5em 0 0.8em; font-size: 1.7em; }
+        h3 { color: #f7971e; margin: 1.2em 0 0.6em; }
+        .nav-tabs { display: flex; gap: 0; margin-bottom: 2em; border-bottom: 2px solid #333; }
+        .nav-tab { flex: 1; text-align: center; padding: 14px 10px; cursor: pointer;
+            background: transparent; color: #888; border: none; font-size: 1em;
+            border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-tab:hover { color: #ffd200; }
+        .nav-tab.active { color: #ffd200; border-bottom-color: #ffd200; background: rgba(255,210,0,0.05); }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .card.highlight { border-color: #f7971e; }
+        .sentence-demo { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .sentence-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 20px 28px;
+            font-size: 1.3em; font-weight: 600; border: 2px solid #444; transition: all 0.3s; min-width: 220px; text-align: center; }
+        .sentence-box .words { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .sentence-box .word { padding: 4px 10px; border-radius: 6px; transition: all 0.3s; }
+        .s1 .word { background: rgba(78,205,196,0.15); color: #4ecdc4; }
+        .s2 .word { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .sentence-box .label { font-size: 0.6em; color: #888; display: block; margin-bottom: 8px; font-weight: 400; }
+        canvas { border-radius: 8px; display: block; margin: 10px auto; max-width: 100%; }
+        .slider-group { margin: 16px 0; }
+        .slider-group label { display: block; color: #ccc; margin-bottom: 4px; font-size: 0.9em; }
+        .slider-group input[type=range] { width: 100%; accent-color: #ffd200; }
+        .slider-val { float: right; color: #ffd200; font-weight: 600; }
+        .insight { background: rgba(247,151,30,0.1); border-left: 4px solid #f7971e;
+            padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .insight strong { color: #ffd200; }
+        blockquote { background: rgba(255,255,255,0.03); border-left: 4px solid #ffd200;
+            padding: 16px 20px; margin: 20px 0; font-style: italic; color: #ccc; border-radius: 0 8px 8px 0; }
+        blockquote cite { display: block; margin-top: 8px; font-style: normal; color: #888; font-size: 0.85em; }
+        .puzzle { background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 12px; padding: 20px; margin: 24px 0; }
+        .puzzle h3 { margin-top: 0; }
+        .puzzle textarea { width: 100%; min-height: 180px; background: #0d1117; color: #c9d1d9;
+            border: 1px solid #333; border-radius: 8px; padding: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9em; resize: vertical; tab-size: 4; line-height: 1.5; }
+        .puzzle textarea:focus { outline: none; border-color: #f7971e; }
+        .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; border: none;
+            font-size: 1em; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .btn-primary { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a1a; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(247,151,30,0.3); }
+        .btn-sm { padding: 6px 16px; font-size: 0.85em; }
+        .btn-outline { background: transparent; border: 1px solid #f7971e; color: #f7971e; }
+        .btn-outline:hover { background: rgba(247,151,30,0.1); }
+        .output { background: #0d1117; border: 1px solid #333; border-radius: 8px;
+            padding: 12px; margin-top: 12px; font-family: monospace; font-size: 0.85em;
+            color: #8b949e; min-height: 40px; white-space: pre-wrap; overflow-x: auto; max-height: 300px; overflow-y: auto; }
+        .output.success { border-color: #3fb950; }
+        .output.error { border-color: #f85149; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 600; margin-left: 8px; }
+        .status-badge.pass { background: rgba(63,185,80,0.2); color: #3fb950; }
+        .status-badge.fail { background: rgba(248,81,73,0.2); color: #f85149; }
+        .timeline { position: relative; padding-left: 30px; margin: 20px 0; }
+        .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+            width: 2px; background: linear-gradient(to bottom, #f7971e, #ffd200); }
+        .timeline-item { position: relative; margin-bottom: 24px; }
+        .timeline-item::before { content: ''; position: absolute; left: -26px; top: 6px;
+            width: 12px; height: 12px; border-radius: 50%; background: #ffd200; border: 2px solid #1a1a1a; }
+        .timeline-item.active::before { background: #f7971e; box-shadow: 0 0 10px rgba(247,151,30,0.5); }
+        .year { color: #ffd200; font-weight: 700; font-size: 1.1em; }
+        .paper-title { color: #fff; font-weight: 600; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8em; } .sentence-demo { flex-direction: column; align-items: center; } }
+        .loading { text-align: center; padding: 20px; color: #888; }
+        .loading .spinner { display: inline-block; width: 20px; height: 20px;
+            border: 2px solid #444; border-top-color: #ffd200; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .rope-canvas-wrap { position: relative; touch-action: none; }
+        .dim-label { display: flex; justify-content: space-between; color: #888; font-size: 0.8em; margin-top: 2px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;
+            background: rgba(255,210,0,0.15); color: #ffd200; margin: 2px; }
+        .progress-dots { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+        .progress-dots .dot { width: 10px; height: 10px; border-radius: 50%; background: #333;
+            transition: all 0.3s; }
+        .progress-dots .dot.done { background: #3fb950; }
+        .progress-dots .dot.current { background: #ffd200; box-shadow: 0 0 8px rgba(255,210,0,0.4); }
+        .pyodide-status { text-align: center; padding: 8px; font-size: 0.85em; color: #888; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌊 Position Matters</h1>
+    <p class="subtitle">Module 03 · Positional Encoding & RoPE</p>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showAct(0)">🔍 Explore</button>
+        <button class="nav-tab" onclick="showAct(1)">🔨 Build</button>
+        <button class="nav-tab" onclick="showAct(2)">🔗 Connect</button>
+    </div>
+
+    <!-- ==================== ACT 1: THE EXPLORABLE ==================== -->
+    <div class="act active" id="act0">
+        <h2>Why Does Order Matter?</h2>
+        <p>Same three words. Completely different meaning. The <em>only</em> difference is position.</p>
+
+        <div class="sentence-demo" id="sentenceDemo">
+            <div class="sentence-box s1">
+                <span class="label">Sentence A</span>
+                <div class="words">
+                    <span class="word" data-i="0">Dog</span>
+                    <span class="word" data-i="1">bites</span>
+                    <span class="word" data-i="2">man</span>
+                </div>
+            </div>
+            <div class="sentence-box s2">
+                <span class="label">Sentence B</span>
+                <div class="words">
+                    <span class="word" data-i="0">Man</span>
+                    <span class="word" data-i="1">bites</span>
+                    <span class="word" data-i="2">dog</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="insight">
+            <strong>The Problem:</strong> A transformer processes all tokens in parallel — unlike an RNN, it has
+            no built-in notion of order. Without positional encoding, "Dog bites man" and "Man bites dog"
+            produce <em>identical</em> representations. We need to inject position information.
+        </div>
+
+        <blockquote>
+            "Since our model contains no recurrence and no convolution, in order for the model to make use
+            of the order of the sequence, we must inject some information about the relative or absolute
+            position of the tokens in the sequence."
+            <cite>— Vaswani et al., "Attention Is All You Need" (2017), Section 3.5</cite>
+        </blockquote>
+
+        <!-- Sinusoidal Encoding Visualization -->
+        <h2>Sinusoidal Positional Encodings</h2>
+        <p>The original transformer uses sine and cosine waves at different frequencies. Each position gets a unique pattern — like a fingerprint made of waves.</p>
+
+        <div class="card">
+            <h3>🌊 Wave Viewer</h3>
+            <p style="color:#aaa; font-size:0.9em; margin-bottom:12px;">Each row is a dimension of the encoding vector. Slide to see how the pattern changes at each position.</p>
+            <canvas id="waveCanvas" width="900" height="280"></canvas>
+            <div class="slider-group">
+                <label>Position: <span class="slider-val" id="posVal">0</span></label>
+                <input type="range" id="posSlider" min="0" max="63" value="0">
+            </div>
+            <div class="slider-group">
+                <label>Dimensions shown: <span class="slider-val" id="dimVal">16</span></label>
+                <input type="range" id="dimSlider" min="4" max="32" value="16">
+            </div>
+            <div class="dim-label"><span>Low freq (global)</span><span>High freq (local)</span></div>
+        </div>
+
+        <!-- Dot Product Decay -->
+        <div class="card">
+            <h3>📉 Distance Decay</h3>
+            <p style="color:#aaa; font-size:0.9em; margin-bottom:12px;">The dot product between positional encodings decreases with distance — nearby positions are more similar. This is how the model "knows" what's close.</p>
+            <canvas id="dotCanvas" width="900" height="220"></canvas>
+            <div class="slider-group">
+                <label>Reference position: <span class="slider-val" id="refVal">0</span></label>
+                <input type="range" id="refSlider" min="0" max="63" value="0">
+            </div>
+        </div>
+
+        <!-- RoPE Visualization -->
+        <h2>RoPE: Rotation Makes It Relative</h2>
+        <p>Rotary Position Embedding encodes position by <em>rotating</em> vectors. The angle between two rotated vectors depends only on their <em>relative</em> distance — not absolute position. Drag the tokens below!</p>
+
+        <div class="card">
+            <h3>🔄 Rotation Visualizer</h3>
+            <p style="color:#aaa; font-size:0.9em; margin-bottom:12px;">Two tokens rotate by angles proportional to their position. The angle <em>between</em> them stays constant when you shift both. Drag the position sliders.</p>
+            <div class="rope-canvas-wrap">
+                <canvas id="ropeCanvas" width="500" height="500"></canvas>
+            </div>
+            <div class="grid-2">
+                <div class="slider-group">
+                    <label>Token A position: <span class="slider-val" id="rPosAVal">2</span></label>
+                    <input type="range" id="rPosA" min="0" max="31" value="2">
+                </div>
+                <div class="slider-group">
+                    <label>Token B position: <span class="slider-val" id="rPosBVal">7</span></label>
+                    <input type="range" id="rPosB" min="0" max="31" value="7">
+                </div>
+            </div>
+            <div id="ropeInfo" class="insight" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="insight">
+            <strong>Key Insight:</strong> RoPE makes the dot product between query and key vectors depend
+            <em>only</em> on relative position (q<sub>m</sub> · k<sub>n</sub> depends on m − n).
+            This means the model naturally generalizes to longer sequences — it doesn't need to have
+            "seen" absolute position 10,000 during training to handle it.
+        </div>
+
+        <div style="text-align:center; margin-top:2em;">
+            <button class="btn btn-primary" onclick="showAct(1)">Now let's build it →</button>
+        </div>
+    </div>
+
+    <!-- ==================== ACT 2: THE BUILD ==================== -->
+    <div class="act" id="act1">
+        <h2>🔨 Build: Positional Encodings in Python</h2>
+        <div class="pyodide-status" id="pyStatus">
+            <span class="spinner"></span> Loading Pyodide…
+        </div>
+        <div class="progress-dots">
+            <div class="dot" id="pd0"></div><div class="dot" id="pd1"></div>
+            <div class="dot" id="pd2"></div><div class="dot" id="pd3"></div>
+        </div>
+
+        <!-- Puzzle 1 -->
+        <div class="puzzle" id="puzzle0">
+            <h3>Puzzle 1: Generate Sinusoidal Encodings <span class="status-badge" id="sb0"></span></h3>
+            <p style="color:#aaa; margin-bottom:12px;">Fill in the function to generate PE(pos, 2i) = sin(pos / 10000^(2i/d_model)) and PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model)).</p>
+            <textarea id="code0">import numpy as np
+
+def sinusoidal_pe(max_len, d_model):
+    """Generate sinusoidal positional encodings.
+    Returns: np.array of shape (max_len, d_model)
+    """
+    pe = np.zeros((max_len, d_model))
+    position = np.arange(max_len).reshape(-1, 1)  # (max_len, 1)
+    
+    # TODO: Compute div_term = 10000^(2i / d_model) for i in 0..d_model/2
+    # Hint: div_term = np.exp(np.arange(0, d_model, 2) * -(np.log(10000.0) / d_model))
+    div_term = ???
+    
+    # TODO: Fill even indices with sin, odd indices with cos
+    pe[:, 0::2] = ???  # sin for even dimensions
+    pe[:, 1::2] = ???  # cos for odd dimensions
+    
+    return pe
+
+# Test
+pe = sinusoidal_pe(64, 16)
+print(f"Shape: {pe.shape}")
+print(f"PE[0,:4]: {pe[0,:4].round(4)}")
+print(f"PE[1,:4]: {pe[1,:4].round(4)}")
+</textarea>
+            <div style="margin-top:8px;">
+                <button class="btn btn-primary btn-sm" onclick="runPuzzle(0)">▶ Run</button>
+                <button class="btn btn-outline btn-sm" onclick="showHint(0)">💡 Hint</button>
+                <button class="btn btn-outline btn-sm" onclick="showSolution(0)">Show Solution</button>
+            </div>
+            <div class="output" id="out0"></div>
+        </div>
+
+        <!-- Puzzle 2 -->
+        <div class="puzzle" id="puzzle1">
+            <h3>Puzzle 2: Add Position to Embeddings <span class="status-badge" id="sb1"></span></h3>
+            <p style="color:#aaa; margin-bottom:12px;">Add positional encodings to word embeddings. The key idea: embedding + position = position-aware representation.</p>
+            <textarea id="code1">import numpy as np
+
+def add_position(embeddings, pe):
+    """Add positional encoding to word embeddings.
+    embeddings: (seq_len, d_model) - word vectors
+    pe: (max_len, d_model) - positional encoding table
+    Returns: (seq_len, d_model) - position-aware embeddings
+    """
+    seq_len = embeddings.shape[0]
+    # TODO: Add the first seq_len rows of pe to embeddings
+    return ???
+
+# Simulate: 3 words ("Dog", "bites", "man") with d_model=8
+np.random.seed(42)
+word_emb = np.random.randn(3, 8) * 0.1  # small random embeddings
+pe = np.zeros((64, 8))  # we'll make a simple PE
+pos = np.arange(64).reshape(-1, 1)
+div = np.exp(np.arange(0, 8, 2) * -(np.log(10000.0) / 8))
+pe[:, 0::2] = np.sin(pos * div)
+pe[:, 1::2] = np.cos(pos * div)
+
+result = add_position(word_emb, pe)
+print(f"Word embedding [0]: {word_emb[0,:4].round(4)}")
+print(f"Position enc [0]:   {pe[0,:4].round(4)}")
+print(f"Sum [0]:            {result[0,:4].round(4)}")
+
+# Verify: swapping word order changes the result
+word_emb_swap = word_emb[[2,1,0]]  # "man bites dog"
+result_swap = add_position(word_emb_swap, pe)
+print(f"\nSame words, different order → different result: {not np.allclose(result, result_swap)}")
+</textarea>
+            <div style="margin-top:8px;">
+                <button class="btn btn-primary btn-sm" onclick="runPuzzle(1)">▶ Run</button>
+                <button class="btn btn-outline btn-sm" onclick="showHint(1)">💡 Hint</button>
+                <button class="btn btn-outline btn-sm" onclick="showSolution(1)">Show Solution</button>
+            </div>
+            <div class="output" id="out1"></div>
+        </div>
+
+        <!-- Puzzle 3 -->
+        <div class="puzzle" id="puzzle2">
+            <h3>Puzzle 3: 2D Rotation Matrix for RoPE <span class="status-badge" id="sb2"></span></h3>
+            <p style="color:#aaa; margin-bottom:12px;">RoPE rotates pairs of dimensions by an angle θ·m where m is position. Implement the rotation.</p>
+            <textarea id="code2">import numpy as np
+
+def rotate_2d(x, y, theta):
+    """Rotate a 2D vector (x, y) by angle theta.
+    Returns: (x_rot, y_rot)
+    The rotation matrix is:
+      [cos θ  -sin θ] [x]
+      [sin θ   cos θ] [y]
+    """
+    # TODO: Apply the 2D rotation matrix
+    x_rot = ???
+    y_rot = ???
+    return x_rot, y_rot
+
+def rope_rotate(vec, position, base=10000):
+    """Apply RoPE rotation to a vector.
+    vec: 1D array of even length (pairs of dims get rotated)
+    position: integer position
+    base: base for frequency computation
+    Returns: rotated vector
+    """
+    d = len(vec)
+    result = np.zeros(d)
+    for i in range(0, d, 2):
+        # Frequency for this dimension pair
+        theta = position / (base ** (i / d))
+        # TODO: Rotate the pair (vec[i], vec[i+1]) by theta
+        result[i], result[i+1] = ???
+    return result
+
+# Test: rotating then dotting should depend only on relative position
+v1 = np.array([1.0, 0.0, 0.5, 0.5])
+v2 = np.array([0.5, 0.5, 1.0, 0.0])
+
+# At positions (3, 7) → relative distance = 4
+r1_a = rope_rotate(v1, 3)
+r2_a = rope_rotate(v2, 7)
+dot_a = np.dot(r1_a, r2_a)
+
+# At positions (10, 14) → same relative distance = 4
+r1_b = rope_rotate(v1, 10)
+r2_b = rope_rotate(v2, 14)
+dot_b = np.dot(r1_b, r2_b)
+
+print(f"Dot product at positions (3,7):   {dot_a:.6f}")
+print(f"Dot product at positions (10,14): {dot_b:.6f}")
+print(f"Same? {np.isclose(dot_a, dot_b)} ← RoPE preserves relative position!")
+</textarea>
+            <div style="margin-top:8px;">
+                <button class="btn btn-primary btn-sm" onclick="runPuzzle(2)">▶ Run</button>
+                <button class="btn btn-outline btn-sm" onclick="showHint(2)">💡 Hint</button>
+                <button class="btn btn-outline btn-sm" onclick="showSolution(2)">Show Solution</button>
+            </div>
+            <div class="output" id="out2"></div>
+        </div>
+
+        <!-- Puzzle 4 -->
+        <div class="puzzle" id="puzzle3">
+            <h3>Puzzle 4: Full RoPE on Query/Key Vectors <span class="status-badge" id="sb3"></span></h3>
+            <p style="color:#aaa; margin-bottom:12px;">Apply RoPE to a sequence of query and key vectors, then compute attention scores. Verify relative position preservation.</p>
+            <textarea id="code3">import numpy as np
+
+def rope_rotate(vec, position, base=10000):
+    d = len(vec)
+    result = np.zeros(d)
+    for i in range(0, d, 2):
+        theta = position / (base ** (i / d))
+        c, s = np.cos(theta), np.sin(theta)
+        result[i] = vec[i] * c - vec[i+1] * s
+        result[i+1] = vec[i] * s + vec[i+1] * c
+    return result
+
+def apply_rope_to_sequence(vectors, base=10000):
+    """Apply RoPE to a sequence of vectors.
+    vectors: (seq_len, d) array
+    Returns: (seq_len, d) array with position-dependent rotations
+    """
+    seq_len, d = vectors.shape
+    result = np.zeros_like(vectors)
+    for pos in range(seq_len):
+        # TODO: Apply rope_rotate to vectors[pos] at position pos
+        result[pos] = ???
+    return result
+
+# Create a small sequence
+np.random.seed(42)
+seq_len, d = 8, 4
+Q = np.random.randn(seq_len, d) * 0.5
+K = np.random.randn(seq_len, d) * 0.5
+
+# TODO: Apply RoPE to both Q and K
+Q_rope = ???
+K_rope = ???
+
+# Compute attention scores: score[i,j] = Q_rope[i] · K_rope[j]
+scores = Q_rope @ K_rope.T
+print("Attention scores with RoPE:")
+print(np.round(scores, 3))
+
+# Key test: shift all positions by +10 — scores should be identical!
+Q_shifted = np.zeros_like(Q)
+K_shifted = np.zeros_like(K)
+for i in range(seq_len):
+    Q_shifted[i] = rope_rotate(Q[i], i + 10)
+    K_shifted[i] = rope_rotate(K[i], i + 10)
+scores_shifted = Q_shifted @ K_shifted.T
+
+print(f"\nScores identical after shifting? {np.allclose(scores, scores_shifted, atol=1e-10)}")
+print("↑ This is the magic of RoPE: only RELATIVE position matters!")
+</textarea>
+            <div style="margin-top:8px;">
+                <button class="btn btn-primary btn-sm" onclick="runPuzzle(3)">▶ Run</button>
+                <button class="btn btn-outline btn-sm" onclick="showHint(3)">💡 Hint</button>
+                <button class="btn btn-outline btn-sm" onclick="showSolution(3)">Show Solution</button>
+            </div>
+            <div class="output" id="out3"></div>
+        </div>
+
+        <div style="text-align:center; margin-top:2em;">
+            <button class="btn btn-primary" onclick="showAct(2)">See the big picture →</button>
+        </div>
+    </div>
+
+    <!-- ==================== ACT 3: THE CONNECTION ==================== -->
+    <div class="act" id="act2">
+        <h2>🔗 The Position Encoding War</h2>
+        <p>How did we get from fixed sinusoidal encodings to RoPE? Here's the evolution:</p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <span class="year">2017</span> — <span class="paper-title">Sinusoidal (Fixed)</span>
+                <p style="color:#aaa; margin-top:4px;">Vaswani et al., "Attention Is All You Need"</p>
+                <blockquote style="margin-top:8px;">
+                    "We chose this function because we hypothesized it would allow the model to easily learn
+                    to attend by relative positions, since for any fixed offset k, PE<sub>pos+k</sub> can be
+                    represented as a linear function of PE<sub>pos</sub>."
+                    <cite>— Section 3.5</cite>
+                </blockquote>
+                <p style="margin-top:8px;">Sin and cos at geometrically spaced frequencies. Simple, elegant, but the encoding is <em>added</em> to the embedding — the position info gets diluted as it flows through layers.</p>
+                <div><span class="tag">GPT-1</span><span class="tag">Original Transformer</span></div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="year">2018–2019</span> — <span class="paper-title">Learned Encodings</span>
+                <p style="color:#aaa; margin-top:4px;">BERT, GPT-2, GPT-3</p>
+                <p style="margin-top:8px;">Instead of fixed waves, just learn a position embedding table. Works well but can't generalize beyond the max training length (BERT: 512 tokens, GPT-3: 2048).</p>
+                <div><span class="tag">BERT</span><span class="tag">GPT-2</span><span class="tag">GPT-3</span></div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="year">2020</span> — <span class="paper-title">Relative Position Encodings</span>
+                <p style="color:#aaa; margin-top:4px;">Shaw et al., Transformer-XL, T5 (bias)</p>
+                <p style="margin-top:8px;">Key insight: what matters is the <em>distance between tokens</em>, not their absolute positions. T5 adds a learned bias based on relative distance directly to attention scores.</p>
+                <div><span class="tag">T5</span><span class="tag">Transformer-XL</span></div>
+            </div>
+
+            <div class="timeline-item active">
+                <span class="year">2021</span> — <span class="paper-title">RoPE (Rotary Position Embedding)</span>
+                <p style="color:#aaa; margin-top:4px;">Su et al., "RoFormer: Enhanced Transformer with Rotary Position Embedding"</p>
+                <blockquote style="margin-top:8px;">
+                    "We propose a novel method called Rotary Position Embedding (RoPE) [...] which naturally
+                    incorporates the relative position information through the rotation of the embedding vectors."
+                    <cite>— Su et al., 2021</cite>
+                </blockquote>
+                <p style="margin-top:8px;">The breakthrough: encode position by <em>rotating</em> query and key vectors. The rotation matrix for position m applied to dimension pair (2i, 2i+1) is:</p>
+                <div class="card" style="background:rgba(0,0,0,0.4); text-align:center; padding:20px; margin:12px 0;">
+                    <div style="font-family: 'Times New Roman', serif; font-size:1.3em; color:#ffd200;">
+                        R<sub>θ,m</sub> = 
+                        <span style="font-size:0.9em;">
+                        ⎡ cos(mθ<sub>i</sub>)  −sin(mθ<sub>i</sub>) ⎤<br>
+                        ⎣ sin(mθ<sub>i</sub>)   cos(mθ<sub>i</sub>) ⎦
+                        </span>
+                    </div>
+                    <p style="color:#aaa; font-size:0.85em; margin-top:8px;">where θ<sub>i</sub> = 1/10000<sup>2i/d</sup></p>
+                </div>
+                <div class="insight">
+                    <strong>Why it works:</strong> When you compute q<sub>m</sub><sup>T</sup> k<sub>n</sub>, the rotation angles combine as
+                    R(m)R(n)<sup>T</sup> = R(m − n). The dot product depends <em>only</em> on the relative distance m − n.
+                    This means a model trained on 4K context can extrapolate to 32K, 128K, or beyond (with techniques like NTK-aware scaling).
+                </div>
+                <div>
+                    <span class="tag">LLaMA 1/2/3</span><span class="tag">Qwen / Qwen3</span>
+                    <span class="tag">DeepSeek V2/V3</span><span class="tag">Mistral</span>
+                    <span class="tag">Gemma</span><span class="tag">Phi</span>
+                    <span class="tag">CodeLlama</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="year">2023+</span> — <span class="paper-title">RoPE Extensions</span>
+                <p style="color:#aaa; margin-top:4px;">YaRN, NTK-aware scaling, Dynamic NTK</p>
+                <p style="margin-top:8px;">RoPE won the position encoding war. Research now focuses on extending it: longer contexts, better extrapolation. YaRN and NTK-aware scaling adjust the frequency base to handle 100K+ token contexts.</p>
+                <div><span class="tag">LLaMA 3.1 128K</span><span class="tag">Qwen2.5 1M</span></div>
+            </div>
+        </div>
+
+        <h2>Why Relative > Absolute</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="color:#ff6b6b;">❌ Absolute Position</h3>
+                <ul style="color:#aaa; padding-left:20px; margin-top:8px;">
+                    <li>Token at position 512 has a fixed encoding</li>
+                    <li>Can't generalize beyond training length</li>
+                    <li>The word "the" at position 5 vs 500 gets very different signals</li>
+                    <li>"I've never seen position 8193 before" 🤷</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3 style="color:#3fb950;">✅ Relative Position (RoPE)</h3>
+                <ul style="color:#aaa; padding-left:20px; margin-top:8px;">
+                    <li>Only encodes the <em>distance</em> between tokens</li>
+                    <li>Naturally generalizes to longer sequences</li>
+                    <li>"3 tokens apart" means the same thing everywhere</li>
+                    <li>Works at position 8193 because relative distances are the same</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card highlight" style="margin-top:2em;">
+            <h3>🏆 The Winner</h3>
+            <p style="margin-top:8px;">Every major open-source LLM today uses RoPE: LLaMA, Qwen3, DeepSeek, Mistral, Gemma, Phi.
+            It's not even close. The combination of mathematical elegance (just rotation!), computational efficiency
+            (no extra parameters), and natural relative-position encoding made it the clear winner.</p>
+            <p style="margin-top:12px; color:#ffd200; font-weight:600;">
+                From "we need to inject position" (2017) → to "just rotate it" (2021) → to 128K+ contexts (2024).
+                That's the arc of positional encoding.
+            </p>
+        </div>
+
+        <div style="text-align:center; margin-top:2em;">
+            <button class="btn btn-outline" onclick="showAct(0)">← Back to Explore</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ====== Navigation ======
+const acts = document.querySelectorAll('.act');
+const tabs = document.querySelectorAll('.nav-tab');
+function showAct(i) {
+    acts.forEach((a,j) => { a.classList.toggle('active', j===i); });
+    tabs.forEach((t,j) => { t.classList.toggle('active', j===i); });
+    window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ====== Sinusoidal PE helpers ======
+function sinPE(pos, dim, dModel) {
+    const i = Math.floor(dim/2);
+    const freq = 1 / Math.pow(10000, (2*i)/dModel);
+    return dim % 2 === 0 ? Math.sin(pos * freq) : Math.cos(pos * freq);
+}
+
+function peVector(pos, dModel) {
+    const v = [];
+    for (let d = 0; d < dModel; d++) v.push(sinPE(pos, d, dModel));
+    return v;
+}
+
+function dot(a, b) {
+    let s = 0; for (let i = 0; i < a.length; i++) s += a[i]*b[i]; return s;
+}
+
+// ====== Wave Canvas ======
+const waveC = document.getElementById('waveCanvas');
+const waveCtx = waveC.getContext('2d');
+const posSlider = document.getElementById('posSlider');
+const dimSlider = document.getElementById('dimSlider');
+
+function drawWaves() {
+    const W = waveC.width, H = waveC.height;
+    const pos = +posSlider.value;
+    const dims = +dimSlider.value;
+    document.getElementById('posVal').textContent = pos;
+    document.getElementById('dimVal').textContent = dims;
+
+    waveCtx.fillStyle = '#0d1117';
+    waveCtx.fillRect(0, 0, W, H);
+
+    const maxPos = 64;
+    const rowH = H / dims;
+
+    // Draw heatmap: each row = one dimension, x = position
+    for (let d = 0; d < dims; d++) {
+        for (let p = 0; p < maxPos; p++) {
+            const val = sinPE(p, d, dims);
+            const r = val > 0 ? Math.floor(val * 200) : 0;
+            const b = val < 0 ? Math.floor(-val * 200) : 0;
+            const g = Math.floor(Math.abs(val) * 80);
+            waveCtx.fillStyle = `rgb(${r+30},${g+30},${b+30})`;
+            const x = (p / maxPos) * W;
+            const w = W / maxPos + 1;
+            waveCtx.fillRect(x, d * rowH, w, rowH);
+        }
+    }
+
+    // Highlight current position column
+    const cx = (pos / maxPos) * W;
+    waveCtx.fillStyle = 'rgba(255,210,0,0.25)';
+    waveCtx.fillRect(cx, 0, W/maxPos + 1, H);
+    waveCtx.strokeStyle = '#ffd200';
+    waveCtx.lineWidth = 2;
+    waveCtx.strokeRect(cx, 0, W/maxPos + 1, H);
+
+    // Draw encoding vector on right as bars
+    const vec = peVector(pos, dims);
+    const barW = 60;
+    waveCtx.fillStyle = 'rgba(0,0,0,0.7)';
+    waveCtx.fillRect(W - barW - 10, 0, barW + 10, H);
+    for (let d = 0; d < dims; d++) {
+        const val = vec[d];
+        const bw = Math.abs(val) * (barW * 0.8);
+        waveCtx.fillStyle = val > 0 ? '#f7971e' : '#4ecdc4';
+        waveCtx.fillRect(W - barW - 5, d * rowH + 1, bw, rowH - 2);
+    }
+}
+
+posSlider.addEventListener('input', drawWaves);
+dimSlider.addEventListener('input', drawWaves);
+drawWaves();
+
+// ====== Dot Product Canvas ======
+const dotC = document.getElementById('dotCanvas');
+const dotCtx = dotC.getContext('2d');
+const refSlider = document.getElementById('refSlider');
+
+function drawDot() {
+    const W = dotC.width, H = dotC.height;
+    const refPos = +refSlider.value;
+    document.getElementById('refVal').textContent = refPos;
+
+    dotCtx.fillStyle = '#0d1117';
+    dotCtx.fillRect(0, 0, W, H);
+
+    const dModel = 64;
+    const maxPos = 64;
+    const refVec = peVector(refPos, dModel);
+
+    // Compute dot products
+    const dots = [];
+    for (let p = 0; p < maxPos; p++) {
+        dots.push(dot(refVec, peVector(p, dModel)) / dModel);
+    }
+
+    // Find range
+    const maxD = Math.max(...dots.map(Math.abs));
+    const pad = {top: 20, bottom: 30, left: 50, right: 20};
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    // Axes
+    dotCtx.strokeStyle = '#444';
+    dotCtx.lineWidth = 1;
+    dotCtx.beginPath();
+    dotCtx.moveTo(pad.left, pad.top);
+    dotCtx.lineTo(pad.left, H - pad.bottom);
+    dotCtx.lineTo(W - pad.right, H - pad.bottom);
+    dotCtx.stroke();
+
+    // Zero line
+    const zeroY = pad.top + plotH * (maxD / (2 * maxD));
+    dotCtx.strokeStyle = '#333';
+    dotCtx.setLineDash([4, 4]);
+    dotCtx.beginPath();
+    dotCtx.moveTo(pad.left, zeroY);
+    dotCtx.lineTo(W - pad.right, zeroY);
+    dotCtx.stroke();
+    dotCtx.setLineDash([]);
+
+    // Bars
+    const barW = plotW / maxPos;
+    for (let p = 0; p < maxPos; p++) {
+        const val = dots[p];
+        const x = pad.left + p * barW;
+        const h = (val / maxD) * (plotH / 2);
+        const y = zeroY;
+
+        dotCtx.fillStyle = p === refPos ? '#ffd200' : (val > 0 ? 'rgba(247,151,30,0.6)' : 'rgba(78,205,196,0.4)');
+        dotCtx.fillRect(x, y - Math.max(h, 0), barW - 1, Math.abs(h));
+    }
+
+    // Labels
+    dotCtx.fillStyle = '#888';
+    dotCtx.font = '11px sans-serif';
+    dotCtx.textAlign = 'center';
+    dotCtx.fillText('Position', W/2, H - 4);
+    dotCtx.save();
+    dotCtx.translate(12, H/2);
+    dotCtx.rotate(-Math.PI/2);
+    dotCtx.fillText('Dot Product (normalized)', 0, 0);
+    dotCtx.restore();
+}
+
+refSlider.addEventListener('input', drawDot);
+drawDot();
+
+// ====== RoPE Canvas ======
+const ropeC = document.getElementById('ropeCanvas');
+const ropeCtx = ropeC.getContext('2d');
+const rPosA = document.getElementById('rPosA');
+const rPosB = document.getElementById('rPosB');
+
+function drawRope() {
+    const W = ropeC.width, H = ropeC.height;
+    const cx = W/2, cy = H/2, R = Math.min(W,H) * 0.38;
+    const pA = +rPosA.value, pB = +rPosB.value;
+    document.getElementById('rPosAVal').textContent = pA;
+    document.getElementById('rPosBVal').textContent = pB;
+
+    ropeCtx.fillStyle = '#0d1117';
+    ropeCtx.fillRect(0, 0, W, H);
+
+    // Unit circle
+    ropeCtx.strokeStyle = '#333';
+    ropeCtx.lineWidth = 1;
+    ropeCtx.beginPath();
+    ropeCtx.arc(cx, cy, R, 0, Math.PI*2);
+    ropeCtx.stroke();
+
+    // Grid lines
+    ropeCtx.strokeStyle = '#222';
+    ropeCtx.beginPath();
+    ropeCtx.moveTo(cx - R - 20, cy); ropeCtx.lineTo(cx + R + 20, cy);
+    ropeCtx.moveTo(cx, cy - R - 20); ropeCtx.lineTo(cx, cy + R + 20);
+    ropeCtx.stroke();
+
+    const thetaBase = 0.3; // radians per position
+    const angA = pA * thetaBase;
+    const angB = pB * thetaBase;
+    const relAngle = (pB - pA) * thetaBase;
+
+    function drawArrow(angle, color, label, r) {
+        r = r || R;
+        const ex = cx + Math.cos(angle) * r;
+        const ey = cy - Math.sin(angle) * r;
+        ropeCtx.strokeStyle = color;
+        ropeCtx.lineWidth = 3;
+        ropeCtx.beginPath();
+        ropeCtx.moveTo(cx, cy);
+        ropeCtx.lineTo(ex, ey);
+        ropeCtx.stroke();
+
+        // Arrowhead
+        const headLen = 12;
+        const a = Math.atan2(cy - ey, ex - cx);
+        ropeCtx.fillStyle = color;
+        ropeCtx.beginPath();
+        ropeCtx.moveTo(ex, ey);
+        ropeCtx.lineTo(ex - headLen*Math.cos(a - 0.3), ey + headLen*Math.sin(a - 0.3));
+        ropeCtx.lineTo(ex - headLen*Math.cos(a + 0.3), ey + headLen*Math.sin(a + 0.3));
+        ropeCtx.fill();
+
+        // Label
+        const lx = cx + Math.cos(angle) * (r + 22);
+        const ly = cy - Math.sin(angle) * (r + 22);
+        ropeCtx.fillStyle = color;
+        ropeCtx.font = 'bold 14px sans-serif';
+        ropeCtx.textAlign = 'center';
+        ropeCtx.textBaseline = 'middle';
+        ropeCtx.fillText(label, lx, ly);
+    }
+
+    drawArrow(angA, '#4ecdc4', `A (pos ${pA})`);
+    drawArrow(angB, '#ff6b6b', `B (pos ${pB})`);
+
+    // Draw arc for relative angle
+    ropeCtx.strokeStyle = '#ffd200';
+    ropeCtx.lineWidth = 2;
+    ropeCtx.setLineDash([4,4]);
+    ropeCtx.beginPath();
+    const arcR = R * 0.35;
+    // Canvas arc goes clockwise, our angles are counter-clockwise
+    const startA = -Math.min(angA, angB);
+    const endA = -Math.max(angA, angB);
+    ropeCtx.arc(cx, cy, arcR, Math.min(startA, endA), Math.max(startA, endA));
+    ropeCtx.stroke();
+    ropeCtx.setLineDash([]);
+
+    // Relative angle label
+    const midAng = (angA + angB) / 2;
+    const lx = cx + Math.cos(midAng) * (arcR + 16);
+    const ly = cy - Math.sin(midAng) * (arcR + 16);
+    ropeCtx.fillStyle = '#ffd200';
+    ropeCtx.font = '13px sans-serif';
+    ropeCtx.textAlign = 'center';
+    ropeCtx.fillText(`Δ = ${Math.abs(pB-pA)} pos`, lx, ly);
+
+    // Info box
+    const info = document.getElementById('ropeInfo');
+    const dotProd = Math.cos(relAngle); // simplified for unit vectors in same direction
+    info.innerHTML = `<strong>Relative distance:</strong> |${pB} − ${pA}| = ${Math.abs(pB-pA)} positions<br>
+        <strong>Relative angle:</strong> ${(Math.abs(relAngle)).toFixed(2)} rad<br>
+        <strong>cos(Δθ):</strong> ${dotProd.toFixed(4)} — this value depends <em>only</em> on the gap, not on absolute positions!<br>
+        <em>Try shifting both sliders by the same amount — the angle between them stays the same.</em>`;
+}
+
+rPosA.addEventListener('input', drawRope);
+rPosB.addEventListener('input', drawRope);
+drawRope();
+
+// ====== Responsive canvases ======
+function resizeCanvases() {
+    const cw = document.querySelector('.container').clientWidth - 48;
+    [waveC, dotC].forEach(c => {
+        if (cw < c.width) { c.style.width = '100%'; c.style.height = 'auto'; }
+    });
+    const ropeSize = Math.min(cw, 500);
+    ropeC.style.width = ropeSize + 'px';
+    ropeC.style.height = ropeSize + 'px';
+}
+resizeCanvases();
+window.addEventListener('resize', resizeCanvases);
+
+// ====== Pyodide Setup ======
+let pyodide = null;
+const puzzlePassed = [false, false, false, false];
+
+async function loadPyodide() {
+    const status = document.getElementById('pyStatus');
+    try {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+        document.head.appendChild(script);
+        await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
+        pyodide = await loadPyodide({indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'});
+        await pyodide.loadPackage('numpy');
+        status.innerHTML = '✅ Python ready (Pyodide + NumPy loaded)';
+        status.style.color = '#3fb950';
+    } catch(e) {
+        status.innerHTML = '⚠️ Could not load Pyodide. Check your internet connection.';
+        status.style.color = '#f85149';
+    }
+}
+
+// Load when user switches to Build tab
+const origShowAct = showAct;
+showAct = function(i) {
+    origShowAct(i);
+    if (i === 1 && !pyodide) loadPyodide();
+};
+
+function updateDots() {
+    puzzlePassed.forEach((p, i) => {
+        const dot = document.getElementById('pd'+i);
+        dot.className = 'dot' + (p ? ' done' : '');
+    });
+}
+
+async function runPuzzle(idx) {
+    const code = document.getElementById('code'+idx).value;
+    const out = document.getElementById('out'+idx);
+    const sb = document.getElementById('sb'+idx);
+    out.className = 'output';
+    out.textContent = 'Running…';
+
+    if (!pyodide) { out.textContent = 'Pyodide not loaded yet. Please wait…'; return; }
+
+    try {
+        pyodide.runPython(`
+import io, sys
+_buf = io.StringIO()
+sys.stdout = _buf
+sys.stderr = _buf
+`);
+        pyodide.runPython(code);
+        const result = pyodide.runPython('_buf.getvalue()');
+        out.textContent = result || '(no output)';
+
+        // Validation
+        const passed = validatePuzzle(idx, result);
+        if (passed) {
+            out.className = 'output success';
+            sb.textContent = '✓ Passed';
+            sb.className = 'status-badge pass';
+            puzzlePassed[idx] = true;
+        } else {
+            out.className = 'output error';
+            sb.textContent = '✗ Not quite';
+            sb.className = 'status-badge fail';
+        }
+        updateDots();
+    } catch(e) {
+        // Get Python error from buffer
+        try {
+            const buf = pyodide.runPython('_buf.getvalue()');
+            out.textContent = buf + '\n' + e.message;
+        } catch(_) {
+            out.textContent = e.message;
+        }
+        out.className = 'output error';
+        sb.textContent = '✗ Error';
+        sb.className = 'status-badge fail';
+    }
+}
+
+function validatePuzzle(idx, result) {
+    switch(idx) {
+        case 0: return result.includes('Shape: (64, 16)') && result.includes('PE[0,:4]') && !result.includes('???');
+        case 1: return result.includes('different result: True');
+        case 2: return result.includes('Same? True');
+        case 3: return result.includes('identical after shifting? True');
+    }
+    return false;
+}
+
+const hints = [
+    'div_term should give you decreasing frequencies. Use np.exp(np.arange(0, d_model, 2) * -(np.log(10000.0) / d_model)). Then multiply position * div_term for both sin and cos.',
+    'It\'s literally just: embeddings + pe[:seq_len]. That\'s the whole thing!',
+    'x_rot = x * cos(theta) - y * sin(theta), y_rot = x * sin(theta) + y * cos(theta). Then call rotate_2d for each pair.',
+    'apply_rope_to_sequence just calls rope_rotate(vectors[pos], pos) for each position. Apply it to both Q and K.',
+];
+
+const solutions = [
+    `import numpy as np
+
+def sinusoidal_pe(max_len, d_model):
+    pe = np.zeros((max_len, d_model))
+    position = np.arange(max_len).reshape(-1, 1)
+    div_term = np.exp(np.arange(0, d_model, 2) * -(np.log(10000.0) / d_model))
+    pe[:, 0::2] = np.sin(position * div_term)
+    pe[:, 1::2] = np.cos(position * div_term)
+    return pe
+
+pe = sinusoidal_pe(64, 16)
+print(f"Shape: {pe.shape}")
+print(f"PE[0,:4]: {pe[0,:4].round(4)}")
+print(f"PE[1,:4]: {pe[1,:4].round(4)}")`,
+
+    `import numpy as np
+
+def add_position(embeddings, pe):
+    seq_len = embeddings.shape[0]
+    return embeddings + pe[:seq_len]
+
+np.random.seed(42)
+word_emb = np.random.randn(3, 8) * 0.1
+pe = np.zeros((64, 8))
+pos = np.arange(64).reshape(-1, 1)
+div = np.exp(np.arange(0, 8, 2) * -(np.log(10000.0) / 8))
+pe[:, 0::2] = np.sin(pos * div)
+pe[:, 1::2] = np.cos(pos * div)
+
+result = add_position(word_emb, pe)
+print(f"Word embedding [0]: {word_emb[0,:4].round(4)}")
+print(f"Position enc [0]:   {pe[0,:4].round(4)}")
+print(f"Sum [0]:            {result[0,:4].round(4)}")
+
+word_emb_swap = word_emb[[2,1,0]]
+result_swap = add_position(word_emb_swap, pe)
+print(f"\\nSame words, different order → different result: {not np.allclose(result, result_swap)}")`,
+
+    `import numpy as np
+
+def rotate_2d(x, y, theta):
+    x_rot = x * np.cos(theta) - y * np.sin(theta)
+    y_rot = x * np.sin(theta) + y * np.cos(theta)
+    return x_rot, y_rot
+
+def rope_rotate(vec, position, base=10000):
+    d = len(vec)
+    result = np.zeros(d)
+    for i in range(0, d, 2):
+        theta = position / (base ** (i / d))
+        result[i], result[i+1] = rotate_2d(vec[i], vec[i+1], theta)
+    return result
+
+v1 = np.array([1.0, 0.0, 0.5, 0.5])
+v2 = np.array([0.5, 0.5, 1.0, 0.0])
+
+r1_a = rope_rotate(v1, 3)
+r2_a = rope_rotate(v2, 7)
+dot_a = np.dot(r1_a, r2_a)
+
+r1_b = rope_rotate(v1, 10)
+r2_b = rope_rotate(v2, 14)
+dot_b = np.dot(r1_b, r2_b)
+
+print(f"Dot product at positions (3,7):   {dot_a:.6f}")
+print(f"Dot product at positions (10,14): {dot_b:.6f}")
+print(f"Same? {np.isclose(dot_a, dot_b)} ← RoPE preserves relative position!")`,
+
+    `import numpy as np
+
+def rope_rotate(vec, position, base=10000):
+    d = len(vec)
+    result = np.zeros(d)
+    for i in range(0, d, 2):
+        theta = position / (base ** (i / d))
+        c, s = np.cos(theta), np.sin(theta)
+        result[i] = vec[i] * c - vec[i+1] * s
+        result[i+1] = vec[i] * s + vec[i+1] * c
+    return result
+
+def apply_rope_to_sequence(vectors, base=10000):
+    seq_len, d = vectors.shape
+    result = np.zeros_like(vectors)
+    for pos in range(seq_len):
+        result[pos] = rope_rotate(vectors[pos], pos, base)
+    return result
+
+np.random.seed(42)
+seq_len, d = 8, 4
+Q = np.random.randn(seq_len, d) * 0.5
+K = np.random.randn(seq_len, d) * 0.5
+
+Q_rope = apply_rope_to_sequence(Q)
+K_rope = apply_rope_to_sequence(K)
+
+scores = Q_rope @ K_rope.T
+print("Attention scores with RoPE:")
+print(np.round(scores, 3))
+
+Q_shifted = np.zeros_like(Q)
+K_shifted = np.zeros_like(K)
+for i in range(seq_len):
+    Q_shifted[i] = rope_rotate(Q[i], i + 10)
+    K_shifted[i] = rope_rotate(K[i], i + 10)
+scores_shifted = Q_shifted @ K_shifted.T
+
+print(f"\\nScores identical after shifting? {np.allclose(scores, scores_shifted, atol=1e-10)}")
+print("↑ This is the magic of RoPE: only RELATIVE position matters!")`
+];
+
+function showHint(idx) {
+    const out = document.getElementById('out'+idx);
+    out.textContent = '💡 ' + hints[idx];
+    out.className = 'output';
+}
+
+function showSolution(idx) {
+    document.getElementById('code'+idx).value = solutions[idx];
+}
+</script>
+</body>
+</html>

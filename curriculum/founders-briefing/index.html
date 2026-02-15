@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Founder's Briefing — 10 AI Concepts</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;padding:1rem;max-width:760px;margin:0 auto}
+a{color:#38bdf8;text-decoration:none}
+a:hover{text-decoration:underline}
+.back{display:inline-block;margin-bottom:1.5rem;font-size:.95rem}
+h1{font-size:1.8rem;margin-bottom:.3rem}
+.subtitle{color:#94a3b8;margin-bottom:2rem;font-size:1.05rem}
+.card{background:#1e293b;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;border:1px solid #334155}
+.card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem}
+.emoji{font-size:1.5rem}
+.card-title{font-size:1.15rem;font-weight:700;color:#f1f5f9}
+.label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem}
+.label-cocktail{color:#38bdf8}
+.label-misconception{color:#f87171}
+.cocktail{color:#cbd5e1;font-size:.95rem;margin-bottom:1rem}
+.misconception{background:#1a1025;border-left:3px solid #a78bfa;border-radius:0 8px 8px 0;padding:.75rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#c4b5fd}
+.misconception strong{color:#a78bfa}
+details{margin-top:.25rem}
+summary{cursor:pointer;color:#38bdf8;font-size:.9rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:.4rem;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸";transition:transform .2s}
+details[open] summary::before{transform:rotate(90deg)}
+.deeper{overflow:hidden;color:#94a3b8;font-size:.9rem;padding-top:.6rem}
+details[open] .deeper{animation:slideDown .25s ease}
+@keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:300px}}
+.count{text-align:center;color:#475569;font-size:.85rem;padding:1.5rem 0 1rem}
+</style>
+</head>
+<body>
+<a href="../" class="back">← Back to Curriculum</a>
+<h1>🍸 Founder's Briefing</h1>
+<p class="subtitle">10 AI concepts you need to explain at a cocktail party.</p>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🎯</span><span class="card-title">Next-Token Prediction</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Large language models work by predicting the next word, over and over. That's the entire trick — there's no reasoning engine, no knowledge database. Just "given everything so far, what word comes next?" Repeat a billion times and you get ChatGPT.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "The model understands what it's saying." It doesn't — it's doing statistical pattern matching at enormous scale. The appearance of understanding is emergent, not designed.</div>
+<details><summary>Go deeper</summary><div class="deeper">The training objective is called "causal language modeling" — predict token <i>t+1</i> given tokens <i>1…t</i>. The loss function is cross-entropy over a vocabulary of ~100K tokens. What's remarkable is that optimizing this simple objective on enough data forces the model to learn grammar, facts, reasoning patterns, and even some world models. This is why researchers call next-token prediction "the master algorithm" of modern AI.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🏗️</span><span class="card-title">Transformers</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">The Transformer is the architecture behind every modern LLM, introduced in 2017's "Attention Is All You Need" paper. Its key innovation is <em>self-attention</em>: every word can look at every other word in the input simultaneously. This parallelism made it vastly more trainable than previous architectures.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Transformers were built for chatbots." They were actually designed for machine translation. Chat, code generation, and image synthesis came later as people realized the architecture generalizes to almost anything.</div>
+<details><summary>Go deeper</summary><div class="deeper">Self-attention computes a weighted sum of all positions, where the weights are learned relevance scores (Q·K^T / √d). Multi-head attention runs this in parallel across different "subspaces," letting the model attend to syntax in one head and semantics in another. The architecture also includes residual connections, layer normalization, and feed-forward networks — but attention is the breakthrough that made scaling possible. GPT-style models use <em>decoder-only</em> transformers with causal masking.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">⚡</span><span class="card-title">Training vs Inference</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Training is when the model learns — it costs millions of dollars, runs on thousands of GPUs for months, and happens once per model version. Inference is when the model answers your question — it's relatively cheap and happens billions of times. Think of training as writing a textbook vs. inference as reading from it.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "The model learns from my conversations." Standard inference doesn't update the model's weights. Your messages are forgotten the moment the session ends (unless the provider explicitly stores them).</div>
+<details><summary>Go deeper</summary><div class="deeper">Training involves forward passes to compute loss, then backpropagation to update billions of parameters via gradient descent. GPT-4-scale training runs cost $50–100M+ in compute alone. Inference is just the forward pass — no gradients, no weight updates. The economics of AI companies hinge on this split: amortize huge training costs across billions of cheap inference calls. "Inference-time compute" (like chain-of-thought) is a growing middle ground — spending more at inference time to get better answers.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">📦</span><span class="card-title">Tokens & Context Windows</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Models don't see words — they see "tokens," which are word pieces. "Unbelievable" might be three tokens: "un," "believ," "able." The context window is the maximum number of tokens the model can process at once — typically 4K to 200K tokens. It's the model's working memory.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Bigger context window = the model remembers more." Context windows aren't memory — they're more like a desk. You can pile more papers on a bigger desk, but the model may still struggle to find the relevant needle in a haystack of text.</div>
+<details><summary>Go deeper</summary><div class="deeper">Tokenization uses algorithms like BPE (Byte-Pair Encoding) that merge frequent character pairs into single tokens. This is why models are worse at character-level tasks — they literally can't "see" individual letters. Context window cost scales quadratically with attention (O(n²)), though techniques like FlashAttention and sparse attention reduce this. A rough rule: 1 token ≈ ¾ of a word in English. Pricing is per-token, so understanding tokenization directly impacts your API costs.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🔧</span><span class="card-title">Fine-tuning vs RAG</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Fine-tuning retrains the model on your specific data — it changes the model's weights to bake in new knowledge or behavior. RAG (Retrieval-Augmented Generation) leaves the model alone and just fetches relevant documents at query time, stuffing them into the prompt. For most business use cases, RAG is cheaper, faster to set up, and easier to keep current.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "We need to fine-tune a model on our data." Usually you don't. RAG handles 90% of "use our company's knowledge" use cases. Fine-tuning is for changing <em>how</em> the model behaves, not <em>what</em> it knows.</div>
+<details><summary>Go deeper</summary><div class="deeper">Fine-tuning updates model weights via continued training on a curated dataset. LoRA (Low-Rank Adaptation) makes this cheaper by only training small adapter matrices. RAG works by embedding your documents into vectors, storing them in a vector database, retrieving the top-k relevant chunks at query time, and prepending them to the prompt. The trade-off: fine-tuning is better for style, tone, and specialized reasoning; RAG is better for factual knowledge that changes. Many production systems use both.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🌀</span><span class="card-title">Hallucination</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Models don't retrieve facts — they generate plausible-sounding text. Sometimes plausible ≠ true. A model will confidently cite a paper that doesn't exist or invent a legal precedent. This isn't a bug to be fixed; it's a fundamental property of how generation works.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Hallucination will be solved in the next model version." It's inherent to probabilistic text generation. You can reduce it (RAG, grounding, citations) but never fully eliminate it. Any production system must design for it.</div>
+<details><summary>Go deeper</summary><div class="deeper">Hallucination stems from the training objective: the model is optimized to produce likely text, not true text. During training, the model learns statistical co-occurrences — "The capital of France is Paris" has high probability because it appeared often. But the same mechanism generates "The capital of Australia is Sydney" because that co-occurrence is also common, even though it's wrong. Mitigation strategies include retrieval grounding (RAG), chain-of-thought verification, confidence calibration, and output validation against trusted sources.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🤖</span><span class="card-title">Agents</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">An agent is an LLM in a loop: it thinks about what to do, takes an action (search the web, run code, call an API), observes the result, and repeats. This is the ReAct pattern — reasoning + acting. It turns a chatbot into something that can actually <em>do</em> things in the world.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Agents are autonomous AI." Today's agents are more like interns with a checklist — they follow patterns, use tools they're given, and fail in predictable ways. The "autonomy" is a loop, not consciousness.</div>
+<details><summary>Go deeper</summary><div class="deeper">The ReAct pattern (Yao et al., 2022) interleaves reasoning traces with tool calls. The model generates a thought ("I need to look up Q3 revenue"), an action (call a search tool), and then incorporates the observation into its next reasoning step. More complex frameworks add planning, memory, and multi-agent collaboration. Key challenges: agents can get stuck in loops, compound errors across steps, and rack up costs quickly. Tool design and guardrails matter more than model choice.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">📈</span><span class="card-title">Scaling Laws</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">There's a remarkably predictable relationship: spend 10× more compute, get a measurably better model. The Chinchilla paper (2022) showed you should scale model size and training data together — not just make models bigger. This predictability is why companies pour billions into training.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "We're hitting a wall — models can't get better." Scaling laws haven't broken yet, though the returns are shifting. Inference-time scaling (thinking longer, not training bigger) is opening a new axis of improvement.</div>
+<details><summary>Go deeper</summary><div class="deeper">Kaplan et al. (2020) at OpenAI discovered power-law relationships: loss decreases as a smooth function of compute, data, and parameters. Chinchilla (Hoffmann et al., 2022) refined this — many models were over-parameterized and under-trained. The optimal ratio is roughly 20 tokens per parameter. This insight shifted the industry: LLaMA 7B trained on more data outperforms models 10× its size. Current research explores "inference-time compute" scaling — spending more tokens thinking (chain-of-thought, search, verification) rather than just training bigger models.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🛡️</span><span class="card-title">RLHF / Alignment</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Raw LLMs are erratic — they'll happily generate toxic content or ignore your question. RLHF (Reinforcement Learning from Human Feedback) is how we tame them. Humans rank model outputs, a reward model learns their preferences, and the LLM is fine-tuned to maximize that reward. InstructGPT proved this turns a wild model into a helpful assistant.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Alignment means censorship." Alignment is about making models follow instructions reliably and refuse genuinely harmful requests. The line between "safe" and "over-cautious" is a real design challenge, not a conspiracy.</div>
+<details><summary>Go deeper</summary><div class="deeper">The RLHF pipeline has three stages: (1) supervised fine-tuning on human-written examples, (2) training a reward model on human preference rankings, (3) optimizing the LLM against the reward model using PPO (Proximal Policy Optimization). Newer approaches like DPO (Direct Preference Optimization) skip the reward model entirely. Constitutional AI (Anthropic) has the model critique its own outputs against principles. The field is evolving rapidly — RLHF is effective but imperfect, and "alignment" at a deeper level (ensuring AI goals match human values) remains an open research problem.</div></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="emoji">🔓</span><span class="card-title">Open vs Closed Models</span></div>
+<div class="label label-cocktail">30-second version</div>
+<p class="cocktail">Closed models (GPT-4, Claude) are accessed via API — you can't see the weights or run them yourself. Open-weight models (LLaMA, Mistral, DeepSeek) let you download and run the model on your own hardware. The trade-off: closed models are generally more capable, but open models give you control, privacy, and no per-token costs.</p>
+<div class="misconception"><strong>⚠️ Common misconception:</strong> "Open-source models are free." The weights may be free, but running a 70B-parameter model requires serious GPU infrastructure. And "open weights" ≠ "open source" — most don't release training data or code.</div>
+<details><summary>Go deeper</summary><div class="deeper">The spectrum runs from fully closed (GPT-4: no weights, no architecture details) to fully open (OLMo: weights, data, code, training logs). Most "open" models like LLaMA are open-weight — you get the trained parameters but not the training data or full recipe. For startups, the choice depends on: volume (high volume favors self-hosting), data sensitivity (regulated industries may need on-premises), customization needs (open models can be fine-tuned freely), and capability requirements (frontier closed models still lead on complex reasoning). Many companies use a hybrid: closed models for hard tasks, open models for high-volume simple ones.</div></details>
+</div>
+
+<p class="count">10 concepts · Built for founders who'd rather understand AI than just fund it.</p>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>Module 05: Scaling Laws</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#13131f;--border:#252540;--text:#e0e0f0;--dim:#8888aa;--accent:#6c8cff;--accent2:#ff6caa;--accent3:#6cffa0;--gold:#ffd76c;--code-bg:#1a1a2e;--success:#4caf50;--error:#ff5555}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:20px}
+h1{font-size:2.2em;text-align:center;margin:40px 0 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.5em;margin:50px 0 20px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:10px}
+h3{font-size:1.15em;margin:25px 0 12px;color:var(--accent3)}
+p,.desc{color:var(--dim);margin-bottom:16px;font-size:.95em}
+.subtitle{text-align:center;color:var(--dim);margin-bottom:40px;font-size:1.05em}
+.act-label{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.8em;font-weight:700;letter-spacing:.05em;margin-bottom:8px}
+.act1 .act-label{background:rgba(108,140,255,.15);color:var(--accent)}
+.act2 .act-label{background:rgba(108,255,160,.15);color:var(--accent3)}
+.act3 .act-label{background:rgba(255,108,170,.15);color:var(--accent2)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0}
+.slider-group{margin:14px 0}
+.slider-group label{display:flex;justify-content:space-between;font-size:.9em;margin-bottom:4px}
+.slider-group label span:last-child{color:var(--accent);font-family:monospace;font-weight:700}
+input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:var(--border);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer}
+canvas{width:100%;border-radius:8px;margin:10px 0;background:#0d0d18}
+.chart-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.chart-row{grid-template-columns:1fr}}
+.frontier-wrap{position:relative}
+.frontier-info{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;margin:10px 0}
+.frontier-info .fi{text-align:center;padding:8px 14px;background:var(--code-bg);border-radius:8px;font-size:.85em;min-width:120px}
+.fi .val{font-size:1.3em;font-weight:700;font-family:monospace}
+.fi.chinchilla .val{color:var(--accent3)}
+.fi.gopher .val{color:var(--accent2)}
+.puzzle{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0}
+.puzzle-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.puzzle-num{background:var(--accent3);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em}
+.puzzle-status{font-size:.8em;padding:4px 10px;border-radius:12px}
+.puzzle-status.solved{background:rgba(76,175,80,.2);color:var(--success)}
+.puzzle-status.unsolved{background:rgba(255,85,85,.15);color:var(--error)}
+textarea.code-input{width:100%;min-height:120px;background:var(--code-bg);color:#e0e0f0;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'Fira Code',monospace;font-size:.88em;resize:vertical;tab-size:4}
+.btn{display:inline-block;padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.9em;font-weight:600;transition:.2s}
+.btn-run{background:var(--accent3);color:#000}.btn-run:hover{filter:brightness(1.2)}
+.btn-reset{background:var(--border);color:var(--dim);margin-left:8px}.btn-reset:hover{background:#333}
+.output{background:#0a0a14;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-family:monospace;font-size:.85em;white-space:pre-wrap;min-height:40px;color:var(--dim)}
+.output.success{border-color:var(--success);color:var(--success)}
+.output.error{border-color:var(--error);color:var(--error)}
+blockquote{border-left:3px solid var(--accent);padding:10px 16px;margin:16px 0;background:rgba(108,140,255,.05);border-radius:0 8px 8px 0;font-style:italic;color:var(--dim)}
+blockquote cite{display:block;margin-top:6px;font-style:normal;font-size:.85em;color:var(--accent)}
+.comparison-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9em}
+.comparison-table th,.comparison-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.comparison-table th{color:var(--accent);font-size:.85em;text-transform:uppercase;letter-spacing:.04em}
+.comparison-table tr:hover{background:rgba(108,140,255,.04)}
+.highlight-row{background:rgba(108,255,160,.08)!important}
+.eq{background:var(--code-bg);padding:12px 18px;border-radius:8px;margin:12px 0;font-family:monospace;font-size:.95em;text-align:center;color:var(--gold);overflow-x:auto}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75em;font-weight:700}
+.tag-kaplan{background:rgba(108,140,255,.2);color:var(--accent)}
+.tag-chinchilla{background:rgba(108,255,160,.2);color:var(--accent3)}
+.nav-dots{display:flex;justify-content:center;gap:8px;margin:30px 0}
+.nav-dots a{width:10px;height:10px;border-radius:50%;background:var(--border);display:block;transition:.2s}
+.nav-dots a:hover,.nav-dots a.active{background:var(--accent)}
+.pyodide-loading{text-align:center;padding:20px;color:var(--dim)}
+.pyodide-loading .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent3);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.timeline{display:flex;align-items:center;justify-content:center;gap:0;margin:30px 0;flex-wrap:wrap}
+.timeline-node{padding:10px 18px;border-radius:20px;font-size:.85em;font-weight:600;white-space:nowrap}
+.timeline-arrow{color:var(--dim);font-size:1.2em;margin:0 4px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🏖️ Module 05: Scaling Laws</h1>
+<p class="subtitle">How big should your model be? The answer changed everything.</p>
+
+<!-- ==================== ACT 1 ==================== -->
+<section class="act1">
+<span class="act-label">ACT 1 — THE EXPLORABLE</span>
+<h2>Power Law Explorer</h2>
+<p>Kaplan et al. (2020) discovered something elegant: language model loss follows a <strong>power law</strong> in three variables. Drag the sliders and watch.</p>
+
+<div class="eq">L(N) = (N<sub>c</sub>/N)<sup>α<sub>N</sub></sup> &nbsp;·&nbsp; L(D) = (D<sub>c</sub>/D)<sup>α<sub>D</sub></sup> &nbsp;·&nbsp; L(C) = (C<sub>c</sub>/C)<sup>α<sub>C</sub></sup></div>
+<p style="text-align:center;font-size:.85em">α<sub>N</sub> ≈ 0.076 &nbsp;|&nbsp; α<sub>D</sub> ≈ 0.095 &nbsp;|&nbsp; α<sub>C</sub> ≈ 0.050</p>
+
+<div class="card">
+<div class="slider-group">
+<label><span>Model Size (Parameters)</span><span id="v-params">1B</span></label>
+<input type="range" id="s-params" min="7" max="12.5" step="0.01" value="9">
+</div>
+<div class="slider-group">
+<label><span>Dataset Size (Tokens)</span><span id="v-tokens">10B</span></label>
+<input type="range" id="s-tokens" min="9" max="13.5" step="0.01" value="10">
+</div>
+<div class="slider-group">
+<label><span>Compute Budget (FLOPs)</span><span id="v-flops">6e18</span></label>
+<input type="range" id="s-flops" min="17" max="25" step="0.01" value="18.78">
+</div>
+
+<div class="chart-row">
+<div><canvas id="chart-n" height="200"></canvas><p style="text-align:center;font-size:.8em">Loss vs Parameters</p></div>
+<div><canvas id="chart-d" height="200"></canvas><p style="text-align:center;font-size:.8em">Loss vs Tokens</p></div>
+<div><canvas id="chart-c" height="200"></canvas><p style="text-align:center;font-size:.8em">Loss vs Compute</p></div>
+</div>
+<p style="text-align:center;font-size:.85em;color:var(--dim)">Current predicted loss: <strong id="current-loss" style="color:var(--gold);font-size:1.2em">—</strong></p>
+</div>
+
+<h3>🔧 The Chinchilla Twist: Compute-Optimal Training</h3>
+<p>For a fixed compute budget C, how should you split between model size N and data D? Kaplan said "go bigger." Chinchilla said "balance it."</p>
+
+<div class="card frontier-wrap">
+<div class="slider-group">
+<label><span>Compute Budget (FLOPs)</span><span id="v-frontier-c">3.4e23</span></label>
+<input type="range" id="s-frontier-c" min="20" max="26" step="0.01" value="23.53">
+</div>
+<div class="slider-group">
+<label><span>Allocation: Data ← → Model</span><span id="v-frontier-split">Balanced</span></label>
+<input type="range" id="s-frontier-split" min="0" max="100" step="1" value="50">
+</div>
+<canvas id="chart-frontier" height="300"></canvas>
+<div class="frontier-info">
+<div class="fi"><div style="font-size:.8em;color:var(--dim)">Model Size</div><div class="val" id="fi-n">—</div></div>
+<div class="fi"><div style="font-size:.8em;color:var(--dim)">Tokens</div><div class="val" id="fi-d">—</div></div>
+<div class="fi"><div style="font-size:.8em;color:var(--dim)">Predicted Loss</div><div class="val" id="fi-loss" style="color:var(--gold)">—</div></div>
+</div>
+<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+<button class="btn" style="background:var(--accent2);color:#000" onclick="setGopher()">📍 Gopher (280B/300B)</button>
+<button class="btn" style="background:var(--accent3);color:#000" onclick="setChinchilla()">📍 Chinchilla (70B/1.4T)</button>
+</div>
+</div>
+</section>
+
+<!-- ==================== ACT 2 ==================== -->
+<section class="act2">
+<span class="act-label">ACT 2 — THE BUILD</span>
+<h2>Python Puzzles</h2>
+<p>Time to code. These puzzles walk you through the math behind scaling laws.</p>
+<div id="pyodide-status" class="pyodide-loading"><span class="spinner"></span>Loading Python runtime...</div>
+
+<div class="puzzle" id="puzzle-1">
+<div class="puzzle-header">
+<div style="display:flex;align-items:center;gap:10px"><div class="puzzle-num">1</div><strong>Fit a Power Law</strong></div>
+<span class="puzzle-status unsolved" id="p1-status">unsolved</span>
+</div>
+<p class="desc">Given data points, fit L = a · N^b using log-log linear regression. Return (a, b).</p>
+<div class="eq">log(L) = log(a) + b·log(N) → linear regression in log space</div>
+<textarea class="code-input" id="p1-code">import numpy as np
+
+def fit_power_law(N, L):
+    """Given arrays N and L, fit L = a * N^b.
+    Return (a, b) as floats.
+    Hint: take log of both sides, then use np.polyfit."""
+    # YOUR CODE HERE
+    pass
+</textarea>
+<div><button class="btn btn-run" onclick="runPuzzle(1)">▶ Run</button><button class="btn btn-reset" onclick="resetPuzzle(1)">Reset</button></div>
+<div class="output" id="p1-output"></div>
+</div>
+
+<div class="puzzle" id="puzzle-2">
+<div class="puzzle-header">
+<div style="display:flex;align-items:center;gap:10px"><div class="puzzle-num">2</div><strong>Kaplan Scaling Law</strong></div>
+<span class="puzzle-status unsolved" id="p2-status">unsolved</span>
+</div>
+<p class="desc">Implement the Kaplan scaling law for model size: L(N) = (N_c / N)^α_N + L_∞</p>
+<div class="eq">L(N) = (8.8×10¹³ / N)^0.076 + 1.69</div>
+<textarea class="code-input" id="p2-code">def kaplan_loss(N):
+    """Compute predicted loss for model with N parameters.
+    N_c = 8.8e13, alpha_N = 0.076, L_inf = 1.69
+    Return the loss as a float."""
+    # YOUR CODE HERE
+    pass
+</textarea>
+<div><button class="btn btn-run" onclick="runPuzzle(2)">▶ Run</button><button class="btn btn-reset" onclick="resetPuzzle(2)">Reset</button></div>
+<div class="output" id="p2-output"></div>
+</div>
+
+<div class="puzzle" id="puzzle-3">
+<div class="puzzle-header">
+<div style="display:flex;align-items:center;gap:10px"><div class="puzzle-num">3</div><strong>Compute-Optimal Allocation</strong></div>
+<span class="puzzle-status unsolved" id="p3-status">unsolved</span>
+</div>
+<p class="desc">Given C FLOPs, find the Chinchilla-optimal N and D where C ≈ 6·N·D and N ∝ D (equal scaling).</p>
+<div class="eq">C ≈ 6·N·D &nbsp;→&nbsp; N_opt = √(C/6) ≈ D_opt &nbsp; (Chinchilla: scale equally)</div>
+<textarea class="code-input" id="p3-code">import math
+
+def compute_optimal(C):
+    """Given compute budget C (in FLOPs), return (N_opt, D_opt).
+    Use Chinchilla rule: N and D scale equally, C ≈ 6*N*D.
+    So N_opt ≈ D_opt ≈ sqrt(C/6).
+    Return (N_opt, D_opt) as floats."""
+    # YOUR CODE HERE
+    pass
+</textarea>
+<div><button class="btn btn-run" onclick="runPuzzle(3)">▶ Run</button><button class="btn btn-reset" onclick="resetPuzzle(3)">Reset</button></div>
+<div class="output" id="p3-output"></div>
+</div>
+
+<div class="puzzle" id="puzzle-4">
+<div class="puzzle-header">
+<div style="display:flex;align-items:center;gap:10px"><div class="puzzle-num">4</div><strong>Gopher vs Chinchilla</strong></div>
+<span class="puzzle-status unsolved" id="p4-status">unsolved</span>
+</div>
+<p class="desc">Both use ~5.76×10²³ FLOPs. Gopher: 280B params, 300B tokens. Chinchilla: 70B params, 1.4T tokens. Which gets lower loss?</p>
+<textarea class="code-input" id="p4-code">def compare_models():
+    """Compare Gopher and Chinchilla using the combined scaling law:
+    L(N, D) = ((N_c/N)^(alpha_N/alpha_C) + (D_c/D)^(alpha_D/alpha_C))^alpha_C + L_inf
+    
+    Simplified: use L(N,D) = (8.8e13/N)**0.076 + (5.4e13/D)**0.095 + 1.69
+    
+    Gopher:     N=280e9,  D=300e9
+    Chinchilla: N=70e9,   D=1.4e12
+    
+    Return (gopher_loss, chinchilla_loss) as floats."""
+    # YOUR CODE HERE
+    pass
+</textarea>
+<div><button class="btn btn-run" onclick="runPuzzle(4)">▶ Run</button><button class="btn btn-reset" onclick="resetPuzzle(4)">Reset</button></div>
+<div class="output" id="p4-output"></div>
+</div>
+</section>
+
+<!-- ==================== ACT 3 ==================== -->
+<section class="act3">
+<span class="act-label">ACT 3 — THE CONNECTION</span>
+<h2>The Story That Changed AI</h2>
+
+<div class="timeline">
+<div class="timeline-node tag-kaplan">Kaplan (Jan 2020)</div>
+<span class="timeline-arrow">→</span>
+<div class="timeline-node" style="background:rgba(255,215,108,.15);color:var(--gold)">GPT-3 (Jun 2020)</div>
+<span class="timeline-arrow">→</span>
+<div class="timeline-node" style="background:rgba(255,108,170,.15);color:var(--accent2)">Gopher (Dec 2021)</div>
+<span class="timeline-arrow">→</span>
+<div class="timeline-node tag-chinchilla">Chinchilla (Mar 2022)</div>
+<span class="timeline-arrow">→</span>
+<div class="timeline-node" style="background:rgba(108,255,160,.15);color:var(--accent3)">LLaMA, Mistral...</div>
+</div>
+
+<h3>📄 Paper #5: Kaplan et al. (2020) — "Scaling Laws for Neural Language Models"</h3>
+<p>The paper that discovered the power laws. Three clean findings:</p>
+
+<blockquote>"Language modeling performance improves smoothly as we increase the model size, dataset size, or amount of compute used for training."<cite>— Kaplan et al., 2020</cite></blockquote>
+
+<blockquote>"Performance depends strongly on scale, weakly on model shape. [...] Other architectural hyperparameters such as depth vs. width have minimal effects within a wide range."<cite>— Kaplan et al., 2020</cite></blockquote>
+
+<blockquote>"Larger models are significantly more sample-efficient... Optimally compute-efficient training involves training very large models on a relatively modest amount of data."<cite>— Kaplan et al., 2020</cite></blockquote>
+
+<p>This last finding was the critical mistake. Kaplan concluded: <strong>for compute-optimal training, scale up the model fast and don't worry too much about data.</strong> Their recommendation: when compute increases 10×, increase model size 5.5× but data only 1.8×.</p>
+
+<div class="eq">Kaplan recipe: N ∝ C<sup>0.73</sup>, D ∝ C<sup>0.27</sup> → heavily favor model size</div>
+
+<h3>📄 Paper #6: Hoffmann et al. (2022) — "Training Compute-Optimal Large Language Models"</h3>
+<p>DeepMind's correction. They re-ran the analysis more carefully and found:</p>
+
+<blockquote>"Given a 10× increase in computational budget, the model size and the number of training tokens should be scaled in approximately equal proportions."<cite>— Hoffmann et al., 2022</cite></blockquote>
+
+<blockquote>"We find that current large language models are significantly over-sized and under-trained given their compute budgets."<cite>— Hoffmann et al., 2022</cite></blockquote>
+
+<blockquote>"Chinchilla [...] uses the same compute budget as Gopher but with 70B parameters and 4× more data. Chinchilla uniformly and significantly outperforms Gopher."<cite>— Hoffmann et al., 2022</cite></blockquote>
+
+<div class="eq">Chinchilla recipe: N ∝ C<sup>0.50</sup>, D ∝ C<sup>0.50</sup> → scale both equally</div>
+
+<h3>📊 The Results: Chinchilla vs Gopher</h3>
+
+<table class="comparison-table">
+<thead><tr><th>Property</th><th>Gopher (280B)</th><th>Chinchilla (70B)</th><th>Winner</th></tr></thead>
+<tbody>
+<tr><td>Parameters</td><td>280B</td><td>70B</td><td>—</td></tr>
+<tr><td>Training Tokens</td><td>300B</td><td>1.4T</td><td>—</td></tr>
+<tr><td>Training FLOPs</td><td>5.76×10²³</td><td>5.76×10²³</td><td>Tie</td></tr>
+<tr class="highlight-row"><td>Wikitext103 (ppl ↓)</td><td>7.15</td><td><strong>6.62</strong></td><td style="color:var(--accent3)">🏆 Chinchilla</td></tr>
+<tr class="highlight-row"><td>LAMBADA (acc ↑)</td><td>74.5%</td><td><strong>77.4%</strong></td><td style="color:var(--accent3)">🏆 Chinchilla</td></tr>
+<tr class="highlight-row"><td>HellaSwag (acc ↑)</td><td>79.2%</td><td><strong>80.8%</strong></td><td style="color:var(--accent3)">🏆 Chinchilla</td></tr>
+<tr class="highlight-row"><td>MMLU (5-shot ↑)</td><td>60.0%</td><td><strong>67.5%</strong></td><td style="color:var(--accent3)">🏆 Chinchilla</td></tr>
+<tr><td>Inference Cost</td><td>4× more</td><td><strong>1×</strong></td><td style="color:var(--accent3)">🏆 Chinchilla</td></tr>
+</tbody>
+</table>
+
+<div class="card" style="border-color:var(--accent3)">
+<h3 style="margin-top:0">💡 The Legacy</h3>
+<p>Chinchilla didn't just train a better model — it <strong>rewrote the playbook</strong>. Every major efficient model since follows Chinchilla-optimal ratios:</p>
+<ul style="color:var(--dim);margin:10px 0 0 20px;line-height:2">
+<li><strong>LLaMA (Meta, 2023):</strong> 65B params trained on 1.4T tokens — explicitly Chinchilla-optimal</li>
+<li><strong>Mistral 7B (2023):</strong> Small model, huge data — outperforms LLaMA-2 13B</li>
+<li><strong>Gemma (Google, 2024):</strong> 2B and 7B models trained on 2-6T tokens</li>
+<li><strong>The trend:</strong> Models got <em>smaller</em> and data got <em>bigger</em> — the opposite of Kaplan's advice</li>
+</ul>
+<p style="margin-top:12px;color:var(--gold)"><strong>One correction to a scaling exponent reshaped a $100B+ industry.</strong></p>
+</div>
+
+<canvas id="chart-comparison" height="300" style="margin:20px 0"></canvas>
+<p style="text-align:center;font-size:.85em;color:var(--dim)">Kaplan vs Chinchilla: optimal model size for a given compute budget</p>
+
+</section>
+
+<div style="text-align:center;padding:40px 0 60px;color:var(--dim);font-size:.9em">
+<p>Module 05 · AI Beach Week Curriculum</p>
+<p style="font-size:.8em;margin-top:4px">Papers: Kaplan et al. (2020), Hoffmann et al. (2022)</p>
+</div>
+
+</div>
+
+<script>
+// === UTILITIES ===
+function fmt(n){if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(1)}
+function fmtE(n){if(n===0)return'0';const e=Math.floor(Math.log10(Math.abs(n)));const m=n/Math.pow(10,e);return m.toFixed(1)+'e'+e}
+
+// === SCALING LAW FUNCTIONS ===
+const Nc=8.8e13, Dc=5.4e13, Cc=1.6e7, aN=0.076, aD=0.095, aC=0.050, Linf=1.69;
+function lossN(N){return Math.pow(Nc/N,aN)+Linf}
+function lossD(D){return Math.pow(Dc/D,aD)+Linf}
+function lossC(C){return Math.pow(Cc/C,aC)+Linf}
+function lossND(N,D){return Math.pow(Nc/N,aN)+Math.pow(Dc/D,aD)+Linf}
+
+// === CHART DRAWING ===
+function drawLogChart(canvasId, xRange, yFn, currentX, label, color){
+  const c=document.getElementById(canvasId);
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=c.clientWidth, H=c.clientHeight;
+  c.width=W*dpr;c.height=H*dpr;
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  
+  const pad={l:10,r:10,t:10,b:10};
+  const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
+  
+  const xs=[];for(let i=0;i<=100;i++)xs.push(xRange[0]+(xRange[1]-xRange[0])*i/100);
+  const ys=xs.map(x=>yFn(Math.pow(10,x)));
+  const yMin=Math.min(...ys), yMax=Math.max(...ys);
+  const yPad=(yMax-yMin)*0.1||0.1;
+  
+  function tx(logx){return pad.l+((logx-xRange[0])/(xRange[1]-xRange[0]))*pw}
+  function ty(y){return pad.t+((yMax+yPad-y)/(yMax-yMin+2*yPad))*ph}
+  
+  // curve
+  ctx.beginPath();
+  ctx.strokeStyle=color;ctx.lineWidth=2;
+  for(let i=0;i<xs.length;i++){const x=tx(xs[i]),y=ty(ys[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.stroke();
+  
+  // current point
+  const cx=tx(Math.log10(currentX)),cy=ty(yFn(currentX));
+  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#ffd76c';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.strokeStyle='rgba(255,215,108,0.4)';ctx.lineWidth=2;ctx.stroke();
+}
+
+// === ACT 1: SLIDERS ===
+const sP=document.getElementById('s-params'),sT=document.getElementById('s-tokens'),sF=document.getElementById('s-flops');
+const vP=document.getElementById('v-params'),vT=document.getElementById('v-tokens'),vF=document.getElementById('v-flops');
+
+function updateAct1(){
+  const N=Math.pow(10,+sP.value),D=Math.pow(10,+sT.value),C=Math.pow(10,+sF.value);
+  vP.textContent=fmt(N);vT.textContent=fmt(D);vF.textContent=fmtE(C);
+  
+  drawLogChart('chart-n',[7,12.5],lossN,N,'N','#6c8cff');
+  drawLogChart('chart-d',[9,13.5],lossD,D,'D','#ff6caa');
+  drawLogChart('chart-c',[17,25],lossC,C,'C','#6cffa0');
+  
+  const loss=lossND(N,D);
+  document.getElementById('current-loss').textContent=loss.toFixed(3);
+}
+sP.addEventListener('input',updateAct1);sT.addEventListener('input',updateAct1);sF.addEventListener('input',updateAct1);
+
+// === ACT 1: FRONTIER ===
+const sFc=document.getElementById('s-frontier-c'),sFsplit=document.getElementById('s-frontier-split');
+
+function updateFrontier(){
+  const C=Math.pow(10,+sFc.value);
+  document.getElementById('v-frontier-c').textContent=fmtE(C);
+  
+  // split: 0=all data, 100=all model. 50=balanced (chinchilla)
+  const s=+sFsplit.value;
+  // parameterize: at s=50, N=D=sqrt(C/6). Shift exponent.
+  const ratio=Math.pow(10,(s-50)/25); // log-scale ratio N/D
+  const D_opt=Math.pow(C/(6*ratio),0.5);
+  const N_opt=C/(6*D_opt);
+  
+  const splitLabel=s<40?'Data-heavy':s>60?'Model-heavy':'Balanced';
+  document.getElementById('v-frontier-split').textContent=splitLabel;
+  document.getElementById('fi-n').textContent=fmt(N_opt);
+  document.getElementById('fi-d').textContent=fmt(D_opt);
+  
+  const loss=lossND(N_opt,D_opt);
+  document.getElementById('fi-loss').textContent=loss.toFixed(3);
+  
+  drawFrontierChart(C,N_opt,D_opt);
+}
+
+function drawFrontierChart(C,curN,curD){
+  const c=document.getElementById('chart-frontier');
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=c.clientWidth,H=c.clientHeight;
+  c.width=W*dpr;c.height=H*dpr;ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  
+  const pad={l:50,r:20,t:20,b:40};
+  const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  
+  // sweep allocations
+  const pts=[];
+  for(let i=0;i<=100;i++){
+    const r=Math.pow(10,(i-50)/25);
+    const D=Math.pow(C/(6*r),0.5);
+    const N=C/(6*D);
+    pts.push({N,D,loss:lossND(N,D),i});
+  }
+  
+  const logNs=pts.map(p=>Math.log10(p.N));
+  const losses=pts.map(p=>p.loss);
+  const xMin=Math.min(...logNs),xMax=Math.max(...logNs);
+  const yMin=Math.min(...losses),yMax=Math.max(...losses);
+  const yPad=(yMax-yMin)*0.15||0.1;
+  
+  function tx(logn){return pad.l+((logn-xMin)/(xMax-xMin))*pw}
+  function ty(l){return pad.t+((yMax+yPad-l)/(yMax-yMin+2*yPad))*ph}
+  
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+ph*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke()}
+  
+  // axes labels
+  ctx.fillStyle='#8888aa';ctx.font='11px system-ui';
+  ctx.fillText('Model Size (N) →',W/2-40,H-5);
+  ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Loss ↓',0,0);ctx.restore();
+  
+  // curve
+  ctx.beginPath();ctx.strokeStyle='#6c8cff';ctx.lineWidth=2.5;
+  pts.forEach((p,i)=>{const x=tx(Math.log10(p.N)),y=ty(p.loss);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.stroke();
+  
+  // optimal point (minimum)
+  const minPt=pts.reduce((a,b)=>a.loss<b.loss?a:b);
+  const mx=tx(Math.log10(minPt.N)),my=ty(minPt.loss);
+  ctx.beginPath();ctx.arc(mx,my,6,0,Math.PI*2);ctx.fillStyle='rgba(108,255,160,0.3)';ctx.fill();
+  ctx.beginPath();ctx.arc(mx,my,3,0,Math.PI*2);ctx.fillStyle='#6cffa0';ctx.fill();
+  ctx.fillStyle='#6cffa0';ctx.font='bold 10px system-ui';ctx.fillText('optimal',mx+8,my-8);
+  
+  // current point
+  const cx=tx(Math.log10(curN)),cy=ty(lossND(curN,curD));
+  ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fillStyle='#ffd76c';ctx.fill();
+  ctx.beginPath();ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(255,215,108,0.4)';
+  ctx.moveTo(cx,cy);ctx.lineTo(cx,H-pad.b);ctx.stroke();ctx.setLineDash([]);
+  
+  // Gopher & Chinchilla markers
+  const gN=280e9,gD=300e9,cN=70e9,cD=1.4e12;
+  const gC=6*gN*gD;
+  // Only show if compute is close
+  if(Math.abs(Math.log10(C)-Math.log10(gC))<1){
+    // adjust for current compute
+    const gD2=C/(6*gN),cD2=C/(6*cN);
+    if(gD2>0&&cD2>0){
+      const gx=tx(Math.log10(gN)),gy=ty(lossND(gN,gD2));
+      const ccx=tx(Math.log10(cN)),ccy=ty(lossND(cN,cD2));
+      if(gx>pad.l&&gx<W-pad.r){ctx.beginPath();ctx.arc(gx,gy,5,0,Math.PI*2);ctx.fillStyle='#ff6caa';ctx.fill();ctx.fillStyle='#ff6caa';ctx.font='bold 10px system-ui';ctx.fillText('Gopher',gx+8,gy-6)}
+      if(ccx>pad.l&&ccx<W-pad.r){ctx.beginPath();ctx.arc(ccx,ccy,5,0,Math.PI*2);ctx.fillStyle='#6cffa0';ctx.fill();ctx.fillStyle='#6cffa0';ctx.font='bold 10px system-ui';ctx.fillText('Chinchilla',ccx+8,ccy-6)}
+    }
+  }
+}
+
+function setGopher(){sFc.value=Math.log10(6*280e9*300e9);sFsplit.value=78;updateFrontier()}
+function setChinchilla(){sFc.value=Math.log10(6*70e9*1.4e12);sFsplit.value=50;updateFrontier()}
+
+sFc.addEventListener('input',updateFrontier);sFsplit.addEventListener('input',updateFrontier);
+
+// === ACT 3: COMPARISON CHART ===
+function drawComparisonChart(){
+  const c=document.getElementById('chart-comparison');
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=c.clientWidth,H=c.clientHeight;
+  c.width=W*dpr;c.height=H*dpr;ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  
+  const pad={l:60,r:30,t:20,b:45};
+  const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  
+  // Kaplan: N_opt ∝ C^0.73, Chinchilla: N_opt ∝ C^0.5
+  const logCs=[];for(let i=0;i<=100;i++)logCs.push(18+i*0.08);
+  const kaplanN=logCs.map(lc=>0.73*lc-5);// log10(N) ~ 0.73*log10(C) + const
+  const chinN=logCs.map(lc=>0.5*lc+0.6);
+  
+  const allN=[...kaplanN,...chinN];
+  const xMin=18,xMax=26;
+  const yMin=Math.min(...allN)-0.5,yMax=Math.max(...allN)+0.5;
+  
+  function tx(lc){return pad.l+((lc-xMin)/(xMax-xMin))*pw}
+  function ty(ln){return pad.t+((yMax-ln)/(yMax-yMin))*ph}
+  
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){const y=pad.t+ph*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke()}
+  
+  // Kaplan line
+  ctx.beginPath();ctx.strokeStyle='#6c8cff';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
+  logCs.forEach((lc,i)=>{const x=tx(lc),y=ty(kaplanN[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.stroke();ctx.setLineDash([]);
+  
+  // Chinchilla line
+  ctx.beginPath();ctx.strokeStyle='#6cffa0';ctx.lineWidth=2.5;
+  logCs.forEach((lc,i)=>{const x=tx(lc),y=ty(chinN[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.stroke();
+  
+  // labels
+  ctx.fillStyle='#8888aa';ctx.font='11px system-ui';
+  ctx.fillText('Compute (FLOPs, log₁₀) →',W/2-60,H-5);
+  ctx.save();ctx.translate(14,H/2+30);ctx.rotate(-Math.PI/2);ctx.fillText('Optimal N (log₁₀) →',0,0);ctx.restore();
+  
+  // tick labels
+  ctx.font='10px monospace';ctx.fillStyle='#666';
+  for(let lc=18;lc<=26;lc+=2){ctx.fillText('1e'+lc,tx(lc)-12,H-pad.b+15)}
+  
+  // legend
+  ctx.font='bold 12px system-ui';
+  ctx.fillStyle='#6c8cff';ctx.fillText('— Kaplan: N ∝ C⁰·⁷³',pad.l+10,pad.t+18);
+  ctx.fillStyle='#6cffa0';ctx.fillText('— Chinchilla: N ∝ C⁰·⁵⁰',pad.l+10,pad.t+36);
+  
+  // annotation
+  const annotX=tx(23),annotY=ty(0.73*23-5);
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='10px system-ui';
+  ctx.fillText('"Make it bigger!"',annotX-30,annotY-15);
+  const annotX2=tx(23),annotY2=ty(0.5*23+0.6);
+  ctx.fillText('"Balance it!"',annotX2+10,annotY2+18);
+}
+
+// === INIT ===
+updateAct1();updateFrontier();drawComparisonChart();
+window.addEventListener('resize',()=>{updateAct1();updateFrontier();drawComparisonChart()});
+
+// === PYODIDE (ACT 2) ===
+const defaultCode={};
+document.querySelectorAll('.code-input').forEach(ta=>{defaultCode[ta.id]=ta.value});
+
+let pyodideReady=false;
+let pyodide=null;
+
+async function loadPyodideRuntime(){
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+  document.head.appendChild(script);
+  script.onload=async()=>{
+    pyodide=await loadPyodide();
+    await pyodide.loadPackage('numpy');
+    pyodideReady=true;
+    document.getElementById('pyodide-status').innerHTML='✅ Python ready!';
+    setTimeout(()=>{document.getElementById('pyodide-status').style.display='none'},2000);
+  };
+  script.onerror=()=>{
+    document.getElementById('pyodide-status').innerHTML='⚠️ Could not load Python. Puzzles require internet.';
+  };
+}
+loadPyodideRuntime();
+
+const tests={
+  1:function(){return`
+import numpy as np
+N = np.array([1e6, 1e7, 1e8, 1e9, 1e10])
+L = np.array([4.5, 3.8, 3.2, 2.7, 2.3])
+a, b = fit_power_law(N, L)
+assert isinstance(a, (int,float)), "Return floats"
+assert isinstance(b, (int,float)), "Return floats"
+assert b < 0, f"Exponent b should be negative, got {b}"
+assert abs(b - (-0.220)) < 0.05, f"Expected b ≈ -0.22, got {b:.3f}"
+assert abs(a - 25.3) < 8, f"Expected a ≈ 25, got {a:.1f}"
+print(f"✅ Power law fit: L = {a:.2f} · N^({b:.4f})")
+print(f"   Test: L(1e8) = {a * (1e8)**b:.3f} (expected ~3.2)")
+`},
+  2:function(){return`
+l1 = kaplan_loss(1e9)
+l2 = kaplan_loss(1e10)
+l3 = kaplan_loss(1e11)
+assert l1 > l2 > l3, "Loss should decrease with more params"
+assert abs(l1 - 2.374) < 0.05, f"L(1B) ≈ 2.374, got {l1:.3f}"
+assert abs(l2 - 2.247) < 0.05, f"L(10B) ≈ 2.247, got {l2:.3f}"
+print(f"✅ Kaplan scaling law working!")
+print(f"   L(1B)   = {l1:.4f}")
+print(f"   L(10B)  = {l2:.4f}")
+print(f"   L(100B) = {l3:.4f}")
+`},
+  3:function(){return`
+import math
+C = 6 * 70e9 * 1.4e12  # Chinchilla's compute
+N, D = compute_optimal(C)
+ratio = N / D
+assert 0.5 < ratio < 2.0, f"N and D should be similar, ratio={ratio:.2f}"
+recon = 6 * N * D
+assert abs(recon - C) / C < 0.01, f"6*N*D should ≈ C, got {recon:.2e} vs {C:.2e}"
+print(f"✅ Compute-optimal allocation!")
+print(f"   C = {C:.2e} FLOPs")
+print(f"   N_opt = {N:.2e} ({N/1e9:.1f}B params)")
+print(f"   D_opt = {D:.2e} ({D/1e12:.2f}T tokens)")
+print(f"   Ratio N/D = {ratio:.3f} (should be ~1.0)")
+`},
+  4:function(){return`
+gl, cl = compare_models()
+assert gl > cl, f"Chinchilla should win! Gopher={gl:.3f}, Chinchilla={cl:.3f}"
+print(f"✅ Chinchilla wins!")
+print(f"   Gopher loss:     {gl:.4f} (280B params, 300B tokens)")
+print(f"   Chinchilla loss: {cl:.4f} (70B params, 1.4T tokens)")
+print(f"   Improvement:     {gl-cl:.4f} ({(gl-cl)/gl*100:.1f}%)")
+print(f"   Same compute, smarter allocation! 🏆")
+`}
+};
+
+async function runPuzzle(n){
+  if(!pyodideReady){document.getElementById('p'+n+'-output').textContent='⏳ Python still loading...';return}
+  const code=document.getElementById('p'+n+'-code').value;
+  const out=document.getElementById('p'+n+'-output');
+  const status=document.getElementById('p'+n+'-status');
+  out.className='output';out.textContent='Running...';
+  try{
+    pyodide.runPython(code);
+    const testCode=tests[n]();
+    pyodide.runPython(`
+import io, sys
+_buf = io.StringIO()
+sys.stdout = _buf
+${testCode}
+sys.stdout = sys.__stdout__
+_result = _buf.getvalue()
+`);
+    const result=pyodide.globals.get('_result');
+    out.textContent=result;out.className='output success';
+    status.textContent='solved ✓';status.className='puzzle-status solved';
+  }catch(e){
+    out.textContent='❌ '+e.message;out.className='output error';
+    status.textContent='unsolved';status.className='puzzle-status unsolved';
+  }
+}
+
+function resetPuzzle(n){
+  document.getElementById('p'+n+'-code').value=defaultCode['p'+n+'-code'];
+  document.getElementById('p'+n+'-output').textContent='';document.getElementById('p'+n+'-output').className='output';
+  document.getElementById('p'+n+'-status').textContent='unsolved';document.getElementById('p'+n+'-status').className='puzzle-status unsolved';
+}
+</script>
+</body>
+</html>

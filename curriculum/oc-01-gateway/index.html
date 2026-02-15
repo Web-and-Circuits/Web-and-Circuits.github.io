@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-01: The Gateway — OpenClaw Deep Dive</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--surface:#131a2b;--surface2:#1a2340;--accent:#4fc3f7;--accent2:#7c4dff;--text:#e0e6f0;--text2:#8892a8;--success:#66bb6a;--warn:#ffa726;--error:#ef5350;--pink:#f06292;--border:#2a3555;--radius:12px;--green:#4caf50;--orange:#ff9800;--cyan:#26c6da}
+html{scroll-behavior:smooth}
+body{font-family:'SF Pro Text',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:'SF Mono',Menlo,monospace;font-size:.85em;background:var(--surface2);padding:2px 6px;border-radius:4px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:'SF Mono',Menlo,monospace;font-size:.82rem;color:#c9d1d9;overflow-x:auto;margin:.75rem 0;line-height:1.5}
+pre .k{color:var(--accent2)}
+pre .s{color:var(--success)}
+pre .c{color:var(--text2)}
+pre .t{color:var(--cyan)}
+
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--pink));z-index:1000;transition:width .3s}
+
+nav{position:fixed;top:12px;right:12px;z-index:999;display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;transition:.2s}
+nav button:hover,nav button.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative}
+.hero h1{font-size:clamp(2rem,6vw,3.5rem);font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero .sub{color:var(--text2);font-size:1.1rem;max-width:550px;margin-bottom:.5rem}
+.hero .tagline{color:var(--pink);font-size:.95rem;font-style:italic;margin-bottom:2rem;max-width:500px}
+.start-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:14px 36px;border-radius:30px;font-size:1.1rem;cursor:pointer;transition:.3s;font-weight:600}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,195,247,.3)}
+.module-tag{font-size:.8rem;text-transform:uppercase;letter-spacing:3px;color:var(--accent);margin-bottom:1rem}
+
+section{padding:3rem 1.5rem;max-width:900px;margin:0 auto}
+.act-header{text-align:center;margin-bottom:2.5rem}
+.act-header .act-label{font-size:.8rem;text-transform:uppercase;letter-spacing:3px;color:var(--accent);margin-bottom:.5rem}
+.act-header h2{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700}
+.act-header p{color:var(--text2);margin-top:.5rem;max-width:600px;margin-left:auto;margin-right:auto}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+.card h3{font-size:1.1rem;margin-bottom:.75rem;color:var(--accent)}
+.card p{color:var(--text2);font-size:.92rem}
+
+/* ── Gateway Architecture Viz ── */
+#gw-canvas{width:100%;height:520px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);cursor:default;display:block}
+
+/* ── WS Inspector ── */
+.ws-inspector{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ws-tabs{display:flex;border-bottom:1px solid var(--border)}
+.ws-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:.85rem;color:var(--text2);transition:.2s;border:none;background:none}
+.ws-tab:hover{color:var(--text)}
+.ws-tab.active{color:var(--accent);border-bottom:2px solid var(--accent);background:rgba(79,195,247,.05)}
+.ws-frame{padding:1rem;min-height:200px;font-family:'SF Mono',Menlo,monospace;font-size:.8rem;line-height:1.6}
+.ws-frame .dir{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;margin-right:8px}
+.ws-frame .dir.in{background:rgba(102,187,106,.15);color:var(--success)}
+.ws-frame .dir.out{background:rgba(79,195,247,.15);color:var(--accent)}
+.ws-lifecycle{display:flex;gap:8px;padding:1rem;border-top:1px solid var(--border);flex-wrap:wrap}
+.ws-lifecycle button{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.78rem;transition:.2s}
+.ws-lifecycle button:hover,
+.ws-lifecycle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+/* ── Health / Config ── */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:1rem}
+.health-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center}
+.health-item .val{font-size:1.6rem;font-weight:700;margin:.25rem 0}
+.health-item .lbl{font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.health-ok .val{color:var(--success)}
+.health-warn .val{color:var(--warn)}
+.health-err .val{color:var(--error)}
+
+.config-field{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;cursor:help;position:relative}
+.config-field:last-child{border:none}
+.config-key{font-family:'SF Mono',Menlo,monospace;color:var(--accent)}
+.config-val{color:var(--success);font-family:'SF Mono',Menlo,monospace;font-size:.85rem}
+.config-tip{display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px;font-size:.8rem;color:var(--text);z-index:10;line-height:1.4}
+.config-field:hover .config-tip{display:block}
+
+/* ── Exercises ── */
+#pyodide-status{text-align:center;padding:1rem;color:var(--text2);font-size:.9rem}
+.puzzle{margin-bottom:2rem}
+.puzzle-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.puzzle-header h3{font-size:1rem}
+.puzzle-num{background:var(--accent2);color:#fff;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;margin-right:8px}
+.puzzle textarea{width:100%;min-height:180px;background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);color:#c9d1d9;font-family:'SF Mono',Menlo,monospace;font-size:.82rem;padding:12px;resize:vertical;outline:none;tab-size:4}
+.puzzle textarea:focus{border-color:var(--accent)}
+.puzzle-controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.run-btn{background:var(--success);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.run-btn:hover{opacity:.85}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+.hint-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem}
+.puzzle-output{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:8px;font-family:'SF Mono',Menlo,monospace;font-size:.8rem;color:#8b949e;min-height:40px;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.puzzle-output.success{border-color:var(--success);color:var(--success)}
+.puzzle-output.error{border-color:var(--error);color:var(--error)}
+.puzzle-desc{color:var(--text2);font-size:.9rem;margin-bottom:.75rem}
+.check-mark{color:var(--success);font-weight:700;font-size:1.1rem}
+.ts-types{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:'SF Mono',Menlo,monospace;font-size:.78rem;color:var(--text2);margin-bottom:1rem;line-height:1.5}
+.ts-label{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);margin-bottom:6px}
+
+/* ── Act 3 ── */
+.e2e-step{display:flex;gap:14px;margin-bottom:1.25rem;align-items:flex-start}
+.e2e-num{background:var(--accent);color:var(--bg);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.e2e-body h4{font-size:.95rem;color:var(--text);margin-bottom:2px}
+.e2e-body p{font-size:.85rem;color:var(--text2)}
+.failure-card{background:var(--surface);border-left:3px solid var(--error);border-radius:0 var(--radius) var(--radius) 0;padding:1rem 1.25rem;margin-bottom:1rem}
+.failure-card h4{color:var(--error);font-size:.95rem;margin-bottom:4px}
+.failure-card p{color:var(--text2);font-size:.85rem}
+.resource-link{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;transition:.2s;margin-bottom:.75rem}
+.resource-link:hover{border-color:var(--accent);transform:translateY(-1px);text-decoration:none}
+
+.completion{text-align:center;padding:4rem 2rem}
+.completion h2{font-size:2rem;margin-bottom:1rem}
+.completion .trophy{font-size:4rem;margin-bottom:1rem}
+
+.json-block{position:relative}
+.json-block .lang-tag{position:absolute;top:8px;right:12px;font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text2);opacity:.6}
+
+@media(max-width:600px){
+  section{padding:2rem 1rem}
+  .puzzle textarea{min-height:200px;font-size:.78rem}
+  #gw-canvas{height:400px}
+  nav{top:auto;bottom:8px;right:8px;left:8px;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:0%"></div>
+
+<nav>
+  <button onclick="goTo('hero')" class="active">Home</button>
+  <button onclick="goTo('act1')">Explore</button>
+  <button onclick="goTo('act2')">Build</button>
+  <button onclick="goTo('act3')">Connect</button>
+</nav>
+
+<!-- ════════════════ HERO ════════════════ -->
+<div class="hero" id="hero">
+  <div class="module-tag">OpenClaw Deep Dive · OC-01</div>
+  <h1>The Gateway</h1>
+  <div class="sub">The message router at the heart of every OpenClaw agent.</div>
+  <div class="tagline">"It doesn't think — it connects thinking to talking to acting."</div>
+  <button class="start-btn" onclick="goTo('act1')">Enter the Gateway →</button>
+</div>
+
+<!-- ════════════════ ACT 1: THE EXPLORABLE ════════════════ -->
+<section id="act1">
+  <div class="act-header">
+    <div class="act-label">Act 1</div>
+    <h2>The Explorable</h2>
+    <p>See the gateway for what it is: a hub that routes messages between channels, clients, nodes, and the agent loop.</p>
+  </div>
+
+  <!-- Architecture Visualization -->
+  <div class="card">
+    <h3>🌐 Gateway Architecture</h3>
+    <p>Messages flow in from channels, through the gateway, to the agent, and back out. Click any node to highlight its connection. Watch the animated message packets.</p>
+    <canvas id="gw-canvas"></canvas>
+  </div>
+
+  <!-- WebSocket Inspector -->
+  <div class="card">
+    <h3>🔌 WebSocket Inspector</h3>
+    <p>Click through a complete message lifecycle — from inbound chat to streamed reply.</p>
+    <div class="ws-inspector">
+      <div class="ws-tabs">
+        <div class="ws-tab active" data-step="0">1. Inbound</div>
+        <div class="ws-tab" data-step="1">2. Agent RPC</div>
+        <div class="ws-tab" data-step="2">3. Stream</div>
+        <div class="ws-tab" data-step="3">4. Reply</div>
+        <div class="ws-tab" data-step="4">5. Outbound</div>
+      </div>
+      <div class="ws-frame" id="ws-frame-display"></div>
+      <div class="ws-lifecycle" id="ws-lifecycle-btns"></div>
+    </div>
+  </div>
+
+  <!-- Health Check -->
+  <div class="card">
+    <h3>💚 Health Endpoint</h3>
+    <p>The gateway exposes <code>GET /health</code> — here's what it monitors:</p>
+    <div class="health-grid">
+      <div class="health-item health-ok"><div class="val">✓</div><div class="lbl">Status</div></div>
+      <div class="health-item health-ok"><div class="val" id="health-mem">48 MB</div><div class="lbl">Memory (RSS)</div></div>
+      <div class="health-item health-ok"><div class="val" id="health-up">3d 14h</div><div class="lbl">Uptime</div></div>
+      <div class="health-item health-ok"><div class="val" id="health-clients">4</div><div class="lbl">Clients</div></div>
+      <div class="health-item health-ok"><div class="val">●</div><div class="lbl">Anthropic</div></div>
+      <div class="health-item health-ok"><div class="val">●</div><div class="lbl">OpenAI</div></div>
+    </div>
+  </div>
+
+  <!-- Config Explorer -->
+  <div class="card">
+    <h3>⚙️ Configuration Explorer</h3>
+    <p>Hover over any field to learn what it controls.</p>
+    <div style="margin-top:1rem">
+      <div class="config-field">
+        <span class="config-key">gateway.host</span>
+        <span class="config-val">"127.0.0.1"</span>
+        <div class="config-tip">The IP address the gateway binds to. Use 127.0.0.1 for local-only access, 0.0.0.0 to accept connections from other machines on your network.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">gateway.port</span>
+        <span class="config-val">3578</span>
+        <div class="config-tip">The port for the HTTP + WebSocket server. Default is 3578. If you get EADDRINUSE, another process is already using this port.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">agent.defaultModel</span>
+        <span class="config-val">"anthropic/claude-sonnet-4-20250514"</span>
+        <div class="config-tip">The model used when no model is specified. Format: provider/model-name. The gateway routes this to the correct provider API.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">channels</span>
+        <span class="config-val">["whatsapp", "telegram", "discord"]</span>
+        <div class="config-tip">Array of enabled channel plugins. Each channel bridges a messaging platform to the gateway via its own protocol adapter.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">channels.discord.token</span>
+        <span class="config-val">"••••••••"</span>
+        <div class="config-tip">Bot token for the Discord channel. Stored in openclaw.json (encrypted at rest). The gateway uses this to authenticate the bot with Discord's API.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">agent.dmScope</span>
+        <span class="config-val">"channel"</span>
+        <div class="config-tip">How sessions are scoped: "channel" = one session per channel+user, "global" = one session across all channels, "strict" = per-channel-per-conversation.</div>
+      </div>
+      <div class="config-field">
+        <span class="config-key">agent.tools</span>
+        <span class="config-val">["read", "write", "exec", "browser"]</span>
+        <div class="config-tip">Tools the agent can invoke. Each tool is a capability — the gateway mediates tool calls between the model and the execution environment.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:2rem">
+    <button class="start-btn" onclick="goTo('act2')">Start Building →</button>
+  </div>
+</section>
+
+<!-- ════════════════ ACT 2: THE BUILD ════════════════ -->
+<section id="act2">
+  <div class="act-header">
+    <div class="act-label">Act 2</div>
+    <h2>The Build</h2>
+    <p>Four exercises that make the gateway's internals concrete. These are JavaScript exercises about OpenClaw's Node.js gateway — we use Pyodide (Python) as the runtime for convenience.</p>
+  </div>
+
+  <div id="pyodide-status">⏳ Loading Pyodide runtime...</div>
+
+  <!-- Exercise 1: Parse WS Frame -->
+  <div class="puzzle card" id="puzzle1">
+    <div class="puzzle-header">
+      <h3><span class="puzzle-num">1</span> Parse a WebSocket Frame</h3>
+      <span class="check-mark" id="check1"></span>
+    </div>
+    <div class="ts-label">TypeScript Types (OpenClaw Gateway)</div>
+    <div class="ts-types">type FrameType = "request" | "response" | "event";<br>interface WsFrame {<br>  type: FrameType;<br>  id?: string;        // request/response correlation ID<br>  method?: string;    // "agent.chat", "agent.stop", etc.<br>  event?: string;     // "stream.delta", "stream.end", etc.<br>  data?: any;         // payload<br>}</div>
+    <div class="puzzle-desc">Given a raw JSON WebSocket frame, return a dict with: <code>frame_type</code> (request/response/event), <code>id</code> (if present), and <code>summary</code> (method or event name).</div>
+    <textarea id="code1">import json
+
+def parse_frame(raw_json: str) -> dict:
+    """Parse a WebSocket frame and extract its key fields."""
+    frame = json.loads(raw_json)
+    # TODO: Determine frame_type, extract id, build summary
+    # Hint: requests have "method", events have "event",
+    #        responses have "type": "response"
+    return {
+        "frame_type": "???",
+        "id": None,
+        "summary": "???"
+    }
+
+# Test cases
+frames = [
+    '{"type":"request","id":"req_1","method":"agent.chat","data":{"message":"hello"}}',
+    '{"type":"response","id":"req_1","data":{"status":"ok"}}',
+    '{"type":"event","event":"stream.delta","data":{"text":"Hi"}}'
+]
+for f in frames:
+    print(parse_frame(f))</textarea>
+    <div class="puzzle-controls">
+      <button class="run-btn" onclick="runPuzzle(1)">▶ Run</button>
+      <button class="hint-btn" onclick="showHint(1)">💡 Hint</button>
+    </div>
+    <div class="puzzle-output" id="output1"></div>
+  </div>
+
+  <!-- Exercise 2: Route Inbound Message -->
+  <div class="puzzle card" id="puzzle2">
+    <div class="puzzle-header">
+      <h3><span class="puzzle-num">2</span> Route an Inbound Message</h3>
+      <span class="check-mark" id="check2"></span>
+    </div>
+    <div class="ts-label">TypeScript Types (OpenClaw Gateway)</div>
+    <div class="ts-types">type DmScope = "channel" | "global" | "strict";<br>interface InboundMessage {<br>  channel: string;     // "discord", "whatsapp", etc.<br>  sender: string;      // user identifier<br>  content: string;     // message text<br>  conversationId?: string; // thread/group ID<br>}</div>
+    <div class="puzzle-desc">Given an inbound message and a <code>dmScope</code> setting, compute the <code>session_key</code> that determines which conversation context this message belongs to.</div>
+    <textarea id="code2">def route_message(channel: str, sender: str, conversation_id: str, dm_scope: str) -> str:
+    """Compute the session key based on dmScope rules.
+    
+    Rules:
+    - "global"  → just the sender (same session everywhere)
+    - "channel" → channel + sender (separate per platform)  
+    - "strict"  → channel + sender + conversation_id (per-thread)
+    """
+    # TODO: Return the session key string
+    # Format: parts joined by ":"
+    pass
+
+# Test cases
+print(route_message("discord", "user123", "thread_abc", "global"))
+# Expected: "user123"
+print(route_message("discord", "user123", "thread_abc", "channel"))
+# Expected: "discord:user123"
+print(route_message("discord", "user123", "thread_abc", "strict"))
+# Expected: "discord:user123:thread_abc"
+print(route_message("whatsapp", "user123", "group_1", "channel"))
+# Expected: "whatsapp:user123"</textarea>
+    <div class="puzzle-controls">
+      <button class="run-btn" onclick="runPuzzle(2)">▶ Run</button>
+      <button class="hint-btn" onclick="showHint(2)">💡 Hint</button>
+    </div>
+    <div class="puzzle-output" id="output2"></div>
+  </div>
+
+  <!-- Exercise 3: Health Check Logic -->
+  <div class="puzzle card" id="puzzle3">
+    <div class="puzzle-header">
+      <h3><span class="puzzle-num">3</span> Health Check Logic</h3>
+      <span class="check-mark" id="check3"></span>
+    </div>
+    <div class="ts-label">TypeScript Types (OpenClaw Gateway)</div>
+    <div class="ts-types">type HealthStatus = "healthy" | "degraded" | "unhealthy";<br>interface HealthReport {<br>  status: HealthStatus;<br>  memoryMB: number;<br>  uptimeSeconds: number;<br>  connectedClients: number;<br>  providers: Record&lt;string, boolean&gt;;<br>}</div>
+    <div class="puzzle-desc">Given system metrics, return the health status. Rules: "unhealthy" if memory > 512MB or uptime < 5s (crash loop). "degraded" if any provider is down or memory > 256MB. Otherwise "healthy".</div>
+    <textarea id="code3">def check_health(memory_mb: float, uptime_s: int, clients: int, providers: dict) -> dict:
+    """Determine gateway health status.
+    
+    Rules:
+    - unhealthy: memory > 512MB OR uptime < 5s (crash-loop)
+    - degraded: any provider down OR memory > 256MB
+    - healthy: everything normal
+    """
+    # TODO: Implement the health logic
+    status = "healthy"
+    reasons = []
+    
+    return {"status": status, "reasons": reasons}
+
+# Test cases
+print(check_health(48, 86400, 3, {"anthropic": True, "openai": True}))
+# Expected: {"status": "healthy", "reasons": []}
+print(check_health(300, 86400, 3, {"anthropic": True, "openai": True}))
+# Expected: {"status": "degraded", ...}
+print(check_health(48, 86400, 3, {"anthropic": True, "openai": False}))
+# Expected: {"status": "degraded", ...}
+print(check_health(600, 2, 0, {"anthropic": False, "openai": False}))
+# Expected: {"status": "unhealthy", ...}</textarea>
+    <div class="puzzle-controls">
+      <button class="run-btn" onclick="runPuzzle(3)">▶ Run</button>
+      <button class="hint-btn" onclick="showHint(3)">💡 Hint</button>
+    </div>
+    <div class="puzzle-output" id="output3"></div>
+  </div>
+
+  <!-- Exercise 4: Config Validation -->
+  <div class="puzzle card" id="puzzle4">
+    <div class="puzzle-header">
+      <h3><span class="puzzle-num">4</span> Config Validation</h3>
+      <span class="check-mark" id="check4"></span>
+    </div>
+    <div class="ts-label">TypeScript Types (OpenClaw Gateway)</div>
+    <div class="ts-types">interface OpenClawConfig {<br>  gateway?: { host?: string; port?: number };<br>  agent?: { defaultModel?: string; tools?: string[] };<br>  channels?: Record&lt;string, { enabled?: boolean; token?: string }&gt;;<br>}</div>
+    <div class="puzzle-desc">Given a partial <code>openclaw.json</code> config, return a list of errors/warnings. Check: model must include "/" (provider/name format), port must be 1-65535, enabled channels need a token.</div>
+    <textarea id="code4">def validate_config(config: dict) -> list:
+    """Validate an openclaw.json configuration.
+    
+    Rules:
+    - agent.defaultModel must exist and contain "/" (provider/model format)
+    - gateway.port must be between 1 and 65535
+    - Any channel with enabled=True must have a non-empty token
+    - agent.tools must be a list (if present)
+    """
+    errors = []
+    # TODO: Validate the config and collect errors
+    
+    return errors
+
+# Test cases
+good = {
+    "gateway": {"host": "127.0.0.1", "port": 3578},
+    "agent": {"defaultModel": "anthropic/claude-sonnet-4-20250514", "tools": ["read", "exec"]},
+    "channels": {"discord": {"enabled": True, "token": "abc123"}}
+}
+print(validate_config(good))
+# Expected: []
+
+bad = {
+    "gateway": {"port": 99999},
+    "agent": {"defaultModel": "claude-sonnet", "tools": "read"},
+    "channels": {"discord": {"enabled": True}}
+}
+print(validate_config(bad))
+# Expected: list of errors</textarea>
+    <div class="puzzle-controls">
+      <button class="run-btn" onclick="runPuzzle(4)">▶ Run</button>
+      <button class="hint-btn" onclick="showHint(4)">💡 Hint</button>
+    </div>
+    <div class="puzzle-output" id="output4"></div>
+  </div>
+
+  <div style="text-align:center;margin-top:2rem">
+    <button class="start-btn" onclick="goTo('act3')">Make Connections →</button>
+  </div>
+</section>
+
+<!-- ════════════════ ACT 3: THE CONNECTION ════════════════ -->
+<section id="act3">
+  <div class="act-header">
+    <div class="act-label">Act 3</div>
+    <h2>The Connection</h2>
+    <p>From exercises to the real system — here's how the gateway fits into everything.</p>
+  </div>
+
+  <!-- E2E Walkthrough -->
+  <div class="card">
+    <h3>📨 What Happens When You Send a Message</h3>
+    <p style="margin-bottom:1.25rem">End-to-end, from your thumb hitting send to the reply appearing on screen.</p>
+
+    <div class="e2e-step"><div class="e2e-num">1</div><div class="e2e-body"><h4>Channel Receives</h4><p>Your message arrives at WhatsApp/Discord/etc. Their API sends a webhook or socket event to the channel plugin.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">2</div><div class="e2e-body"><h4>Channel Plugin Normalizes</h4><p>The plugin converts the platform-specific payload into OpenClaw's internal <code>InboundMessage</code> format: sender, content, channel, attachments.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">3</div><div class="e2e-body"><h4>Session Resolution</h4><p>The gateway computes a <code>sessionKey</code> based on dmScope rules (Exercise 2!). This determines which conversation history to load.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">4</div><div class="e2e-body"><h4>Agent Loop Invoked</h4><p>The gateway calls the agent with the message + conversation history. The agent sends an RPC to the model provider (Anthropic, OpenAI, etc.).</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">5</div><div class="e2e-body"><h4>Streaming Response</h4><p>The model streams tokens back via <code>stream.delta</code> events. Connected clients (macOS app, web UI) see these in real time.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">6</div><div class="e2e-body"><h4>Tool Calls (Maybe)</h4><p>If the model wants to use a tool (read file, run command, browse), it emits tool-call events. The gateway executes them and feeds results back.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">7</div><div class="e2e-body"><h4>Final Reply</h4><p>Once streaming completes, the gateway has the full response. It saves it to the session history.</p></div></div>
+    <div class="e2e-step"><div class="e2e-num">8</div><div class="e2e-body"><h4>Outbound Delivery</h4><p>The reply is sent back through the originating channel plugin, which converts it to the platform's format and sends it via their API.</p></div></div>
+  </div>
+
+  <!-- Real Config -->
+  <div class="card">
+    <h3>📄 Real openclaw.json Structure</h3>
+    <div class="json-block">
+      <span class="lang-tag">json</span>
+      <pre>{
+  <span class="k">"gateway"</span>: {
+    <span class="s">"host"</span>: <span class="s">"127.0.0.1"</span>,
+    <span class="s">"port"</span>: 3578
+  },
+  <span class="k">"agent"</span>: {
+    <span class="s">"defaultModel"</span>: <span class="s">"anthropic/claude-sonnet-4-20250514"</span>,
+    <span class="s">"dmScope"</span>: <span class="s">"channel"</span>,
+    <span class="s">"tools"</span>: [<span class="s">"read"</span>, <span class="s">"write"</span>, <span class="s">"exec"</span>, <span class="s">"browser"</span>],
+    <span class="s">"systemPrompt"</span>: <span class="s">"You are a helpful assistant."</span>
+  },
+  <span class="k">"channels"</span>: {
+    <span class="s">"discord"</span>: { <span class="s">"enabled"</span>: true, <span class="s">"token"</span>: <span class="s">"••••"</span> },
+    <span class="s">"whatsapp"</span>: { <span class="s">"enabled"</span>: true },
+    <span class="s">"telegram"</span>: { <span class="s">"enabled"</span>: true, <span class="s">"token"</span>: <span class="s">"••••"</span> },
+    <span class="s">"webchat"</span>: { <span class="s">"enabled"</span>: true }
+  },
+  <span class="k">"providers"</span>: {
+    <span class="s">"anthropic"</span>: { <span class="s">"apiKey"</span>: <span class="s">"••••"</span> },
+    <span class="s">"openai"</span>: { <span class="s">"apiKey"</span>: <span class="s">"••••"</span> }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <!-- Failure Modes -->
+  <div class="card">
+    <h3>🔥 Common Failure Modes</h3>
+    <div class="failure-card">
+      <h4>EADDRINUSE — Port Conflict</h4>
+      <p>Another process is on port 3578. Fix: <code>lsof -i :3578</code> to find it, or change <code>gateway.port</code> in config.</p>
+    </div>
+    <div class="failure-card">
+      <h4>WebSocket Disconnect</h4>
+      <p>Client loses connection mid-stream. The gateway buffers the response — when the client reconnects, it receives the full reply from session history.</p>
+    </div>
+    <div class="failure-card">
+      <h4>Memory Growth</h4>
+      <p>Long sessions with large tool outputs (screenshots, file reads) can bloat memory. The gateway monitors RSS and warns at 256MB. Fix: restart or reduce context window.</p>
+    </div>
+    <div class="failure-card">
+      <h4>Provider Auth Failure</h4>
+      <p>Invalid or expired API key. The gateway surfaces this as a user-facing error, not a crash. Check <code>providers.*.apiKey</code> in config.</p>
+    </div>
+  </div>
+
+  <!-- Resources -->
+  <div class="card">
+    <h3>📚 Go Deeper</h3>
+    <a href="https://docs.openclaw.com/architecture/gateway" class="resource-link" target="_blank">
+      <span>🏗️</span><span>Gateway Architecture — How it all fits together</span>
+    </a>
+    <a href="https://docs.openclaw.com/protocol/websocket" class="resource-link" target="_blank">
+      <span>🔌</span><span>Gateway Protocol — Full WebSocket frame reference</span>
+    </a>
+    <a href="https://docs.openclaw.com/configuration" class="resource-link" target="_blank">
+      <span>⚙️</span><span>Configuration — Every field in openclaw.json</span>
+    </a>
+    <a href="https://docs.openclaw.com/channels" class="resource-link" target="_blank">
+      <span>💬</span><span>Channel Plugins — How platforms are bridged</span>
+    </a>
+  </div>
+
+  <!-- Completion -->
+  <div class="completion">
+    <div class="trophy">🌐</div>
+    <h2>Gateway: Understood</h2>
+    <p style="color:var(--text2);max-width:500px;margin:0 auto 1.5rem">You now know the gateway is a message router — not an AI. It connects thinking (the model) to talking (the channels) to acting (the tools). This separation is the foundation of everything else in OpenClaw.</p>
+    <p style="color:var(--text2);font-size:.9rem">Next up: <strong>OC-02 — Sessions & Memory</strong></p>
+  </div>
+</section>
+
+<script>
+// ── Navigation ──
+function goTo(id) {
+  document.querySelectorAll('section, .hero').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('nav button').forEach((b,i) => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(
+      id === 'hero' ? 'home' : id.replace('act','act ')
+    ));
+  });
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  const pct = {hero:0, act1:33, act2:66, act3:100};
+  document.getElementById('progress-bar').style.width = (pct[id]||0) + '%';
+}
+// Show hero initially, hide sections
+document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+
+// ── Gateway Architecture Canvas Animation ──
+(function() {
+  const canvas = document.getElementById('gw-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, dpr;
+  let hoveredNode = null;
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const channels = [
+    {name:'WhatsApp', icon:'💬', color:'#25D366'},
+    {name:'Telegram', icon:'✈️', color:'#0088cc'},
+    {name:'Discord', icon:'🎮', color:'#5865F2'},
+    {name:'Slack', icon:'💼', color:'#4A154B'},
+    {name:'Signal', icon:'🔒', color:'#3A76F0'},
+    {name:'iMessage', icon:'🍎', color:'#34C759'},
+    {name:'Webchat', icon:'🌐', color:'#4fc3f7'},
+  ];
+  const clients = [
+    {name:'macOS App', icon:'🖥️', color:'#a78bfa'},
+    {name:'CLI', icon:'⌨️', color:'#c084fc'},
+    {name:'Web UI', icon:'🌍', color:'#818cf8'},
+  ];
+  const nodes = [
+    {name:'Phone', icon:'📱', color:'#f59e0b'},
+    {name:'Pi', icon:'🥧', color:'#ef4444'},
+    {name:'Remote', icon:'☁️', color:'#06b6d4'},
+  ];
+
+  // Packets
+  const packets = [];
+  function spawnPacket() {
+    const groups = [channels, clients, nodes];
+    const g = groups[Math.floor(Math.random() * groups.length)];
+    const item = g[Math.floor(Math.random() * g.length)];
+    const inbound = Math.random() > 0.4;
+    packets.push({item, inbound, t: 0, speed: 0.008 + Math.random() * 0.008});
+  }
+
+  function getNodePositions() {
+    const cx = W / 2, cy = H / 2;
+    const positions = new Map();
+    // Channels on left
+    channels.forEach((c, i) => {
+      const y = 60 + i * ((H - 120) / (channels.length - 1));
+      positions.set(c, {x: 60, y});
+    });
+    // Clients on right-top
+    clients.forEach((c, i) => {
+      const y = 80 + i * 70;
+      positions.set(c, {x: W - 60, y});
+    });
+    // Nodes on right-bottom
+    nodes.forEach((c, i) => {
+      const y = H - 160 + i * 60;
+      positions.set(c, {x: W - 60, y});
+    });
+    return {cx, cy, positions};
+  }
+
+  let frameCount = 0;
+  function draw() {
+    frameCount++;
+    ctx.clearRect(0, 0, W, H);
+    const {cx, cy, positions} = getNodePositions();
+
+    // Gateway hub
+    const hubR = Math.min(W, H) * 0.1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, hubR);
+    grad.addColorStop(0, 'rgba(79,195,247,0.2)');
+    grad.addColorStop(1, 'rgba(124,77,255,0.05)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(79,195,247,0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Hub label
+    ctx.fillStyle = '#4fc3f7';
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GATEWAY', cx, cy - 6);
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.fillStyle = '#8892a8';
+    ctx.fillText('Message Router', cx, cy + 12);
+
+    // Agent loop inside hub
+    const agentAngle = frameCount * 0.02;
+    const agentR = hubR * 0.45;
+    ctx.beginPath();
+    ctx.arc(cx, cy, agentR, agentAngle, agentAngle + Math.PI * 1.5);
+    ctx.strokeStyle = 'rgba(240,98,146,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw connections + nodes
+    positions.forEach((pos, item) => {
+      const isHovered = hoveredNode === item;
+      // Connection line
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = isHovered ? item.color + 'aa' : 'rgba(42,53,85,0.6)';
+      ctx.lineWidth = isHovered ? 2 : 1;
+      ctx.setLineDash(isHovered ? [] : [4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = isHovered ? item.color + '33' : 'rgba(19,26,43,0.9)';
+      ctx.fill();
+      ctx.strokeStyle = isHovered ? item.color : '#2a3555';
+      ctx.lineWidth = isHovered ? 2 : 1;
+      ctx.stroke();
+
+      // Icon
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(item.icon, pos.x, pos.y + 5);
+
+      // Label
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.fillStyle = isHovered ? item.color : '#8892a8';
+      ctx.fillText(item.name, pos.x, pos.y + 34);
+    });
+
+    // Group labels
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.fillStyle = '#4fc3f7';
+    ctx.textAlign = 'left';
+    ctx.fillText('CHANNELS', 20, 30);
+    ctx.textAlign = 'right';
+    ctx.fillText('CLIENTS', W - 20, 50);
+    ctx.fillText('NODES', W - 20, H - 190);
+
+    // Packets
+    if (frameCount % 30 === 0 && packets.length < 8) spawnPacket();
+    for (let i = packets.length - 1; i >= 0; i--) {
+      const p = packets[i];
+      p.t += p.speed;
+      if (p.t > 1) { packets.splice(i, 1); continue; }
+      const pos = positions.get(p.item);
+      if (!pos) { packets.splice(i, 1); continue; }
+      const t = p.inbound ? p.t : 1 - p.t;
+      const px = pos.x + (cx - pos.x) * t;
+      const py = pos.y + (cy - pos.y) * t;
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = p.item.color;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px, py, 7, 0, Math.PI * 2);
+      ctx.fillStyle = p.item.color + '33';
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Hit testing
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const {positions} = getNodePositions();
+    hoveredNode = null;
+    positions.forEach((pos, item) => {
+      if (Math.hypot(mx - pos.x, my - pos.y) < 24) hoveredNode = item;
+    });
+    canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
+  });
+  canvas.addEventListener('mouseleave', () => { hoveredNode = null; });
+})();
+
+// ── WebSocket Inspector ──
+const wsFrames = [
+  {
+    label: '1. Inbound Chat Message',
+    dir: 'in',
+    frame: {
+      type: 'event',
+      event: 'channel.message',
+      data: {
+        channel: 'whatsapp',
+        sender: '+1-555-0123',
+        content: 'What\'s the weather like today?',
+        timestamp: '2026-02-14T21:56:00Z'
+      }
+    },
+    note: 'The channel plugin receives a message from WhatsApp and emits it as an internal event.'
+  },
+  {
+    label: '2. Agent RPC Request',
+    dir: 'out',
+    frame: {
+      type: 'request',
+      id: 'req_a7f3',
+      method: 'agent.chat',
+      data: {
+        sessionKey: 'whatsapp:+1-555-0123',
+        message: 'What\'s the weather like today?',
+        model: 'anthropic/claude-sonnet-4-20250514'
+      }
+    },
+    note: 'Gateway resolves the session and dispatches to the agent loop via RPC.'
+  },
+  {
+    label: '3. Stream Deltas',
+    dir: 'in',
+    frame: {
+      type: 'event',
+      event: 'stream.delta',
+      data: {
+        sessionKey: 'whatsapp:+1-555-0123',
+        delta: 'I\'d be happy to check the weather! Let me ',
+        tokenCount: 12
+      }
+    },
+    note: 'Tokens stream back from the model in real time. Connected clients see these live.'
+  },
+  {
+    label: '4. Stream Complete',
+    dir: 'in',
+    frame: {
+      type: 'event',
+      event: 'stream.end',
+      data: {
+        sessionKey: 'whatsapp:+1-555-0123',
+        fullText: 'I\'d be happy to check the weather! Based on your location, it\'s currently 42°F and partly cloudy in New York.',
+        usage: {input: 1247, output: 38}
+      }
+    },
+    note: 'Streaming ends. The full response is assembled and saved to session history.'
+  },
+  {
+    label: '5. Outbound Reply',
+    dir: 'out',
+    frame: {
+      type: 'request',
+      id: 'req_b1c9',
+      method: 'channel.send',
+      data: {
+        channel: 'whatsapp',
+        to: '+1-555-0123',
+        content: 'I\'d be happy to check the weather! Based on your location, it\'s currently 42°F and partly cloudy in New York.'
+      }
+    },
+    note: 'The gateway sends the reply back through the WhatsApp channel plugin.'
+  }
+];
+
+function renderWsFrame(idx) {
+  const f = wsFrames[idx];
+  const display = document.getElementById('ws-frame-display');
+  const dirClass = f.dir === 'in' ? 'in' : 'out';
+  const dirLabel = f.dir === 'in' ? '◀ IN' : '▶ OUT';
+  display.innerHTML = `<div style="margin-bottom:8px"><span class="dir ${dirClass}">${dirLabel}</span><strong>${f.label}</strong></div>` +
+    `<pre style="margin:0;border:none;padding:8px;font-size:.78rem">${JSON.stringify(f.frame, null, 2)}</pre>` +
+    `<div style="margin-top:10px;font-size:.82rem;color:var(--text2);border-top:1px solid var(--border);padding-top:8px">💡 ${f.note}</div>`;
+
+  document.querySelectorAll('.ws-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+document.querySelectorAll('.ws-tab').forEach(tab => {
+  tab.addEventListener('click', () => renderWsFrame(parseInt(tab.dataset.step)));
+});
+renderWsFrame(0);
+
+// ── Health counter animation ──
+(function animateHealth() {
+  const memEl = document.getElementById('health-mem');
+  const upEl = document.getElementById('health-up');
+  const clientsEl = document.getElementById('health-clients');
+  let t = 0;
+  setInterval(() => {
+    t++;
+    memEl.textContent = (45 + Math.floor(Math.sin(t * 0.1) * 8 + 8)) + ' MB';
+    const secs = 3 * 86400 + 14 * 3600 + t;
+    const d = Math.floor(secs / 86400);
+    const h = Math.floor((secs % 86400) / 3600);
+    upEl.textContent = d + 'd ' + h + 'h';
+    clientsEl.textContent = 3 + Math.floor(Math.sin(t * 0.05) + 1);
+  }, 1000);
+})();
+
+// ── Pyodide Exercises ──
+let pyodide = null;
+async function loadPyodide_() {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.4/full/pyodide.js';
+  document.head.appendChild(script);
+  await new Promise(r => script.onload = r);
+  pyodide = await loadPyodide();
+  document.getElementById('pyodide-status').innerHTML = '✅ Runtime ready — write code and hit Run!';
+}
+loadPyodide_();
+
+const solutions = {
+  1: (out) => out.includes('request') && out.includes('response') && out.includes('event') && out.includes('agent.chat') && out.includes('stream.delta'),
+  2: (out) => out.includes('user123') && out.includes('discord:user123') && out.includes('discord:user123:thread_abc') && out.includes('whatsapp:user123'),
+  3: (out) => out.includes('healthy') && out.includes('degraded') && out.includes('unhealthy'),
+  4: (out) => out.includes('[]') && (out.includes('port') || out.includes('model') || out.includes('token'))
+};
+
+const hints = {
+  1: "Check frame['type']. If it's 'request', summary = frame['method']. If 'event', summary = frame['event']. For 'response', summary can be 'response:' + frame.get('id','?').",
+  2: "It's just string joining! 'global' → sender, 'channel' → channel + ':' + sender, 'strict' → channel + ':' + sender + ':' + conversation_id.",
+  3: "Check the unhealthy conditions first (they override degraded). Then check degraded conditions. Use `any(not v for v in providers.values())` for provider status.",
+  4: "Use .get() to safely access nested keys. Check: '/' in model, 1 <= port <= 65535, isinstance(tools, list), and loop through channels checking enabled+token."
+};
+
+function runPuzzle(n) {
+  if (!pyodide) { alert('Pyodide still loading...'); return; }
+  const code = document.getElementById('code' + n).value;
+  const out = document.getElementById('output' + n);
+  try {
+    pyodide.runPython(`import io, sys; sys.stdout = io.StringIO()`);
+    pyodide.runPython(code);
+    const result = pyodide.runPython('sys.stdout.getvalue()');
+    out.textContent = result || '(no output)';
+    if (solutions[n](result)) {
+      out.className = 'puzzle-output success';
+      document.getElementById('check' + n).textContent = '✓';
+    } else {
+      out.className = 'puzzle-output';
+    }
+  } catch (e) {
+    out.textContent = e.message;
+    out.className = 'puzzle-output error';
+  }
+}
+
+function showHint(n) {
+  const out = document.getElementById('output' + n);
+  out.textContent = '💡 ' + hints[n];
+  out.className = 'puzzle-output';
+}
+</script>
+</body>
+</html>

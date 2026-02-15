@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>OC-06: Multi-Agent — Separation of Concerns</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1a1a1a 0%,#1b2a4a 100%);color:#e1e1e1;line-height:1.6;min-height:100vh}
+        .container{max-width:1000px;margin:0 auto;padding:20px}
+        .act{display:none;animation:fadeIn .5s ease}.act.active{display:block}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        @keyframes slideRight{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes messageFloat{0%{transform:translateY(0) scale(1);opacity:1}50%{transform:translateY(-30px) scale(.9);opacity:.7}100%{transform:translateY(0) scale(1);opacity:1}}
+        h1{text-align:center;font-size:2.4em;margin-bottom:.3em;background:linear-gradient(45deg,#ff6b6b,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        h2{color:#4ecdc4;margin:1.8em 0 .8em;font-size:1.6em}
+        h3{color:#ff6b6b;margin:1.2em 0 .6em}
+        .subtitle{text-align:center;color:#888;font-size:1.1em;margin-bottom:2em}
+        .nav-tabs{display:flex;gap:4px;margin:20px 0;flex-wrap:wrap}
+        .nav-tab{padding:10px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px 8px 0 0;cursor:pointer;color:#888;font-size:.9em;transition:all .2s}
+        .nav-tab:hover{background:rgba(255,255,255,.1);color:#ccc}
+        .nav-tab.active{background:rgba(78,205,196,.15);border-color:#4ecdc4;color:#4ecdc4}
+        .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:24px;margin:16px 0}
+        .card-glow{border-color:rgba(78,205,196,.3);box-shadow:0 0 20px rgba(78,205,196,.1)}
+        button,.btn{padding:10px 20px;background:linear-gradient(135deg,#4ecdc4,#44b3ab);color:#1a1a1a;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.95em;transition:all .2s}
+        button:hover,.btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(78,205,196,.3)}
+        button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+        .btn-secondary{background:rgba(255,255,255,.1);color:#e1e1e1;border:1px solid rgba(255,255,255,.15)}
+        .btn-secondary:hover{background:rgba(255,255,255,.15)}
+        .btn-sm{padding:6px 14px;font-size:.85em}
+
+        /* Agent cards */
+        .agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+        @media(max-width:700px){.agent-grid{grid-template-columns:1fr}}
+        .agent-card{background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;position:relative;transition:all .3s}
+        .agent-card.highlight{border-color:#4ecdc4;box-shadow:0 0 25px rgba(78,205,196,.2)}
+        .agent-card.highlight-red{border-color:#ff6b6b;box-shadow:0 0 25px rgba(255,107,107,.2)}
+        .agent-name{font-size:1.3em;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+        .agent-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+        .file-tree{font-family:'SF Mono',Monaco,monospace;font-size:.82em;color:#888;padding:8px 0;line-height:1.8}
+        .file-tree .file{padding-left:16px;position:relative}
+        .file-tree .file::before{content:'├─ ';color:#555}
+        .file-tree .file:last-child::before{content:'└─ ';color:#555}
+        .file-tree .file.active{color:#4ecdc4}
+
+        /* Message routing viz */
+        .routing-viz{position:relative;min-height:200px;margin:20px 0;display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
+        .msg-bubble{background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.3);border-radius:20px;padding:10px 16px;font-size:.85em;max-width:200px;transition:all .5s}
+        .msg-bubble.routed{background:rgba(78,205,196,.15);border-color:rgba(78,205,196,.3)}
+        .arrow{font-size:1.5em;color:#555;transition:color .3s}
+        .arrow.active{color:#4ecdc4}
+
+        /* Binding builder */
+        .binding-row{display:grid;grid-template-columns:100px 1fr 1fr 100px;gap:8px;align-items:center;margin:6px 0;font-size:.85em}
+        @media(max-width:600px){.binding-row{grid-template-columns:1fr 1fr;font-size:.8em}}
+        .binding-row select,.binding-row input{padding:8px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#e1e1e1;font-size:inherit}
+        .binding-row select:focus,.binding-row input:focus{outline:none;border-color:#4ecdc4}
+        .binding-label{color:#888;font-size:.8em}
+
+        /* Timeline */
+        .timeline{position:relative;padding-left:30px;margin:16px 0}
+        .timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:rgba(255,255,255,.1)}
+        .timeline-step{position:relative;margin:16px 0;padding:12px 16px;background:rgba(0,0,0,.2);border-radius:8px;border-left:3px solid #555;transition:all .4s}
+        .timeline-step.active{border-left-color:#4ecdc4;background:rgba(78,205,196,.05)}
+        .timeline-step.done{border-left-color:#44b3ab;opacity:.7}
+        .timeline-step::before{content:'';position:absolute;left:-26px;top:16px;width:12px;height:12px;border-radius:50%;background:#333;border:2px solid #555;transition:all .3s}
+        .timeline-step.active::before{background:#4ecdc4;border-color:#4ecdc4;box-shadow:0 0 10px rgba(78,205,196,.5)}
+        .timeline-step.done::before{background:#44b3ab;border-color:#44b3ab}
+        .step-label{font-size:.75em;color:#4ecdc4;text-transform:uppercase;letter-spacing:1px}
+        .step-key{font-family:monospace;font-size:.8em;color:#ff6b6b;margin-top:4px}
+
+        /* Session keys */
+        .session-key{font-family:'SF Mono',Monaco,monospace;font-size:.82em;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2);padding:4px 10px;border-radius:6px;display:inline-block;margin:4px 2px;word-break:break-all}
+
+        /* Exercise */
+        .exercise{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;margin:20px 0}
+        .exercise-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+        .exercise-num{background:#ff6b6b;color:#1a1a1a;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;flex-shrink:0}
+        textarea{width:100%;padding:12px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#e1e1e1;font-family:'SF Mono',Monaco,monospace;font-size:.85em;resize:vertical;min-height:120px;line-height:1.5}
+        textarea:focus{outline:none;border-color:#4ecdc4}
+        .feedback{margin-top:12px;padding:12px;border-radius:8px;display:none;font-size:.9em}
+        .feedback.correct{display:block;background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.3);color:#4ecdc4}
+        .feedback.incorrect{display:block;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:#ff6b6b}
+        .feedback.hint{display:block;background:rgba(255,200,100,.1);border:1px solid rgba(255,200,100,.3);color:#ffc864}
+
+        /* Docs section */
+        .doc-link{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);border-radius:8px;margin:8px 0;color:#4ecdc4;text-decoration:none;transition:all .2s}
+        .doc-link:hover{background:rgba(78,205,196,.05);border-color:rgba(78,205,196,.3);transform:translateX(4px)}
+        .doc-icon{font-size:1.2em}
+        .principle{background:rgba(78,205,196,.05);border-left:3px solid #4ecdc4;padding:16px 20px;margin:16px 0;border-radius:0 8px 8px 0}
+        .warning{background:rgba(255,107,107,.05);border-left:3px solid #ff6b6b;padding:16px 20px;margin:16px 0;border-radius:0 8px 8px 0}
+        .code{font-family:'SF Mono',Monaco,monospace;font-size:.85em;background:rgba(0,0,0,.3);padding:16px;border-radius:8px;overflow-x:auto;margin:10px 0;line-height:1.6}
+        .code .comment{color:#666}
+        .code .key{color:#4ecdc4}
+        .code .val{color:#ff6b6b}
+        .code .str{color:#ffc864}
+
+        /* Progress */
+        .progress-bar{height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin:20px 0;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#ff6b6b);border-radius:2px;transition:width .5s}
+        .act-nav{display:flex;justify-content:space-between;margin:30px 0;gap:10px}
+
+        /* Send viz */
+        .send-viz{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+        .send-agent{background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 18px;text-align:center;min-width:100px;transition:all .4s}
+        .send-agent.sending{border-color:#ff6b6b;box-shadow:0 0 15px rgba(255,107,107,.2)}
+        .send-agent.receiving{border-color:#4ecdc4;box-shadow:0 0 15px rgba(78,205,196,.2)}
+        .send-arrow{font-size:1.5em;color:#555;transition:all .3s}
+        .send-arrow.active{color:#ffc864}
+        .send-msg{background:rgba(255,200,100,.1);border:1px solid rgba(255,200,100,.3);border-radius:12px;padding:6px 12px;font-size:.8em;color:#ffc864;transition:all .3s}
+        .wall{width:3px;height:60px;background:repeating-linear-gradient(0deg,#ff6b6b 0,#ff6b6b 4px,transparent 4px,transparent 8px);border-radius:2px;opacity:.5}
+
+        /* Responsive */
+        @media(max-width:600px){h1{font-size:1.8em}.agent-grid{gap:10px}.agent-card{padding:14px}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧠 Multi-Agent</h1>
+    <p class="subtitle">Separation of Concerns — One Gateway, Many Brains</p>
+
+    <div class="nav-tabs" id="mainNav">
+        <div class="nav-tab active" onclick="showAct(0)">🔬 Explore</div>
+        <div class="nav-tab" onclick="showAct(1)">🔨 Build</div>
+        <div class="nav-tab" onclick="showAct(2)">🔗 Connect</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+
+    <!-- ═══════════════ ACT 1: THE EXPLORABLE ═══════════════ -->
+    <div class="act active" id="act0">
+        <h2>Agent Isolation</h2>
+        <p>Each agent is a <strong>separate brain</strong>. Own workspace, own memory, own auth, own personality. They share a gateway — nothing else.</p>
+
+        <div class="agent-grid" id="isolationDemo">
+            <div class="agent-card" id="agentMain">
+                <div class="agent-name"><div class="agent-icon" style="background:#4ecdc4;color:#1a1a1a">🤖</div> main</div>
+                <div style="font-size:.85em;color:#888;margin-bottom:8px">Personal assistant · Claude Sonnet</div>
+                <div class="file-tree">
+                    <div class="file">SOUL.md <span style="color:#555">— "friendly, proactive"</span></div>
+                    <div class="file">AGENTS.md</div>
+                    <div class="file">MEMORY.md <span style="color:#555">— personal context</span></div>
+                    <div class="file active">TOOLS.md <span style="color:#555">— full access</span></div>
+                </div>
+                <div style="margin-top:10px">
+                    <span class="session-key">agent:main:whatsapp:*</span>
+                </div>
+            </div>
+            <div class="agent-card" id="agentDoorman">
+                <div class="agent-name"><div class="agent-icon" style="background:#ff6b6b;color:#1a1a1a">🚪</div> doorman</div>
+                <div style="font-size:.85em;color:#888;margin-bottom:8px">Client-facing · Claude Haiku</div>
+                <div class="file-tree">
+                    <div class="file">SOUL.md <span style="color:#555">— "professional, brief"</span></div>
+                    <div class="file">AGENTS.md</div>
+                    <div class="file">MEMORY.md <span style="color:#555">— client FAQs</span></div>
+                    <div class="file">TOOLS.md <span style="color:#555">— email only</span></div>
+                </div>
+                <div style="margin-top:10px">
+                    <span class="session-key">agent:doorman:email:*</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="routingCard">
+            <h3>📨 Message Routing</h3>
+            <p style="font-size:.9em;color:#888;margin-bottom:12px">Watch how inbound messages get routed to the right agent based on channel + binding rules.</p>
+            <div class="routing-viz" id="routingViz">
+                <div class="msg-bubble" id="routeMsg">💬 Incoming message...</div>
+                <div class="arrow" id="routeArrow">→</div>
+                <div id="routeTarget" style="font-weight:600;color:#888">?</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+                <button class="btn-sm" onclick="simulateRoute('whatsapp','Hey, what time is dinner?','main')">WhatsApp msg</button>
+                <button class="btn-sm" onclick="simulateRoute('email','hello@: Meeting request','doorman')">Email to hello@</button>
+                <button class="btn-sm" onclick="simulateRoute('telegram','@workbot: Deploy v2.1','work')">Telegram @workbot</button>
+                <button class="btn-sm btn-secondary" onclick="simulateRoute('discord','Random DM','main')">Discord (fallback)</button>
+            </div>
+        </div>
+
+        <h2>Binding Rules</h2>
+        <p>Bindings map inbound channels to agents. Each binding specifies a channel, an account (bot/number), and optional sender patterns.</p>
+
+        <div class="card card-glow" id="bindingBuilder">
+            <h3>⚙️ Binding Builder</h3>
+            <p style="font-size:.85em;color:#888;margin-bottom:12px">Configure which agent handles which channel. Try adding your own!</p>
+
+            <div id="bindingsContainer">
+                <div class="binding-row" style="color:#4ecdc4;font-weight:600;font-size:.8em">
+                    <div>Agent</div><div>Channel</div><div>Account / Pattern</div><div></div>
+                </div>
+            </div>
+            <button class="btn-sm btn-secondary" style="margin-top:10px" onclick="addBinding()">+ Add Binding</button>
+
+            <div id="bindingTest" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)">
+                <p style="font-size:.85em;color:#888;margin-bottom:8px"><strong>Test it:</strong> Which agent handles this?</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <select id="testChannel" style="padding:8px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#e1e1e1">
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="email">Email</option>
+                        <option value="discord">Discord</option>
+                    </select>
+                    <input id="testAccount" placeholder="account/sender" style="flex:1;min-width:150px;padding:8px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#e1e1e1">
+                    <button class="btn-sm" onclick="testBinding()">Route →</button>
+                </div>
+                <div id="bindingResult" style="margin-top:8px;font-size:.9em"></div>
+            </div>
+        </div>
+
+        <h2>Sub-Agent Spawning</h2>
+        <p>When a task is too big or needs parallel work, the main agent <strong>spawns a sub-agent</strong> — a child session with its own isolated workspace and focus.</p>
+
+        <div class="card">
+            <h3>🔀 Spawn Lifecycle</h3>
+            <p style="font-size:.85em;color:#888;margin-bottom:12px">Click each step to walk through the sub-agent lifecycle.</p>
+            <div class="timeline" id="spawnTimeline">
+                <div class="timeline-step active" data-step="0" onclick="setSpawnStep(0)">
+                    <div class="step-label">Parent Session</div>
+                    <div>Main agent receives complex task: <em>"Build modules 1-6 of the curriculum"</em></div>
+                    <div class="step-key">agent:main:webchat:abc123</div>
+                </div>
+                <div class="timeline-step" data-step="1" onclick="setSpawnStep(1)">
+                    <div class="step-label">sessions_spawn</div>
+                    <div>Main calls <code>sessions_spawn</code> with task description + label</div>
+                    <div class="step-key">spawn({ label: "oc-06-builder", task: "Build Module OC-06..." })</div>
+                </div>
+                <div class="timeline-step" data-step="2" onclick="setSpawnStep(2)">
+                    <div class="step-label">Child Created</div>
+                    <div>Gateway creates an isolated session. New workspace scope. Inherits agent config but NOT parent context.</div>
+                    <div class="step-key">agent:main:subagent:53401d24-dee6-...</div>
+                </div>
+                <div class="timeline-step" data-step="3" onclick="setSpawnStep(3)">
+                    <div class="step-label">Child Runs</div>
+                    <div>Sub-agent works independently. Reads its own AGENTS.md, uses tools, builds files. Parent continues other work.</div>
+                    <div class="step-key">status: running | model: claude-opus-4-6</div>
+                </div>
+                <div class="timeline-step" data-step="4" onclick="setSpawnStep(4)">
+                    <div class="step-label">Result Announced</div>
+                    <div>Sub-agent finishes → result sent back to parent session. "Built OC-06 at .../index.html (38KB)"</div>
+                    <div class="step-key">parent notified via session announcement</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn-sm btn-secondary" onclick="autoPlaySpawn()">▶ Auto-play</button>
+                <button class="btn-sm btn-secondary" onclick="setSpawnStep(0)">⟲ Reset</button>
+            </div>
+        </div>
+
+        <h2>Inter-Agent Communication</h2>
+        <p>Agents can send messages to each other's sessions via <code>sessions_send</code> — without sharing context or memory.</p>
+
+        <div class="card">
+            <h3>📡 Agent Send</h3>
+            <div class="send-viz" id="sendViz">
+                <div class="send-agent" id="sendA">
+                    <div style="font-size:1.2em">🤖</div>
+                    <div style="font-weight:600;font-size:.9em">main</div>
+                </div>
+                <div class="wall" title="Isolation boundary"></div>
+                <div style="text-align:center">
+                    <div class="send-arrow" id="sendArrow1">→</div>
+                    <div class="send-msg" id="sendMsg" style="opacity:0">sessions_send</div>
+                </div>
+                <div class="wall" title="Isolation boundary"></div>
+                <div class="send-agent" id="sendB">
+                    <div style="font-size:1.2em">🚪</div>
+                    <div style="font-weight:600;font-size:.9em">doorman</div>
+                </div>
+            </div>
+            <p style="font-size:.85em;color:#888;text-align:center;margin:8px 0">The red walls = isolation boundaries. No shared memory, no shared files, no shared auth.</p>
+            <div style="text-align:center;margin-top:12px">
+                <button onclick="animateSend()">Send Message →</button>
+            </div>
+            <div class="principle" style="margin-top:16px">
+                <strong>Key insight:</strong> Agents collaborate by <em>message passing</em>, not by sharing state. Like microservices, not a monolith.
+            </div>
+        </div>
+
+        <div class="act-nav">
+            <div></div>
+            <button onclick="showAct(1)">Continue to Build →</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════ ACT 2: THE BUILD ═══════════════ -->
+    <div class="act" id="act1">
+        <h2>🔨 Exercises</h2>
+
+        <div class="exercise" id="ex1">
+            <div class="exercise-header">
+                <div class="exercise-num">1</div>
+                <h3 style="margin:0">Agent Config</h3>
+            </div>
+            <p style="font-size:.9em;margin-bottom:12px">Write the <code>agents.list</code> config for a 3-agent setup. Each agent needs: name, model, workspace path, and description. Use the format shown:</p>
+            <div class="code" style="margin-bottom:12px;font-size:.8em">
+<span class="comment"># Format: one agent per block</span>
+<span class="key">name</span>=main
+<span class="key">model</span>=anthropic/claude-sonnet-4-20250514
+<span class="key">agentDir</span>=~/.openclaw/workspace-main
+<span class="key">desc</span>=Personal assistant
+</div>
+            <textarea id="ex1input" placeholder="# Define 3 agents: main, work, doorman
+# Each with different models and separate workspaces
+
+name=main
+model=...
+agentDir=...
+desc=...
+
+name=work
+..."></textarea>
+            <div style="margin-top:8px;display:flex;gap:8px">
+                <button onclick="checkEx1()">Check</button>
+                <button class="btn-secondary" onclick="hintEx(1)">Hint</button>
+            </div>
+            <div class="feedback" id="ex1feedback"></div>
+        </div>
+
+        <div class="exercise" id="ex2">
+            <div class="exercise-header">
+                <div class="exercise-num">2</div>
+                <h3 style="margin:0">Binding Resolution</h3>
+            </div>
+            <p style="font-size:.9em;margin-bottom:12px">Given these bindings and the inbound message below, which agent should handle it?</p>
+            <div class="code" style="margin-bottom:8px;font-size:.8em">
+<span class="comment"># Bindings:</span>
+<span class="key">main</span>  ← whatsapp / +1-555-0100 / *
+<span class="key">work</span>  ← telegram / @acme_bot / *
+<span class="key">doorman</span> ← email / hello@acme.com / *
+<span class="key">main</span>  ← discord / * / * <span class="comment">(fallback)</span>
+</div>
+            <div class="card" style="margin:12px 0;padding:14px">
+                <strong>Inbound:</strong> channel=<span style="color:#ffc864">telegram</span>, account=<span style="color:#ffc864">@acme_bot</span>, sender=<span style="color:#ffc864">user:9281</span><br>
+                <strong>Message:</strong> <em>"Schedule standup for Monday 9am"</em>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn-secondary" onclick="checkEx2('main')">main</button>
+                <button class="btn-secondary" onclick="checkEx2('work')">work</button>
+                <button class="btn-secondary" onclick="checkEx2('doorman')">doorman</button>
+                <button class="btn-secondary" onclick="checkEx2('none')">no match</button>
+            </div>
+            <div class="feedback" id="ex2feedback"></div>
+        </div>
+
+        <div class="exercise" id="ex3">
+            <div class="exercise-header">
+                <div class="exercise-num">3</div>
+                <h3 style="margin:0">Sub-Agent Task Design</h3>
+            </div>
+            <p style="font-size:.9em;margin-bottom:12px">You need to build a website with: landing page, API docs, blog, and contact form. Design 3-4 sub-agent tasks. For each, specify: <strong>label</strong>, <strong>task description</strong>, and <strong>expected output</strong>.</p>
+            <textarea id="ex3input" placeholder="Sub-agent 1:
+  label: landing-builder
+  task: Build the landing page with hero section, features, and CTA
+  output: /site/index.html
+
+Sub-agent 2:
+  label: ...
+  task: ...
+  output: ..."></textarea>
+            <div style="margin-top:8px;display:flex;gap:8px">
+                <button onclick="checkEx3()">Check</button>
+                <button class="btn-secondary" onclick="hintEx(3)">Hint</button>
+            </div>
+            <div class="feedback" id="ex3feedback"></div>
+        </div>
+
+        <div class="exercise" id="ex4">
+            <div class="exercise-header">
+                <div class="exercise-num">4</div>
+                <h3 style="margin:0">Security Boundaries</h3>
+            </div>
+            <p style="font-size:.9em;margin-bottom:12px">For each item, decide: Can agent "work" access this from agent "main"?</p>
+            <div id="ex4items"></div>
+            <div class="feedback" id="ex4feedback"></div>
+        </div>
+
+        <div class="act-nav">
+            <button class="btn-secondary" onclick="showAct(0)">← Back to Explore</button>
+            <button onclick="showAct(2)">Continue to Connect →</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════ ACT 3: THE CONNECTION ═══════════════ -->
+    <div class="act" id="act2">
+        <h2>🔗 The Big Picture</h2>
+
+        <div class="principle">
+            <strong>Multi-agent isn't about having multiple chatbots.</strong> It's about <em>separation of concerns</em>. Your personal assistant doesn't need to know about your client's data. Your doorman doesn't need access to your files. Each agent is a full brain with its own personality, memory, and permissions.
+        </div>
+
+        <h3>📚 Documentation</h3>
+        <a class="doc-link" href="https://docs.openclaw.com/guides/multi-agent" target="_blank">
+            <span class="doc-icon">📖</span>
+            <div><strong>Multi-Agent Routing</strong><br><span style="color:#888;font-size:.85em">How bindings route messages to agents</span></div>
+        </a>
+        <a class="doc-link" href="https://docs.openclaw.com/guides/sub-agents" target="_blank">
+            <span class="doc-icon">🔀</span>
+            <div><strong>Sub-Agents</strong><br><span style="color:#888;font-size:.85em">Spawning, lifecycle, and result handling</span></div>
+        </a>
+        <a class="doc-link" href="https://docs.openclaw.com/guides/agent-send" target="_blank">
+            <span class="doc-icon">📡</span>
+            <div><strong>Agent Send</strong><br><span style="color:#888;font-size:.85em">Inter-agent communication via sessions_send</span></div>
+        </a>
+
+        <h3>🛠 Getting Started</h3>
+        <div class="code">
+<span class="comment"># Add a new agent</span>
+$ <span class="key">openclaw agents add</span>
+
+<span class="comment"># The wizard asks:</span>
+<span class="str">Agent name:</span> doorman
+<span class="str">Model:</span> anthropic/claude-haiku-3
+<span class="str">Workspace:</span> ~/.openclaw/workspace-doorman
+<span class="str">Description:</span> Client-facing concierge
+
+<span class="comment"># Creates isolated workspace with SOUL.md, AGENTS.md, etc.</span>
+<span class="comment"># Bindings configured in openclaw.json</span>
+</div>
+
+        <h3>🏗 Architecture Principles</h3>
+        <div class="card">
+            <div style="display:grid;gap:16px">
+                <div>
+                    <strong style="color:#4ecdc4">🧠 One Agent = One Brain</strong>
+                    <p style="font-size:.9em;color:#888">Each agent has its own SOUL.md (personality), MEMORY.md (long-term memory), TOOLS.md (capabilities), and session store. Complete isolation.</p>
+                </div>
+                <div>
+                    <strong style="color:#4ecdc4">🔑 Auth is Per-Agent</strong>
+                    <p style="font-size:.9em;color:#888">Auth profiles (Gmail, calendar, APIs) live in the agent's workspace. Never share agentDir between agents — that's how secrets leak.</p>
+                </div>
+                <div>
+                    <strong style="color:#4ecdc4">🔀 Sub-Agents for Parallel Work</strong>
+                    <p style="font-size:.9em;color:#888">Like this curriculum! The main agent spawned sub-agents to build each module in parallel. Each sub-agent gets a task, runs independently, and reports back.</p>
+                </div>
+                <div>
+                    <strong style="color:#4ecdc4">📡 Message Passing, Not Shared State</strong>
+                    <p style="font-size:.9em;color:#888">Agents communicate via sessions_send. Like microservices — loose coupling, clear interfaces, no hidden dependencies.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>💡 Real Use Cases</h3>
+        <div class="card">
+            <div style="display:grid;gap:12px;font-size:.9em">
+                <div><strong>🏠 Personal + 💼 Work:</strong> Personal assistant on WhatsApp, work bot on Slack. Different models, different memory, different auth.</div>
+                <div><strong>🚪 Client Concierge:</strong> Doorman handles hello@ email with FAQ responses. Escalates to main agent only when needed.</div>
+                <div><strong>🔨 Build Teams:</strong> Main agent spawns sub-agents for parallel coding tasks. Each builds a component, results merge back.</div>
+                <div><strong>🌐 Multi-Language:</strong> English agent + Spanish agent, each with localized SOUL.md and relevant context.</div>
+            </div>
+        </div>
+
+        <h3>⚠️ Common Pitfalls</h3>
+        <div class="warning">
+            <div style="display:grid;gap:10px;font-size:.9em">
+                <div><strong>Binding conflicts:</strong> Two agents bound to the same channel+account. Gateway can't decide → first match wins, unpredictably.</div>
+                <div><strong>Shared agentDir:</strong> Two agents pointing to the same workspace = shared MEMORY.md, shared auth, shared everything. Defeats the purpose.</div>
+                <div><strong>Sub-agent timeout:</strong> Sub-agents that run too long. Set reasonable timeouts and monitor with <code>sessions list</code>.</div>
+                <div><strong>Over-spawning:</strong> Spawning 20 sub-agents for trivial tasks. Each spawn has overhead. Batch small tasks instead.</div>
+            </div>
+        </div>
+
+        <div class="principle" style="margin-top:30px;text-align:center;font-size:1.1em">
+            <strong>Sub-agents are how one brain delegates work without losing focus.</strong><br>
+            <span style="color:#888;font-size:.85em">The parent stays on task. The children do the heavy lifting. Everyone reports back.</span>
+        </div>
+
+        <div class="act-nav">
+            <button class="btn-secondary" onclick="showAct(1)">← Back to Build</button>
+            <button onclick="showAct(0)">↺ Start Over</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════ NAVIGATION ═══════════
+function showAct(i){
+    document.querySelectorAll('.act').forEach((a,j)=>a.classList.toggle('active',j===i));
+    document.querySelectorAll('.nav-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+    document.getElementById('progressFill').style.width=((i+1)/3*100)+'%';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════ ROUTING DEMO ═══════════
+function simulateRoute(channel,text,target){
+    const msg=document.getElementById('routeMsg');
+    const arrow=document.getElementById('routeArrow');
+    const tgt=document.getElementById('routeTarget');
+    const icons={main:'🤖 main',doorman:'🚪 doorman',work:'💼 work'};
+    const colors={main:'#4ecdc4',doorman:'#ff6b6b',work:'#ffc864'};
+
+    msg.textContent=channel+': "'+text+'"';
+    msg.classList.remove('routed');
+    arrow.classList.remove('active');
+    tgt.style.color='#888';tgt.textContent='routing...';
+
+    // Highlight matching agent card
+    document.querySelectorAll('.agent-card').forEach(c=>{c.classList.remove('highlight','highlight-red')});
+
+    setTimeout(()=>{
+        msg.classList.add('routed');
+        arrow.classList.add('active');
+        tgt.style.color=colors[target]||'#4ecdc4';
+        tgt.textContent='→ '+( icons[target]||target);
+
+        const card=document.getElementById(target==='main'?'agentMain':target==='doorman'?'agentDoorman':null);
+        if(card)card.classList.add('highlight');
+    },600);
+}
+
+// ═══════════ BINDING BUILDER ═══════════
+let bindings=[
+    {agent:'main',channel:'whatsapp',pattern:'+1-555-0100'},
+    {agent:'work',channel:'telegram',pattern:'@acme_bot'},
+    {agent:'doorman',channel:'email',pattern:'hello@acme.com'},
+];
+
+function renderBindings(){
+    const c=document.getElementById('bindingsContainer');
+    let h='<div class="binding-row" style="color:#4ecdc4;font-weight:600;font-size:.8em"><div>Agent</div><div>Channel</div><div>Account / Pattern</div><div></div></div>';
+    bindings.forEach((b,i)=>{
+        h+=`<div class="binding-row">
+            <select onchange="bindings[${i}].agent=this.value"><option ${b.agent==='main'?'selected':''}>main</option><option ${b.agent==='work'?'selected':''}>work</option><option ${b.agent==='doorman'?'selected':''}>doorman</option></select>
+            <select onchange="bindings[${i}].channel=this.value"><option ${b.channel==='whatsapp'?'selected':''}>whatsapp</option><option ${b.channel==='telegram'?'selected':''}>telegram</option><option ${b.channel==='email'?'selected':''}>email</option><option ${b.channel==='discord'?'selected':''}>discord</option></select>
+            <input value="${b.pattern}" onchange="bindings[${i}].pattern=this.value" placeholder="account or * for any">
+            <button class="btn-sm btn-secondary" onclick="bindings.splice(${i},1);renderBindings()">✕</button>
+        </div>`;
+    });
+    c.innerHTML=h;
+}
+
+function addBinding(){bindings.push({agent:'main',channel:'discord',pattern:'*'});renderBindings();}
+
+function testBinding(){
+    const ch=document.getElementById('testChannel').value;
+    const acc=document.getElementById('testAccount').value||'*';
+    const res=document.getElementById('bindingResult');
+    const match=bindings.find(b=>b.channel===ch&&(b.pattern==='*'||acc.includes(b.pattern)||b.pattern.includes(acc)));
+    if(match){
+        res.innerHTML='✅ Routed to <strong style="color:#4ecdc4">'+match.agent+'</strong> (matched: '+match.channel+' / '+match.pattern+')';
+    }else{
+        res.innerHTML='❌ No matching binding. Message would be <span style="color:#ff6b6b">dropped</span> or go to fallback.';
+    }
+}
+
+renderBindings();
+
+// ═══════════ SPAWN TIMELINE ═══════════
+let currentSpawnStep=0;
+function setSpawnStep(n){
+    currentSpawnStep=n;
+    document.querySelectorAll('.timeline-step').forEach((s,i)=>{
+        s.classList.remove('active','done');
+        if(i<n)s.classList.add('done');
+        if(i===n)s.classList.add('active');
+    });
+}
+
+function autoPlaySpawn(){
+    setSpawnStep(0);
+    let step=0;
+    const iv=setInterval(()=>{
+        step++;
+        if(step>4){clearInterval(iv);return;}
+        setSpawnStep(step);
+    },1200);
+}
+
+// ═══════════ SEND ANIMATION ═══════════
+function animateSend(){
+    const a=document.getElementById('sendA'),b=document.getElementById('sendB');
+    const arrow=document.getElementById('sendArrow1'),msg=document.getElementById('sendMsg');
+    a.classList.remove('sending');b.classList.remove('receiving');
+    arrow.classList.remove('active');msg.style.opacity='0';
+
+    setTimeout(()=>{a.classList.add('sending');},100);
+    setTimeout(()=>{arrow.classList.add('active');msg.style.opacity='1';msg.textContent='📨 "Client needs proposal by Friday"';},500);
+    setTimeout(()=>{b.classList.add('receiving');a.classList.remove('sending');},1000);
+    setTimeout(()=>{msg.textContent='✅ Delivered to doorman session';},1500);
+    setTimeout(()=>{arrow.classList.remove('active');msg.style.opacity='0';b.classList.remove('receiving');},3000);
+}
+
+// ═══════════ EXERCISES ═══════════
+function checkEx1(){
+    const v=document.getElementById('ex1input').value.toLowerCase();
+    const fb=document.getElementById('ex1feedback');
+    const hasThree=['main','work','doorman'].every(n=>v.includes('name='+n));
+    const hasModels=v.includes('model=');
+    const hasDirs=(v.match(/agentdir=/g)||[]).length>=3;
+    const uniqueDirs=new Set((v.match(/agentdir=([^\n]+)/g)||[]).map(s=>s.trim()));
+
+    if(hasThree&&hasModels&&hasDirs&&uniqueDirs.size>=3){
+        fb.className='feedback correct';
+        fb.innerHTML='✅ <strong>Excellent!</strong> Three agents with separate workspaces and models. Key: each agentDir must be unique — shared dirs = shared brains.';
+    }else{
+        fb.className='feedback incorrect';
+        let issues=[];
+        if(!hasThree)issues.push('Need all 3 agents: main, work, doorman');
+        if(!hasModels)issues.push('Each agent needs a model');
+        if(hasDirs&&uniqueDirs.size<3)issues.push('Each agent needs a UNIQUE agentDir!');
+        if(!hasDirs)issues.push('Need agentDir for each agent');
+        fb.innerHTML='❌ '+issues.join('. ')+'.';
+    }
+}
+
+function checkEx2(answer){
+    const fb=document.getElementById('ex2feedback');
+    if(answer==='work'){
+        fb.className='feedback correct';
+        fb.innerHTML='✅ <strong>Correct!</strong> channel=telegram + account=@acme_bot matches the "work" binding. The sender pattern is * (any), so user:9281 passes through.';
+    }else{
+        fb.className='feedback incorrect';
+        fb.innerHTML='❌ Not quite. Look at the channel (telegram) and account (@acme_bot) — which binding matches both?';
+    }
+}
+
+function checkEx3(){
+    const v=document.getElementById('ex3input').value.toLowerCase();
+    const fb=document.getElementById('ex3feedback');
+    const hasLabels=(v.match(/label/g)||[]).length>=3;
+    const hasTasks=(v.match(/task/g)||[]).length>=3;
+    const hasOutputs=(v.match(/output/g)||[]).length>=3;
+
+    if(hasLabels&&hasTasks&&hasOutputs){
+        fb.className='feedback correct';
+        fb.innerHTML='✅ <strong>Well designed!</strong> Each sub-agent has a clear label, focused task, and expected output. Good separation of concerns — each sub-agent can work independently without knowing about the others.';
+    }else{
+        fb.className='feedback incorrect';
+        let missing=[];
+        if(!hasLabels)missing.push('labels');
+        if(!hasTasks)missing.push('task descriptions');
+        if(!hasOutputs)missing.push('expected outputs');
+        fb.innerHTML='❌ Each sub-agent needs: '+missing.join(', ')+'. Define at least 3 sub-agents.';
+    }
+}
+
+function hintEx(n){
+    const fb=document.getElementById('ex'+n+'feedback');
+    fb.className='feedback hint';
+    if(n===1)fb.innerHTML='💡 <strong>Hint:</strong> Use different models for different needs. Haiku for simple tasks (doorman), Sonnet for daily work, Opus for complex reasoning. And remember: each agentDir must be a <em>different</em> path!';
+    if(n===3)fb.innerHTML='💡 <strong>Hint:</strong> Think about which parts can be built independently. Landing page, API docs, blog posts, contact form — each is a natural sub-agent boundary. What does each one need as input? What file(s) does it produce?';
+}
+
+// Exercise 4: Security boundaries
+const ex4Data=[
+    {item:"main's MEMORY.md",canAccess:false,reason:"Each agent's workspace is isolated. Work can't read main's files."},
+    {item:"main's session history",canAccess:false,reason:"Sessions are per-agent. Work has no access to main's session store."},
+    {item:"main's Gmail auth token",canAccess:false,reason:"Auth profiles live in agentDir. Separate dirs = separate auth."},
+    {item:"A file main shared via sessions_send",canAccess:true,reason:"If main explicitly sends data via sessions_send, the receiving agent gets that specific message."},
+    {item:"main's SOUL.md personality",canAccess:false,reason:"SOUL.md is in main's agentDir. Work has its own personality."},
+    {item:"The gateway's config",canAccess:true,reason:"All agents share the same gateway. Gateway-level config (like bindings) is visible."},
+];
+
+function renderEx4(){
+    const c=document.getElementById('ex4items');
+    let h='';
+    ex4Data.forEach((d,i)=>{
+        h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px;margin:6px 0;background:rgba(0,0,0,.2);border-radius:8px;flex-wrap:wrap">
+            <span style="flex:1;min-width:200px;font-size:.9em">${d.item}</span>
+            <button class="btn-sm btn-secondary" onclick="checkEx4(${i},true)">✅ Yes</button>
+            <button class="btn-sm btn-secondary" onclick="checkEx4(${i},false)">❌ No</button>
+            <div id="ex4r${i}" style="width:100%;font-size:.85em;margin-top:4px"></div>
+        </div>`;
+    });
+    c.innerHTML=h;
+}
+
+let ex4Score=0,ex4Answered=0;
+function checkEx4(i,answer){
+    const r=document.getElementById('ex4r'+i);
+    const correct=answer===ex4Data[i].canAccess;
+    ex4Answered++;
+    if(correct)ex4Score++;
+    r.innerHTML=(correct?'✅':'❌')+' '+ex4Data[i].reason;
+    r.style.color=correct?'#4ecdc4':'#ff6b6b';
+
+    if(ex4Answered===ex4Data.length){
+        const fb=document.getElementById('ex4feedback');
+        fb.className='feedback '+(ex4Score>=5?'correct':'incorrect');
+        fb.innerHTML=`${ex4Score}/${ex4Data.length} correct. `+(ex4Score>=5?'Strong understanding of agent isolation!':'Review: the key principle is that agents share a gateway but nothing else — unless explicitly sent via sessions_send.');
+    }
+}
+
+renderEx4();
+</script>
+</body>
+</html>

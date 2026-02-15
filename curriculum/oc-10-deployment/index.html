@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-10: Deployment & Operations</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--surface3:#222233;--border:#2a2a3a;--text:#e0e0e8;--dim:#888;--accent:#7c6aef;--accent2:#5b4cc4;--green:#4ade80;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--orange:#fb923c;--cyan:#22d3ee;--pink:#f472b6}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(180deg,#151525 0%,var(--bg) 100%)}
+.hero .module-tag{display:inline-block;background:var(--accent2);color:#fff;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600;letter-spacing:1px;margin-bottom:16px}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:700;margin-bottom:12px;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{color:var(--dim);font-size:18px;max-width:600px;margin:0 auto}
+
+/* Act headers */
+.act-header{padding:40px 0 20px;text-align:center}
+.act-header .act-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:12px;margin-bottom:8px}
+.act-header h2{font-size:clamp(22px,4vw,32px);font-weight:700}
+.act-header p{color:var(--dim);margin-top:6px;max-width:500px;margin-left:auto;margin-right:auto;font-size:15px}
+.act1-tag{background:rgba(124,106,239,.2);color:var(--accent)}
+.act2-tag{background:rgba(74,222,128,.15);color:var(--green)}
+.act3-tag{background:rgba(96,165,250,.15);color:var(--blue)}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:16px 0}
+.card h3{font-size:18px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .icon{font-size:22px}
+
+/* Topology Builder */
+.topo-modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px}
+.topo-btn{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:.2s}
+.topo-btn:hover{border-color:var(--accent);background:var(--surface3)}
+.topo-btn.active{border-color:var(--accent);background:rgba(124,106,239,.1)}
+.topo-btn .topo-icon{font-size:28px;margin-bottom:4px}
+.topo-btn .topo-label{font-size:13px;font-weight:600}
+.topo-btn .topo-desc{font-size:11px;color:var(--dim);margin-top:2px}
+.topo-diagram{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;min-height:220px;position:relative;overflow:hidden}
+.topo-diagram svg{width:100%;height:220px}
+.topo-info{margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px;font-size:14px;color:var(--dim)}
+.topo-info strong{color:var(--text)}
+
+/* SVG styles */
+.topo-diagram svg text{fill:var(--text);font-family:inherit;font-size:11px;text-anchor:middle}
+.topo-diagram svg .node-box{fill:var(--surface2);stroke:var(--border);stroke-width:1.5;rx:8}
+.topo-diagram svg .node-accent{fill:rgba(124,106,239,.15);stroke:var(--accent);stroke-width:1.5;rx:8}
+.topo-diagram svg .node-green{fill:rgba(74,222,128,.1);stroke:var(--green);stroke-width:1.5;rx:8}
+.topo-diagram svg .node-blue{fill:rgba(96,165,250,.1);stroke:var(--blue);stroke-width:1.5;rx:8}
+.topo-diagram svg .node-orange{fill:rgba(251,146,42,.1);stroke:var(--orange);stroke-width:1.5;rx:8}
+.topo-diagram svg .conn{stroke:var(--dim);stroke-width:1.5;stroke-dasharray:6,4;fill:none}
+.topo-diagram svg .conn-accent{stroke:var(--accent);stroke-width:2;stroke-dasharray:6,4;fill:none}
+.topo-diagram svg .label{fill:var(--dim);font-size:9px}
+
+/* Cost calculator */
+.calc-row{display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}
+.calc-row label{min-width:140px;font-size:14px;color:var(--dim)}
+.calc-row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.calc-row .val{min-width:60px;text-align:right;font-weight:600;font-size:14px;color:var(--accent)}
+.calc-result{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px}
+.calc-result .big-num{font-size:36px;font-weight:700;color:var(--accent)}
+.calc-result .label{color:var(--dim);font-size:13px}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px}
+.calc-grid .cg-item{background:var(--surface2);padding:10px;border-radius:8px;text-align:center}
+.calc-grid .cg-item .cg-val{font-size:20px;font-weight:700}
+.calc-grid .cg-item .cg-label{font-size:11px;color:var(--dim)}
+.model-select{display:flex;gap:8px;flex:1;flex-wrap:wrap}
+.model-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px;font-weight:500;transition:.2s}
+.model-btn.active{border-color:var(--accent);background:rgba(124,106,239,.15)}
+.model-btn:hover{border-color:var(--accent)}
+
+/* VPS Sizing */
+.sizing-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:500px){.sizing-inputs{grid-template-columns:1fr}}
+.sizing-input{background:var(--surface2);border-radius:8px;padding:12px}
+.sizing-input label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
+.sizing-input input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:16px}
+.sizing-result{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.sr-card{background:var(--surface2);border-radius:8px;padding:12px;text-align:center;border:2px solid transparent}
+.sr-card.recommended{border-color:var(--green)}
+.sr-card .sr-val{font-size:20px;font-weight:700}
+.sr-card .sr-label{font-size:11px;color:var(--dim)}
+
+/* Monitor Dashboard */
+.monitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.monitor-grid{grid-template-columns:1fr}}
+.mon-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
+.mon-card .mon-title{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.mon-card canvas{width:100%;height:80px;display:block}
+.mon-card .mon-val{font-size:24px;font-weight:700;margin-top:4px}
+.mon-card .mon-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.status-ok{background:rgba(74,222,128,.15);color:var(--green)}
+.status-warn{background:rgba(251,191,36,.15);color:var(--yellow)}
+.status-bad{background:rgba(248,113,113,.15);color:var(--red)}
+
+/* Exercises */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden}
+.exercise-header{padding:16px 20px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.exercise-header:hover{background:var(--surface2)}
+.exercise-header .ex-num{background:var(--green);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.exercise-header .ex-title{font-weight:600;font-size:15px}
+.exercise-header .ex-arrow{margin-left:auto;transition:.3s;color:var(--dim)}
+.exercise-header .ex-arrow.open{transform:rotate(180deg)}
+.exercise-body{padding:0 20px 20px;display:none}
+.exercise-body.open{display:block}
+pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;font-size:13px;line-height:1.5;color:var(--cyan);margin:10px 0}
+code{font-family:'SF Mono',Consolas,monospace}
+.exercise-body p{font-size:14px;color:var(--dim);margin:8px 0}
+.exercise-body h4{font-size:14px;margin:12px 0 6px;color:var(--text)}
+
+/* Connection section */
+.conn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:12px 0}
+.conn-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.conn-card h4{font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.conn-card p{font-size:13px;color:var(--dim)}
+.conn-card ul{list-style:none;padding:0;margin:6px 0 0}
+.conn-card li{font-size:13px;color:var(--dim);padding:3px 0;border-bottom:1px solid var(--border)}
+.conn-card li:last-child{border:none}
+
+.doc-links{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.doc-link{display:inline-block;padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-size:13px;text-decoration:none;transition:.2s}
+.doc-link:hover{border-color:var(--accent);background:rgba(124,106,239,.1)}
+
+.story{background:var(--surface2);border-left:3px solid var(--accent);padding:14px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+.story .story-title{font-weight:600;color:var(--text);margin-bottom:4px}
+.story p{color:var(--dim);margin:4px 0}
+
+.tip{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--yellow)}
+.tip::before{content:'⚠️ ';font-size:14px}
+
+/* Footer */
+.module-footer{text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+.module-footer .next-link{display:inline-block;margin-top:8px;color:var(--accent);text-decoration:none;font-weight:600}
+
+/* Bar chart for cost comparison */
+.bar-chart{display:flex;align-items:flex-end;gap:16px;height:120px;margin:16px 0;padding:0 10px}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1}
+.bar-col .bar{width:100%;border-radius:6px 6px 0 0;transition:height .4s;min-height:4px}
+.bar-col .bar-label{font-size:11px;color:var(--dim);margin-top:6px;text-align:center}
+.bar-col .bar-val{font-size:12px;font-weight:700;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="module-tag">MODULE OC-10</div>
+  <h1>Deployment & Operations</h1>
+  <p class="subtitle">The difference between "it works on my laptop" and "it runs reliably for clients."</p>
+</div>
+
+<div class="container">
+
+<!-- ═══════════ ACT 1: THE EXPLORABLE ═══════════ -->
+<div class="act-header">
+  <div class="act-tag act1-tag">Act 1</div>
+  <h2>The Explorable</h2>
+  <p>Understand the deployment landscape before you build</p>
+</div>
+
+<!-- Topology Builder -->
+<div class="card">
+  <h3><span class="icon">🏗️</span> Deployment Topology Builder</h3>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:14px">Click a mode to see how the architecture changes.</p>
+  <div class="topo-modes" id="topoModes">
+    <div class="topo-btn active" data-mode="local" onclick="setTopo('local')">
+      <div class="topo-icon">💻</div>
+      <div class="topo-label">Local Laptop</div>
+      <div class="topo-desc">Everything on one machine</div>
+    </div>
+    <div class="topo-btn" data-mode="vps" onclick="setTopo('vps')">
+      <div class="topo-icon">☁️</div>
+      <div class="topo-label">VPS</div>
+      <div class="topo-desc">Gateway in the cloud</div>
+    </div>
+    <div class="topo-btn" data-mode="remote" onclick="setTopo('remote')">
+      <div class="topo-icon">🔗</div>
+      <div class="topo-label">Remote Gateway</div>
+      <div class="topo-desc">Mac app → remote via tunnel</div>
+    </div>
+    <div class="topo-btn" data-mode="multi" onclick="setTopo('multi')">
+      <div class="topo-icon">🏢</div>
+      <div class="topo-label">Multi-Gateway</div>
+      <div class="topo-desc">Separate gateways per client</div>
+    </div>
+  </div>
+  <div class="topo-diagram" id="topoDiagram"></div>
+  <div class="topo-info" id="topoInfo"></div>
+</div>
+
+<!-- Cost Calculator -->
+<div class="card">
+  <h3><span class="icon">💰</span> Monthly Cost Calculator</h3>
+  <div class="calc-row">
+    <label>Model</label>
+    <div class="model-select" id="modelSelect">
+      <button class="model-btn" data-model="haiku" onclick="setModel('haiku')">Haiku</button>
+      <button class="model-btn active" data-model="sonnet" onclick="setModel('sonnet')">Sonnet</button>
+      <button class="model-btn" data-model="opus" onclick="setModel('opus')">Opus</button>
+    </div>
+  </div>
+  <div class="calc-row">
+    <label>Messages / day</label>
+    <input type="range" id="msgPerDay" min="10" max="500" value="100" oninput="calcCost()">
+    <div class="val" id="msgPerDayVal">100</div>
+  </div>
+  <div class="calc-row">
+    <label>Avg tokens / msg</label>
+    <input type="range" id="tokPerMsg" min="500" max="8000" value="2000" step="100" oninput="calcCost()">
+    <div class="val" id="tokPerMsgVal">2,000</div>
+  </div>
+  <div class="calc-row">
+    <label>Heartbeat freq (min)</label>
+    <input type="range" id="hbFreq" min="5" max="120" value="30" step="5" oninput="calcCost()">
+    <div class="val" id="hbFreqVal">30</div>
+  </div>
+  <div class="calc-result">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <div class="big-num" id="totalCost">$0</div>
+      <div class="label">estimated monthly API cost</div>
+    </div>
+    <div class="calc-grid" id="calcGrid"></div>
+    <div style="margin-top:14px">
+      <div style="font-size:13px;color:var(--dim);margin-bottom:8px"><strong style="color:var(--text)">Model Comparison</strong> — same usage, different models:</div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VPS Sizing -->
+<div class="card">
+  <h3><span class="icon">📐</span> VPS Sizing Guide</h3>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:14px">Enter your expected load to get a recommendation.</p>
+  <div class="sizing-inputs">
+    <div class="sizing-input">
+      <label>Number of channels</label>
+      <input type="number" id="numChannels" value="3" min="1" max="50" oninput="calcSizing()">
+    </div>
+    <div class="sizing-input">
+      <label>Concurrent sessions</label>
+      <input type="number" id="numSessions" value="2" min="1" max="20" oninput="calcSizing()">
+    </div>
+  </div>
+  <div class="sizing-result" id="sizingResult"></div>
+  <div style="margin-top:12px">
+    <div style="font-size:13px;color:var(--dim);margin-bottom:8px"><strong style="color:var(--text)">Memory Growth Pattern</strong></div>
+    <canvas id="memChart" style="width:100%;height:120px;background:var(--bg);border:1px solid var(--border);border-radius:8px"></canvas>
+    <div style="font-size:11px;color:var(--dim);margin-top:4px">Node.js base ~80MB + ~60MB per channel + ~120MB per active session. Memory compacts between sessions.</div>
+  </div>
+</div>
+
+<!-- Monitoring Dashboard -->
+<div class="card">
+  <h3><span class="icon">📊</span> Monitoring Dashboard</h3>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:14px">The metrics you'd watch in production. This is a mockup — real data comes from your gateway logs.</p>
+  <div class="monitor-grid">
+    <div class="mon-card">
+      <div class="mon-title">Memory Usage</div>
+      <canvas id="monMem"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="mon-val" style="color:var(--yellow)">847 MB</div>
+        <span class="mon-status status-warn">Warning</span>
+      </div>
+    </div>
+    <div class="mon-card">
+      <div class="mon-title">Messages / Hour</div>
+      <canvas id="monMsg"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="mon-val" style="color:var(--green)">42</div>
+        <span class="mon-status status-ok">Normal</span>
+      </div>
+    </div>
+    <div class="mon-card">
+      <div class="mon-title">Model Latency (p95)</div>
+      <canvas id="monLat"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="mon-val" style="color:var(--green)">2.3s</div>
+        <span class="mon-status status-ok">Normal</span>
+      </div>
+    </div>
+    <div class="mon-card">
+      <div class="mon-title">Error Rate</div>
+      <canvas id="monErr"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="mon-val" style="color:var(--red)">3.2%</div>
+        <span class="mon-status status-bad">Elevated</span>
+      </div>
+    </div>
+  </div>
+  <div class="tip" style="margin-top:14px">Watch <code>gateway-crashes.log</code> for OOM kills. If memory exceeds 80% of your VPS RAM, the gateway will eventually crash. Set up alerts at 70%.</div>
+</div>
+
+<!-- ═══════════ ACT 2: THE BUILD ═══════════ -->
+<div class="act-header">
+  <div class="act-tag act2-tag">Act 2</div>
+  <h2>The Build</h2>
+  <p>Four exercises to make deployment real</p>
+</div>
+
+<div class="exercise">
+  <div class="exercise-header" onclick="toggleEx(this)">
+    <div class="ex-num">1</div>
+    <div class="ex-title">VPS Setup Script</div>
+    <div class="ex-arrow">▼</div>
+  </div>
+  <div class="exercise-body">
+    <p>Deploy OpenClaw on a fresh Ubuntu 22.04 VPS. This is the full sequence — from bare metal to running gateway.</p>
+    <h4>System prep & Node.js</h4>
+<pre><code># Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js 22 (LTS)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verify
+node --version  # v22.x.x
+npm --version</code></pre>
+
+    <h4>Install OpenClaw</h4>
+<pre><code># Install globally
+sudo npm install -g @anthropic/openclaw
+
+# Initial setup — walks you through config
+openclaw setup
+
+# This creates ~/.openclaw/ with:
+#   openclaw.json    — main config (encrypted with sops)
+#   workspace-main/  — your workspace
+#   logs/            — gateway logs</code></pre>
+
+    <h4>Configure as systemd service</h4>
+<pre><code># Create service file
+sudo tee /etc/systemd/system/openclaw.service &lt;&lt;'EOF'
+[Unit]
+Description=OpenClaw Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=openclaw
+Group=openclaw
+WorkingDirectory=/home/openclaw
+ExecStart=/usr/bin/openclaw gateway start --foreground
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+# Memory safety
+MemoryMax=2G
+MemoryHigh=1.5G
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openclaw
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create dedicated user
+sudo useradd -r -m -s /bin/bash openclaw
+sudo -u openclaw openclaw setup
+
+# Enable and start
+sudo systemctl daemon-reload
+sudo systemctl enable openclaw
+sudo systemctl start openclaw
+
+# Check status
+sudo systemctl status openclaw
+journalctl -u openclaw -f</code></pre>
+
+    <h4>Firewall</h4>
+<pre><code># Only allow SSH and the gateway port
+sudo ufw allow ssh
+sudo ufw allow 3000/tcp  # gateway port (adjust as needed)
+sudo ufw enable</code></pre>
+    <p>💡 <strong>Key insight:</strong> The <code>MemoryMax=2G</code> in the systemd unit is your safety net. When Node.js leaks (and it will, over days), systemd kills and restarts the process cleanly instead of letting the whole VPS swap-thrash to death.</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="exercise-header" onclick="toggleEx(this)">
+    <div class="ex-num">2</div>
+    <div class="ex-title">Tailscale Tunnel</div>
+    <div class="ex-arrow">▼</div>
+  </div>
+  <div class="exercise-body">
+    <p>Connect your Mac app to a remote gateway securely — no port forwarding, no SSL certs, no exposed ports.</p>
+    <h4>On the VPS</h4>
+<pre><code># Install Tailscale
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# Authenticate
+sudo tailscale up
+
+# Note the Tailscale IP (e.g., 100.x.y.z)
+tailscale ip -4</code></pre>
+
+    <h4>On your Mac</h4>
+<pre><code># Install Tailscale (or use the Mac app from App Store)
+brew install tailscale
+
+# Connect to same tailnet
+sudo tailscale up
+
+# Test connectivity
+ping 100.x.y.z</code></pre>
+
+    <h4>Configure OpenClaw to use the tunnel</h4>
+<pre><code># On Mac, point to the remote gateway
+# In openclaw.json or via:
+openclaw gateway config.set remoteGateway "http://100.x.y.z:3000"
+
+# Now your Mac app talks to the VPS gateway
+# over an encrypted WireGuard tunnel
+# No ports exposed to the internet!</code></pre>
+    <p>💡 <strong>Why Tailscale over SSH tunnels?</strong> SSH tunnels break. They need keepalive hacks, reconnection scripts, and still drop under load. Tailscale is a WireGuard mesh — it reconnects automatically, survives network changes, and just works.</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="exercise-header" onclick="toggleEx(this)">
+    <div class="ex-num">3</div>
+    <div class="ex-title">Client Isolation (Docker)</div>
+    <div class="ex-arrow">▼</div>
+  </div>
+  <div class="exercise-body">
+    <p>Run two separate client environments on one VPS. Complete workspace and config isolation.</p>
+    <h4>docker-compose.yml</h4>
+<pre><code>version: '3.8'
+
+services:
+  client-alpha:
+    image: node:22-slim
+    container_name: openclaw-alpha
+    working_dir: /home/openclaw
+    volumes:
+      - ./alpha/workspace:/home/openclaw/.openclaw/workspace-main
+      - ./alpha/config:/home/openclaw/.openclaw
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_AGENT_NAME=Alpha
+    command: >
+      sh -c "npm install -g @anthropic/openclaw &&
+             openclaw gateway start --foreground"
+    restart: always
+    mem_limit: 2g
+    cpus: 1.0
+
+  client-beta:
+    image: node:22-slim
+    container_name: openclaw-beta
+    working_dir: /home/openclaw
+    volumes:
+      - ./beta/workspace:/home/openclaw/.openclaw/workspace-main
+      - ./beta/config:/home/openclaw/.openclaw
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_AGENT_NAME=Beta
+    command: >
+      sh -c "npm install -g @anthropic/openclaw &&
+             openclaw gateway start --foreground"
+    restart: always
+    mem_limit: 2g
+    cpus: 1.0</code></pre>
+
+    <h4>Directory structure</h4>
+<pre><code>├── docker-compose.yml
+├── alpha/
+│   ├── config/
+│   │   └── openclaw.json    # Alpha's encrypted config
+│   └── workspace/
+│       ├── SOUL.md           # Alpha's personality
+│       ├── AGENTS.md
+│       └── ...
+└── beta/
+    ├── config/
+    │   └── openclaw.json    # Beta's encrypted config
+    └── workspace/
+        ├── SOUL.md           # Beta's personality
+        └── ...</code></pre>
+
+    <h4>Deploy</h4>
+<pre><code># Set up each client's config first
+cd alpha/config && openclaw setup  # configure Alpha
+cd ../../beta/config && openclaw setup  # configure Beta
+
+# Launch both
+docker compose up -d
+
+# Check status
+docker compose ps
+docker logs -f openclaw-alpha
+docker logs -f openclaw-beta</code></pre>
+    <p>💡 <strong>Key insight:</strong> Each container gets its own config, workspace, API keys, and channels. One client's WhatsApp crash doesn't affect the other. The <code>mem_limit</code> prevents one runaway container from starving the other.</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="exercise-header" onclick="toggleEx(this)">
+    <div class="ex-num">4</div>
+    <div class="ex-title">Healthcheck & Alerting</div>
+    <div class="ex-arrow">▼</div>
+  </div>
+  <div class="exercise-body">
+    <p>Monitor your gateway and get alerts before users notice problems.</p>
+    <h4>healthcheck.sh</h4>
+<pre><code>#!/bin/bash
+# OpenClaw Gateway Healthcheck
+# Run via cron: */5 * * * * /opt/openclaw/healthcheck.sh
+
+WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+GATEWAY_PORT=3000
+MAX_MEMORY_MB=1500
+MAX_UPTIME_DAYS=7
+LOG_FILE="/var/log/openclaw-health.log"
+
+timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
+
+alert() {
+  local msg="$1"
+  local level="${2:-warning}"
+  echo "[$(timestamp)] ALERT: $msg" >> "$LOG_FILE"
+  
+  curl -s -X POST "$WEBHOOK_URL" \
+    -H 'Content-Type: application/json' \
+    -d "{
+      \"text\": \"🚨 OpenClaw [$level]: $msg\",
+      \"username\": \"openclaw-monitor\"
+    }" > /dev/null
+}
+
+# 1. Process alive?
+if ! pgrep -f "openclaw gateway" > /dev/null; then
+  alert "Gateway process not running!" "critical"
+  sudo systemctl restart openclaw
+  alert "Attempted restart" "info"
+  exit 1
+fi
+
+# 2. Memory check
+MEM_MB=$(ps -o rss= -p $(pgrep -f "openclaw gateway" | head -1) 2>/dev/null | awk '{printf "%.0f", $1/1024}')
+if [ -n "$MEM_MB" ] && [ "$MEM_MB" -gt "$MAX_MEMORY_MB" ]; then
+  alert "Memory at ${MEM_MB}MB (threshold: ${MAX_MEMORY_MB}MB)" "warning"
+fi
+
+# 3. Uptime check (restart periodically to clear leaks)
+UPTIME_SEC=$(ps -o etimes= -p $(pgrep -f "openclaw gateway" | head -1) 2>/dev/null | tr -d ' ')
+UPTIME_DAYS=$((UPTIME_SEC / 86400))
+if [ -n "$UPTIME_DAYS" ] && [ "$UPTIME_DAYS" -gt "$MAX_UPTIME_DAYS" ]; then
+  alert "Gateway uptime ${UPTIME_DAYS}d — scheduling restart" "info"
+  sudo systemctl restart openclaw
+fi
+
+# 4. Responsiveness (check gateway HTTP)
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
+  --max-time 10 "http://localhost:${GATEWAY_PORT}/health" 2>/dev/null)
+if [ "$HTTP_CODE" != "200" ]; then
+  alert "Gateway health endpoint returned $HTTP_CODE" "critical"
+fi
+
+# 5. Disk space
+DISK_PCT=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
+if [ "$DISK_PCT" -gt 85 ]; then
+  alert "Disk usage at ${DISK_PCT}%" "warning"
+fi
+
+echo "[$(timestamp)] OK - mem:${MEM_MB}MB uptime:${UPTIME_DAYS}d disk:${DISK_PCT}%" >> "$LOG_FILE"</code></pre>
+
+    <h4>Install</h4>
+<pre><code># Make executable
+chmod +x /opt/openclaw/healthcheck.sh
+
+# Add to cron (every 5 minutes)
+echo "*/5 * * * * /opt/openclaw/healthcheck.sh" | sudo crontab -
+
+# Test it
+/opt/openclaw/healthcheck.sh && tail -1 /var/log/openclaw-health.log</code></pre>
+    <p>💡 <strong>The restart-after-N-days pattern</strong> is real ops wisdom. Node.js processes grow memory over time. Rather than chase every leak, schedule graceful restarts. It's the pragmatic solution that actually works in production.</p>
+  </div>
+</div>
+
+<!-- ═══════════ ACT 3: THE CONNECTION ═══════════ -->
+<div class="act-header">
+  <div class="act-tag act3-tag">Act 3</div>
+  <h2>The Connection</h2>
+  <p>Real-world deployment wisdom</p>
+</div>
+
+<div class="card">
+  <h3><span class="icon">📚</span> Documentation Links</h3>
+  <div class="doc-links">
+    <a class="doc-link" href="#">📖 VPS Deploy Guide</a>
+    <a class="doc-link" href="#">🔗 Remote Gateway</a>
+    <a class="doc-link" href="#">🛡️ Tailscale Setup</a>
+    <a class="doc-link" href="#">🏢 Multiple Gateways</a>
+    <a class="doc-link" href="#">🔍 Diagnostics</a>
+    <a class="doc-link" href="#">📊 Monitoring</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="icon">🌍</span> Deployment Stories</h3>
+  
+  <div class="story">
+    <div class="story-title">The DigitalOcean Strategy — $96/mo for 16GB</div>
+    <p>The sweet spot for most deployments. A $96/mo Premium AMD droplet (4 vCPU, 16GB RAM) comfortably runs 3-4 client containers with room to breathe. The math: ~2GB per container + 4GB OS overhead + headroom for spikes. Cheaper than a single AWS t3.xlarge.</p>
+  </div>
+
+  <div class="story">
+    <div class="story-title">AWS Bedrock — When you need enterprise compliance</div>
+    <p>Some clients require data to stay in their AWS org. Bedrock gives you Claude without data leaving their VPC. The trade-off: higher per-token cost, no streaming for some models, and you're locked into AWS networking. Worth it when the alternative is "no deal."</p>
+  </div>
+
+  <div class="story">
+    <div class="story-title">Hetzner — The cost optimizer's choice</div>
+    <p>Half the price of DigitalOcean for equivalent specs. €16/mo gets you 8GB RAM with dedicated vCPU. The trade-offs: EU-only datacenters (latency to US), German privacy law (pro or con depending on client), and a more bare-bones control panel. Perfect for personal deployments or EU-based clients.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="icon">📋</span> Operations Runbook</h3>
+  
+  <div class="conn-grid">
+    <div class="conn-card">
+      <h4>📁 Where Logs Live</h4>
+      <ul>
+        <li><code>~/.openclaw/logs/gateway.log</code> — main log</li>
+        <li><code>~/.openclaw/logs/gateway-crashes.log</code> — crash reports</li>
+        <li><code>journalctl -u openclaw</code> — systemd journal</li>
+        <li><code>docker logs openclaw-alpha</code> — container logs</li>
+      </ul>
+    </div>
+    <div class="conn-card">
+      <h4>🔄 The Update Cycle</h4>
+      <ul>
+        <li><code>openclaw update</code> — pull latest</li>
+        <li>Run post-update scripts if any</li>
+        <li>Re-encrypt secrets: <code>sops updatekeys</code></li>
+        <li>Restart: <code>systemctl restart openclaw</code></li>
+        <li>Verify: check logs for 60 seconds</li>
+      </ul>
+    </div>
+    <div class="conn-card">
+      <h4>🔥 Common Issues</h4>
+      <ul>
+        <li><strong>Memory leak</strong> — restart every 5-7 days</li>
+        <li><strong>Port conflict</strong> — check <code>lsof -i :3000</code></li>
+        <li><strong>SSL certs</strong> — use Tailscale or Let's Encrypt</li>
+        <li><strong>WhatsApp sessions</strong> — persist <code>.wwebjs_auth</code> across restarts</li>
+      </ul>
+    </div>
+    <div class="conn-card">
+      <h4>🔑 Secrets Management</h4>
+      <ul>
+        <li>Config encrypted with <code>sops</code> + age</li>
+        <li>API keys in <code>openclaw.json</code>, never in env</li>
+        <li>Rotate keys quarterly</li>
+        <li>Back up age key separately!</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="icon">🧱</span> Container-Per-Client Architecture</h3>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:12px">The production pattern for running multiple clients on shared infrastructure:</p>
+<pre><code>┌─────────────────────────────────────────────┐
+│                 VPS (16GB)                   │
+│                                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Client A │  │ Client B │  │ Client C │  │
+│  │ :3001    │  │ :3002    │  │ :3003    │  │
+│  │ 2GB cap  │  │ 2GB cap  │  │ 2GB cap  │  │
+│  │ Discord  │  │ WhatsApp │  │ Telegram │  │
+│  │ Slack    │  │ Webchat  │  │ Discord  │  │
+│  └──────────┘  └──────────┘  └──────────┘  │
+│                                              │
+│  ┌──────────────────────────────────────┐   │
+│  │  Nginx reverse proxy + Tailscale    │   │
+│  └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘</code></pre>
+  <p style="color:var(--dim);font-size:14px;margin-top:12px">Each container is a separate OpenClaw instance with its own config, workspace, API keys, and channels. One container going down doesn't affect others. Memory caps prevent any single client from starving the rest.</p>
+</div>
+
+<div class="card" style="background:linear-gradient(135deg,var(--surface) 0%,rgba(124,106,239,.05) 100%);border-color:var(--accent)">
+  <h3><span class="icon">💎</span> The Key Insight</h3>
+  <p style="font-size:16px;line-height:1.7;color:var(--text)">Running an agent in production is <strong>operations work</strong>. It's monitoring memory, rotating logs, managing secrets, and keeping channels alive through restarts.</p>
+  <p style="font-size:15px;line-height:1.7;color:var(--dim);margin-top:8px">This module is the difference between a toy and a product. The code to <em>deploy</em> OpenClaw takes 20 minutes. The discipline to <em>operate</em> it reliably takes months of learned patterns — systemd units, memory caps, scheduled restarts, alerting pipelines, and the humility to know that every long-running process eventually fails.</p>
+  <p style="font-size:15px;line-height:1.7;color:var(--dim);margin-top:8px">Plan for failure. Automate recovery. Sleep well.</p>
+</div>
+
+<div class="module-footer">
+  <div>Module OC-10 · Deployment & Operations</div>
+  <div style="margin-top:4px">Part of the OpenClaw Deep-Dive Curriculum</div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════ TOPOLOGY BUILDER ═══════════
+const topos = {
+  local: {
+    info: `<strong>Local Laptop</strong> — Gateway and all channels run on the same machine. Simplest setup. Great for development, personal use, or demos. Downside: agent goes offline when your laptop sleeps.`,
+    svg: `
+      <rect class="node-accent" x="150" y="20" width="200" height="180" rx="12"/>
+      <text x="250" y="46" style="font-size:13px;font-weight:700;fill:${CSS('--accent')}">Your Laptop</text>
+      <rect class="node-green" x="175" y="60" width="150" height="40"/>
+      <text x="250" y="84">⚡ Gateway</text>
+      <rect class="node-box" x="175" y="112" width="70" height="32"/>
+      <text x="210" y="132" style="font-size:10px">Discord</text>
+      <rect class="node-box" x="255" y="112" width="70" height="32"/>
+      <text x="290" y="132" style="font-size:10px">Webchat</text>
+      <rect class="node-box" x="215" y="154" width="70" height="32"/>
+      <text x="250" y="174" style="font-size:10px">WhatsApp</text>
+      <text x="250" y="210" class="label">Everything on localhost</text>`
+  },
+  vps: {
+    info: `<strong>VPS Deployment</strong> — Gateway runs 24/7 on a cloud server. Channels connect remotely. Always-on, survives laptop closure. The standard production setup. Pair with Tailscale for secure access.`,
+    svg: `
+      <rect class="node-accent" x="180" y="10" width="140" height="70" rx="10"/>
+      <text x="250" y="34" style="font-size:12px;font-weight:700;fill:${CSS('--accent')}">☁️ VPS</text>
+      <text x="250" y="54" style="font-size:11px">Gateway :3000</text>
+      <line class="conn-accent" x1="210" y1="80" x2="80" y2="140"/>
+      <line class="conn-accent" x1="250" y1="80" x2="250" y2="140"/>
+      <line class="conn-accent" x1="290" y1="80" x2="420" y2="140"/>
+      <rect class="node-blue" x="20" y="140" width="120" height="50"/>
+      <text x="80" y="162" style="font-size:11px">💬 Discord</text>
+      <text x="80" y="178" class="label">API webhook</text>
+      <rect class="node-blue" x="190" y="140" width="120" height="50"/>
+      <text x="250" y="162" style="font-size:11px">📱 WhatsApp</text>
+      <text x="250" y="178" class="label">puppeteer</text>
+      <rect class="node-blue" x="360" y="140" width="120" height="50"/>
+      <text x="420" y="162" style="font-size:11px">💻 Webchat</text>
+      <text x="420" y="178" class="label">WebSocket</text>
+      <text x="250" y="210" class="label">Gateway always-on · Channels connect remotely</text>`
+  },
+  remote: {
+    info: `<strong>Remote Gateway</strong> — Mac app on your laptop connects to a gateway running on a remote server via SSH or Tailscale. You get the Mac app's UX with the reliability of a server. Best of both worlds.`,
+    svg: `
+      <rect class="node-orange" x="30" y="40" width="140" height="60"/>
+      <text x="100" y="64" style="font-size:12px;font-weight:600;fill:${CSS('--orange')}">🍎 Mac App</text>
+      <text x="100" y="82" class="label">UI + workspace</text>
+      <line class="conn-accent" x1="170" y1="70" x2="280" y2="70"/>
+      <text x="225" y="62" style="font-size:9px;fill:${CSS('--accent')}">🔒 Tailscale</text>
+      <rect class="node-accent" x="280" y="20" width="180" height="100" rx="10"/>
+      <text x="370" y="46" style="font-size:12px;font-weight:700;fill:${CSS('--accent')}">☁️ Remote VPS</text>
+      <rect class="node-green" x="300" y="56" width="140" height="30"/>
+      <text x="370" y="76" style="font-size:11px">⚡ Gateway</text>
+      <rect class="node-box" x="300" y="92" width="65" height="22"/>
+      <text x="332" y="107" style="font-size:9px">Discord</text>
+      <rect class="node-box" x="375" y="92" width="65" height="22"/>
+      <text x="407" y="107" style="font-size:9px">Slack</text>
+      <text x="250" y="160" class="label">Encrypted WireGuard tunnel · No exposed ports</text>
+      <text x="250" y="180" class="label">Mac app UX + server reliability</text>`
+  },
+  multi: {
+    info: `<strong>Multi-Gateway</strong> — Separate gateway instances for separate clients. Full isolation: different configs, different API keys, different agent personalities. The professional services architecture.`,
+    svg: `
+      <rect class="node-accent" x="20" y="20" width="130" height="100" rx="8"/>
+      <text x="85" y="42" style="font-size:11px;font-weight:700;fill:${CSS('--accent')}">Client Alpha</text>
+      <rect class="node-green" x="35" y="50" width="100" height="25"/>
+      <text x="85" y="67" style="font-size:10px">Gateway :3001</text>
+      <rect class="node-box" x="35" y="82" width="45" height="20"/>
+      <text x="57" y="96" style="font-size:8px">Discord</text>
+      <rect class="node-box" x="85" y="82" width="45" height="20"/>
+      <text x="107" y="96" style="font-size:8px">Slack</text>
+      <rect class="node-blue" x="185" y="20" width="130" height="100" rx="8"/>
+      <text x="250" y="42" style="font-size:11px;font-weight:700;fill:${CSS('--blue')}">Client Beta</text>
+      <rect class="node-green" x="200" y="50" width="100" height="25"/>
+      <text x="250" y="67" style="font-size:10px">Gateway :3002</text>
+      <rect class="node-box" x="200" y="82" width="50" height="20"/>
+      <text x="225" y="96" style="font-size:8px">WhatsApp</text>
+      <rect class="node-box" x="255" y="82" width="45" height="20"/>
+      <text x="277" y="96" style="font-size:8px">Web</text>
+      <rect class="node-orange" x="350" y="20" width="130" height="100" rx="8"/>
+      <text x="415" y="42" style="font-size:11px;font-weight:700;fill:${CSS('--orange')}">Client Gamma</text>
+      <rect class="node-green" x="365" y="50" width="100" height="25"/>
+      <text x="415" y="67" style="font-size:10px">Gateway :3003</text>
+      <rect class="node-box" x="365" y="82" width="50" height="20"/>
+      <text x="390" y="96" style="font-size:8px">Telegram</text>
+      <rect class="node-box" x="420" y="82" width="45" height="20"/>
+      <text x="442" y="96" style="font-size:8px">Discord</text>
+      <text x="250" y="150" class="label">Each client fully isolated · Different keys, configs, personalities</text>
+      <text x="250" y="170" class="label">One VPS, multiple containers (Docker Compose)</text>`
+  }
+};
+
+function CSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+
+function setTopo(mode){
+  document.querySelectorAll('.topo-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  const t=topos[mode];
+  document.getElementById('topoDiagram').innerHTML=`<svg viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">${t.svg}</svg>`;
+  document.getElementById('topoInfo').innerHTML=t.info;
+}
+setTopo('local');
+
+// ═══════════ COST CALCULATOR ═══════════
+const models={
+  haiku:{name:'Haiku',input:0.25,output:1.25,color:'var(--green)'},
+  sonnet:{name:'Sonnet',input:3,output:15,color:'var(--accent)'},
+  opus:{name:'Opus',input:15,output:75,color:'var(--orange)'}
+};
+let curModel='sonnet';
+
+function setModel(m){
+  curModel=m;
+  document.querySelectorAll('.model-btn').forEach(b=>b.classList.toggle('active',b.dataset.model===m));
+  calcCost();
+}
+
+function calcCost(){
+  const mpd=+document.getElementById('msgPerDay').value;
+  const tpm=+document.getElementById('tokPerMsg').value;
+  const hbf=+document.getElementById('hbFreq').value;
+  document.getElementById('msgPerDayVal').textContent=mpd;
+  document.getElementById('tokPerMsgVal').textContent=tpm.toLocaleString();
+  document.getElementById('hbFreqVal').textContent=hbf+'m';
+
+  // Heartbeats per day
+  const hbPerDay=Math.floor(1440/hbf);
+  const hbTokens=500; // small context check
+  const totalMsgs=mpd*30;
+  const totalHb=hbPerDay*30;
+  
+  function costFor(m){
+    // Each message: ~tpm input tokens, ~tpm/3 output tokens
+    const inTok=(mpd*tpm + hbPerDay*hbTokens)*30;
+    const outTok=(mpd*(tpm/3)+ hbPerDay*200)*30;
+    return (inTok/1e6)*m.input + (outTok/1e6)*m.output;
+  }
+
+  const cost=costFor(models[curModel]);
+  document.getElementById('totalCost').textContent='$'+Math.round(cost);
+
+  const inTokMonth=(mpd*tpm+hbPerDay*500)*30;
+  const outTokMonth=(mpd*(tpm/3)+hbPerDay*200)*30;
+  
+  document.getElementById('calcGrid').innerHTML=`
+    <div class="cg-item"><div class="cg-val">${totalMsgs.toLocaleString()}</div><div class="cg-label">messages / month</div></div>
+    <div class="cg-item"><div class="cg-val">${totalHb.toLocaleString()}</div><div class="cg-label">heartbeats / month</div></div>
+    <div class="cg-item"><div class="cg-val">${(inTokMonth/1e6).toFixed(1)}M</div><div class="cg-label">input tokens</div></div>
+    <div class="cg-item"><div class="cg-val">${(outTokMonth/1e6).toFixed(1)}M</div><div class="cg-label">output tokens</div></div>
+  `;
+
+  // Bar chart comparison
+  const costs=Object.entries(models).map(([k,m])=>({name:m.name,cost:costFor(m),color:m.color}));
+  // Add subscription comparison
+  costs.push({name:'Max Plan ($200)',cost:200,color:'var(--pink)'});
+  const maxC=Math.max(...costs.map(c=>c.cost));
+  document.getElementById('barChart').innerHTML=costs.map(c=>{
+    const h=Math.max(4,Math.round((c.cost/maxC)*100));
+    return `<div class="bar-col"><div class="bar-val" style="color:${c.color}">$${Math.round(c.cost)}</div><div class="bar" style="height:${h}px;background:${c.color}"></div><div class="bar-label">${c.name}</div></div>`;
+  }).join('');
+}
+calcCost();
+
+// ═══════════ VPS SIZING ═══════════
+function calcSizing(){
+  const ch=+document.getElementById('numChannels').value||1;
+  const sess=+document.getElementById('numSessions').value||1;
+  const baseMem=80;
+  const perChan=60;
+  const perSess=120;
+  const memMB=baseMem+ch*perChan+sess*perSess;
+  const recRAM=memMB<500?1:memMB<1000?2:memMB<2000?4:memMB<4000?8:16;
+  const recCPU=sess<=1?1:sess<=3?2:sess<=6?4:8;
+  
+  const tiers=[
+    {ram:1,cpu:1,price:'$6',provider:'DO Basic'},
+    {ram:2,cpu:1,price:'$18',provider:'DO Basic'},
+    {ram:4,cpu:2,price:'$36',provider:'DO Regular'},
+    {ram:8,cpu:4,price:'$68',provider:'DO Premium'},
+    {ram:16,cpu:4,price:'$96',provider:'DO Premium'}
+  ];
+  
+  document.getElementById('sizingResult').innerHTML=tiers.map(t=>{
+    const rec=t.ram===recRAM;
+    return `<div class="sr-card${rec?' recommended':''}">
+      <div class="sr-val">${t.ram}GB</div>
+      <div class="sr-label">${t.cpu} vCPU · ${t.price}/mo</div>
+      <div class="sr-label">${t.provider}</div>
+      ${rec?'<div style="color:var(--green);font-size:11px;font-weight:600;margin-top:4px">✓ Recommended</div>':''}
+    </div>`;
+  }).join('');
+
+  drawMemChart(ch,sess);
+}
+
+function drawMemChart(ch,sess){
+  const c=document.getElementById('memChart');
+  const ctx=c.getContext('2d');
+  const W=c.width=c.offsetWidth*2;
+  const H=c.height=240;
+  ctx.scale(1,1);
+  ctx.clearRect(0,0,W,H);
+  
+  const base=80,perCh=60,perS=120;
+  const points=[];
+  // Simulate 24 hours
+  for(let i=0;i<96;i++){
+    const hour=i/4;
+    const activeSess=hour>8&&hour<22?sess:Math.max(1,Math.floor(sess/3));
+    const leak=i*0.5; // slow leak
+    const compact=i%24===0?-20:0;
+    let mem=base+ch*perCh+activeSess*perS+leak+compact;
+    points.push(mem);
+  }
+  
+  const maxMem=Math.max(...points)*1.2;
+  const pad={l:40,r:10,t:10,b:20};
+  
+  ctx.strokeStyle='rgba(124,106,239,0.3)';
+  ctx.lineWidth=1;
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const y=pad.t+(H-pad.t-pad.b)*(1-f);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#666';ctx.font='10px sans-serif';
+    ctx.fillText(Math.round(maxMem*f)+'MB',2,y+3);
+  });
+  
+  ctx.beginPath();
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  points.forEach((p,i)=>{
+    const x=pad.l+i*(W-pad.l-pad.r)/points.length;
+    const y=pad.t+(H-pad.t-pad.b)*(1-p/maxMem);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  
+  // Gradient fill
+  const lastX=pad.l+(points.length-1)*(W-pad.l-pad.r)/points.length;
+  const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0,'rgba(124,106,239,0.2)');
+  grad.addColorStop(1,'rgba(124,106,239,0)');
+  ctx.lineTo(lastX,H-pad.b);ctx.lineTo(pad.l,H-pad.b);
+  ctx.fillStyle=grad;ctx.fill();
+}
+calcSizing();
+
+// ═══════════ MONITOR SPARKLINES ═══════════
+function sparkline(id,data,color,fillAlpha=0.15){
+  const c=document.getElementById(id);
+  const ctx=c.getContext('2d');
+  const W=c.width=c.offsetWidth*2;
+  const H=c.height=160;
+  ctx.clearRect(0,0,W,H);
+  const max=Math.max(...data)*1.15;
+  const pad=4;
+  
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;
+  data.forEach((v,i)=>{
+    const x=pad+i*(W-2*pad)/(data.length-1);
+    const y=pad+(H-2*pad)*(1-v/max);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  
+  const lastX=pad+(data.length-1)*(W-2*pad)/(data.length-1);
+  ctx.lineTo(lastX,H-pad);ctx.lineTo(pad,H-pad);ctx.closePath();
+  ctx.fillStyle=color.replace(')',`,${fillAlpha})`).replace('rgb','rgba');
+  ctx.fill();
+}
+
+// Generate fake data
+const mkData=(base,variance,n=24)=>Array.from({length:n},()=>base+Math.random()*variance-variance/4);
+
+sparkline('monMem',mkData(700,300).map((v,i)=>v+i*6),'rgb(251,191,36)');
+sparkline('monMsg',mkData(35,20),'rgb(74,222,128)');
+sparkline('monLat',mkData(1.8,1.2),'rgb(96,165,250)');
+sparkline('monErr',[0.1,0.2,0.1,0.3,0.2,0.1,0.1,0.4,0.8,1.2,2.1,3.5,4.2,3.8,3.2,2.8,2.5,2.2,2.0,1.8,1.5,1.2,0.9,0.6],'rgb(248,113,113)');
+
+// ═══════════ EXERCISE TOGGLE ═══════════
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const arrow=header.querySelector('.ex-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+</script>
+</body>
+</html>

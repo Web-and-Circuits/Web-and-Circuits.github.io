@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>From Neurons to Agents — 7-Day AI Curriculum</title>
+<meta name="description" content="A 7-day, 2-hours-per-day AI course for founders. From neural networks to production agents.">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<link rel="manifest" href="manifest.json">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--card:#1e293b;--card-hover:#253349;--accent:#38bdf8;--accent2:#a78bfa;--text:#e2e8f0;--dim:#94a3b8;--green:#4ade80;--border:#334155;--radius:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:800px;margin:0 auto;padding:16px}
+header{text-align:center;padding:40px 16px 20px}
+header h1{font-size:1.8rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--dim);margin-top:8px;font-size:.95rem}
+.briefing-card{display:block;background:linear-gradient(135deg,#1e293b,#2d1b4e);border:2px solid var(--accent2);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;text-decoration:none;transition:all .2s}
+.briefing-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 20px rgba(167,139,250,.15);text-decoration:none}
+.briefing-card h2{font-size:1.15rem;color:var(--accent2);margin-bottom:4px}
+.briefing-card p{color:var(--dim);font-size:.9rem;margin:0}
+.quick-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.quick-link{padding:6px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);font-size:.82rem;color:var(--dim);transition:border-color .2s}
+.quick-link:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:8px 0 16px;-webkit-overflow-scrolling:touch}
+.tab{padding:10px 16px;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);color:var(--dim);cursor:pointer;white-space:nowrap;font-size:.9rem;transition:all .2s}
+.tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.tab:hover:not(.active){background:var(--card-hover)}
+.panel{display:none}.panel.active{display:block}
+.day{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:border-color .2s}
+.day:hover{border-color:var(--accent)}
+.day-header{padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;user-select:none}
+.day-num{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:var(--bg);flex-shrink:0}
+.day-info{flex:1;min-width:0}
+.day-title{font-weight:600;font-size:1.05rem}.day-sub{color:var(--dim);font-size:.85rem;margin-top:2px}
+.arrow{color:var(--dim);transition:transform .3s;font-size:1.2rem;flex-shrink:0}
+.day.open .arrow{transform:rotate(180deg)}
+.day-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.day.open .day-body{display:block}
+.segment{margin-top:14px}
+.seg-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:6px;font-weight:600}
+.vid-row{display:flex;gap:10px;flex-wrap:wrap}
+.vid-thumb{position:relative;width:100%;max-width:360px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000;cursor:pointer}
+.vid-thumb img{width:100%;height:100%;object-fit:cover;opacity:.8;transition:opacity .2s}
+.vid-thumb:hover img{opacity:1}
+.vid-thumb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none}
+.vid-thumb .caption{position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:.8rem;color:#fff}
+.vid-embed{width:100%;max-width:360px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000}
+.vid-embed iframe{width:100%;height:100%;border:0}
+.reading-link,.build-link,.concept-link{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:.88rem;margin-right:8px;margin-bottom:6px;transition:border-color .2s}
+.reading-link:hover,.build-link:hover,.concept-link:hover{border-color:var(--accent);text-decoration:none}
+.unlock{margin-top:14px;padding:12px 16px;border-radius:8px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:var(--green);font-size:.9rem}
+.unlock::before{content:"🔓 "}
+.ref-group{margin-bottom:20px}
+.ref-group h3{font-size:.95rem;color:var(--accent2);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.ref-item{padding:8px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:.9rem}
+.ref-item:last-child{border-bottom:0}
+.oc-item{display:block;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:.9rem;transition:border-color .2s;text-decoration:none;color:var(--text)}
+.oc-item:hover{border-color:var(--accent);text-decoration:none}
+.oc-item span{color:var(--dim);font-size:.8rem;display:block;margin-top:2px}
+.vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.vid-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.vid-card .vid-thumb{max-width:none}
+.vid-card-info{padding:10px 12px}
+.vid-card-info .title{font-size:.88rem;font-weight:600}.vid-card-info .meta{color:var(--dim);font-size:.78rem;margin-top:2px}
+.bonus-builds{margin-top:20px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.bonus-builds h3{font-size:.95rem;color:var(--accent2);margin-bottom:10px}
+.ref-module-link{display:block;padding:8px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:.9rem;color:var(--text);text-decoration:none;transition:color .2s}
+.ref-module-link:hover{color:var(--accent);text-decoration:none}
+.ref-module-link:last-child{border-bottom:0}
+.ref-module-link .mod-num{color:var(--accent2);font-weight:600;margin-right:6px}
+footer{text-align:center;padding:40px 16px;color:var(--dim);font-size:.82rem;border-top:1px solid var(--border);margin-top:32px}
+@media(max-width:480px){header h1{font-size:1.4rem}.vid-thumb,.vid-embed{max-width:100%}}
+</style>
+</head>
+<body>
+<header>
+<h1>From Neurons to Agents</h1>
+<p>7 days · 2 hours/day · Built for AI founders</p>
+</header>
+<div class="wrap">
+
+<a class="briefing-card" href="founders-briefing/">
+<h2>📋 Founder's Briefing</h2>
+<p>Start here — the executive overview before diving into the course.</p>
+</a>
+
+<div class="quick-links">
+<a class="quick-link" href="READING-ASSIGNMENTS.md">📖 Reading Assignments</a>
+</div>
+
+<div class="tabs" role="tablist">
+<div class="tab active" data-tab="course">🗓️ 7-Day Course</div>
+<div class="tab" data-tab="openclaw">⚙️ OpenClaw</div>
+<div class="tab" data-tab="reference">📚 Reference</div>
+<div class="tab" data-tab="videos">🎬 Videos</div>
+</div>
+
+<div id="course" class="panel active"></div>
+<div id="openclaw" class="panel"></div>
+<div id="reference" class="panel"></div>
+<div id="videos" class="panel"></div>
+</div>
+<footer>All interactive modules are original content. Videos link to YouTube. Papers link to arXiv.<br>Built for Beach Week 2026.</footer>
+
+<script>
+const DAYS=[
+{n:1,title:"How It Thinks",sub:"Next-token prediction, tokenization, the GPT architecture",
+clips:[{id:"7xTGNNLPyMI",s:1384,e:1560,cap:"Karpathy — Next-token prediction"},{id:"zduSFxRajkE",s:26,e:150,cap:"Karpathy — Tokenization"}],
+reading:{url:"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",text:"GPT-2 paper, pages 1–3"},
+build:{path:"build-01-speak/",text:"Build: Make it speak"},
+concepts:"Founder concepts 1–3",
+unlock:"how every LLM works at its core"},
+{n:2,title:"How It Understands",sub:"Attention mechanism, multi-head attention, positional encoding",
+clips:[{id:"eMlx5fFNoYc",s:487,e:720,cap:"3B1B — Attention step-by-step"},{id:"kCc8FmEb1nY",s:3828,e:4080,cap:"Karpathy — Self-attention"}],
+reading:{url:"https://arxiv.org/abs/1706.03762",text:"Vaswani et al. §3.2, pages 3–5"},
+build:{path:"build-02-smarter/",text:"Build: Make it smarter"},
+concepts:"Founder concepts 4–5",
+unlock:"what attention is and how to read the paper's equation"},
+{n:3,title:"How It Acts",sub:"Tool use, agent loops, ReAct pattern",
+clips:[{id:"EWvNQjAaOHw",s:1861,e:2010,cap:"Karpathy — LLMs as ZIP files"},{id:"EWvNQjAaOHw",s:3660,e:3810,cap:"Karpathy — Tool-use loop"}],
+reading:{url:"https://arxiv.org/abs/2210.03629",text:"ReAct §1–3"},
+build:{path:"build-05-act/",text:"Build: Make it act"},
+concepts:"OC module: oc-02-sessions/",
+unlock:"how agents work — you built one"},
+{n:4,title:"How It Remembers",sub:"Embeddings, vector search, RAG architecture",
+clips:[{id:"9-Jl0dxWQs8",s:272,e:480,cap:"3B1B — How LLMs store facts"}],
+reading:{url:"https://arxiv.org/abs/2005.11401",text:"RAG §1–3"},
+build:{path:"build-06-remember/",text:"Build: Give it memory"},
+concepts:"Founder concepts 6–7",
+unlock:"how to build RAG, which is 90% of enterprise AI"},
+{n:5,title:"How It Scales",sub:"Scaling laws, Chinchilla, training economics",
+clips:[{id:"l8pRSuU81PU",s:53,e:180,cap:"Karpathy — Reproducing GPT-2"},{id:"7xTGNNLPyMI",s:870,e:990,cap:"Karpathy — Training data"}],
+reading:{url:"https://arxiv.org/abs/2203.15556",text:"Chinchilla key result, pages 8–10"},
+build:{path:"build-08-scale/",text:"Build: Make it efficient"},
+concepts:"OC module: oc-10-deployment/",
+unlock:"model selection, cost math, Chinchilla-optimal"},
+{n:6,title:"How It Stays Safe",sub:"Hallucinations, RLHF, red-teaming, alignment",
+clips:[{id:"7xTGNNLPyMI",s:4842,e:5040,cap:"Karpathy — Hallucinations"},{id:"Iar4yweKGoI",s:1157,e:1290,cap:"AI Explained — Constitutional AI"}],
+reading:{url:"https://arxiv.org/abs/2203.02155",text:"InstructGPT §3"},
+build:{path:"build-09-safe/",text:"Build: Make it safe"},
+concepts:"OC module: oc-09-security/",
+unlock:"hardening, alignment, hallucination expectations"},
+{n:7,title:"Build Your Thing",sub:"Multimodal, interpretability, capstone project",
+clips:[{id:"iv-5mZ_9CPY",s:395,e:600,cap:"Welch Labs — CLIP latent space"},{id:"FMMpUO1uAYk",s:1102,e:1260,cap:"AI Explained — 2025→2026 frontier"}],
+reading:{url:"https://transformer-circuits.pub/2024/scaling-monosemanticity/",text:"Scaling Monosemanticity — skim the Golden Gate Bridge section"},
+build:{path:"build-capstone/",text:"Build: Your capstone"},
+concepts:"Founder concepts 8–10",
+unlock:"You can build a real AI product. You just did."}
+];
+
+const OC_MODULES=[
+{id:"oc-01",path:"oc-01-gateway/",title:"OC-01: Installation & First Run",desc:"Get OpenClaw running locally"},
+{id:"oc-02",path:"oc-02-sessions/",title:"OC-02: Sessions & Channels",desc:"Connect Discord, Slack, Telegram"},
+{id:"oc-03",path:"oc-03-context/",title:"OC-03: Memory & Context",desc:"Workspace files, MEMORY.md, context injection"},
+{id:"oc-04",path:"oc-04-channels/",title:"OC-04: Channels",desc:"Multi-channel communication"},
+{id:"oc-05",path:"oc-05-tools/",title:"OC-05: Skills & Tools",desc:"Extend the agent with custom tools"},
+{id:"oc-06",path:"oc-06-multi-agent/",title:"OC-06: Multi-Agent",desc:"Sub-agents and coordination"},
+{id:"oc-07",path:"oc-07-automation/",title:"OC-07: Automation",desc:"Cron, heartbeats, and proactive behavior"},
+{id:"oc-08",path:"oc-08-nodes/",title:"OC-08: Node Pairing",desc:"Pair phones, PCs, IoT devices"},
+{id:"oc-09",path:"oc-09-security/",title:"OC-09: Security & Permissions",desc:"Sandboxing, allowlists, PII handling"},
+{id:"oc-10",path:"oc-10-deployment/",title:"OC-10: Deployment",desc:"Production hosting, scaling, monitoring"}
+];
+
+const REF_MODULES=[
+{num:"01",path:"module-01-prediction-game/",title:"The Prediction Game",desc:"Next-token prediction from scratch"},
+{num:"02",path:"module-02-attention/",title:"Attention",desc:"The mechanism that changed everything"},
+{num:"03",path:"module-03-position/",title:"Positional Encoding",desc:"How transformers know word order"},
+{num:"04",path:"module-04-flash-attention/",title:"Flash Attention",desc:"Making attention fast and memory-efficient"},
+{num:"05",path:"module-05-scaling-laws/",title:"Scaling Laws",desc:"The relationship between compute, data, and performance"},
+{num:"06",path:"module-06-alignment/",title:"Alignment",desc:"RLHF, DPO, and keeping models safe"},
+{num:"07",path:"module-07-reasoning/",title:"Reasoning",desc:"Chain-of-thought and beyond"},
+{num:"08",path:"module-08-mixture-of-experts/",title:"Mixture of Experts",desc:"Sparse models and efficient scaling"},
+{num:"09",path:"module-09-open-source/",title:"Open Source",desc:"LLaMA, Mistral, and the open ecosystem"},
+{num:"10",path:"module-10-interpretability/",title:"Interpretability",desc:"Understanding what's inside the black box"},
+{num:"11",path:"module-11-embeddings/",title:"Embeddings",desc:"Vector representations and semantic search"},
+{num:"12",path:"module-12-multimodal/",title:"Multimodal",desc:"Vision, audio, and beyond text"}
+];
+
+const BONUS_BUILDS=[
+{path:"build-03-window/",text:"Build: Give it a window (context window)"},
+{path:"build-04-talk/",text:"Build: Make it talk (TTS/voice)"},
+{path:"build-07-see/",text:"Build: Make it see (vision)"}
+];
+
+const REF_ARCS=[
+{title:"Arc 1: Foundations",items:[
+{t:"Neural Networks from Scratch",links:[{l:"3B1B Neural Nets",u:"https://youtube.com/watch?v=aircAruvnKk"},{l:"Gradient Descent",u:"https://youtube.com/watch?v=IHZwWFHWa-w"},{l:"Backpropagation",u:"https://youtube.com/watch?v=Ilg3gGewQ5U"}]},
+{t:"The Transformer",links:[{l:"Illustrated Transformer",u:"https://jalammar.github.io/illustrated-transformer/"},{l:"Attention Is All You Need",u:"https://arxiv.org/abs/1706.03762"},{l:"3B1B Transformers",u:"https://youtube.com/watch?v=wjZofJX0v4M"}]},
+{t:"Language Models",links:[{l:"GPT-2 Paper",u:"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"},{l:"LLaMA",u:"https://arxiv.org/abs/2302.13971"},{l:"3B1B LLMs Briefly",u:"https://youtube.com/watch?v=LPZh9BOjkQs"}]}
+]},
+{title:"Arc 2: Training & Scaling",items:[
+{t:"Scaling Laws",links:[{l:"Kaplan et al.",u:"https://arxiv.org/abs/2001.08361"},{l:"Chinchilla",u:"https://arxiv.org/abs/2203.15556"}]},
+{t:"Efficiency",links:[{l:"FlashAttention",u:"https://arxiv.org/abs/2205.05198"},{l:"Karpathy GPT-2 Repro",u:"https://youtube.com/watch?v=l8pRSuU81PU"}]},
+{t:"Alignment",links:[{l:"InstructGPT",u:"https://arxiv.org/abs/2203.02155"},{l:"DPO",u:"https://arxiv.org/abs/2305.18290"}]}
+]},
+{title:"Arc 3: Agents & Applications",items:[
+{t:"Reasoning",links:[{l:"Chain-of-Thought",u:"https://arxiv.org/abs/2201.11903"},{l:"DeepSeek-R1",u:"https://arxiv.org/abs/2501.12948"}]},
+{t:"Tool Use & Agents",links:[{l:"ReAct",u:"https://arxiv.org/abs/2210.03629"},{l:"Toolformer",u:"https://arxiv.org/abs/2302.04761"}]},
+{t:"Retrieval & Memory",links:[{l:"RAG",u:"https://arxiv.org/abs/2005.11401"}]}
+]},
+{title:"Arc 4: Frontiers",items:[
+{t:"Interpretability",links:[{l:"Scaling Monosemanticity",u:"https://transformer-circuits.pub/2024/scaling-monosemanticity/"},{l:"Platonic Representation",u:"https://arxiv.org/abs/2405.07987"}]},
+{t:"Multimodal & Beyond",links:[{l:"Welch Labs — AI Images",u:"https://youtube.com/watch?v=iv-5mZ_9CPY"},{l:"AI Explained — 2025→2026",u:"https://youtube.com/watch?v=FMMpUO1uAYk"}]},
+{t:"The Big Picture",links:[{l:"Karpathy Deep Dive",u:"https://youtube.com/watch?v=7xTGNNLPyMI"},{l:"Karpathy How I Use LLMs",u:"https://youtube.com/watch?v=EWvNQjAaOHw"}]}
+]}
+];
+
+const ALL_VIDS=[
+{id:"7xTGNNLPyMI",title:"Deep Dive into LLMs",author:"Karpathy",tag:"Day 1, 5, 6"},
+{id:"EWvNQjAaOHw",title:"How I Use LLMs",author:"Karpathy",tag:"Day 3"},
+{id:"wjZofJX0v4M",title:"Transformers",author:"3Blue1Brown",tag:"Reference"},
+{id:"eMlx5fFNoYc",title:"Attention Step-by-Step",author:"3Blue1Brown",tag:"Day 2"},
+{id:"9-Jl0dxWQs8",title:"How LLMs Store Facts",author:"3Blue1Brown",tag:"Day 4"},
+{id:"LPZh9BOjkQs",title:"LLMs Explained Briefly",author:"3Blue1Brown",tag:"Reference"},
+{id:"kCc8FmEb1nY",title:"Let's Build GPT",author:"Karpathy",tag:"Day 2"},
+{id:"zduSFxRajkE",title:"GPT Tokenizer",author:"Karpathy",tag:"Day 1"},
+{id:"l8pRSuU81PU",title:"Reproduce GPT-2",author:"Karpathy",tag:"Day 5"},
+{id:"iv-5mZ_9CPY",title:"AI Images & Videos",author:"Welch Labs",tag:"Day 7"},
+{id:"FMMpUO1uAYk",title:"Freakiness 2025→2026",author:"AI Explained",tag:"Day 7"},
+{id:"Iar4yweKGoI",title:"Claude Co-founder Claims",author:"AI Explained",tag:"Day 6"},
+{id:"aircAruvnKk",title:"What Is a Neural Network",author:"3Blue1Brown",tag:"Reference"},
+{id:"IHZwWFHWa-w",title:"Gradient Descent",author:"3Blue1Brown",tag:"Reference"},
+{id:"Ilg3gGewQ5U",title:"Backpropagation",author:"3Blue1Brown",tag:"Reference"}
+];
+
+function thumb(id){return `https://img.youtube.com/vi/${id}/mqdefault.jpg`}
+function ytUrl(id,s,e){let u=`https://www.youtube.com/embed/${id}?autoplay=1&start=${s}`;if(e)u+=`&end=${e}`;return u}
+
+function renderCourse(){
+const el=document.getElementById('course');
+el.innerHTML=DAYS.map(d=>{
+const clips=d.clips.map(c=>`
+<div class="vid-thumb" data-yt="${c.id}" data-s="${c.s}" data-e="${c.e||''}">
+<img src="${thumb(c.id)}" alt="${c.cap}" loading="lazy">
+<div class="play">▶</div>
+<div class="caption">${c.cap}</div>
+</div>`).join('');
+return `<div class="day" data-day="${d.n}">
+<div class="day-header">
+<div class="day-num">${d.n}</div>
+<div class="day-info"><div class="day-title">Day ${d.n}: ${d.title}</div><div class="day-sub">${d.sub}</div></div>
+<div class="arrow">▾</div>
+</div>
+<div class="day-body">
+<div class="segment"><div class="seg-label">🎬 Watch</div><div class="vid-row">${clips}</div></div>
+<div class="segment"><div class="seg-label">📖 Read</div><a class="reading-link" href="${d.reading.url}" target="_blank" rel="noopener">📄 ${d.reading.text}</a></div>
+<div class="segment"><div class="seg-label">🔨 Build</div><a class="build-link" href="${d.build.path}">${d.build.text}</a></div>
+<div class="segment"><div class="seg-label">⚙️ Context</div><span class="concept-link">${d.concepts}</span></div>
+<div class="unlock">You leave knowing: ${d.unlock}</div>
+</div></div>`}).join('');
+
+// Bonus builds section
+el.innerHTML+=`<div class="bonus-builds"><h3>🔨 Bonus Build Modules</h3>${BONUS_BUILDS.map(b=>
+`<a class="build-link" href="${b.path}">${b.text}</a>`).join('')}</div>`;
+}
+
+function renderOC(){
+document.getElementById('openclaw').innerHTML='<h2 style="font-size:1.1rem;margin-bottom:16px;color:var(--accent2)">⚙️ OpenClaw Deep Dive — 10 Modules</h2>'+
+OC_MODULES.map(m=>`<a class="oc-item" href="${m.path}"><strong>${m.title}</strong><span>${m.desc}</span></a>`).join('');
+}
+
+function renderRef(){
+// Interactive modules section
+let html='<h2 style="font-size:1.1rem;margin-bottom:16px;color:var(--accent2)">🧪 Interactive Modules</h2>';
+html+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:24px">${REF_MODULES.map(m=>
+`<a class="ref-module-link" href="${m.path}"><span class="mod-num">${m.num}</span>${m.title}<span style="color:var(--dim);font-size:.8rem;margin-left:8px">— ${m.desc}</span></a>`
+).join('')}</div>`;
+
+// Papers & videos arcs
+html+='<h2 style="font-size:1.1rem;margin-bottom:16px;color:var(--accent2)">📚 Papers & Videos by Arc</h2>';
+html+=REF_ARCS.map(a=>
+`<div class="ref-group"><h3>${a.title}</h3>${a.items.map(i=>
+`<div class="ref-item"><strong>${i.t}</strong><br>${i.links.map(l=>`<a href="${l.u}" target="_blank" rel="noopener">${l.l}</a>`).join(' · ')}</div>`
+).join('')}</div>`).join('');
+
+document.getElementById('reference').innerHTML=html;
+}
+
+function renderVids(){
+document.getElementById('videos').innerHTML='<div class="vid-grid">'+ALL_VIDS.map(v=>
+`<div class="vid-card">
+<div class="vid-thumb" data-yt="${v.id}" data-s="0" data-e="">
+<img src="${thumb(v.id)}" alt="${v.title}" loading="lazy">
+<div class="play">▶</div>
+</div>
+<div class="vid-card-info"><div class="title">${v.title}</div><div class="meta">${v.author} · ${v.tag}</div></div>
+</div>`).join('')+'</div>';
+}
+
+// Tabs
+document.querySelector('.tabs').addEventListener('click',e=>{
+const t=e.target.closest('.tab');if(!t)return;
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+t.classList.add('active');
+document.getElementById(t.dataset.tab).classList.add('active');
+});
+
+// Expand days
+document.addEventListener('click',e=>{
+const h=e.target.closest('.day-header');
+if(h){h.parentElement.classList.toggle('open');return}
+// Play video
+const vt=e.target.closest('.vid-thumb');
+if(vt){
+const wrap=document.createElement('div');wrap.className='vid-embed';
+wrap.innerHTML=`<iframe src="${ytUrl(vt.dataset.yt,vt.dataset.s,vt.dataset.e)}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+vt.replaceWith(wrap);
+}
+});
+
+renderCourse();renderOC();renderRef();renderVids();
+
+// SW registration
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

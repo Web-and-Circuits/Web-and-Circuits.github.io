@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-02: Sessions & the Agent Loop</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3a;--text:#e0e0e8;--dim:#888;--accent:#6c5ce7;--accent2:#a29bfe;--green:#00b894;--red:#e17055;--yellow:#fdcb6e;--blue:#74b9ff;--orange:#e17055;--cyan:#81ecec;--pink:#fd79a8}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:1.5rem}
+h1{font-size:2rem;background:linear-gradient(135deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem}
+h2{font-size:1.4rem;color:var(--accent2);margin:2.5rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+h3{font-size:1.1rem;color:var(--cyan);margin:1.5rem 0 .8rem}
+p{margin:.6rem 0;color:var(--dim)}
+.subtitle{color:var(--dim);font-size:.95rem;margin-bottom:2rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin:1rem 0}
+.card-header{font-weight:600;color:var(--text);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:600}
+.badge-act1{background:var(--accent);color:#fff}
+.badge-act2{background:var(--green);color:#000}
+.badge-act3{background:var(--yellow);color:#000}
+button{background:var(--accent);color:#fff;border:none;padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s}
+button:hover{filter:brightness(1.2)}
+button.secondary{background:var(--surface2);border:1px solid var(--border)}
+button.small{padding:.3rem .7rem;font-size:.78rem}
+select,input{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:.4rem .7rem;border-radius:6px;font-size:.85rem}
+.tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:4px;font-size:.78rem;font-family:monospace;color:var(--cyan)}
+.warning{background:rgba(225,112,85,.12);border:1px solid var(--red);border-radius:8px;padding:.8rem;margin:.8rem 0}
+.warning::before{content:"⚠️ ";font-size:1rem}
+.ok{background:rgba(0,184,148,.1);border:1px solid var(--green);border-radius:8px;padding:.8rem;margin:.8rem 0}
+.ok::before{content:"✅ "}
+code{background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:.82rem;color:var(--accent2)}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.8rem;line-height:1.5;color:var(--text);margin:.8rem 0}
+
+/* Session Key Explorer */
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:.8rem 0}
+@media(max-width:600px){.sk-grid{grid-template-columns:1fr}}
+.sk-input-group{display:flex;flex-direction:column;gap:.3rem}
+.sk-input-group label{font-size:.78rem;color:var(--dim)}
+.sk-result{background:var(--surface2);border:2px solid var(--accent);border-radius:10px;padding:1rem;margin-top:1rem;font-family:monospace;word-break:break-all;font-size:.85rem;text-align:center;min-height:3rem;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.sk-sessions{display:flex;flex-direction:column;gap:.5rem;margin-top:1rem}
+.sk-session{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;border-radius:8px;font-size:.82rem;font-family:monospace;transition:all .3s}
+.sk-session.shared{background:rgba(225,112,85,.15);border:1px solid var(--red)}
+.sk-session.isolated{background:rgba(0,184,148,.1);border:1px solid var(--green)}
+.sk-session .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Agent Loop Stepper */
+.step-container{position:relative;margin:1rem 0}
+.step-track{display:flex;gap:2px;margin-bottom:1rem;overflow-x:auto;padding-bottom:.5rem}
+.step-dot{width:100%;min-width:24px;height:6px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .3s;flex-shrink:0}
+.step-dot.active{background:var(--accent);border-color:var(--accent)}
+.step-dot.done{background:var(--green);border-color:var(--green)}
+.step-display{min-height:240px;position:relative}
+.step-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1.2rem;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.step-card .step-num{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.step-card .step-title{font-size:1.1rem;font-weight:700;color:var(--accent2);margin:.3rem 0}
+.step-card .step-desc{color:var(--dim);font-size:.88rem;margin:.5rem 0}
+.step-card .data-flow{margin-top:.8rem}
+.data-label{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}
+.data-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.6rem;font-family:monospace;font-size:.78rem;color:var(--cyan)}
+.step-nav{display:flex;gap:.5rem;margin-top:1rem;align-items:center}
+.step-counter{flex:1;text-align:center;font-size:.85rem;color:var(--dim)}
+.auto-play{margin-left:.5rem}
+
+/* Queue Viz */
+.queue-viz{position:relative;min-height:200px;margin:1rem 0}
+.q-lane{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;padding:.5rem;border-radius:8px;background:var(--surface2)}
+.q-lane-label{font-size:.72rem;color:var(--dim);width:60px;flex-shrink:0;text-transform:uppercase}
+.q-msg{padding:.4rem .8rem;border-radius:6px;font-size:.8rem;font-weight:600;transition:all .5s;white-space:nowrap}
+.q-msg.m1{background:var(--accent);color:#fff}
+.q-msg.m2{background:var(--green);color:#000}
+.q-msg.m3{background:var(--yellow);color:#000}
+.q-msg.waiting{opacity:.5;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.q-msg.processing{box-shadow:0 0 12px rgba(108,92,231,.5)}
+.q-msg.done{opacity:.4;text-decoration:line-through}
+
+/* Timeline */
+.timeline{position:relative;margin:1rem 0;padding-left:1.5rem;border-left:2px solid var(--border)}
+.tl-event{position:relative;padding:.6rem 0 .6rem .8rem;cursor:pointer;transition:all .2s}
+.tl-event::before{content:'';position:absolute;left:-1.8rem;top:.85rem;width:12px;height:12px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);transition:all .3s}
+.tl-event.active::before{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent)}
+.tl-event.done::before{background:var(--green);border-color:var(--green)}
+.tl-event .ev-name{font-weight:600;font-size:.88rem;color:var(--text)}
+.tl-event .ev-data{font-size:.78rem;color:var(--dim);font-family:monospace;margin-top:.2rem;display:none}
+.tl-event.active .ev-data{display:block;animation:fadeIn .3s}
+
+/* Exercises */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin:1rem 0}
+.exercise .ex-num{font-size:.72rem;color:var(--green);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.exercise .ex-title{font-size:1rem;font-weight:600;margin:.3rem 0 .6rem}
+.exercise .ex-prompt{background:var(--surface2);border-radius:8px;padding:.8rem;font-size:.85rem;margin:.5rem 0}
+.exercise .choices{display:flex;flex-direction:column;gap:.4rem;margin:.8rem 0}
+.exercise .choice{padding:.6rem .8rem;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;background:var(--surface2)}
+.exercise .choice:hover{border-color:var(--accent)}
+.exercise .choice.correct{background:rgba(0,184,148,.15);border-color:var(--green);color:var(--green)}
+.exercise .choice.wrong{background:rgba(225,112,85,.1);border-color:var(--red);color:var(--red)}
+.exercise .explanation{display:none;margin-top:.8rem;padding:.8rem;background:var(--bg);border-radius:8px;font-size:.85rem;border:1px solid var(--border)}
+.exercise .explanation.show{display:block;animation:fadeIn .3s}
+.score-bar{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;background:var(--surface);border-radius:10px;margin:1rem 0;border:1px solid var(--border)}
+.score-bar .score-num{font-size:1.4rem;font-weight:700;color:var(--accent2)}
+.score-bar .score-label{font-size:.85rem;color:var(--dim)}
+
+/* Connection links */
+.link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.8rem;margin:1rem 0}
+.link-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;transition:all .2s}
+.link-card:hover{border-color:var(--accent)}
+.link-card .lc-title{font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+.link-card .lc-desc{font-size:.8rem;color:var(--dim)}
+.tip{background:rgba(116,185,255,.08);border:1px solid var(--blue);border-radius:8px;padding:.8rem;margin:.8rem 0;font-size:.85rem}
+.tip::before{content:"💡 "}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>OC-02: Sessions & the Agent Loop</h1>
+<p class="subtitle">The heartbeat of OpenClaw — how conversations live, breathe, and stay sane.</p>
+
+<div class="card">
+<p>A <strong style="color:var(--accent2)">session</strong> is a conversation with memory. The <strong style="color:var(--cyan)">agent loop</strong> is one turn of that conversation. The <strong style="color:var(--green)">queue</strong> ensures turns don't overlap. Every feature in OpenClaw builds on this foundation.</p>
+</div>
+
+<!-- ═══════════ ACT 1: THE EXPLORABLE ═══════════ -->
+<h2><span class="badge badge-act1">Act 1</span> The Explorable</h2>
+
+<!-- Session Key Explorer -->
+<h3>1. Session Key Explorer</h3>
+<p>Session keys determine <em>who shares context with whom</em>. The <code>dmScope</code> setting changes everything.</p>
+
+<div class="card">
+<div class="card-header">🔑 Configure & Explore</div>
+<div class="sk-grid">
+<div class="sk-input-group">
+<label>Agent ID</label>
+<input id="sk-agent" value="main" placeholder="main">
+</div>
+<div class="sk-input-group">
+<label>Channel</label>
+<select id="sk-channel">
+<option value="discord">discord</option>
+<option value="whatsapp">whatsapp</option>
+<option value="webchat">webchat</option>
+<option value="telegram">telegram</option>
+</select>
+</div>
+<div class="sk-input-group">
+<label>Account ID</label>
+<input id="sk-account" value="bot-01" placeholder="bot-01">
+</div>
+<div class="sk-input-group">
+<label>DM Scope</label>
+<select id="sk-scope">
+<option value="main">main (shared!)</option>
+<option value="per-peer" selected>per-peer</option>
+<option value="per-channel-peer">per-channel-peer</option>
+<option value="per-account-channel-peer">per-account-channel-peer</option>
+</select>
+</div>
+</div>
+
+<div class="data-label" style="margin-top:1rem">What Alice and Bob see:</div>
+<div class="sk-sessions" id="sk-sessions"></div>
+<div id="sk-warning"></div>
+</div>
+
+<!-- Agent Loop Stepper -->
+<h3>2. Agent Loop Stepper</h3>
+<p>Click through each phase of a single agent turn — from message arrival to history persistence.</p>
+
+<div class="card">
+<div class="card-header">⚡ The Agent Loop</div>
+<div class="step-track" id="step-track"></div>
+<div class="step-display" id="step-display"></div>
+<div class="step-nav">
+<button id="step-prev" class="secondary" onclick="stepNav(-1)">← Prev</button>
+<span class="step-counter" id="step-counter"></span>
+<button id="step-next" onclick="stepNav(1)">Next →</button>
+<button class="auto-play secondary small" id="step-auto" onclick="toggleAutoPlay()">▶ Auto</button>
+</div>
+</div>
+
+<!-- Queue Visualization -->
+<h3>3. Queue Visualization</h3>
+<p>Two messages arrive almost simultaneously. Watch how serialization prevents chaos.</p>
+
+<div class="card">
+<div class="card-header">📦 Command Queue</div>
+<div class="queue-viz" id="queue-viz">
+<div class="q-lane"><span class="q-lane-label">Inbox</span><div id="q-inbox" style="display:flex;gap:.5rem"></div></div>
+<div class="q-lane"><span class="q-lane-label">Queue</span><div id="q-queue" style="display:flex;gap:.5rem"></div></div>
+<div class="q-lane"><span class="q-lane-label">Running</span><div id="q-running" style="display:flex;gap:.5rem"></div></div>
+<div class="q-lane"><span class="q-lane-label">Done</span><div id="q-done" style="display:flex;gap:.5rem"></div></div>
+</div>
+<div style="display:flex;gap:.5rem;margin-top:.8rem">
+<button onclick="resetQueue()">Reset</button>
+<button class="secondary" onclick="queueStep()">Step →</button>
+<button class="secondary small" onclick="autoQueue()">▶ Auto</button>
+</div>
+<p id="q-narration" style="margin-top:.8rem;font-size:.85rem;color:var(--accent2)"></p>
+</div>
+
+<!-- Run Lifecycle Events -->
+<h3>4. Run Lifecycle Events</h3>
+<p>What the client sees during a run — the event stream.</p>
+
+<div class="card">
+<div class="card-header">📡 Event Stream</div>
+<div class="timeline" id="timeline"></div>
+<div style="display:flex;gap:.5rem;margin-top:.8rem">
+<button onclick="resetTimeline()">Reset</button>
+<button class="secondary" onclick="timelineStep()">Step →</button>
+<button class="secondary small" onclick="autoTimeline()">▶ Auto</button>
+</div>
+</div>
+
+<!-- ═══════════ ACT 2: THE BUILD ═══════════ -->
+<h2><span class="badge badge-act2">Act 2</span> The Build</h2>
+<div class="score-bar">
+<span class="score-num" id="score">0</span><span class="score-label">/ 4 exercises completed</span>
+</div>
+
+<!-- Exercise 1 -->
+<div class="exercise" id="ex1">
+<div class="ex-num">Exercise 1</div>
+<div class="ex-title">Session Key Resolution</div>
+<div class="ex-prompt">
+<p>Config: <code>agent=main</code>, <code>dmScope=per-channel-peer</code></p>
+<p>Message from: <code>sender=alice</code>, <code>channel=discord</code>, <code>account=bot-01</code>, <code>group=null</code> (DM)</p>
+<p>What session key is produced?</p>
+</div>
+<div class="choices">
+<div class="choice" onclick="checkAnswer(1,this,false)"><code>agent:main:main</code></div>
+<div class="choice" onclick="checkAnswer(1,this,false)"><code>agent:main:alice</code></div>
+<div class="choice" onclick="checkAnswer(1,this,true)"><code>agent:main:discord:alice</code></div>
+<div class="choice" onclick="checkAnswer(1,this,false)"><code>agent:main:bot-01:discord:alice</code></div>
+</div>
+<div class="explanation" id="ex1-exp">With <code>per-channel-peer</code>, the key includes channel + sender: <code>agent:{agentId}:{channel}:{sender}</code>. The account ID is only included at the most granular scope (<code>per-account-channel-peer</code>).</div>
+</div>
+
+<!-- Exercise 2 -->
+<div class="exercise" id="ex2">
+<div class="ex-num">Exercise 2</div>
+<div class="ex-title">Queue Simulation</div>
+<div class="ex-prompt">
+<p>Three messages arrive on the same session:</p>
+<p><code>M1</code> at T=0ms, <code>M2</code> at T=50ms, <code>M3</code> at T=100ms</p>
+<p>M1 takes 3000ms to process. M2 takes 1000ms. M3 takes 500ms.</p>
+<p>At T=2000ms, what is the state?</p>
+</div>
+<div class="choices">
+<div class="choice" onclick="checkAnswer(2,this,true)">M1 running, M2 & M3 queued</div>
+<div class="choice" onclick="checkAnswer(2,this,false)">M1 running, M2 running, M3 queued</div>
+<div class="choice" onclick="checkAnswer(2,this,false)">M1 done, M2 running, M3 queued</div>
+<div class="choice" onclick="checkAnswer(2,this,false)">All three running in parallel</div>
+</div>
+<div class="explanation" id="ex2-exp"><strong>One run at a time per session.</strong> M1 starts immediately at T=0 and runs until T=3000ms. M2 and M3 arrive while M1 is running, so they queue. No parallelism — that's the whole point. At T=2000ms, M1 is still running (needs 3000ms), and M2+M3 wait.</div>
+</div>
+
+<!-- Exercise 3 -->
+<div class="exercise" id="ex3">
+<div class="ex-num">Exercise 3</div>
+<div class="ex-title">Agent Loop Phases</div>
+<div class="ex-prompt">
+<p>The model returns a response containing a tool call to <code>exec</code> (run a shell command). What happens <strong>immediately</strong> after the tool call is parsed?</p>
+</div>
+<div class="choices">
+<div class="choice" onclick="checkAnswer(3,this,false)">The tool result is sent to the client</div>
+<div class="choice" onclick="checkAnswer(3,this,true)">The tool is executed and its result fed back to the model</div>
+<div class="choice" onclick="checkAnswer(3,this,false)">The run ends and the tool runs asynchronously</div>
+<div class="choice" onclick="checkAnswer(3,this,false)">The model is called again without the tool result</div>
+</div>
+<div class="explanation" id="ex3-exp">Tool calls are <strong>intercepted and executed synchronously</strong> within the agent loop. The result is fed back to the model, which then continues generating. The client receives a <code>stream:tool</code> event during this phase. The loop doesn't end until the model produces a final response with no more tool calls.</div>
+</div>
+
+<!-- Exercise 4 -->
+<div class="exercise" id="ex4">
+<div class="ex-num">Exercise 4</div>
+<div class="ex-title">Run Timeout Handling</div>
+<div class="ex-prompt">
+<p>Config: <code>runTimeout=30s</code>. The model calls <code>exec</code> which starts a command that hangs. At T=25s the tool is still running.</p>
+<p>What happens at T=30s?</p>
+</div>
+<div class="choices">
+<div class="choice" onclick="checkAnswer(4,this,false)">Nothing — tool calls have their own separate timeout</div>
+<div class="choice" onclick="checkAnswer(4,this,true)">The entire run is aborted, tool is killed, client gets lifecycle:end with timeout error</div>
+<div class="choice" onclick="checkAnswer(4,this,false)">The tool continues but the model stops waiting</div>
+<div class="choice" onclick="checkAnswer(4,this,false)">The run pauses and resumes when the tool finishes</div>
+</div>
+<div class="explanation" id="ex4-exp">The <code>runTimeout</code> is a hard ceiling on the <strong>entire run</strong>. When it fires, everything stops — pending tool executions are killed, the model call is cancelled, and the client receives a <code>lifecycle:end</code> event with a timeout indicator. The session state is saved up to the last completed turn. This prevents resource exhaustion from runaway tools.</div>
+</div>
+
+<!-- ═══════════ ACT 3: THE CONNECTION ═══════════ -->
+<h2><span class="badge badge-act3">Act 3</span> The Connection</h2>
+
+<h3>Core Concepts</h3>
+<div class="card">
+<div class="card-header">📐 The One-Run Rule</div>
+<p>OpenClaw enforces <strong>exactly one active run per session</strong>. If a second message arrives while a run is in progress, it enters the queue and waits. This sounds limiting, but it's the foundation of correctness:</p>
+<ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--dim);font-size:.88rem">
+<li>No race conditions on session history (two runs can't write simultaneously)</li>
+<li>Tool executions can't conflict (imagine two <code>exec</code> calls modifying the same file)</li>
+<li>The model always sees a consistent, complete history</li>
+<li>Memory/context management stays predictable</li>
+</ul>
+</div>
+
+<h3>Session JSONL — What Gets Persisted</h3>
+<pre>{
+  "role": "user",
+  "content": "What's the weather?",
+  "ts": 1707940000000,
+  "channel": "discord",
+  "sender": "alice"
+}
+{
+  "role": "assistant",
+  "content": "Let me check that for you.",
+  "ts": 1707940001200,
+  "tool_calls": [{"id":"tc_1","type":"function","function":{"name":"web_fetch","arguments":"{\"url\":\"...\"}"}}]
+}
+{
+  "role": "tool",
+  "tool_call_id": "tc_1",
+  "content": "{\"temp\":72,\"condition\":\"sunny\"}",
+  "ts": 1707940002500
+}
+{
+  "role": "assistant",
+  "content": "It's 72°F and sunny! ☀️",
+  "ts": 1707940003100
+}</pre>
+<p>Each session is a single JSONL file. One line per message. History grows until context limits trigger summarization or truncation.</p>
+
+<h3>Debugging Toolkit</h3>
+<div class="link-grid">
+<div class="link-card">
+<div class="lc-title"><code>/status</code></div>
+<div class="lc-desc">Shows current session state, active run info, queue depth, and model config. Your first stop when something seems wrong.</div>
+</div>
+<div class="link-card">
+<div class="lc-title"><code>/context</code></div>
+<div class="lc-desc">Dumps the full context window — system prompt, loaded skills, history. See exactly what the model sees.</div>
+</div>
+<div class="link-card">
+<div class="lc-title"><code>session_status</code> tool</div>
+<div class="lc-desc">The agent can call this itself to inspect its own session. Useful for self-diagnostic prompts and heartbeat checks.</div>
+</div>
+<div class="link-card">
+<div class="lc-title"><code>openclaw gateway status</code></div>
+<div class="lc-desc">CLI command showing the gateway process, active sessions, and system health. The ops-level view.</div>
+</div>
+</div>
+
+<h3>Common Issues</h3>
+<div class="tip"><strong>Stuck session:</strong> A run that never completes (hung tool, network issue). Use <code>/status</code> to check, then restart the gateway if needed. The queue behind it will replay.</div>
+<div class="tip"><strong>Queue buildup:</strong> Too many messages arriving faster than the agent can process. Usually means the model is too slow or tools are hanging. Check <code>runTimeout</code> settings.</div>
+<div class="tip"><strong>Context overflow:</strong> Session history grew too large. OpenClaw will auto-summarize, but you can manually reset with <code>/clear</code> or adjust <code>maxContextTokens</code>.</div>
+<div class="tip"><strong>Wrong session scope:</strong> Users sharing context unexpectedly? Check <code>dmScope</code>. The default <code>main</code> scope means ALL DMs share one session — fine for single-user setups, dangerous for multi-user bots.</div>
+
+<h3>Further Reading</h3>
+<div class="link-grid">
+<div class="link-card">
+<div class="lc-title">📖 Agent Loop Docs</div>
+<div class="lc-desc">Full specification of the run lifecycle, event types, and error handling.</div>
+</div>
+<div class="link-card">
+<div class="lc-title">📖 Session Management</div>
+<div class="lc-desc">Session key computation, scoping rules, JSONL format, and persistence strategies.</div>
+</div>
+<div class="link-card">
+<div class="lc-title">📖 Command Queue</div>
+<div class="lc-desc">Queue semantics, serialization guarantees, and timeout behavior.</div>
+</div>
+<div class="link-card">
+<div class="lc-title">← OC-01: Architecture</div>
+<div class="lc-desc">Previous module: The big picture of how OpenClaw is structured.</div>
+</div>
+</div>
+
+<div class="card" style="margin-top:2rem;text-align:center;border-color:var(--accent)">
+<p style="color:var(--accent2);font-weight:600;font-size:1.05rem">🎯 Key Takeaway</p>
+<p style="color:var(--text)">Session → Memory. Agent Loop → One Turn. Queue → Order.<br>This is the heartbeat. Everything else is built on top.</p>
+</div>
+
+<p style="text-align:center;margin:2rem 0;color:var(--dim);font-size:.8rem">OC-02 · Sessions & the Agent Loop · OpenClaw Deep-Dive Curriculum</p>
+
+</div><!-- /container -->
+
+<script>
+// ═══ Session Key Explorer ═══
+const skAgent=document.getElementById('sk-agent'),skChannel=document.getElementById('sk-channel'),skAccount=document.getElementById('sk-account'),skScope=document.getElementById('sk-scope');
+
+function computeKey(scope,agent,channel,account,sender){
+  switch(scope){
+    case'main':return`agent:${agent}:main`;
+    case'per-peer':return`agent:${agent}:${sender}`;
+    case'per-channel-peer':return`agent:${agent}:${channel}:${sender}`;
+    case'per-account-channel-peer':return`agent:${agent}:${account}:${channel}:${sender}`;
+  }
+}
+
+function updateSK(){
+  const scope=skScope.value,agent=skAgent.value||'main',ch=skChannel.value,acct=skAccount.value||'bot-01';
+  const alice=computeKey(scope,agent,ch,acct,'alice');
+  const bob=computeKey(scope,agent,ch,acct,'bob');
+  const shared=alice===bob;
+  const el=document.getElementById('sk-sessions');
+  el.innerHTML=`
+    <div class="sk-session ${shared?'shared':'isolated'}">
+      <span class="dot" style="background:var(--blue)"></span>
+      <span>Alice → <strong>${alice}</strong></span>
+    </div>
+    <div class="sk-session ${shared?'shared':'isolated'}">
+      <span class="dot" style="background:var(--pink)"></span>
+      <span>Bob → <strong>${bob}</strong></span>
+    </div>`;
+  const w=document.getElementById('sk-warning');
+  if(shared){
+    w.innerHTML=`<div class="warning">Alice and Bob share the <strong>same session</strong>! Bob can see Alice's conversation history. This is dangerous for multi-user bots.</div>`;
+  }else{
+    w.innerHTML=`<div class="ok">Alice and Bob have <strong>isolated sessions</strong>. Neither can see the other's history.</div>`;
+  }
+}
+[skAgent,skChannel,skAccount,skScope].forEach(e=>e.addEventListener('input',updateSK));
+updateSK();
+
+// ═══ Agent Loop Stepper ═══
+const STEPS=[
+  {title:'Message Arrives',icon:'📨',desc:'A user sends a message via a channel plugin (Discord, WhatsApp, webchat, etc). The gateway receives the raw payload.',
+   inLabel:'Input',inData:'{ channel: "discord", sender: "alice",\n  content: "What files are in /tmp?",\n  group: null, ts: 1707940000000 }',
+   outLabel:'Output',outData:'Normalized message object passed to session resolver'},
+  {title:'Session Resolved',icon:'🔑',desc:'The session key is computed from the message metadata and dmScope config. This determines which conversation history to load.',
+   inLabel:'Input',inData:'sender=alice, channel=discord,\ndmScope=per-peer, agent=main',
+   outLabel:'Session Key',outData:'agent:main:alice'},
+  {title:'Queue Check',icon:'📋',desc:'Is another run active on this session? If yes, this message enters the queue and waits. If no, we proceed immediately.',
+   inLabel:'Check',inData:'session.activeRun === null → proceed\nsession.activeRun !== null → enqueue & wait',
+   outLabel:'Result',outData:'No active run → acquired lock ✓'},
+  {title:'Workspace Prepared',icon:'📁',desc:'The workspace directory is ensured to exist. Context files (AGENTS.md, TOOLS.md, etc) are collected and ready for injection.',
+   inLabel:'Loaded',inData:'AGENTS.md, TOOLS.md, SOUL.md, USER.md\nmemory/2026-02-14.md',
+   outLabel:'Ready',outData:'Workspace files collected for system prompt'},
+  {title:'Skills Loaded',icon:'🧩',desc:'Enabled skills are loaded. Each skill defines tools and instructions. Tool schemas are assembled into the tools array for the API call.',
+   inLabel:'Skills',inData:'core, exec, browser, web_fetch,\nmessage, nodes, canvas...',
+   outLabel:'Tools',outData:'42 tool definitions assembled'},
+  {title:'System Prompt Assembled',icon:'📝',desc:'The full system prompt is built: base instructions + skill instructions + workspace files + runtime context. This is what the model "knows" before seeing history.',
+   inLabel:'Components',inData:'Base prompt + skill prompts +\nworkspace context + runtime info',
+   outLabel:'Size',outData:'~12,000 tokens of system prompt'},
+  {title:'Model Called',icon:'🧠',desc:'The API call goes out: system prompt + conversation history + new message + tool definitions. Streaming mode is enabled.',
+   inLabel:'API Call',inData:'POST /v1/chat/completions\nmodel: claude-sonnet-4-20250514\nstream: true\nmessages: [...history, newMessage]',
+   outLabel:'Event',outData:'lifecycle:start emitted to client'},
+  {title:'Streaming Begins',icon:'⚡',desc:'Token deltas arrive from the model. Each chunk is forwarded to the client as a stream:assistant event in real-time.',
+   inLabel:'Model Output',inData:'"Let me " + "check " + "that " + "for you..."',
+   outLabel:'Client Events',outData:'stream:assistant { delta: "Let me " }\nstream:assistant { delta: "check " }\n...'},
+  {title:'Tool Call Intercepted',icon:'🔧',desc:'The model output includes a tool call! Streaming pauses. The tool call is parsed and validated against the tool schema.',
+   inLabel:'Model Output',inData:'tool_call: {\n  name: "exec",\n  arguments: { command: "ls /tmp" }\n}',
+   outLabel:'Event',outData:'stream:tool { name: "exec", status: "started" }'},
+  {title:'Tool Executed',icon:'⚙️',desc:'The tool runs. For exec, this means spawning a shell process. The result is captured and formatted as a tool response message.',
+   inLabel:'Execution',inData:'$ ls /tmp\nfile1.txt  file2.log  cache/',
+   outLabel:'Tool Result',outData:'{ tool_call_id: "tc_1",\n  content: "file1.txt  file2.log  cache/" }'},
+  {title:'Results Fed Back',icon:'🔄',desc:'The tool result is appended to the conversation and the model is called again. It now has the tool output to reason about.',
+   inLabel:'Updated Messages',inData:'[...history, userMsg, assistantMsg,\n toolResult]',
+   outLabel:'Action',outData:'Second model API call with tool results'},
+  {title:'Model Continues',icon:'💬',desc:'The model generates its final response, incorporating the tool results. No more tool calls this time — it is a plain text response.',
+   inLabel:'Model Output',inData:'"Here are the files in /tmp:\\n- file1.txt\\n- file2.log\\n- cache/"',
+   outLabel:'Events',outData:'stream:assistant deltas → client'},
+  {title:'Final Reply',icon:'✅',desc:'The complete response is assembled. The reply is delivered back through the channel plugin to the user.',
+   inLabel:'Response',inData:'"Here are the files in /tmp:\\n- file1.txt\\n- file2.log\\n- cache/"',
+   outLabel:'Delivery',outData:'discord.sendMessage(channelId, response)'},
+  {title:'History Persisted',icon:'💾',desc:'The full turn (user message + assistant messages + tool calls + tool results) is appended to the session JSONL file. The run lock is released. If messages are queued, the next one starts.',
+   inLabel:'Persisted',inData:'4 messages appended to session JSONL\nRun lock released',
+   outLabel:'Event',outData:'lifecycle:end { reason: "complete" }\nQueue: next message dequeued (if any)'}
+];
+
+let currentStep=0,autoInterval=null;
+const track=document.getElementById('step-track');
+STEPS.forEach((_,i)=>{const d=document.createElement('div');d.className='step-dot';d.onclick=()=>{currentStep=i;renderStep()};track.appendChild(d)});
+
+function renderStep(){
+  const s=STEPS[currentStep];
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{d.className='step-dot'+(i<currentStep?' done':'')+(i===currentStep?' active':'')});
+  document.getElementById('step-display').innerHTML=`<div class="step-card">
+    <div class="step-num">Step ${currentStep+1} of ${STEPS.length}</div>
+    <div class="step-title">${s.icon} ${s.title}</div>
+    <div class="step-desc">${s.desc}</div>
+    <div class="data-flow">
+      <div class="data-label">${s.inLabel}</div>
+      <div class="data-box">${s.inData}</div>
+      <div class="data-label" style="margin-top:.6rem">${s.outLabel}</div>
+      <div class="data-box">${s.outData}</div>
+    </div>
+  </div>`;
+  document.getElementById('step-counter').textContent=`${currentStep+1} / ${STEPS.length}`;
+  document.getElementById('step-prev').disabled=currentStep===0;
+  document.getElementById('step-next').disabled=currentStep===STEPS.length-1;
+}
+
+function stepNav(dir){currentStep=Math.max(0,Math.min(STEPS.length-1,currentStep+dir));renderStep()}
+function toggleAutoPlay(){
+  if(autoInterval){clearInterval(autoInterval);autoInterval=null;document.getElementById('step-auto').textContent='▶ Auto';return}
+  document.getElementById('step-auto').textContent='⏸ Stop';
+  autoInterval=setInterval(()=>{if(currentStep<STEPS.length-1)stepNav(1);else{clearInterval(autoInterval);autoInterval=null;document.getElementById('step-auto').textContent='▶ Auto'}},2000);
+}
+renderStep();
+
+// ═══ Queue Visualization ═══
+let qState=0;
+const Q_STEPS=[
+  {inbox:['M1','M2'],queue:[],running:[],done:[],text:'Two messages arrive nearly simultaneously on the same session.'},
+  {inbox:['M2'],queue:[],running:['M1'],done:[],text:'M1 arrives first → no active run → enters the agent loop immediately.'},
+  {inbox:[],queue:['M2'],running:['M1'],done:[],text:'M2 arrives → run active! → M2 enters the queue and waits.'},
+  {inbox:[],queue:['M2'],running:['M1'],done:[],text:'M1 is processing... model called, tools running, streaming response...'},
+  {inbox:[],queue:[],running:['M2'],done:['M1'],text:'M1 completes → lock released → M2 dequeued and starts immediately.'},
+  {inbox:[],queue:[],running:['M2'],done:['M1'],text:'M2 is processing... it sees M1\'s full conversation in history.'},
+  {inbox:[],queue:[],running:[],done:['M1','M2'],text:'M2 completes. Both messages processed in order. No race conditions. ✓'},
+];
+
+function renderQueue(){
+  const s=Q_STEPS[qState];
+  ['inbox','queue','running','done'].forEach(lane=>{
+    const el=document.getElementById('q-'+lane);
+    el.innerHTML=s[lane].map(m=>{
+      const cls=m==='M1'?'m1':'m2';
+      const state=lane==='running'?'processing':lane==='done'?'done':lane==='queue'?'waiting':'';
+      return`<div class="q-msg ${cls} ${state}">${m}</div>`;
+    }).join('');
+  });
+  document.getElementById('q-narration').textContent=s.text;
+}
+function resetQueue(){qState=0;renderQueue()}
+function queueStep(){if(qState<Q_STEPS.length-1){qState++;renderQueue()}}
+function autoQueue(){resetQueue();let i=setInterval(()=>{if(qState<Q_STEPS.length-1)queueStep();else clearInterval(i)},1500)}
+renderQueue();
+
+// ═══ Timeline ═══
+const TL_EVENTS=[
+  {name:'lifecycle:start',data:'{ runId: "run_abc123", sessionKey: "agent:main:alice", ts: 1707940000000 }'},
+  {name:'stream:assistant',data:'{ delta: "Let me check ", ts: 1707940000150 }'},
+  {name:'stream:assistant',data:'{ delta: "that for you.", ts: 1707940000300 }'},
+  {name:'stream:tool',data:'{ name: "exec", status: "started", args: { command: "ls /tmp" }, ts: 1707940000500 }'},
+  {name:'stream:tool',data:'{ name: "exec", status: "complete", result: "file1.txt  file2.log  cache/", ts: 1707940001800 }'},
+  {name:'stream:assistant',data:'{ delta: "Here are the files in /tmp:\\n", ts: 1707940002000 }'},
+  {name:'stream:assistant',data:'{ delta: "- file1.txt\\n- file2.log\\n- cache/", ts: 1707940002200 }'},
+  {name:'lifecycle:end',data:'{ runId: "run_abc123", reason: "complete", durationMs: 2400, ts: 1707940002400 }'},
+];
+let tlState=-1;
+const tlEl=document.getElementById('timeline');
+
+function buildTimeline(){
+  tlEl.innerHTML=TL_EVENTS.map((e,i)=>`<div class="tl-event${i<tlState?' done':''}${i===tlState?' active':''}" onclick="tlState=${i};updateTL()">
+    <div class="ev-name">${e.name}</div>
+    <div class="ev-data">${e.data}</div>
+  </div>`).join('');
+}
+function updateTL(){buildTimeline()}
+function resetTimeline(){tlState=-1;buildTimeline()}
+function timelineStep(){if(tlState<TL_EVENTS.length-1){tlState++;buildTimeline()}}
+function autoTimeline(){resetTimeline();let i=setInterval(()=>{if(tlState<TL_EVENTS.length-1)timelineStep();else clearInterval(i)},1200)}
+buildTimeline();
+
+// ═══ Exercises ═══
+let score=0,answered=new Set();
+function checkAnswer(n,el,correct){
+  if(answered.has(n))return;
+  answered.add(n);
+  if(correct){el.classList.add('correct');score++;document.getElementById('score').textContent=score}
+  else{el.classList.add('wrong');el.parentElement.querySelectorAll('.choice').forEach(c=>{if(c!==el&&c.onclick.toString().includes('true'))c.classList.add('correct')})}
+  document.getElementById(`ex${n}-exp`).classList.add('show');
+}
+</script>
+</body>
+</html>

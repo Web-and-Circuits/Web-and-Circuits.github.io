@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+<title>OC-03: Context & Compaction</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:#2a2a3a;--text:#e0e0e8;--dim:#7a7a8a;--accent:#6c5ce7;--accent2:#a29bfe;--warn:#fdcb6e;--danger:#e17055;--success:#00b894;--blue:#74b9ff;--pink:#fd79a8;--green:#55efc4;--orange:#fab1a0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:1rem}
+h1{font-size:2rem;margin-bottom:.25rem}
+h2{font-size:1.5rem;margin:2rem 0 1rem;color:var(--accent2)}
+h3{font-size:1.15rem;margin:1.5rem 0 .75rem;color:var(--blue)}
+p{margin-bottom:.75rem;color:var(--dim)}
+.hero{text-align:center;padding:3rem 1rem 2rem;background:linear-gradient(180deg,#1a1a2e 0%,var(--bg) 100%);border-bottom:1px solid var(--border);margin-bottom:2rem}
+.hero .mod{color:var(--accent);font-size:.9rem;letter-spacing:2px;text-transform:uppercase}
+.hero h1{font-size:2.2rem;background:linear-gradient(135deg,var(--accent2),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{color:var(--dim);font-size:1.1rem;max-width:600px;margin:1rem auto 0}
+.act-label{display:inline-block;padding:.25rem .75rem;border-radius:4px;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem;font-weight:600}
+.act1-label{background:rgba(108,92,231,.2);color:var(--accent2)}
+.act2-label{background:rgba(253,203,110,.15);color:var(--warn)}
+.act3-label{background:rgba(0,184,148,.15);color:var(--success)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.key-insight{background:linear-gradient(135deg,rgba(108,92,231,.1),rgba(116,185,255,.1));border:1px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1.5rem 0;font-size:.95rem;color:var(--text)}
+.key-insight::before{content:'💡 ';font-size:1.1rem}
+button{background:var(--accent);color:#fff;border:none;padding:.5rem 1.25rem;border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}
+button:hover{filter:brightness(1.15)}
+button.secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+button.secondary:hover{border-color:var(--accent)}
+button.sm{padding:.3rem .75rem;font-size:.8rem}
+.tag{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;margin:.15rem}
+
+/* === CONTEXT BAR VISUALIZER === */
+.ctx-bar-wrap{margin:1rem 0}
+.ctx-bar{display:flex;height:60px;border-radius:8px;overflow:hidden;border:2px solid var(--border);position:relative}
+.ctx-seg{position:relative;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#fff;cursor:default;min-width:2px;transition:flex .3s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px;user-select:none}
+.ctx-seg .handle{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;background:rgba(255,255,255,.15);opacity:0;transition:opacity .2s}
+.ctx-seg:hover .handle{opacity:1}
+.ctx-legend{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.ctx-legend-item{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--dim)}
+.ctx-legend-item .dot{width:10px;height:10px;border-radius:2px}
+.ctx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:1rem}
+.ctx-stat{background:var(--surface2);padding:.5rem .75rem;border-radius:6px;font-size:.85rem}
+.ctx-stat .val{font-size:1.1rem;font-weight:700;color:var(--text)}
+.ctx-stat .label{font-size:.7rem;color:var(--dim)}
+.danger-zone{position:absolute;right:0;top:0;bottom:0;background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(225,112,85,.1) 3px,rgba(225,112,85,.1) 6px);border-left:2px dashed var(--danger);pointer-events:none}
+.danger-label{position:absolute;top:-18px;right:0;font-size:.65rem;color:var(--danger)}
+.slider-row{display:flex;align-items:center;gap:.75rem;margin:.4rem 0;font-size:.85rem}
+.slider-row label{min-width:130px;color:var(--dim)}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-row .val{min-width:50px;text-align:right;font-weight:600;font-size:.85rem}
+
+/* === SYSTEM PROMPT ASSEMBLY === */
+.sp-section{border:1px solid var(--border);border-radius:8px;margin:.5rem 0;overflow:hidden;transition:all .2s}
+.sp-header{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;cursor:pointer;background:var(--surface2);font-size:.9rem}
+.sp-header:hover{background:var(--border)}
+.sp-header .arrow{transition:transform .2s;color:var(--dim)}
+.sp-header .tokens{color:var(--dim);font-size:.75rem}
+.sp-body{display:none;padding:1rem;background:var(--surface);font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.78rem;line-height:1.5;color:var(--green);white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto}
+.sp-section.open .sp-body{display:block}
+.sp-section.open .arrow{transform:rotate(90deg)}
+.sp-order{display:inline-block;width:22px;height:22px;background:var(--accent);border-radius:50%;text-align:center;line-height:22px;font-size:.7rem;color:#fff;margin-right:.5rem}
+
+/* === COMPACTION SIMULATOR === */
+.conv-msg{padding:.5rem .75rem;margin:.3rem 0;border-radius:8px;font-size:.85rem;border-left:3px solid var(--border)}
+.conv-msg.user{background:rgba(108,92,231,.08);border-left-color:var(--accent)}
+.conv-msg.assistant{background:rgba(116,185,255,.08);border-left-color:var(--blue)}
+.conv-msg.system{background:rgba(0,184,148,.08);border-left-color:var(--success)}
+.conv-msg.compacted{background:rgba(253,203,110,.08);border-left-color:var(--warn);animation:compactIn .5s ease}
+.conv-msg .role{font-weight:700;font-size:.75rem;text-transform:uppercase;margin-bottom:.2rem}
+.conv-msg .role.user-role{color:var(--accent2)}
+.conv-msg .role.assistant-role{color:var(--blue)}
+.conv-msg .role.system-role{color:var(--success)}
+.conv-msg .tokens-badge{float:right;font-size:.7rem;color:var(--dim);background:var(--surface2);padding:.1rem .4rem;border-radius:4px}
+.conv-msg.fading{opacity:.3;transform:scaleY(.5);transition:all .4s}
+.compact-stats{display:flex;gap:1.5rem;padding:.75rem;background:var(--surface2);border-radius:8px;margin:.75rem 0;font-size:.85rem}
+.compact-stats .stat{text-align:center}
+.compact-stats .stat .num{font-size:1.2rem;font-weight:700}
+@keyframes compactIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+/* === MEMORY FLUSH === */
+.flush-item{display:flex;align-items:flex-start;gap:.5rem;padding:.5rem;margin:.3rem 0;border-radius:6px;background:var(--surface2);font-size:.85rem}
+.flush-item .icon{font-size:1.1rem;flex-shrink:0}
+.flush-file{font-family:monospace;color:var(--green);font-size:.8rem;margin-top:.25rem}
+
+/* === EXERCISES === */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.exercise .q{font-size:.95rem;color:var(--text);margin-bottom:1rem}
+.exercise input[type=number],.exercise select,.exercise input[type=text]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.4rem .75rem;border-radius:6px;font-size:.9rem;width:100%;margin:.3rem 0}
+.exercise .options{display:flex;flex-direction:column;gap:.4rem;margin:.5rem 0}
+.exercise .opt{padding:.5rem .75rem;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.85rem;transition:all .15s}
+.exercise .opt:hover{border-color:var(--accent)}
+.exercise .opt.selected{border-color:var(--accent);background:rgba(108,92,231,.1)}
+.exercise .opt.correct{border-color:var(--success);background:rgba(0,184,148,.1)}
+.exercise .opt.wrong{border-color:var(--danger);background:rgba(225,112,85,.1)}
+.feedback{margin-top:.75rem;padding:.5rem .75rem;border-radius:6px;font-size:.85rem;display:none}
+.feedback.show{display:block}
+.feedback.correct{background:rgba(0,184,148,.1);border:1px solid var(--success);color:var(--green)}
+.feedback.incorrect{background:rgba(225,112,85,.1);border:1px solid var(--danger);color:var(--orange)}
+.checkbox-list{display:flex;flex-direction:column;gap:.4rem}
+.checkbox-list label{display:flex;align-items:center;gap:.5rem;font-size:.85rem;padding:.4rem .6rem;border-radius:6px;cursor:pointer;border:1px solid var(--border)}
+.checkbox-list label:hover{border-color:var(--accent)}
+.checkbox-list input[type=checkbox]{accent-color:var(--accent)}
+
+/* === ACT 3 === */
+.doc-link{display:flex;align-items:center;gap:.5rem;padding:.6rem 1rem;margin:.4rem 0;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);font-size:.9rem;transition:all .15s}
+.doc-link:hover{border-color:var(--accent);background:rgba(108,92,231,.05)}
+.doc-link .icon{font-size:1.2rem}
+.cmd-example{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin:.5rem 0;font-family:monospace;font-size:.82rem;color:var(--green);white-space:pre-wrap;overflow-x:auto}
+.tip{background:rgba(253,203,110,.08);border:1px solid rgba(253,203,110,.3);border-radius:8px;padding:.75rem 1rem;margin:.75rem 0;font-size:.85rem}
+.tip::before{content:'⚡ Tip: ';font-weight:700;color:var(--warn)}
+.issue{background:rgba(225,112,85,.08);border-left:3px solid var(--danger);padding:.6rem 1rem;margin:.4rem 0;border-radius:0 8px 8px 0;font-size:.85rem}
+.issue .title{font-weight:700;color:var(--danger);font-size:.8rem;margin-bottom:.25rem}
+
+/* === NAV === */
+.nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:.5rem 1rem;display:flex;gap:.5rem;overflow-x:auto}
+.nav a{color:var(--dim);text-decoration:none;font-size:.8rem;padding:.3rem .6rem;border-radius:4px;white-space:nowrap}
+.nav a:hover,.nav a.active{color:var(--text);background:var(--surface2)}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:.75rem}
+  h1{font-size:1.5rem}
+  .hero{padding:2rem .75rem 1.5rem}
+  .hero h1{font-size:1.7rem}
+  .ctx-bar{height:50px}
+  .ctx-stats{grid-template-columns:1fr 1fr}
+  .compact-stats{flex-wrap:wrap}
+  .slider-row label{min-width:100px;font-size:.8rem}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="#act1">🔍 Explore</a>
+  <a href="#budget">Budget</a>
+  <a href="#sysprompt">System Prompt</a>
+  <a href="#compaction">Compaction</a>
+  <a href="#flush">Memory Flush</a>
+  <a href="#act2">🔨 Build</a>
+  <a href="#act3">🔗 Connect</a>
+</nav>
+
+<div class="hero">
+  <div class="mod">Module OC-03</div>
+  <h1>Context & Compaction</h1>
+  <p class="subtitle">Context is what the model sees <em>right now</em>. Memory is what persists. Compaction is the bridge between them.</p>
+</div>
+
+<div class="container">
+
+<!-- ==================== ACT 1 ==================== -->
+<span class="act-label act1-label" id="act1">Act 1 — The Explorable</span>
+
+<!-- CONTEXT BUDGET VISUALIZER -->
+<h2 id="budget">📊 Context Budget Visualizer</h2>
+<p>A model's context window is finite. Everything the model can "see" must fit inside it. Drag the sliders to explore how different components compete for space.</p>
+
+<div class="card">
+  <div class="ctx-bar-wrap">
+    <div style="position:relative">
+      <div class="ctx-bar" id="ctxBar"></div>
+      <div class="danger-zone" id="dangerZone" style="width:15%">
+        <span class="danger-label">⚠️ Auto-compact zone</span>
+      </div>
+    </div>
+    <div class="ctx-legend" id="ctxLegend"></div>
+  </div>
+
+  <div class="ctx-stats" id="ctxStats"></div>
+
+  <div style="margin-top:1.25rem">
+    <div class="slider-row">
+      <label>System Prompt</label>
+      <input type="range" min="2000" max="25000" value="10000" step="500" data-seg="0">
+      <span class="val">10K</span>
+    </div>
+    <div class="slider-row">
+      <label>Workspace Files</label>
+      <input type="range" min="1000" max="30000" value="8000" step="500" data-seg="1">
+      <span class="val">8K</span>
+    </div>
+    <div class="slider-row">
+      <label>Skill Descriptions</label>
+      <input type="range" min="500" max="15000" value="4000" step="500" data-seg="2">
+      <span class="val">4K</span>
+    </div>
+    <div class="slider-row">
+      <label>Tool Schemas</label>
+      <input type="range" min="1000" max="20000" value="6000" step="500" data-seg="3">
+      <span class="val">6K</span>
+    </div>
+    <div class="slider-row">
+      <label>Conv. History</label>
+      <input type="range" min="0" max="150000" value="50000" step="1000" data-seg="4">
+      <span class="val">50K</span>
+    </div>
+    <div class="slider-row">
+      <label>Current Message</label>
+      <input type="range" min="100" max="20000" value="2000" step="100" data-seg="5">
+      <span class="val">2K</span>
+    </div>
+  </div>
+</div>
+
+<div class="key-insight">The context window is a zero-sum game. Every token used by system infrastructure is a token <em>not</em> available for conversation. A bloated TOOLS.md or verbose skill descriptions directly reduce how much history the model can see.</div>
+
+<!-- SYSTEM PROMPT ASSEMBLY -->
+<h2 id="sysprompt">🏗️ System Prompt Assembly</h2>
+<p>The system prompt is assembled dynamically each turn. Click each section to see what gets injected and in what order.</p>
+
+<div class="card" id="spAssembly">
+  <div class="sp-section" data-order="1">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">1</span> Runtime Info</span>
+      <span><span class="tokens">~200 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body">Runtime: agent=main | host=5isalive | os=Darwin 24.6.0 (arm64)
+model=anthropic/claude-opus-4-6 | default_model=anthropic/claude-opus-4-6
+shell=zsh | channel=webchat | capabilities=none
+thinking=low | node=v22.22.0
+
+Current Date & Time
+Time zone: America/New_York
+[Sat 2026-02-14 16:56 EST]
+
+⟶ Tells the model WHO it is, WHERE it's running, and WHEN it is.</div>
+  </div>
+
+  <div class="sp-section" data-order="2">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">2</span> Core Identity (SOUL.md)</span>
+      <span><span class="tokens">~2,000 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body"># SOUL.md — Who You Are
+
+Your personality, values, communication style.
+How you approach tasks, your relationship with the user.
+What makes you YOU across sessions.
+
+⟶ Loaded every session. This is the agent's persistent identity.</div>
+  </div>
+
+  <div class="sp-section" data-order="3">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">3</span> Workspace Files (AGENTS.md, USER.md, TOOLS.md)</span>
+      <span><span class="tokens">~5,000–15,000 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body"># AGENTS.md — Your Workspace
+- Session startup procedures
+- Memory management rules
+- Safety guidelines
+- Heartbeat behavior
+- Group chat etiquette
+
+# USER.md — Who You're Helping
+- User preferences, context, background
+
+# TOOLS.md — Local Notes
+- Camera names, SSH hosts, API details
+- Environment-specific configuration
+
+⟶ These are "workspace context" — injected as-is into every turn.
+   Large files here directly eat your conversation budget!</div>
+  </div>
+
+  <div class="sp-section" data-order="4">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">4</span> Skill Descriptions</span>
+      <span><span class="tokens">~2,000–8,000 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body">Skills loaded: gmail, calendar, browser-eye, home-assistant...
+
+Each skill has a SKILL.md that describes:
+- What the skill does
+- Available commands
+- Usage examples
+
+Only ACTIVE skills are injected — disable unused skills
+to save context budget.
+
+⟶ More skills = more tokens. Keep skill docs lean.</div>
+  </div>
+
+  <div class="sp-section" data-order="5">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">5</span> Tool Schemas</span>
+      <span><span class="tokens">~3,000–10,000 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body">Available tools (JSON schemas):
+- read: Read file contents
+- write: Create or overwrite files
+- edit: Make precise edits
+- exec: Run shell commands
+- browser: Control web browser
+- message: Send messages
+- web_fetch: Fetch URL content
+- nodes: Control paired nodes
+- canvas: Present/control Canvas
+- tts: Text to speech
+...
+
+Each tool includes full parameter schemas with types,
+descriptions, enums, and required fields.
+
+⟶ This is structural overhead — you can't really shrink it.</div>
+  </div>
+
+  <div class="sp-section" data-order="6">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">6</span> Channel Context</span>
+      <span><span class="tokens">~100–500 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body">Channel: webchat (direct conversation)
+— or —
+Channel: discord | server=MyServer | channel=#general
+Recent participants: Alice, Bob, Charlie
+
+⟶ Varies by platform. Discord/Slack add participant context.</div>
+  </div>
+
+  <div class="sp-section" data-order="7">
+    <div class="sp-header" onclick="toggleSP(this)">
+      <span><span class="sp-order">7</span> Heartbeat Config & Reply Tags</span>
+      <span><span class="tokens">~100–300 tokens</span> <span class="arrow">▶</span></span>
+    </div>
+    <div class="sp-body">Heartbeat prompt: "Read HEARTBEAT.md if it exists..."
+Heartbeat interval: 30m
+
+Reply tags: HEARTBEAT_OK | REPLY:channel_id | SILENT
+
+⟶ Small but always present. Controls agent autonomy loop.</div>
+  </div>
+</div>
+
+<div class="key-insight">The system prompt is rebuilt on <em>every single turn</em>. It's not sent once — it's re-assembled and re-injected with each API call. That's why workspace file size matters so much.</div>
+
+<!-- COMPACTION SIMULATOR -->
+<h2 id="compaction">🗜️ Compaction Simulator</h2>
+<p>When conversation history approaches the context limit, older messages are summarized. Watch it happen.</p>
+
+<div class="card">
+  <div class="compact-stats" id="compactStats">
+    <div class="stat"><div class="num" id="csMsgCount">24</div><div class="label" style="color:var(--dim)">Messages</div></div>
+    <div class="stat"><div class="num" id="csTokens">87,200</div><div class="label" style="color:var(--dim)">History Tokens</div></div>
+    <div class="stat"><div class="num" id="csUsage">72%</div><div class="label" style="color:var(--dim)">Context Used</div></div>
+    <div class="stat"><div class="num" id="csSaved" style="color:var(--success)">—</div><div class="label" style="color:var(--dim)">Tokens Saved</div></div>
+  </div>
+
+  <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+    <button onclick="runCompaction()">🗜️ Run Compaction</button>
+    <button class="secondary" onclick="resetCompaction()">↺ Reset</button>
+  </div>
+
+  <div id="convList" style="max-height:400px;overflow-y:auto"></div>
+</div>
+
+<div class="key-insight">Compaction preserves recent messages intact — only older turns get summarized. The model loses detail from early conversation but keeps full fidelity on recent exchanges. Think of it like human memory: you remember the last hour clearly, but yesterday is fuzzy.</div>
+
+<!-- MEMORY FLUSH -->
+<h2 id="flush">💾 Memory Flush</h2>
+<p>Before compaction wipes detail from old messages, the agent flushes important context to disk. This is the bridge between ephemeral context and persistent knowledge.</p>
+
+<div class="card">
+  <p style="font-size:.9rem;color:var(--text);margin-bottom:1rem">When compaction is about to trigger, the agent scans the conversation for things worth preserving:</p>
+
+  <div id="flushDemo">
+    <div class="flush-item">
+      <span class="icon">📝</span>
+      <div>
+        <div><strong>Decision made:</strong> "Use PostgreSQL instead of SQLite for the project"</div>
+        <div class="flush-file">→ memory/2026-02-14.md</div>
+      </div>
+    </div>
+    <div class="flush-item">
+      <span class="icon">🔧</span>
+      <div>
+        <div><strong>Config discovered:</strong> "SSH tunnel needs port 2222, not 22"</div>
+        <div class="flush-file">→ TOOLS.md (SSH section)</div>
+      </div>
+    </div>
+    <div class="flush-item">
+      <span class="icon">🧠</span>
+      <div>
+        <div><strong>User preference:</strong> "Prefers tabs over spaces, always"</div>
+        <div class="flush-file">→ USER.md</div>
+      </div>
+    </div>
+    <div class="flush-item">
+      <span class="icon">⚡</span>
+      <div>
+        <div><strong>Lesson learned:</strong> "The API rate-limits at 100 req/min, add backoff"</div>
+        <div class="flush-file">→ memory/2026-02-14.md</div>
+      </div>
+    </div>
+    <div class="flush-item">
+      <span class="icon">🗑️</span>
+      <div>
+        <div style="color:var(--dim)"><strong>Discarded:</strong> "Debugging output from 15 failed attempts" — ephemeral, not worth saving</div>
+      </div>
+    </div>
+    <div class="flush-item">
+      <span class="icon">🗑️</span>
+      <div>
+        <div style="color:var(--dim)"><strong>Discarded:</strong> "Casual banter about the weather" — no long-term value</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;padding:.75rem;background:var(--surface2);border-radius:8px;font-size:.85rem">
+    <strong style="color:var(--warn)">The cycle:</strong><br>
+    Conversation → approaching limit → <span style="color:var(--success)">flush to disk</span> → <span style="color:var(--warn)">compact history</span> → continue with fresh budget<br>
+    <span style="color:var(--dim)">Next session: agent reads MEMORY.md + daily files → knowledge persists even though original context is gone</span>
+  </div>
+</div>
+
+<!-- ==================== ACT 2 ==================== -->
+<span class="act-label act2-label" id="act2">Act 2 — The Build</span>
+<h2>🔨 Exercises</h2>
+
+<!-- Exercise 1: Token Budget Math -->
+<div class="exercise" id="ex1">
+  <h3>Exercise 1: Token Budget Math</h3>
+  <div class="q">
+    A model has a <strong>200,000 token</strong> context window. The system prompt uses <strong>12,000</strong> tokens, workspace files use <strong>8,500</strong>, skill descriptions use <strong>4,200</strong>, and tool schemas use <strong>6,800</strong>. Current conversation history is <strong>95,000</strong> tokens.<br><br>
+    How many tokens remain for the current message + response?
+  </div>
+  <input type="number" id="ex1Input" placeholder="Enter remaining tokens...">
+  <button onclick="checkEx1()" style="margin-top:.5rem">Check Answer</button>
+  <div class="feedback" id="ex1Feedback"></div>
+</div>
+
+<!-- Exercise 2: Workspace File Injection -->
+<div class="exercise" id="ex2">
+  <h3>Exercise 2: Workspace File Priority</h3>
+  <div class="q">
+    Budget is tight — you can only fit <strong>8,000 tokens</strong> of workspace files but you have:
+    <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--text)">
+      <li>AGENTS.md — 4,000 tokens (session startup rules)</li>
+      <li>SOUL.md — 2,500 tokens (agent identity)</li>
+      <li>USER.md — 1,500 tokens (user context)</li>
+      <li>TOOLS.md — 3,000 tokens (tool notes)</li>
+      <li>MEMORY.md — 2,000 tokens (long-term memory)</li>
+    </ul>
+    Total: 13,000 tokens. Which file(s) should be <strong>truncated first</strong>?
+  </div>
+  <div class="options" id="ex2Options">
+    <div class="opt" onclick="selectEx2(this,0)">AGENTS.md — it's the longest</div>
+    <div class="opt" onclick="selectEx2(this,1)">TOOLS.md & MEMORY.md — environment-specific, can be abbreviated</div>
+    <div class="opt" onclick="selectEx2(this,2)">SOUL.md — identity can be shortened</div>
+    <div class="opt" onclick="selectEx2(this,3)">USER.md — it's the smallest anyway</div>
+  </div>
+  <div class="feedback" id="ex2Feedback"></div>
+</div>
+
+<!-- Exercise 3: Compaction Decision -->
+<div class="exercise" id="ex3">
+  <h3>Exercise 3: Compaction Decision</h3>
+  <div class="q">
+    Context usage is at <strong>82%</strong>. The auto-compaction threshold is <strong>85%</strong>. The user just pasted a 5,000-token file and is asking you to analyze it. Your response will likely be ~3,000 tokens.<br><br>
+    Should you trigger <strong>manual compaction</strong> before responding?
+  </div>
+  <div class="options" id="ex3Options">
+    <div class="opt" onclick="selectEx3(this,0)">No — still under the 85% threshold</div>
+    <div class="opt" onclick="selectEx3(this,1)">Yes — the input + output will push past 85%, better to compact proactively</div>
+    <div class="opt" onclick="selectEx3(this,2)">No — auto-compaction will handle it if needed</div>
+    <div class="opt" onclick="selectEx3(this,3)">Yes — always compact when above 80%</div>
+  </div>
+  <div class="feedback" id="ex3Feedback"></div>
+</div>
+
+<!-- Exercise 4: Memory Flush Planning -->
+<div class="exercise" id="ex4">
+  <h3>Exercise 4: Memory Flush Planning</h3>
+  <div class="q">
+    A conversation is about to be compacted. It contains these items. Check everything that should be <strong>saved to disk</strong> before compaction:
+  </div>
+  <div class="checkbox-list" id="ex4List">
+    <label><input type="checkbox" value="1"> User said they prefer dark themes for all UIs</label>
+    <label><input type="checkbox" value="2"> 47 lines of debug output from a failed npm install</label>
+    <label><input type="checkbox" value="3"> Decision to use port 3001 for the dev server (port 3000 was taken)</label>
+    <label><input type="checkbox" value="4"> Three jokes exchanged about JavaScript</label>
+    <label><input type="checkbox" value="5"> SSH key for vault404 requires the passphrase "hunter2"</label>
+    <label><input type="checkbox" value="6"> User explained their project architecture (3 microservices + API gateway)</label>
+    <label><input type="checkbox" value="7"> A typo that was quickly corrected</label>
+  </div>
+  <button onclick="checkEx4()" style="margin-top:.75rem">Check Answer</button>
+  <div class="feedback" id="ex4Feedback"></div>
+</div>
+
+<!-- ==================== ACT 3 ==================== -->
+<span class="act-label act3-label" id="act3">Act 3 — The Connection</span>
+<h2>🔗 Docs & Commands</h2>
+
+<div class="card">
+  <h3>Essential Commands</h3>
+
+  <p style="color:var(--text);font-size:.9rem"><strong>/context list</strong> — See what's in your context right now:</p>
+  <div class="cmd-example">$ /context list
+
+Context Window: 200,000 tokens
+┌─────────────────────┬────────┬───────┐
+│ Component           │ Tokens │   %   │
+├─────────────────────┼────────┼───────┤
+│ System prompt       │ 10,240 │  5.1% │
+│ Workspace files     │  8,120 │  4.1% │
+│ Skill descriptions  │  4,350 │  2.2% │
+│ Tool schemas        │  6,800 │  3.4% │
+│ Conversation (42t)  │ 98,400 │ 49.2% │
+│ ─── Available ───   │ 72,090 │ 36.0% │
+└─────────────────────┴────────┴───────┘
+⚠️ Auto-compact at 85% (170,000 tokens)</div>
+
+  <p style="color:var(--text);font-size:.9rem;margin-top:1rem"><strong>/compact</strong> — Manually trigger compaction:</p>
+  <div class="cmd-example">$ /compact
+
+🗜️ Compacting conversation history...
+Before: 42 messages, 98,400 tokens
+Flushing important context to memory...
+  → memory/2026-02-14.md (3 entries added)
+  → TOOLS.md (1 update)
+Summarizing messages 1-30...
+After: 13 messages, 34,200 tokens
+Saved: 64,200 tokens (65% reduction)</div>
+
+  <p style="color:var(--text);font-size:.9rem;margin-top:1rem"><strong>/context detail</strong> — Deep dive into specific components:</p>
+  <div class="cmd-example">$ /context detail workspace
+
+Workspace Files Breakdown:
+  AGENTS.md      3,840 tokens
+  SOUL.md        2,100 tokens  
+  USER.md        1,280 tokens
+  TOOLS.md       2,950 tokens  ← consider trimming
+  MEMORY.md      1,800 tokens
+  ──────────────────────
+  Total          11,970 tokens</div>
+</div>
+
+<div class="card">
+  <h3>Why MEMORY.md Exists</h3>
+  <p style="color:var(--text);font-size:.9rem">MEMORY.md is the bridge between <strong>ephemeral context</strong> and <strong>persistent knowledge</strong>.</p>
+
+  <div style="display:flex;gap:1rem;margin:1rem 0;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px;padding:.75rem;background:rgba(108,92,231,.08);border-radius:8px;border:1px solid var(--accent)">
+      <div style="font-weight:700;color:var(--accent2);margin-bottom:.25rem">Context (ephemeral)</div>
+      <div style="font-size:.85rem;color:var(--dim)">What the model sees right now. Gone when the session ends or compaction triggers.</div>
+    </div>
+    <div style="flex:0;display:flex;align-items:center;font-size:1.5rem">→</div>
+    <div style="flex:1;min-width:200px;padding:.75rem;background:rgba(253,203,110,.08);border-radius:8px;border:1px solid var(--warn)">
+      <div style="font-weight:700;color:var(--warn);margin-bottom:.25rem">MEMORY.md (persistent)</div>
+      <div style="font-size:.85rem;color:var(--dim)">Curated knowledge that survives across sessions. Loaded into context at startup.</div>
+    </div>
+  </div>
+
+  <p style="font-size:.85rem">Without memory flush + MEMORY.md, every compaction would permanently lose context. With it, the agent maintains continuity across hours-long sessions and even between separate conversations.</p>
+</div>
+
+<div class="card">
+  <h3>Common Issues</h3>
+
+  <div class="issue">
+    <div class="title">Context bloat from large tool outputs</div>
+    A single <code>exec</code> or <code>read</code> that dumps 10K+ tokens of output. Fix: use <code>limit</code> on reads, pipe through <code>head</code>/<code>tail</code>, or summarize output before continuing.
+  </div>
+
+  <div class="issue">
+    <div class="title">Workspace files eating budget</div>
+    TOOLS.md grew to 5,000 tokens with old notes. AGENTS.md has verbose examples. Fix: regularly audit and trim workspace files. Move rarely-needed info to separate files that are read on demand.
+  </div>
+
+  <div class="issue">
+    <div class="title">Compaction losing important details</div>
+    A key decision from turn 3 gets summarized away. Fix: use <code>/compact</code> manually when you know important context exists, so the agent can flush deliberately. Or maintain a DECISIONS.md file for critical choices.
+  </div>
+
+  <div class="issue">
+    <div class="title">Skills you don't use wasting tokens</div>
+    15 skills loaded but you only use 3. Each skill's description and schema costs tokens. Fix: disable unused skills to reclaim budget.
+  </div>
+
+  <div class="tip">Best practice: treat context like RAM. You don't load every file on disk into RAM — you load what you need. Keep workspace files lean, disable unused skills, and use <code>/compact</code> proactively when you know a long session is ahead.</div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">📚 Further Reading</h3>
+  <a class="doc-link" href="https://docs.openclaw.com/concepts/context" target="_blank">
+    <span class="icon">📖</span> Context Window — How context is assembled and managed
+  </a>
+  <a class="doc-link" href="https://docs.openclaw.com/concepts/compaction" target="_blank">
+    <span class="icon">🗜️</span> Compaction — Auto and manual compaction behavior
+  </a>
+  <a class="doc-link" href="https://docs.openclaw.com/concepts/memory" target="_blank">
+    <span class="icon">🧠</span> Memory — MEMORY.md, daily files, and persistence
+  </a>
+  <a class="doc-link" href="https://docs.openclaw.com/concepts/system-prompt" target="_blank">
+    <span class="icon">🏗️</span> System Prompt — Assembly order and components
+  </a>
+</div>
+
+<div style="text-align:center;padding:2rem 0;color:var(--dim);font-size:.85rem">
+  <div style="margin-bottom:.5rem">Module OC-03 complete. You understand the boundary between context and memory.</div>
+  <div>← <a href="../oc-02-tools/" style="color:var(--accent2);text-decoration:none">OC-02: Tools</a> · <a href="../oc-04-skills/" style="color:var(--accent2);text-decoration:none">OC-04: Skills</a> →</div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// === CONTEXT BAR VISUALIZER ===
+const segments = [
+  { name: 'System Prompt', tokens: 10000, color: '#6c5ce7' },
+  { name: 'Workspace Files', tokens: 8000, color: '#a29bfe' },
+  { name: 'Skill Descriptions', tokens: 4000, color: '#74b9ff' },
+  { name: 'Tool Schemas', tokens: 6000, color: '#0984e3' },
+  { name: 'Conv. History', tokens: 50000, color: '#00b894' },
+  { name: 'Current Message', tokens: 2000, color: '#55efc4' },
+];
+const CTX_MAX = 200000;
+const COMPACT_THRESHOLD = 0.85;
+
+function renderBar() {
+  const bar = document.getElementById('ctxBar');
+  const legend = document.getElementById('ctxLegend');
+  const stats = document.getElementById('ctxStats');
+  const used = segments.reduce((s, seg) => s + seg.tokens, 0);
+  const free = Math.max(0, CTX_MAX - used);
+  const pct = used / CTX_MAX;
+
+  bar.innerHTML = '';
+  segments.forEach(seg => {
+    const el = document.createElement('div');
+    el.className = 'ctx-seg';
+    el.style.flex = seg.tokens;
+    el.style.background = seg.color;
+    el.textContent = seg.tokens >= CTX_MAX * 0.04 ? seg.name : '';
+    el.title = `${seg.name}: ${(seg.tokens/1000).toFixed(1)}K tokens`;
+    bar.appendChild(el);
+  });
+  if (free > 0) {
+    const el = document.createElement('div');
+    el.className = 'ctx-seg';
+    el.style.flex = free;
+    el.style.background = '#1a1a24';
+    el.style.borderLeft = '1px solid #2a2a3a';
+    el.textContent = free >= CTX_MAX * 0.05 ? 'Available' : '';
+    el.style.color = 'var(--dim)';
+    el.title = `Available: ${(free/1000).toFixed(1)}K tokens`;
+    bar.appendChild(el);
+  }
+
+  // Danger zone
+  const dz = document.getElementById('dangerZone');
+  dz.style.width = ((1 - COMPACT_THRESHOLD) * 100) + '%';
+
+  legend.innerHTML = segments.map(s =>
+    `<div class="ctx-legend-item"><span class="dot" style="background:${s.color}"></span>${s.name}</div>`
+  ).join('') + `<div class="ctx-legend-item"><span class="dot" style="background:#1a1a24;border:1px solid var(--border)"></span>Available</div>`;
+
+  const usedPct = (pct * 100).toFixed(1);
+  stats.innerHTML = `
+    <div class="ctx-stat"><div class="val">${(used/1000).toFixed(1)}K</div><div class="label">Tokens Used</div></div>
+    <div class="ctx-stat"><div class="val">${(free/1000).toFixed(1)}K</div><div class="label">Available</div></div>
+    <div class="ctx-stat"><div class="val" style="color:${pct > COMPACT_THRESHOLD ? 'var(--danger)' : pct > 0.7 ? 'var(--warn)' : 'var(--success)'}">${usedPct}%</div><div class="label">Context Used</div></div>
+    <div class="ctx-stat"><div class="val">${pct > COMPACT_THRESHOLD ? '🔴 COMPACT' : pct > 0.7 ? '🟡 Watch' : '🟢 OK'}</div><div class="label">Status</div></div>
+  `;
+}
+
+document.querySelectorAll('.slider-row input[type=range]').forEach(slider => {
+  slider.addEventListener('input', function() {
+    const idx = parseInt(this.dataset.seg);
+    const val = parseInt(this.value);
+    segments[idx].tokens = val;
+    this.parentElement.querySelector('.val').textContent = val >= 1000 ? (val/1000).toFixed(val % 1000 === 0 ? 0 : 1) + 'K' : val;
+    renderBar();
+  });
+});
+renderBar();
+
+// === SYSTEM PROMPT ASSEMBLY ===
+function toggleSP(header) {
+  header.closest('.sp-section').classList.toggle('open');
+}
+
+// === COMPACTION SIMULATOR ===
+const convData = [
+  { role: 'user', text: "Hey, can you help me set up a PostgreSQL database?", tokens: 420 },
+  { role: 'assistant', text: "Of course! Let me check if PostgreSQL is installed on your system first.", tokens: 380 },
+  { role: 'assistant', text: "[Ran: which psql → /usr/local/bin/psql] Great, PostgreSQL is installed. Let me check the version.", tokens: 850 },
+  { role: 'user', text: "I need a database for a Node.js project with users, posts, and comments tables.", tokens: 520 },
+  { role: 'assistant', text: "I'll create the database and schema. Here's the plan: users table with UUID primary keys, posts with foreign key to users, comments with foreign keys to both.", tokens: 1200 },
+  { role: 'assistant', text: "[Ran: createdb myproject] [Ran: psql -c 'CREATE TABLE users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())'] Done, created users table.", tokens: 2400 },
+  { role: 'user', text: "Looks good. Can you add an index on the email column?", tokens: 380 },
+  { role: 'assistant', text: "[Ran: psql -c 'CREATE INDEX idx_users_email ON users(email)'] Index created. This will speed up lookups by email.", tokens: 920 },
+  { role: 'user', text: "Now create the posts table. Each post should have a title, body, and created_at.", tokens: 480 },
+  { role: 'assistant', text: "[Ran: psql -c 'CREATE TABLE posts (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id), title TEXT NOT NULL, body TEXT, created_at TIMESTAMPTZ DEFAULT NOW())'] Posts table ready.", tokens: 1800 },
+  { role: 'user', text: "And comments — they reference both a user and a post.", tokens: 390 },
+  { role: 'assistant', text: "[Ran: psql -c 'CREATE TABLE comments (...)'] Comments table created with foreign keys to both users and posts.", tokens: 1600 },
+  { role: 'user', text: "Can you show me the full schema now?", tokens: 320 },
+  { role: 'assistant', text: "[Ran: psql -c '\\dt'] [Ran: psql -c '\\d users'] [Ran: psql -c '\\d posts'] [Ran: psql -c '\\d comments'] Here's the complete schema with all three tables, indexes, and constraints.", tokens: 4200 },
+  { role: 'user', text: "Perfect. Now let's set up the Node.js connection. I want to use the 'pg' package.", tokens: 450 },
+  { role: 'assistant', text: "[Ran: npm install pg] Installed. Let me create a connection pool module for you.", tokens: 680 },
+  { role: 'assistant', text: "[Wrote: src/db.js] Created connection pool with SSL support, retry logic, and proper error handling.", tokens: 2800 },
+  { role: 'user', text: "Add a query helper that handles transactions automatically.", tokens: 410 },
+  { role: 'assistant', text: "[Edited: src/db.js] Added withTransaction() helper that auto-commits on success and rolls back on error.", tokens: 1900 },
+  { role: 'user', text: "Now let's write the user CRUD functions.", tokens: 350 },
+  { role: 'assistant', text: "[Wrote: src/models/user.js] Created getUser, createUser, updateUser, deleteUser with parameterized queries.", tokens: 3200 },
+  { role: 'user', text: "The createUser function should also send a welcome email. Can you add that?", tokens: 420 },
+  { role: 'assistant', text: "[Edited: src/models/user.js] Added email integration. After insert, calls sendWelcomeEmail(). I imported your existing mailer module.", tokens: 1800 },
+  { role: 'user', text: "Great, now let's write tests for all of this.", tokens: 300 },
+];
+
+let compacted = false;
+
+function renderConv() {
+  const el = document.getElementById('convList');
+  const msgs = compacted ? getCompactedMsgs() : convData;
+  el.innerHTML = msgs.map((m, i) => {
+    const cls = m.compacted ? 'compacted' : m.role;
+    return `<div class="conv-msg ${cls}${m.fading ? ' fading' : ''}">
+      <span class="tokens-badge">${m.tokens.toLocaleString()} tok</span>
+      <div class="role ${m.role}-role">${m.compacted ? '📦 compacted summary' : m.role}</div>
+      <div>${m.text}</div>
+    </div>`;
+  }).join('');
+
+  const totalTokens = msgs.reduce((s, m) => s + m.tokens, 0);
+  document.getElementById('csMsgCount').textContent = msgs.length;
+  document.getElementById('csTokens').textContent = totalTokens.toLocaleString();
+  document.getElementById('csUsage').textContent = ((totalTokens + 30000) / CTX_MAX * 100).toFixed(0) + '%';
+}
+
+function getCompactedMsgs() {
+  return [
+    { role: 'system', text: 'Summary of turns 1-16: User requested PostgreSQL database setup for a Node.js project. Created database "myproject" with three tables (users, posts, comments) with UUID primary keys, foreign key relationships, and an email index. Installed pg package and created src/db.js with connection pool, SSL, retry logic, and withTransaction() helper.', tokens: 480, compacted: true },
+    ...convData.slice(16)
+  ];
+}
+
+function runCompaction() {
+  if (compacted) return;
+  // Animate old messages fading
+  const el = document.getElementById('convList');
+  const msgs = el.querySelectorAll('.conv-msg');
+  const beforeTokens = convData.reduce((s, m) => s + m.tokens, 0);
+
+  for (let i = 0; i < 16; i++) {
+    setTimeout(() => { if (msgs[i]) msgs[i].classList.add('fading'); }, i * 40);
+  }
+
+  setTimeout(() => {
+    compacted = true;
+    renderConv();
+    const afterMsgs = getCompactedMsgs();
+    const afterTokens = afterMsgs.reduce((s, m) => s + m.tokens, 0);
+    const saved = beforeTokens - afterTokens;
+    document.getElementById('csSaved').textContent = saved.toLocaleString();
+  }, 800);
+}
+
+function resetCompaction() {
+  compacted = false;
+  document.getElementById('csSaved').textContent = '—';
+  renderConv();
+}
+
+renderConv();
+
+// === EXERCISES ===
+function checkEx1() {
+  const val = parseInt(document.getElementById('ex1Input').value);
+  const correct = 200000 - 12000 - 8500 - 4200 - 6800 - 95000; // 73500
+  const fb = document.getElementById('ex1Feedback');
+  if (val === correct) {
+    fb.className = 'feedback show correct';
+    fb.innerHTML = `✅ Correct! <strong>73,500 tokens</strong> remain. That's 36.75% of the window — comfortable, but one big tool output could push you into the danger zone.`;
+  } else {
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = `Not quite. Add up all the used components: 12,000 + 8,500 + 4,200 + 6,800 + 95,000 = 126,500. Subtract from 200,000 = <strong>73,500</strong>.`;
+  }
+}
+
+let ex2Answer = -1;
+function selectEx2(el, idx) {
+  document.querySelectorAll('#ex2Options .opt').forEach(o => o.classList.remove('selected','correct','wrong'));
+  el.classList.add('selected');
+  ex2Answer = idx;
+  const fb = document.getElementById('ex2Feedback');
+  if (idx === 1) {
+    el.classList.add('correct');
+    fb.className = 'feedback show correct';
+    fb.innerHTML = `✅ Right! TOOLS.md (environment-specific notes) and MEMORY.md (curated memories) are the most compressible. AGENTS.md has critical rules, SOUL.md defines identity, and USER.md is already small. TOOLS.md often accumulates cruft, and MEMORY.md can be trimmed to essentials.`;
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = `Not ideal. AGENTS.md contains session startup rules — truncating it risks the agent forgetting how to behave. SOUL.md is core identity. USER.md is tiny already. <strong>TOOLS.md</strong> (env-specific notes that grow over time) and <strong>MEMORY.md</strong> (can be distilled) are the best truncation targets.`;
+  }
+}
+
+let ex3Answer = -1;
+function selectEx3(el, idx) {
+  document.querySelectorAll('#ex3Options .opt').forEach(o => o.classList.remove('selected','correct','wrong'));
+  el.classList.add('selected');
+  ex3Answer = idx;
+  const fb = document.getElementById('ex3Feedback');
+  if (idx === 1) {
+    el.classList.add('correct');
+    fb.className = 'feedback show correct';
+    fb.innerHTML = `✅ Exactly! At 82% + 5K input + 3K output, you'd hit ~86% — past the auto-compact threshold. Proactive compaction gives you control over what gets flushed to memory. Waiting for auto-compact means the system decides.`;
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = `Think about it: 82% + ~8K tokens (input + output) on a 200K window = ~86%. That exceeds the 85% threshold. <strong>Proactive compaction</strong> is better because you control the memory flush, rather than letting auto-compact handle it mid-response.`;
+  }
+}
+
+function checkEx4() {
+  const checked = [...document.querySelectorAll('#ex4List input:checked')].map(c => parseInt(c.value));
+  const correct = [1, 3, 6]; // preferences, config decisions, architecture
+  const fb = document.getElementById('ex4Feedback');
+  const isCorrect = correct.length === checked.length && correct.every(c => checked.includes(c));
+
+  if (isCorrect) {
+    fb.className = 'feedback show correct';
+    fb.innerHTML = `✅ Perfect! Save: <strong>user preference</strong> (dark themes → USER.md), <strong>config decision</strong> (port 3001 → TOOLS.md or daily memory), and <strong>architecture overview</strong> (project structure → memory). Skip: debug output (ephemeral), jokes (no value), SSH secrets (⚠️ never store passwords in workspace files!), and typos (noise).`;
+  } else {
+    fb.className = 'feedback show incorrect';
+    let hint = 'Save things with <strong>lasting value</strong>: user preferences, decisions, and project context. ';
+    if (checked.includes(5)) hint += '⚠️ Never save passwords/secrets to workspace files — that\'s a security risk! ';
+    if (checked.includes(2)) hint += 'Debug output from failed attempts is ephemeral noise. ';
+    fb.innerHTML = hint + 'The correct answers are: dark theme preference, port 3001 decision, and project architecture.';
+  }
+}
+</script>
+</body>
+</html>

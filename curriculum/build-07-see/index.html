@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neurons→Agents">
+    <title>BUILD-07: Let It See</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#121212;color:#e1e1e1;line-height:1.7;min-height:100vh}
+        .container{max-width:960px;margin:0 auto;padding:20px}
+        .phase{border-radius:16px;padding:30px;margin:30px 0;position:relative;overflow:hidden}
+        .phase::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px}
+        .phase-wall{background:rgba(255,90,60,0.06);border:1px solid rgba(255,90,60,0.2)}.phase-wall::before{background:#ff5a3c}
+        .phase-theory{background:rgba(60,130,255,0.06);border:1px solid rgba(60,130,255,0.2)}.phase-theory::before{background:#3c82ff}
+        .phase-build{background:rgba(50,205,100,0.06);border:1px solid rgba(50,205,100,0.2)}.phase-build::before{background:#32cd64}
+        .phase-payoff{background:rgba(255,200,50,0.06);border:1px solid rgba(255,200,50,0.2)}.phase-payoff::before{background:#ffc832}
+        .phase-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.75em;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px}
+        .tag-wall{background:rgba(255,90,60,0.2);color:#ff5a3c}
+        .tag-theory{background:rgba(60,130,255,0.2);color:#3c82ff}
+        .tag-build{background:rgba(50,205,100,0.2);color:#32cd64}
+        .tag-payoff{background:rgba(255,200,50,0.2);color:#ffc832}
+        h1{text-align:center;font-size:2.4em;margin-bottom:0.3em;background:linear-gradient(135deg,#ff5a3c,#3c82ff,#32cd64);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .subtitle{text-align:center;color:#888;font-size:1.1em;margin-bottom:30px}
+        h2{font-size:1.5em;margin-bottom:15px}
+        h3{font-size:1.2em;margin:20px 0 10px;color:#ccc}
+        p{margin:10px 0}
+        code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.9em}
+        pre{background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:16px;overflow-x:auto;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:1.5;margin:15px 0}
+        .progress-track{background:rgba(255,255,255,0.08);height:6px;border-radius:3px;margin:20px 0;overflow:hidden}
+        .progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#ff5a3c,#3c82ff,#32cd64);transition:width 0.4s ease}
+        .progress-label{text-align:center;font-size:0.8em;color:#888;margin-bottom:5px}
+        .exercise{background:#1a1a2e;border:1px solid #2a2a4e;border-radius:12px;padding:24px;margin:20px 0}
+        .exercise-num{display:inline-block;background:#32cd64;color:#000;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-weight:700;font-size:0.85em;margin-right:8px}
+        .exercise h3{display:inline;color:#32cd64}
+        .code-editor{background:#0d1117;border:1px solid #333;border-radius:8px;overflow:hidden;margin:15px 0}
+        .code-header{background:#1a1a2e;padding:8px 14px;font-size:0.8em;color:#888;display:flex;justify-content:space-between;align-items:center}
+        .code-header .lang{color:#3c82ff;font-weight:600}
+        textarea.code{width:100%;min-height:220px;background:#0d1117;color:#c9d1d9;border:none;padding:14px;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:1.5;resize:vertical;tab-size:4}
+        textarea.code:focus{outline:none}
+        .btn{display:inline-block;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.95em;font-weight:600;transition:all 0.2s}
+        .btn:hover{transform:translateY(-1px)}
+        .btn-run{background:#32cd64;color:#000}.btn-run:hover{background:#3de070}
+        .btn-reset{background:rgba(255,255,255,0.08);color:#ccc}.btn-reset:hover{background:rgba(255,255,255,0.12)}
+        .btn-nav{background:linear-gradient(135deg,#3c82ff,#32cd64);color:#fff;padding:12px 28px;font-size:1em;text-decoration:none}
+        .btn-group{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}
+        .output{background:#0a0a15;border:1px solid #2a2a4e;border-radius:8px;padding:14px;margin:10px 0;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;min-height:60px;white-space:pre-wrap;color:#a0a0a0;max-height:300px;overflow-y:auto}
+        .output.success{border-color:#32cd64;color:#32cd64}
+        .output.error{border-color:#ff5a3c;color:#ff5a3c}
+        .sidebar{position:fixed;top:0;right:-320px;width:320px;height:100vh;background:#1a1a2e;border-left:1px solid #333;padding:24px;overflow-y:auto;transition:right 0.3s ease;z-index:100}
+        .sidebar.open{right:0}
+        .sidebar h3{color:#ffc832;margin-bottom:15px}
+        .sidebar-toggle{position:fixed;top:20px;right:20px;background:#1a1a2e;border:1px solid #333;color:#ffc832;padding:8px 14px;border-radius:8px;cursor:pointer;z-index:101;font-size:0.85em}
+        .sidebar a{color:#3c82ff;text-decoration:none;display:block;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+        .sidebar a:hover{color:#5a9aff}
+        .sidebar .vid{color:#ff5a3c}
+        .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}
+        .overlay.open{display:block}
+        .diagram{background:#0d1117;border:1px solid #333;border-radius:12px;padding:20px;margin:20px 0;text-align:center;font-family:'SF Mono',Monaco,Menlo,monospace;font-size:0.85em;line-height:2;color:#888}
+        .diagram .hl{color:#3c82ff;font-weight:600}
+        .diagram .green{color:#32cd64}
+        .diagram .orange{color:#ff5a3c}
+        .diagram .gold{color:#ffc832}
+        .diagram .arrow{color:#555}
+        .pyodide-status{text-align:center;padding:10px;color:#888;font-size:0.85em}
+        .pyodide-status.ready{color:#32cd64}
+        .pyodide-status.loading{color:#ffc832}
+        .pyodide-status.error{color:#ff5a3c}
+        .demo-box{background:#0d1117;border:2px solid #3c82ff;border-radius:12px;padding:20px;margin:20px 0}
+        .nav-bottom{display:flex;justify-content:space-between;align-items:center;margin:40px 0 20px;padding:20px 0;border-top:1px solid #333}
+        .patch-grid{display:grid;gap:2px;margin:15px auto;width:fit-content}
+        .patch-grid .cell{width:28px;height:28px;border-radius:3px;transition:all 0.3s}
+        @keyframes sliceIn{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+        .patch-grid.animated .cell{animation:sliceIn 0.3s ease forwards;opacity:0}
+        .clip-space{position:relative;width:100%;max-width:500px;height:300px;margin:20px auto;background:#0a0a15;border-radius:12px;border:1px solid #333;overflow:hidden}
+        .clip-dot{position:absolute;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7em;font-weight:700;transition:all 1s ease;cursor:default}
+        @media(max-width:768px){.container{padding:12px}h1{font-size:1.8em}.phase{padding:20px}.sidebar{width:280px;right:-280px}}
+    </style>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()">📚 Go Deeper</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <h3>📚 Go Deeper</h3>
+    <p style="font-size:0.85em;color:#888;margin-bottom:15px">Reference modules & papers</p>
+    <h4 style="color:#3c82ff;margin:15px 0 8px">Theory Modules</h4>
+    <a href="../module-12-multimodal/">🖼 12: Multimodal Models</a>
+    <a href="../module-11-embeddings/">🧮 11: Embeddings & Vector Space</a>
+    <a href="../module-02-attention/">🎯 02: Attention</a>
+    <h4 style="color:#ff5a3c;margin:15px 0 8px">Papers</h4>
+    <a class="vid" href="https://arxiv.org/abs/2010.11929" target="_blank">📄 ViT: An Image is Worth 16×16 Words</a>
+    <a class="vid" href="https://arxiv.org/abs/2103.00020" target="_blank">📄 CLIP (Radford et al. 2021)</a>
+    <h4 style="color:#ffc832;margin:20px 0 8px">Build Series</h4>
+    <a href="../build-06-remember/">← BUILD-06: Let It Remember</a>
+    <a href="../build-07-see/" style="color:#ffc832">→ BUILD-07: Let It See (you are here)</a>
+    <a href="../build-08-scale/">→ BUILD-08: Let It Scale</a>
+</div>
+
+<div class="container">
+    <h1>👁️ BUILD-07: Let It See</h1>
+    <p class="subtitle">Teach a transformer to understand images — using what it already knows about words</p>
+    
+    <div class="progress-label">Progress: <span id="progress-text">0 / 6 exercises</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+
+    <!-- ============ HIT THE WALL ============ -->
+    <div class="phase phase-wall">
+        <span class="phase-tag tag-wall">🧱 Hit the Wall</span>
+        <h2>Your Agent Is Blind</h2>
+        <pre style="color:#ff5a3c">
+User: [uploads photo of a broken pipe under a sink]
+      What's wrong here and how do I fix it?
+
+Agent: I can only process text. I cannot view images.
+       Could you describe what you see?
+        </pre>
+        <p>Your agent can read, remember, act, and talk — but it can't <em>see</em>. It can't look at a photo, a chart, a screenshot, or a diagram. Every image might as well be a blank page.</p>
+        <p>Transformers were built for sequences of tokens — words. Images aren't words. <strong>So how do you feed a picture into something that only understands sentences?</strong></p>
+        <p>You make the picture <em>look like</em> a sentence.</p>
+    </div>
+
+    <!-- ============ LEARN THE THEORY ============ -->
+    <div class="phase phase-theory">
+        <span class="phase-tag tag-theory">📘 Learn the Theory</span>
+        <h2>From Pixels to Patches to Tokens</h2>
+        
+        <h3>Step 1: Slice the Photo Into a Grid</h3>
+        <p>What if we sliced a photo into a grid of tiles, like a puzzle? Each tile becomes a "word" for the transformer.</p>
+        
+        <div class="demo-box" id="patch-demo">
+            <p style="text-align:center;margin-bottom:10px;color:#888">Click to see an image get sliced into patches:</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap">
+                <div>
+                    <canvas id="originalCanvas" width="196" height="196" style="border:2px solid #3c82ff;border-radius:8px;image-rendering:pixelated"></canvas>
+                    <p style="text-align:center;font-size:0.8em;color:#888;margin-top:5px">Original image (196×196)</p>
+                </div>
+                <div style="font-size:2em;color:#3c82ff">→</div>
+                <div>
+                    <div id="patchGrid" style="display:grid;grid-template-columns:repeat(14,28px);gap:2px"></div>
+                    <p style="text-align:center;font-size:0.8em;color:#888;margin-top:5px">14 × 14 = 196 patches</p>
+                </div>
+            </div>
+            <button class="btn btn-run" onclick="animatePatches()" style="display:block;margin:15px auto">✂️ Slice it!</button>
+        </div>
+
+        <p>An image is 224×224 pixels. Cut into 16×16 pixel patches = <strong>14 × 14 = 196 patches = 196 "tokens"</strong>. Now the transformer can read an image the same way it reads a sentence.</p>
+        <p>A sentence is a sequence of words. An image is now a sequence of patches. Same architecture, different input. That's the key insight of the <strong>Vision Transformer (ViT)</strong>.</p>
+
+        <div class="diagram">
+            <span class="orange">Sentence:</span> [ "The" ] [ "cat" ] [ "sat" ] → <span class="hl">3 tokens</span><br>
+            <span class="green">Image:</span> [ patch₁ ] [ patch₂ ] ... [ patch₁₉₆ ] → <span class="hl">196 tokens</span><br><br>
+            <span class="arrow">Same transformer. Different "words."</span>
+        </div>
+
+        <h3>Step 2: Turn Each Patch Into an Embedding</h3>
+        <p>Each patch is just a grid of pixel values — numbers for red, green, and blue at every pixel. A 16×16 patch with 3 color channels = <strong>768 numbers</strong>.</p>
+        <p>We flatten that grid into a list of 768 numbers, then multiply by a weight matrix to get an embedding. <strong>Same thing we did with words in Module 02.</strong> Words got turned into embeddings through a lookup table. Patches get turned into embeddings through a matrix multiplication. Same idea: raw input → dense vector the transformer can work with.</p>
+
+        <div class="diagram">
+            <span class="orange">One patch</span> (16×16×3) → flatten → <span class="hl">[768 numbers]</span><br>
+            <span class="arrow">↓ multiply by weight matrix (768 × D)</span><br>
+            <span class="green">[D-dimensional embedding]</span><br><br>
+            <span class="arrow">This is called a "linear projection" — it's just a matrix multiply.<br>Exactly like how word embeddings work, but for pixel grids.</span>
+        </div>
+
+        <h3>Step 3: Add Position (You Already Know This)</h3>
+        <p>Remember positional encoding from Module 03? The transformer needs to know <em>where</em> each token is. Same deal here — we add a position embedding to each patch so the model knows "this patch is top-left, that patch is bottom-right."</p>
+
+        <div class="diagram">
+            <span class="hl">patch_embedding</span> + <span class="gold">position_embedding</span> = <span class="green">final input</span><br><br>
+            <span class="arrow">Same as: word_embedding + position_embedding<br>You did this in Module 03. Exact same idea.</span>
+        </div>
+
+        <h3>Step 4: Run the Transformer (You Already Know This Too)</h3>
+        <p>Now we have 196 embeddings, each with a position. Feed them into a standard transformer with self-attention. Every patch attends to every other patch — the model learns that the patch showing an ear is related to the patch showing a face.</p>
+        <p>Remember attention from Module 02? Q, K, V, dot products, softmax? <strong>All of that works identically on image patches.</strong> The attention maps just happen to look like "which regions of the image are related to which other regions."</p>
+
+        <h3>CLIP: Words and Images in the Same Space</h3>
+        <p>In Module 06, you learned that embeddings place similar meanings near each other in space. "King" is near "queen." "Dog" is near "puppy."</p>
+        <p><strong>What if the word "dog" and a PHOTO of a dog lived at the same GPS coordinates in embedding space?</strong> That's CLIP.</p>
+        <p>CLIP trains two encoders — one for text, one for images — and forces them to share the same embedding space. After training, you can:</p>
+        <ul style="margin:10px 0 10px 20px">
+            <li>Search photos with text ("sunset over mountains")</li>
+            <li>Classify images without training a classifier</li>
+            <li>Compare any image to any text</li>
+        </ul>
+
+        <div id="clipSpace" class="clip-space">
+            <p style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#333;font-size:0.9em">Click "Train CLIP" below</p>
+        </div>
+        <button class="btn btn-run" onclick="animateCLIP()" style="display:block;margin:10px auto">🔗 Train CLIP</button>
+        <p style="text-align:center;font-size:0.8em;color:#888">Watch matching image-text pairs move together</p>
+
+        <h3>Contrastive Learning: How CLIP Trains</h3>
+        <p>Imagine you have 4 images and 4 captions. The model needs to figure out which caption goes with which image.</p>
+
+        <div class="diagram">
+            <span class="orange">🐕 Photo of dog</span> ←→ <span class="hl">"a golden retriever"</span> ✅<br>
+            <span class="orange">🌊 Photo of ocean</span> ←→ <span class="hl">"waves on a beach"</span> ✅<br>
+            <span class="orange">🎸 Photo of guitar</span> ←→ <span class="hl">"acoustic instrument"</span> ✅<br>
+            <span class="orange">🍕 Photo of pizza</span> ←→ <span class="hl">"pepperoni slice"</span> ✅<br><br>
+            <span class="green">Right pairs → PULL together in embedding space</span><br>
+            <span class="orange">Wrong pairs → PUSH apart in embedding space</span><br><br>
+            <span class="arrow">🐕 + "pepperoni slice" = ❌ push apart</span><br>
+            <span class="arrow">🐕 + "a golden retriever" = ✅ pull together</span>
+        </div>
+
+        <p>That's the whole idea. Show the model millions of image-text pairs. Train it so matching pairs get <strong>close</strong> and non-matching pairs get <strong>far</strong> apart in embedding space.</p>
+        <p>The formal name for this is <strong>contrastive learning</strong>. The loss function (called InfoNCE) is basically: "for each image, the correct caption should have the highest cosine similarity out of all captions in the batch." You already know cosine similarity from Module 06 — it's just the dot product of normalized vectors.</p>
+
+        <div class="diagram">
+            <span class="gold">InfoNCE intuition:</span><br>
+            <span class="arrow">For each image: softmax over similarities with ALL captions</span><br>
+            <span class="arrow">Correct caption should get probability ≈ 1.0</span><br>
+            <span class="arrow">Wrong captions should get probability ≈ 0.0</span><br><br>
+            <span class="arrow">You know softmax from Module 01.<br>You know cosine similarity from Module 06.<br>InfoNCE is just: softmax(cosine similarities).</span>
+        </div>
+    </div>
+
+    <!-- ============ BUILD THE SOLUTION ============ -->
+    <div class="phase phase-build">
+        <span class="phase-tag tag-build">🔨 Build the Solution</span>
+        <h2>Exercises</h2>
+        <p id="pyodide-status" class="pyodide-status loading">⏳ Loading Python environment (Pyodide)...</p>
+
+        <!-- Exercise 1: Patch an Image -->
+        <div class="exercise" id="ex1">
+            <span class="exercise-num">1</span><h3>Slice an Image Into Patches</h3>
+            <p>Implement the first step of ViT: take a flat list of pixel values (representing an image) and slice it into a grid of patches. Each patch becomes one "token."</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_1.py</span></div>
+                <textarea class="code" id="code1">import math
+
+def make_patches(pixels, img_size, patch_size, channels=3):
+    """Slice an image into patches.
+    
+    Args:
+        pixels: flat list of pixel values, length = img_size * img_size * channels
+                laid out as [row0_col0_R, row0_col0_G, row0_col0_B, row0_col1_R, ...]
+        img_size: width (= height) of the square image, e.g. 224
+        patch_size: width (= height) of each patch, e.g. 16
+        channels: number of color channels, e.g. 3 (RGB)
+    
+    Returns:
+        list of patches, where each patch is a flat list of length patch_size*patch_size*channels
+        Number of patches = (img_size // patch_size) ** 2
+    """
+    # YOUR CODE HERE
+    # 1. Calculate how many patches per row/col
+    # 2. For each patch position (row, col):
+    #    - Extract the pixel values for that patch
+    #    - Flatten into a list
+    # 3. Return list of all patches
+    pass
+
+# Test with a tiny 4x4 "image", patch size 2, 1 channel (grayscale)
+# Image:  1  2  3  4
+#          5  6  7  8
+#          9 10 11 12
+#         13 14 15 16
+pixels = list(range(1, 17))
+patches = make_patches(pixels, img_size=4, patch_size=2, channels=1)
+
+print(f"Number of patches: {len(patches)}")
+assert len(patches) == 4, f"Expected 4 patches, got {len(patches)}"
+
+# Top-left patch should be [1,2,5,6]
+print(f"Patch 0 (top-left): {patches[0]}")
+assert patches[0] == [1, 2, 5, 6], f"Expected [1,2,5,6], got {patches[0]}"
+
+# Top-right patch should be [3,4,7,8]
+print(f"Patch 1 (top-right): {patches[1]}")
+assert patches[1] == [3, 4, 7, 8], f"Expected [3,4,7,8], got {patches[1]}"
+
+# Bottom-left
+print(f"Patch 2 (bottom-left): {patches[2]}")
+assert patches[2] == [9, 10, 13, 14], f"Expected [9,10,13,14], got {patches[2]}"
+
+# Bottom-right
+print(f"Patch 3 (bottom-right): {patches[3]}")
+assert patches[3] == [11, 12, 15, 16], f"Expected [11,12,15,16], got {patches[3]}"
+
+# Test with realistic sizes
+big_pixels = [0.5] * (224 * 224 * 3)
+big_patches = make_patches(big_pixels, 224, 16, 3)
+print(f"\n224x224 image, 16x16 patches: {len(big_patches)} patches")
+print(f"Each patch has {len(big_patches[0])} values (16*16*3 = {16*16*3})")
+assert len(big_patches) == 196, f"Expected 196 patches, got {len(big_patches)}"
+assert len(big_patches[0]) == 768, f"Expected 768 values per patch, got {len(big_patches[0])}"
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(1)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(1)">↺ Reset</button>
+            </div>
+            <div class="output" id="output1">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 2: Linear Projection -->
+        <div class="exercise" id="ex2">
+            <span class="exercise-num">2</span><h3>Project Patches Into Embeddings</h3>
+            <p>Each patch is a flat list of pixel values. We need to turn it into an embedding — a dense vector the transformer can work with. This is just a matrix multiply: <code>embedding = patch × weight_matrix</code>. Same idea as word embeddings, but for pixel grids.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_2.py</span></div>
+                <textarea class="code" id="code2">import math, random
+
+random.seed(42)
+
+def mat_vec_mul(matrix, vec):
+    """Multiply a matrix (list of rows) by a vector.
+    matrix shape: [out_dim x in_dim], vec shape: [in_dim]
+    Returns: vector of shape [out_dim]
+    """
+    # YOUR CODE HERE
+    pass
+
+def project_patches(patches, embed_dim):
+    """Project each patch into an embedding space.
+    
+    1. Determine patch_dim from the first patch's length
+    2. Create a random weight matrix of shape [embed_dim x patch_dim]
+       (use random.gauss(0, 0.02) for each weight)
+    3. For each patch, compute: embedding = weight_matrix × patch
+    4. Return list of embeddings
+    """
+    # YOUR CODE HERE
+    pass
+
+# Test mat_vec_mul
+matrix = [[1, 2], [3, 4], [5, 6]]  # 3x2
+vec = [10, 20]
+result = mat_vec_mul(matrix, vec)
+print(f"Matrix-vector multiply: {result}")
+assert result == [50, 110, 170], f"Expected [50, 110, 170], got {result}"
+
+# Test projection with tiny patches
+patches = [
+    [1.0, 0.5, 0.3, 0.8],  # patch 0: 4 values (e.g. 2x2x1)
+    [0.2, 0.9, 0.1, 0.6],  # patch 1
+    [0.7, 0.3, 0.5, 0.4],  # patch 2
+]
+embeddings = project_patches(patches, embed_dim=3)
+print(f"\n{len(patches)} patches → {len(embeddings)} embeddings")
+print(f"Each embedding has {len(embeddings[0])} dimensions")
+assert len(embeddings) == 3, f"Expected 3 embeddings, got {len(embeddings)}"
+assert len(embeddings[0]) == 3, f"Expected dim 3, got {len(embeddings[0])}"
+
+# Each embedding should be different (patches have different values)
+assert embeddings[0] != embeddings[1], "Different patches should give different embeddings"
+
+# Realistic test: 768-dim patches projected to 512-dim embeddings
+big_patches = [[random.random() for _ in range(768)] for _ in range(4)]
+big_embeds = project_patches(big_patches, embed_dim=512)
+print(f"\n768-dim patches → 512-dim embeddings: {len(big_embeds[0])} dims")
+assert len(big_embeds) == 4
+assert len(big_embeds[0]) == 512
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(2)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(2)">↺ Reset</button>
+            </div>
+            <div class="output" id="output2">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 3: Position Embeddings for Patches -->
+        <div class="exercise" id="ex3">
+            <span class="exercise-num">3</span><h3>Add Position Embeddings</h3>
+            <p>Just like words need position info ("cat" in position 1 vs position 5), patches need to know their location in the image grid. Add learnable position embeddings to each patch embedding.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_3.py</span></div>
+                <textarea class="code" id="code3">import math, random
+
+random.seed(42)
+
+def make_position_embeddings(num_patches, embed_dim):
+    """Create position embeddings — one vector per patch position.
+    Uses random initialization (in real ViT these are learned).
+    
+    Returns: list of num_patches vectors, each of length embed_dim
+    """
+    # YOUR CODE HERE
+    pass
+
+def add_position_embeddings(patch_embeddings, pos_embeddings):
+    """Add position embeddings to patch embeddings element-wise.
+    
+    patch_embeddings[i] + pos_embeddings[i] for each i.
+    Returns: list of combined embeddings.
+    """
+    # YOUR CODE HERE
+    pass
+
+# Test
+num_patches = 4
+embed_dim = 8
+
+# Make fake patch embeddings
+random.seed(10)
+patch_embs = [[random.random() for _ in range(embed_dim)] for _ in range(num_patches)]
+
+random.seed(42)
+pos_embs = make_position_embeddings(num_patches, embed_dim)
+
+print(f"Patch embeddings: {num_patches} × {embed_dim}")
+print(f"Position embeddings: {len(pos_embs)} × {len(pos_embs[0])}")
+
+assert len(pos_embs) == num_patches, f"Expected {num_patches} position embeddings"
+assert len(pos_embs[0]) == embed_dim, f"Expected dim {embed_dim}"
+
+# Each position should have a DIFFERENT embedding
+assert pos_embs[0] != pos_embs[1], "Different positions should have different embeddings"
+
+# Add them together
+combined = add_position_embeddings(patch_embs, pos_embs)
+print(f"Combined: {len(combined)} × {len(combined[0])}")
+assert len(combined) == num_patches
+assert len(combined[0]) == embed_dim
+
+# Verify element-wise addition
+for i in range(embed_dim):
+    expected = patch_embs[0][i] + pos_embs[0][i]
+    assert abs(combined[0][i] - expected) < 1e-9, f"Element {i}: expected {expected}, got {combined[0][i]}"
+
+print(f"\nPatch 0 before: [{', '.join(f'{x:.3f}' for x in patch_embs[0][:4])}...]")
+print(f"Position 0:     [{', '.join(f'{x:.3f}' for x in pos_embs[0][:4])}...]")
+print(f"Combined 0:     [{', '.join(f'{x:.3f}' for x in combined[0][:4])}...]")
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(3)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(3)">↺ Reset</button>
+            </div>
+            <div class="output" id="output3">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 4: Cosine Similarity for CLIP -->
+        <div class="exercise" id="ex4">
+            <span class="exercise-num">4</span><h3>CLIP Similarity Matrix</h3>
+            <p>CLIP compares every image embedding against every text embedding. Build the similarity matrix — the core of contrastive learning. You already know cosine similarity from Module 06.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_4.py</span></div>
+                <textarea class="code" id="code4">import math
+
+def cosine_sim(a, b):
+    """Cosine similarity between two vectors."""
+    dot = sum(x*y for x,y in zip(a,b))
+    mag_a = math.sqrt(sum(x*x for x in a))
+    mag_b = math.sqrt(sum(x*x for x in b))
+    return dot / (mag_a * mag_b) if mag_a > 0 and mag_b > 0 else 0
+
+def clip_similarity_matrix(image_embeddings, text_embeddings):
+    """Build an NxN similarity matrix.
+    
+    matrix[i][j] = cosine_similarity(image_embeddings[i], text_embeddings[j])
+    
+    Returns: NxN list of lists
+    """
+    # YOUR CODE HERE
+    pass
+
+def clip_match(image_embeddings, text_embeddings, image_labels, text_labels):
+    """For each image, find the text with highest similarity.
+    
+    Returns: list of (image_label, best_text_label, score) tuples
+    """
+    # YOUR CODE HERE
+    pass
+
+# Simulate CLIP embeddings (in reality these would come from trained encoders)
+# Similar concepts have similar vectors
+image_embs = [
+    [0.9, 0.1, 0.0, 0.2],  # dog photo
+    [0.1, 0.8, 0.3, 0.1],  # ocean photo
+    [0.0, 0.2, 0.9, 0.1],  # guitar photo
+    [0.3, 0.1, 0.1, 0.9],  # pizza photo
+]
+text_embs = [
+    [0.85, 0.15, 0.05, 0.25],  # "a golden retriever"
+    [0.15, 0.75, 0.35, 0.15],  # "waves on a beach"
+    [0.05, 0.25, 0.85, 0.15],  # "acoustic instrument"
+    [0.25, 0.15, 0.15, 0.85],  # "pepperoni slice"
+]
+img_labels = ["🐕 dog", "🌊 ocean", "🎸 guitar", "🍕 pizza"]
+txt_labels = ["retriever", "beach", "instrument", "pepperoni"]
+
+# Build similarity matrix
+matrix = clip_similarity_matrix(image_embs, text_embs)
+print("Similarity Matrix:")
+print(f"{'':>12}", end="")
+for t in txt_labels:
+    print(f"{t:>12}", end="")
+print()
+for i, row in enumerate(matrix):
+    print(f"{img_labels[i]:>12}", end="")
+    for val in row:
+        print(f"{val:>12.3f}", end="")
+    print()
+
+# Diagonal should be highest (matching pairs)
+for i in range(4):
+    for j in range(4):
+        if i == j: continue
+        assert matrix[i][i] > matrix[i][j], \
+            f"Matching pair ({i},{i}) should score higher than non-matching ({i},{j})"
+
+# Match images to text
+matches = clip_match(image_embs, text_embs, img_labels, txt_labels)
+print("\nMatches:")
+for img, txt, score in matches:
+    print(f"  {img} → {txt} (score: {score:.3f})")
+
+assert matches[0][1] == "retriever", f"Dog should match retriever, got {matches[0][1]}"
+assert matches[3][1] == "pepperoni", f"Pizza should match pepperoni, got {matches[3][1]}"
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(4)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(4)">↺ Reset</button>
+            </div>
+            <div class="output" id="output4">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 5: Contrastive Loss -->
+        <div class="exercise" id="ex5">
+            <span class="exercise-num">5</span><h3>Contrastive Loss (InfoNCE)</h3>
+            <p>The training signal for CLIP: for each image, softmax over similarities with all captions. The correct caption should get probability ≈ 1.0. You know softmax from Module 01. This is just softmax applied to similarity scores.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_5.py</span></div>
+                <textarea class="code" id="code5">import math
+
+def softmax(logits):
+    """Softmax — you did this in Module 01!
+    Turns a list of numbers into probabilities that sum to 1."""
+    max_l = max(logits)
+    exps = [math.exp(l - max_l) for l in logits]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+def cosine_sim(a, b):
+    dot = sum(x*y for x,y in zip(a,b))
+    ma = math.sqrt(sum(x*x for x in a))
+    mb = math.sqrt(sum(x*x for x in b))
+    return dot/(ma*mb) if ma>0 and mb>0 else 0
+
+def infonce_loss(image_embs, text_embs, temperature=0.07):
+    """Compute InfoNCE contrastive loss.
+    
+    For each image i:
+      1. Compute similarity with ALL text embeddings: sim_j = cosine_sim(img_i, txt_j)
+      2. Scale by temperature: sim_j / temperature
+      3. Apply softmax to get probabilities
+      4. The loss for image i = -log(probability of the CORRECT text)
+         (correct text is text[i] — matching index)
+    
+    Return average loss across all images.
+    
+    Low loss = model correctly matches images to their captions.
+    """
+    # YOUR CODE HERE
+    pass
+
+# Good embeddings: matching pairs are similar
+good_img = [
+    [0.9, 0.1, 0.0],
+    [0.1, 0.9, 0.0],
+    [0.0, 0.1, 0.9],
+]
+good_txt = [
+    [0.85, 0.15, 0.05],
+    [0.15, 0.85, 0.05],
+    [0.05, 0.15, 0.85],
+]
+
+# Bad embeddings: everything is similar (random)
+bad_img = [
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+]
+bad_txt = [
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+]
+
+good_loss = infonce_loss(good_img, good_txt)
+bad_loss = infonce_loss(bad_img, bad_txt)
+
+print(f"Good embeddings loss: {good_loss:.4f}")
+print(f"Bad embeddings loss:  {bad_loss:.4f}")
+print(f"\nGood < Bad? {good_loss < bad_loss}")
+
+assert good_loss < bad_loss, "Good embeddings should have lower loss"
+assert good_loss < 1.0, f"Good loss should be low, got {good_loss}"
+
+# Show the probabilities for a good example
+sims = [cosine_sim(good_img[0], t) for t in good_txt]
+probs = softmax([s/0.07 for s in sims])
+print(f"\nImage 0 similarities: {[f'{s:.3f}' for s in sims]}")
+print(f"After softmax:        {[f'{p:.3f}' for p in probs]}")
+print(f"Correct text (idx 0) gets probability: {probs[0]:.3f}")
+
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(5)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(5)">↺ Reset</button>
+            </div>
+            <div class="output" id="output5">Output will appear here...</div>
+        </div>
+
+        <!-- Exercise 6: Mini ViT Pipeline -->
+        <div class="exercise" id="ex6">
+            <span class="exercise-num">6</span><h3>Mini ViT Pipeline: Image → Patches → Embeddings → Attention</h3>
+            <p>Put it all together: slice an image into patches, project to embeddings, add positions, run simplified self-attention. This is the full Vision Transformer pipeline.</p>
+            <div class="code-editor">
+                <div class="code-header"><span class="lang">Python</span><span>exercise_6.py</span></div>
+                <textarea class="code" id="code6">import math, random
+random.seed(42)
+
+def make_patches(pixels, img_size, patch_size, channels):
+    n = img_size // patch_size
+    patches = []
+    for pr in range(n):
+        for pc in range(n):
+            patch = []
+            for r in range(patch_size):
+                for c in range(patch_size):
+                    row = pr * patch_size + r
+                    col = pc * patch_size + c
+                    idx = (row * img_size + col) * channels
+                    for ch in range(channels):
+                        patch.append(pixels[idx + ch])
+            patches.append(patch)
+    return patches
+
+def dot(a, b):
+    return sum(x*y for x,y in zip(a,b))
+
+def magnitude(v):
+    return math.sqrt(sum(x*x for x in v))
+
+def softmax(vals):
+    mx = max(vals)
+    exps = [math.exp(v - mx) for v in vals]
+    s = sum(exps)
+    return [e/s for e in exps]
+
+class MiniViT:
+    """A simplified Vision Transformer pipeline.
+    
+    You need to implement:
+    - __init__: set up weight matrices
+    - patch_embed: patches → embeddings via linear projection + position
+    - self_attention: simplified single-head attention over patch embeddings
+    - forward: full pipeline from pixels to output
+    """
+    
+    def __init__(self, img_size, patch_size, channels, embed_dim):
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.channels = channels
+        self.embed_dim = embed_dim
+        self.patch_dim = patch_size * patch_size * channels
+        self.num_patches = (img_size // patch_size) ** 2
+        
+        # Initialize weights (random, for demonstration)
+        # Projection matrix: [embed_dim x patch_dim]
+        self.W_proj = [[random.gauss(0, 0.02) for _ in range(self.patch_dim)]
+                        for _ in range(embed_dim)]
+        # Position embeddings: [num_patches x embed_dim]
+        self.pos_emb = [[random.gauss(0, 0.02) for _ in range(embed_dim)]
+                         for _ in range(self.num_patches)]
+        # Q, K, V weight matrices: [embed_dim x embed_dim]
+        self.W_q = [[random.gauss(0, 0.02) for _ in range(embed_dim)] for _ in range(embed_dim)]
+        self.W_k = [[random.gauss(0, 0.02) for _ in range(embed_dim)] for _ in range(embed_dim)]
+        self.W_v = [[random.gauss(0, 0.02) for _ in range(embed_dim)] for _ in range(embed_dim)]
+    
+    def mat_vec(self, mat, vec):
+        return [dot(row, vec) for row in mat]
+    
+    def patch_embed(self, patches):
+        """Convert patches to embeddings:
+        1. Multiply each patch by W_proj to get an embedding
+        2. Add the position embedding for that patch index
+        Return: list of embeddings
+        """
+        # YOUR CODE HERE
+        pass
+    
+    def self_attention(self, embeddings):
+        """Simplified single-head self-attention:
+        1. Compute Q, K, V for each embedding using W_q, W_k, W_v
+        2. For each query i, compute attention scores with all keys
+           score = dot(Q_i, K_j) / sqrt(embed_dim)
+        3. Softmax the scores
+        4. Output_i = weighted sum of V vectors using attention weights
+        Return: list of output embeddings
+        """
+        # YOUR CODE HERE
+        pass
+    
+    def forward(self, pixels):
+        """Full pipeline:
+        1. Make patches from pixels
+        2. Embed patches (projection + position)
+        3. Run self-attention
+        4. Return output embeddings
+        """
+        # YOUR CODE HERE
+        pass
+
+# Test with a small "image"
+img_size = 8
+patch_size = 4
+channels = 1
+embed_dim = 6
+
+random.seed(42)
+vit = MiniViT(img_size, patch_size, channels, embed_dim)
+
+# Create a simple test image (8x8, 1 channel)
+pixels = [random.random() for _ in range(img_size * img_size * channels)]
+
+output = vit.forward(pixels)
+num_patches = (img_size // patch_size) ** 2
+
+print(f"Image: {img_size}×{img_size}×{channels}")
+print(f"Patches: {num_patches} ({img_size//patch_size}×{img_size//patch_size})")
+print(f"Embed dim: {embed_dim}")
+print(f"Output: {len(output)} embeddings × {len(output[0])} dims")
+
+assert len(output) == num_patches, f"Expected {num_patches} outputs, got {len(output)}"
+assert len(output[0]) == embed_dim, f"Expected dim {embed_dim}, got {len(output[0])}"
+
+# Verify outputs are different (attention mixed information)
+assert output[0] != output[1], "Outputs should differ after attention"
+
+# Verify values are finite
+for emb in output:
+    for v in emb:
+        assert math.isfinite(v), f"Got non-finite value: {v}"
+
+print(f"\nPatch 0 output: [{', '.join(f'{v:.4f}' for v in output[0])}]")
+print(f"Patch 1 output: [{', '.join(f'{v:.4f}' for v in output[1])}]")
+print("\n✅ Full ViT pipeline working: pixels → patches → embeddings → attention → output")
+print("PASS")</textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-run" onclick="runCode(6)">▶ Run</button>
+                <button class="btn btn-reset" onclick="resetCode(6)">↺ Reset</button>
+            </div>
+            <div class="output" id="output6">Output will appear here...</div>
+        </div>
+    </div>
+
+    <!-- ============ THE PAYOFF ============ -->
+    <div class="phase phase-payoff">
+        <span class="phase-tag tag-payoff">🏆 The Payoff</span>
+        <h2>You Just Gave the Transformer Eyes</h2>
+        <div class="diagram">
+            <span class="orange">Image (224×224)</span> <span class="arrow">→</span> <span class="gold">Slice into 196 patches</span> <span class="arrow">→</span> <span class="hl">Project to embeddings</span><br>
+            <span class="arrow">→</span> <span class="green">Add positions</span> <span class="arrow">→</span> <span class="gold">Self-attention</span> <span class="arrow">→</span> <span class="hl">Visual understanding</span><br><br>
+            <span class="arrow">An image is just a sentence made of patches.</span><br>
+            <span class="arrow">Same transformer. Same attention. Same architecture.</span>
+        </div>
+        <p>This is how GPT-4V, Claude, and Gemini understand images. They slice photos into patches, project them into the same embedding space as words, and let attention do its thing. CLIP connects images and text in a shared space, enabling search, classification, and image generation guidance.</p>
+        <p><strong>The big insight:</strong> We didn't need a completely new architecture for vision. We just needed to translate images into the language transformers already speak — sequences of embeddings.</p>
+    </div>
+
+    <div class="nav-bottom">
+        <a href="../build-06-remember/" class="btn btn-nav" style="background:rgba(255,255,255,0.08);color:#ccc">← Let It Remember</a>
+        <a href="../build-08-scale/" class="btn btn-nav">Let It Scale →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<script>
+let pyodide = null;
+const TOTAL_EX = 6;
+const progress = new Set(JSON.parse(localStorage.getItem('build07-progress') || '[]'));
+const originalCode = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+    for (let i = 1; i <= TOTAL_EX; i++) originalCode[i] = document.getElementById('code' + i).value;
+    updateProgress();
+    drawOriginalImage();
+});
+
+function drawOriginalImage() {
+    const canvas = document.getElementById('originalCanvas');
+    const ctx = canvas.getContext('2d');
+    // Draw a simple colorful pattern
+    for (let y = 0; y < 196; y++) {
+        for (let x = 0; x < 196; x++) {
+            const r = Math.floor((x / 196) * 255);
+            const g = Math.floor((y / 196) * 255);
+            const b = Math.floor(((x + y) / 392) * 255);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+    }
+}
+
+function animatePatches() {
+    const grid = document.getElementById('patchGrid');
+    grid.innerHTML = '';
+    const canvas = document.getElementById('originalCanvas');
+    const ctx = canvas.getContext('2d');
+    const patchesPerRow = 14;
+    const patchPx = 14; // 196/14
+    
+    for (let pr = 0; pr < patchesPerRow; pr++) {
+        for (let pc = 0; pc < patchesPerRow; pc++) {
+            const imgData = ctx.getImageData(pc * patchPx, pr * patchPx, patchPx, patchPx);
+            let r = 0, g = 0, b = 0;
+            for (let i = 0; i < imgData.data.length; i += 4) {
+                r += imgData.data[i]; g += imgData.data[i+1]; b += imgData.data[i+2];
+            }
+            const n = patchPx * patchPx;
+            r = Math.floor(r/n); g = Math.floor(g/n); b = Math.floor(b/n);
+            
+            const cell = document.createElement('div');
+            cell.style.width = '28px';
+            cell.style.height = '28px';
+            cell.style.borderRadius = '3px';
+            cell.style.background = `rgb(${r},${g},${b})`;
+            cell.style.opacity = '0';
+            cell.style.transform = 'scale(0.5)';
+            cell.style.transition = 'all 0.3s ease';
+            grid.appendChild(cell);
+            
+            setTimeout(() => {
+                cell.style.opacity = '1';
+                cell.style.transform = 'scale(1)';
+            }, (pr * patchesPerRow + pc) * 15);
+        }
+    }
+}
+
+function animateCLIP() {
+    const space = document.getElementById('clipSpace');
+    space.innerHTML = '';
+    
+    const items = [
+        {label: '🐕', type: 'img', pair: 0, x: 50, y: 30, tx: 180, ty: 80},
+        {label: '"dog"', type: 'txt', pair: 0, x: 350, y: 230, tx: 200, ty: 100},
+        {label: '🌊', type: 'img', pair: 1, x: 400, y: 40, tx: 350, ty: 180},
+        {label: '"ocean"', type: 'txt', pair: 1, x: 80, y: 200, tx: 330, ty: 200},
+        {label: '🎸', type: 'img', pair: 2, x: 120, y: 250, tx: 100, ty: 160},
+        {label: '"guitar"', type: 'txt', pair: 2, x: 380, y: 130, tx: 120, ty: 180},
+        {label: '🍕', type: 'img', pair: 3, x: 250, y: 60, tx: 300, ty: 50},
+        {label: '"pizza"', type: 'txt', pair: 3, x: 200, y: 260, tx: 280, ty: 70},
+    ];
+    
+    const colors = ['#ff5a3c','#3c82ff','#32cd64','#ffc832'];
+    
+    items.forEach(item => {
+        const dot = document.createElement('div');
+        dot.className = 'clip-dot';
+        dot.style.left = item.x + 'px';
+        dot.style.top = item.y + 'px';
+        dot.style.background = colors[item.pair] + '33';
+        dot.style.border = `2px solid ${colors[item.pair]}`;
+        dot.style.color = item.type === 'txt' ? colors[item.pair] : '#fff';
+        dot.style.fontSize = item.type === 'img' ? '1.5em' : '0.6em';
+        dot.textContent = item.label;
+        space.appendChild(dot);
+        
+        setTimeout(() => {
+            dot.style.left = item.tx + 'px';
+            dot.style.top = item.ty + 'px';
+        }, 500);
+    });
+}
+
+async function loadPyodideEnv() {
+    try {
+        pyodide = await loadPyodide();
+        document.getElementById('pyodide-status').textContent = '✅ Python environment ready';
+        document.getElementById('pyodide-status').className = 'pyodide-status ready';
+    } catch (e) {
+        document.getElementById('pyodide-status').textContent = '❌ Failed to load Python.';
+        document.getElementById('pyodide-status').className = 'pyodide-status error';
+    }
+}
+loadPyodideEnv();
+
+async function runCode(n) {
+    if (!pyodide) { alert('Python is still loading...'); return; }
+    const code = document.getElementById('code' + n).value;
+    const out = document.getElementById('output' + n);
+    out.className = 'output'; out.textContent = 'Running...';
+    try {
+        pyodide.runPython(`import sys, io; sys.stdout = io.StringIO(); sys.stderr = io.StringIO()`);
+        await pyodide.runPythonAsync(code);
+        const stdout = pyodide.runPython('sys.stdout.getvalue()');
+        const stderr = pyodide.runPython('sys.stderr.getvalue()');
+        const output = stdout + (stderr ? '\n' + stderr : '');
+        out.textContent = output || '(no output)';
+        if (output.includes('PASS')) {
+            out.className = 'output success';
+            progress.add(n);
+            localStorage.setItem('build07-progress', JSON.stringify([...progress]));
+            updateProgress();
+        }
+    } catch (e) { out.textContent = e.message; out.className = 'output error'; }
+}
+
+function resetCode(n) {
+    document.getElementById('code' + n).value = originalCode[n];
+    document.getElementById('output' + n).textContent = 'Output will appear here...';
+    document.getElementById('output' + n).className = 'output';
+}
+
+function updateProgress() {
+    const done = progress.size;
+    document.getElementById('progress-text').textContent = `${done} / ${TOTAL_EX} exercises`;
+    document.getElementById('progress-bar').style.width = `${(done / TOTAL_EX) * 100}%`;
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+}
+</script>
+</body>
+</html>
