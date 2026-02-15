@@ -295,12 +295,12 @@ weather-cli current --location "London" --units metric
       <div class="msg-sim">
         <div class="sim-header">
           <span class="tier-badge tier-owner">owner</span>
-          <span class="sim-user">dab</span>
+          <span class="sim-user">alice</span>
         </div>
         <div class="sim-msg">Hey, can you run <code>rm -rf /tmp/data</code> for me?</div>
         <div class="sim-result allowed"><span class="sim-icon">✅</span> ALLOWED — exec tool permitted for owner tier</div>
         <div class="resolution-chain">
-          Resolution: sender <code>dab</code> → matched in trust config → tier: <code>owner</code> → tool <code>exec</code> → policy: <code>allow</code>
+          Resolution: sender <code>alice</code> → matched in trust config → tier: <code>owner</code> → tool <code>exec</code> → policy: <code>allow</code>
         </div>
       </div>
     </div>
@@ -510,7 +510,7 @@ gh run view &lt;run-id&gt;
       <div class="ex-prompt">
         <strong>Scenario:</strong> Given this trust config:
         <pre style="margin:12px 0;background:var(--bg);padding:12px;border-radius:6px;font-size:12px">{
-  "owner": ["dab"],
+  "owner": ["alice"],
   "collaborator": ["alice", "bob"],
   "guest": ["#general"],
   "channels": {
