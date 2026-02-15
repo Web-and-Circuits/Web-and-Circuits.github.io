@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own ___ — The Complete AI Series</title>
+<meta name="description" content="14 interactive courses. Zero to AI founder. Each one: one page, one scroll, you end with a working thing.">
+<meta name="theme-color" content="#fafafa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Build Your Own">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fafafa;color:#1a1a2e;font-size:18px;line-height:1.7}
+a{color:#2563eb;text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:720px;margin:0 auto;padding:40px 20px}
+
+.hero{text-align:center;margin-bottom:60px}
+.hero h1{font-size:2.8rem;font-weight:700;line-height:1.2;margin-bottom:16px}
+.hero h1 span{background:linear-gradient(135deg,#2563eb,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:1.15rem;color:#4a5568;max-width:560px;margin:0 auto 24px}
+.hero .stats{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.hero .stat{text-align:center}
+.hero .stat .num{font-size:2rem;font-weight:700;color:#2563eb}
+.hero .stat .label{font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+
+.section-label{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;font-weight:600;margin:48px 0 16px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+
+.course-card{display:block;background:white;border-radius:12px;padding:24px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e2e8f0;transition:all .2s;text-decoration:none;color:inherit}
+.course-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);border-color:#2563eb;transform:translateY(-1px);text-decoration:none}
+.course-card .top{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.course-card .num{width:36px;height:36px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.course-card .title{font-size:1.1rem;font-weight:600}
+.course-card .metaphor{font-size:13px;color:#7c3aed;font-weight:600;margin-left:auto;flex-shrink:0}
+.course-card .desc{color:#4a5568;font-size:15px;margin-left:50px}
+.course-card .hook{color:#64748b;font-size:13px;font-style:italic;margin-left:50px;margin-top:4px}
+
+.bonus-card .num{background:#7c3aed}
+
+.ref-card{display:block;background:white;border-radius:12px;padding:20px 24px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e2e8f0;transition:all .2s;text-decoration:none;color:inherit}
+.ref-card:hover{border-color:#2563eb;text-decoration:none}
+.ref-card .title{font-weight:600;font-size:1rem}
+.ref-card .desc{color:#4a5568;font-size:14px}
+
+.how-it-works{background:white;border-radius:12px;padding:28px;margin:48px 0;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.how-it-works h2{font-size:1.2rem;margin-bottom:16px}
+.how-it-works ul{list-style:none;padding:0}
+.how-it-works li{padding:8px 0;padding-left:28px;position:relative;font-size:15px;color:#4a5568}
+.how-it-works li::before{content:"✓";position:absolute;left:0;color:#16a34a;font-weight:700}
+
+.start-btn{display:inline-block;padding:16px 32px;background:#2563eb;color:white;border-radius:10px;font-size:1.1rem;font-weight:600;text-decoration:none;margin-top:24px;transition:background .2s}
+.start-btn:hover{background:#1d4ed8;text-decoration:none}
+
+footer{text-align:center;padding:40px 20px;color:#94a3b8;font-size:14px;border-top:1px solid #e2e8f0;margin-top:48px}
+
+@media(max-width:480px){
+  .hero h1{font-size:2rem}
+  .hero .stats{gap:16px}
+  .course-card .desc,.course-card .hook{margin-left:0;margin-top:8px}
+  .course-card .metaphor{display:none}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>Build Your Own <span>___</span></h1>
+  <p>14 interactive courses. Each one: one page, one scroll, you end with a working thing. Zero assumed knowledge. Total understanding.</p>
+  <div class="stats">
+    <div class="stat"><div class="num">14</div><div class="label">Courses</div></div>
+    <div class="stat"><div class="num">~130</div><div class="label">Concepts</div></div>
+    <div class="stat"><div class="num">70+</div><div class="label">Exercises</div></div>
+    <div class="stat"><div class="num">$0</div><div class="label">Cost</div></div>
+  </div>
+</div>
+
+<div class="how-it-works">
+  <h2>How every course works</h2>
+  <ul>
+    <li>You start with nothing. No installs, no sign-ups, no prerequisites.</li>
+    <li>Each chapter introduces one concept, then you <strong>use it immediately</strong>.</li>
+    <li>By the end, you've built a working thing — not a toy, a real system.</li>
+    <li>Concepts from earlier courses resurface later. Repetition is intentional.</li>
+    <li>Each course stands alone, but the recommended order below builds on itself.</li>
+  </ul>
+</div>
+
+<div class="section-label">🧠 The Brain — How AI Thinks</div>
+
+<a class="course-card" href="../build-llm/">
+  <div class="top">
+    <div class="num">1</div>
+    <div class="title">Build Your Own LLM</div>
+    <div class="metaphor">the brain</div>
+  </div>
+  <div class="desc">Tokenization → attention → transformers → scaling laws. How every language model works.</div>
+  <div class="hook">"How does ChatGPT actually work?"</div>
+</a>
+
+<a class="course-card" href="../build-rag/">
+  <div class="top">
+    <div class="num">2</div>
+    <div class="title">Build Your Own RAG System</div>
+    <div class="metaphor">the knowledge</div>
+  </div>
+  <div class="desc">Chunking → embeddings → vector search → grounded generation. Chat with any document.</div>
+  <div class="hook">"Chat with your PDF in 30 minutes"</div>
+</a>
+
+<a class="course-card" href="../build-finetune/">
+  <div class="top">
+    <div class="num">3</div>
+    <div class="title">Build Your Own Fine-Tune</div>
+    <div class="metaphor">the personality</div>
+  </div>
+  <div class="desc">Training data → loss curves → LoRA → evaluation. Teach AI your style permanently.</div>
+  <div class="hook">"Make AI learn YOUR style"</div>
+</a>
+
+<div class="section-label">🤲 The Body — How AI Acts</div>
+
+<a class="course-card" href="../build-tools/">
+  <div class="top">
+    <div class="num">4</div>
+    <div class="title">Build Your Own Tool System</div>
+    <div class="metaphor">the hands</div>
+  </div>
+  <div class="desc">Function calling → ReAct loop → skills → MCP protocol. Give AI the ability to do things.</div>
+  <div class="hook">"Everyone's talking about MCP. Build one."</div>
+</a>
+
+<a class="course-card" href="../build-vision/">
+  <div class="top">
+    <div class="num">5</div>
+    <div class="title">Build Your Own Vision Model</div>
+    <div class="metaphor">the eyes</div>
+  </div>
+  <div class="desc">Patches → ViT → CLIP → vision-language models. Teach AI to see photos and screens.</div>
+  <div class="hook">"Teach AI to see your photos"</div>
+</a>
+
+<a class="course-card" href="../build-voice/">
+  <div class="top">
+    <div class="num">6</div>
+    <div class="title">Build Your Own Voice Assistant</div>
+    <div class="metaphor">the ears & mouth</div>
+  </div>
+  <div class="desc">Waveforms → Whisper → LLM → TTS. Build something you talk to.</div>
+  <div class="hook">"Talk to your creation"</div>
+</a>
+
+<a class="course-card" href="../build-agent/">
+  <div class="top">
+    <div class="num">7</div>
+    <div class="title">Build Your Own AI Agent</div>
+    <div class="metaphor">the body</div>
+  </div>
+  <div class="desc">API → memory → tools → security. The capstone: assemble every organ into one creature.</div>
+  <div class="hook">"Build your own ChatGPT"</div>
+</a>
+
+<div class="section-label">🛡️ The Discipline — How AI Stays Good</div>
+
+<a class="course-card" href="../build-eval/">
+  <div class="top">
+    <div class="num">8</div>
+    <div class="title">Build Your Own Eval System</div>
+    <div class="metaphor">the mirror</div>
+  </div>
+  <div class="desc">Metrics → test sets → LLM-as-judge → A/B testing. Measure whether it actually works.</div>
+  <div class="hook">"Is your AI actually good?"</div>
+</a>
+
+<a class="course-card" href="../build-guardrails/">
+  <div class="top">
+    <div class="num">9</div>
+    <div class="title">Build Your Own Guardrails</div>
+    <div class="metaphor">the immune system</div>
+  </div>
+  <div class="desc">Prompt injection → input/output validation → hallucination detection → defense in depth.</div>
+  <div class="hook">"Stop AI from going rogue"</div>
+</a>
+
+<a class="course-card" href="../build-data/">
+  <div class="top">
+    <div class="num">10</div>
+    <div class="title">Build Your Own Data Pipeline</div>
+    <div class="metaphor">the food</div>
+  </div>
+  <div class="desc">Extraction → cleaning → chunking → labeling → synthetic data. Your AI is only as good as its data.</div>
+  <div class="hook">"Garbage in, garbage out — fixed"</div>
+</a>
+
+<div class="section-label">🚀 The Mission — How AI Becomes a Business</div>
+
+<a class="course-card" href="../build-founder/">
+  <div class="top">
+    <div class="num">11</div>
+    <div class="title">Build Your Own AI Company</div>
+    <div class="metaphor">the soul</div>
+  </div>
+  <div class="desc">Landscape → business models → failure patterns → the playbook. PG, Ng, and Altman's advice.</div>
+  <div class="hook">"The business of AI, from people who've done it"</div>
+</a>
+
+<a class="course-card" href="../build-chief-of-staff/">
+  <div class="top">
+    <div class="num">12</div>
+    <div class="title">Build Your Own AI Chief of Staff</div>
+    <div class="metaphor">the amplifier</div>
+  </div>
+  <div class="desc">Inbox triage → morning briefs → integrations → trust boundaries. Your AI productivity system.</div>
+  <div class="hook">"An AI that manages your day while you sleep"</div>
+</a>
+
+<div class="section-label">🔬 Bonus — Frontier Research</div>
+
+<a class="course-card bonus-card" href="../build-spatial/">
+  <div class="top">
+    <div class="num">B1</div>
+    <div class="title">Build Your Own 3D World</div>
+    <div class="metaphor">spatial AI</div>
+  </div>
+  <div class="desc">Depth estimation → gaussian splats → SAM → geo-localization. Spatial AI for sports broadcasting.</div>
+  <div class="hook">"How AI reconstructs the world from video"</div>
+</a>
+
+<div class="section-label">📋 Reference</div>
+
+<a class="ref-card" href="../model-cheatsheet/">
+  <div class="title">📋 AI Model Cheat Sheet</div>
+  <div class="desc">Every major model compared. Filterable, sortable, with cost calculator. Updated February 2026.</div>
+</a>
+
+<a class="ref-card" href="../founders-briefing/">
+  <div class="title">🎤 Founder's Briefing</div>
+  <div class="desc">10 AI concepts explained for cocktail parties. The 30-second version of everything.</div>
+</a>
+
+<div style="text-align:center;margin-top:48px;">
+  <a class="start-btn" href="../build-llm/">Start with Course 1 →</a>
+  <p style="color:#64748b;font-size:14px;margin-top:12px;">No sign-up. No install. Just start.</p>
+</div>
+
+</div>
+
+<footer>
+  Built by <a href="https://webandcircuits.com">Web & Circuits</a><br>
+  14 courses · 130+ concepts · all free · all interactive
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own AI Company — The Complete Playbook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .industry-rings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 40px 0;
+            gap: 20px;
+        }
+
+        .ring {
+            padding: 20px;
+            border-radius: 50px;
+            text-align: center;
+            border: 3px solid;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+
+        .ring:hover {
+            transform: scale(1.05);
+        }
+
+        .ring.foundation {
+            background: #fee2e2;
+            border-color: #dc2626;
+            width: 90%;
+        }
+
+        .ring.infrastructure {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            width: 80%;
+        }
+
+        .ring.application {
+            background: #d1fae5;
+            border-color: #16a34a;
+            width: 70%;
+            font-size: 1.2rem;
+        }
+
+        .quiz-container {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .quiz-question {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .quiz-option {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .quiz-option:hover {
+            background: #cbd5e1;
+        }
+
+        .quiz-option.selected {
+            background: #2563eb;
+            color: white;
+        }
+
+        .quiz-option.correct {
+            background: #16a34a;
+            color: white;
+            border-color: #15803d;
+        }
+
+        .quiz-option.incorrect {
+            background: #dc2626;
+            color: white;
+            border-color: #b91c1c;
+        }
+
+        .quiz-score {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .business-models {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .model-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .model-card:hover {
+            transform: translateY(-2px);
+            border-color: #2563eb;
+        }
+
+        .model-number {
+            background: #2563eb;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .death-patterns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .death-pattern {
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .death-pattern .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .dos-donts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .dos {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .donts {
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .dos h4, .donts h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+
+        .dos ul, .donts ul {
+            list-style: none;
+        }
+
+        .dos li, .donts li {
+            margin: 12px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .dos li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        .donts li:before {
+            content: "❌";
+            position: absolute;
+            left: 0;
+        }
+
+        .scenario {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #e2e8f0;
+        }
+
+        .scenario.active {
+            border-color: #2563eb;
+        }
+
+        .scenario-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .scenario-option {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .scenario-option:hover {
+            background: #e2e8f0;
+        }
+
+        .scenario-option.selected {
+            background: #2563eb;
+            color: white;
+        }
+
+        .pitch-builder {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .form-group {
+            margin: 20px 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.success {
+            background: #16a34a;
+        }
+
+        .btn.success:hover {
+            background: #15803d;
+        }
+
+        .pitch-output {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #e2e8f0;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', monospace;
+            line-height: 1.6;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .tool-category {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .tool-category h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .tool-category ul {
+            list-style: none;
+        }
+
+        .tool-category li {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .quote {
+            background: #f8fafc;
+            border-left: 4px solid #2563eb;
+            padding: 20px 25px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .quote-author {
+            font-weight: 600;
+            margin-top: 10px;
+            font-style: normal;
+            color: #4a5568;
+        }
+
+        .deeper-section {
+            background: #eff6ff;
+            border: 2px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .deeper-section h4 {
+            color: #2563eb;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .deeper-section ul {
+            list-style: none;
+        }
+
+        .deeper-section li {
+            margin: 8px 0;
+        }
+
+        .deeper-section a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .deeper-section a:hover {
+            text-decoration: underline;
+        }
+
+        .progress-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .cta-section h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .celebration {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(45deg, #16a34a, #15803d);
+            color: white;
+            border-radius: 15px;
+            margin: 40px 0;
+        }
+
+        .celebration h3 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .dos-donts {
+                grid-template-columns: 1fr;
+            }
+
+            .quiz-options {
+                grid-template-columns: 1fr;
+            }
+
+            .scenario-options {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .progress-indicator {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin: 20px auto;
+                width: fit-content;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 11 of 14</span>
+    </div>
+    <div class="progress-indicator">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 / 5 chapters</div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own AI Company</h1>
+            <p>You understand AI. Now build a business with it.</p>
+            <p>The landscape, the playbook, the mistakes everyone makes, and the ones who got it right.</p>
+            <p><strong>For absolute beginners — no business experience required.</strong></p>
+        </div>
+
+        <!-- Chapter 1: The Landscape -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Landscape</h2>
+            <p><strong>Where does the money flow? Who's winning? And most importantly — where do YOU play?</strong></p>
+            
+            <div class="card">
+                <h3>The AI Industry in Concentric Rings</h3>
+                <div class="industry-rings">
+                    <div class="ring foundation">
+                        <strong>Foundation Layer</strong><br>
+                        OpenAI, Anthropic, Google, Meta<br>
+                        <em>They build the models</em>
+                    </div>
+                    <div class="ring infrastructure">
+                        <strong>Infrastructure Layer</strong><br>
+                        NVIDIA, AWS, Vector DBs, Frameworks<br>
+                        <em>The plumbing</em>
+                    </div>
+                    <div class="ring application">
+                        <strong>Application Layer</strong><br>
+                        Vertical SaaS, Copilots, Agents<br>
+                        <em>🎯 THIS IS WHERE YOU PLAY</em>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Wrapper Problem</h3>
+                <p><strong>Most "AI startups" are thin wrappers over GPT.</strong> They die when OpenAI adds their feature. Here's what happens:</p>
+                
+                <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">📈 The Cycle of Death:</div>
+                    <div>1. Build feature using GPT API</div>
+                    <div>2. Get users, raise money</div>
+                    <div>3. OpenAI ships your feature natively</div>
+                    <div>4. Your customers leave for the "official" version</div>
+                    <div>5. 💀 Game over</div>
+                </div>
+
+                <p><strong>The antidote? Build something defensible.</strong> Own data, workflows, or distribution that OpenAI can't replicate.</p>
+            </div>
+
+            <div class="quiz-container">
+                <h3>Interactive: AI Company or Feature?</h3>
+                <p>Look at these real AI products. Can you guess which survived platform updates and which got killed?</p>
+                <div id="quiz-1"></div>
+                <button class="btn" onclick="startQuiz()" id="start-quiz-btn">Start Quiz</button>
+                <div id="quiz-score-1" class="quiz-score" style="display: none;"></div>
+                <button class="btn success" onclick="completeChapter(1)" id="complete-1-btn" style="display: none;">Chapter 1 Complete ✓</button>
+            </div>
+
+            <div class="quote">
+                "The way to create something great is to create something people want" — <strong>solve real pain, not demo-day tricks.</strong>
+                <div class="quote-author">— Paul Graham</div>
+            </div>
+
+            <div class="quote">
+                "AI companies that win will look like regular companies that are great at AI, not AI companies that bolt on a business model."
+                <div class="quote-author">— Sam Altman</div>
+            </div>
+
+            <div class="deeper-section">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li>📄 <a href="https://www.sequoiacap.com/article/generative-ai-act-two/" target="_blank">Sequoia's "Generative AI's Act Two" essay</a></li>
+                    <li>🗺️ <a href="https://a16z.com/2023/01/19/who-owns-the-generative-ai-platform/" target="_blank">a16z AI Market Map</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 2: What's Working -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: What's Working</h2>
+            <p><strong>Five business models that actually make money.</strong> Not theory — companies doing millions in ARR.</p>
+
+            <div class="business-models">
+                <div class="model-card">
+                    <div class="model-number">1</div>
+                    <h4>Vertical AI Agents</h4>
+                    <p><strong>Own a niche deeply.</strong> Harvey (legal), Abridge (medical notes). Not "AI for everything" but "AI that replaces this specific $200/hr workflow."</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+                        <strong>Examples:</strong> Harvey, Abridge, Glean
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-number">2</div>
+                    <h4>AI-Native Workflows</h4>
+                    <p><strong>Rebuild the tool around AI.</strong> Cursor, Replit. Not "add AI to existing tool" but "reimagine what's possible."</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+                        <strong>Examples:</strong> Cursor, Replit, Notion AI
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-number">3</div>
+                    <h4>Infrastructure Picks-and-Shovels</h4>
+                    <p><strong>Sell to the gold rushers.</strong> LangChain, Pinecone, Weights & Biases. While others dig for gold, you sell the shovels.</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+                        <strong>Examples:</strong> LangChain, Pinecone, W&B
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-number">4</div>
+                    <h4>Data Moats</h4>
+                    <p><strong>Your proprietary dataset IS your moat.</strong> Scale AI, Snorkel. Models commoditize, but unique data stays valuable.</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+                        <strong>Examples:</strong> Scale AI, Snorkel, Labelbox
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-number">5</div>
+                    <h4>Enterprise Deployment</h4>
+                    <p><strong>Help big companies adopt AI safely.</strong> Consulting + tools. They want AI but don't know how. You show them.</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+                        <strong>Examples:</strong> Anthropic's Claude for Enterprise, OpenAI Enterprise
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-container">
+                <h3>Interactive: Revenue Model Builder</h3>
+                <p>Pick your target and see which business model fits best:</p>
+                
+                <div class="form-group">
+                    <label>Target Customer:</label>
+                    <select id="customer-type">
+                        <option value="">Choose...</option>
+                        <option value="lawyers">Lawyers</option>
+                        <option value="doctors">Doctors</option>
+                        <option value="developers">Developers</option>
+                        <option value="marketers">Marketers</option>
+                        <option value="sales">Sales Teams</option>
+                        <option value="hr">HR Teams</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Problem They Face:</label>
+                    <select id="problem-type">
+                        <option value="">Choose...</option>
+                        <option value="repetitive">Repetitive manual work</option>
+                        <option value="research">Research & analysis</option>
+                        <option value="writing">Content creation</option>
+                        <option value="data">Data processing</option>
+                        <option value="communication">Communication</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>AI Capability Needed:</label>
+                    <select id="ai-capability">
+                        <option value="">Choose...</option>
+                        <option value="text">Text generation</option>
+                        <option value="analysis">Document analysis</option>
+                        <option value="classification">Data classification</option>
+                        <option value="search">Semantic search</option>
+                        <option value="automation">Workflow automation</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="buildRevenueModel()">Build My Model</button>
+                <div id="revenue-model-result" style="display: none; margin-top: 20px;"></div>
+            </div>
+
+            <div class="quote">
+                "AI is the new electricity" — but also: "Don't start with the technology. Start with the business problem."
+                <div class="quote-author">— Andrew Ng</div>
+            </div>
+
+            <div class="quote">
+                "Do things that don't scale" — applies to AI: hand-hold your first 10 customers, learn what they actually need.
+                <div class="quote-author">— Paul Graham</div>
+            </div>
+
+            <button class="btn success" onclick="completeChapter(2)" id="complete-2-btn" style="display: none;">Chapter 2 Complete ✓</button>
+
+            <div class="deeper-section">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li>📄 <a href="https://a16z.com/2023/01/19/who-owns-the-generative-ai-platform/" target="_blank">a16z "Who Owns the Generative AI Platform?" essay</a></li>
+                    <li>🎧 <a href="https://www.acquired.fm/episodes/nvidia-the-gpu-company-2004-2006" target="_blank">Acquired podcast on NVIDIA's AI transformation</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 3: What's Failing -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: What's Failing</h2>
+            <p><strong>The graveyard of AI startups.</strong> Learn from their mistakes so you don't repeat them.</p>
+
+            <div class="death-patterns">
+                <div class="death-pattern">
+                    <div class="icon">🌯</div>
+                    <h4>The Wrapper Trap</h4>
+                    <p>Built on GPT, no moat. <strong>OpenAI ships the feature natively.</strong></p>
+                </div>
+                <div class="death-pattern">
+                    <div class="icon">🎪</div>
+                    <h4>Demo-Day Darling</h4>
+                    <p>Incredible demo, no real workflow. <strong>"Cool but when would I actually use this?"</strong></p>
+                </div>
+                <div class="death-pattern">
+                    <div class="icon">💸</div>
+                    <h4>Cost Death Spiral</h4>
+                    <p>Giving away AI features, burning cash on inference. <strong>No path to margins.</strong></p>
+                </div>
+                <div class="death-pattern">
+                    <div class="icon">⚖️</div>
+                    <h4>Hallucination Lawsuit</h4>
+                    <p>Shipped without guardrails. <strong>AI said something wrong, customer got burned.</strong></p>
+                </div>
+                <div class="death-pattern">
+                    <div class="icon">🔨</div>
+                    <h4>Solution Looking for Problem</h4>
+                    <p>"We have this amazing model!" "What does it do?" <strong>"...anything?"</strong></p>
+                </div>
+                <div class="death-pattern">
+                    <div class="icon">🔒</div>
+                    <h4>Data Privacy Fumble</h4>
+                    <p>Enterprise customers walked away. <strong>You trained on their data.</strong></p>
+                </div>
+            </div>
+
+            <div class="quiz-container">
+                <h3>Interactive: Startup Autopsy</h3>
+                <p>Six real AI startup stories. Can you identify which death pattern killed them?</p>
+                <div id="autopsy-quiz"></div>
+                <button class="btn" onclick="startAutopsyQuiz()" id="start-autopsy-btn">Start Autopsy</button>
+                <div id="autopsy-score" class="quiz-score" style="display: none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Real Examples (Carefully Worded)</h3>
+                <ul>
+                    <li><strong>Jasper's decline after ChatGPT launch</strong> — from $40M ARR to layoffs in 6 months</li>
+                    <li><strong>Character.AI's pivot</strong> — amazing demos, but users didn't stick around</li>
+                    <li><strong>Copy.ai's commoditization</strong> — once unique, now one of dozens</li>
+                </ul>
+                <p><strong>The pattern?</strong> They solved a problem that the foundation models eventually solved better and cheaper.</p>
+            </div>
+
+            <div class="quote">
+                "80% of AI startups will fail, same as every other category"
+                <div class="quote-author">— Vinod Khosla</div>
+            </div>
+
+            <div class="quote">
+                "The most common mistake startups make is to solve problems no one has"
+                <div class="quote-author">— Paul Graham</div>
+            </div>
+
+            <button class="btn success" onclick="completeChapter(3)" id="complete-3-btn" style="display: none;">Chapter 3 Complete ✓</button>
+
+            <div class="deeper-section">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li>📄 <a href="https://www.platformer.news/p/why-ai-chatbots-are-fading-fast" target="_blank">Why AI Chatbots Are Fading Fast</a></li>
+                    <li>🎧 <a href="https://www.youtube.com/watch?v=tjvTwP-1QNY" target="_blank">Elad Gil on AI Startup Failures</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 4: The Playbook -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: The Playbook</h2>
+            <p><strong>The dos and don'ts from people who've done it.</strong> Hard-won lessons from successful AI founders.</p>
+
+            <div class="dos-donts">
+                <div class="dos">
+                    <h4>The DOs</h4>
+                    <ul>
+                        <li><strong>Start with a workflow,</strong> not a technology ("What 4-hour task can I make take 10 minutes?")</li>
+                        <li><strong>Build evaluation before features</strong> (you can't improve what you can't measure)</li>
+                        <li><strong>Own your data pipeline</strong> (your data is your moat, not your model)</li>
+                        <li><strong>Price on value, not cost</strong> (save $500/hr of work? Charge $100, not $0.02 per token)</li>
+                        <li><strong>Ship ugly, learn fast</strong> (your first version should embarrass you)</li>
+                        <li><strong>Build for the future model</strong> (assume 10x improvement yearly)</li>
+                        <li><strong>Keep humans in the loop</strong> for high-stakes decisions</li>
+                    </ul>
+                </div>
+
+                <div class="donts">
+                    <h4>The DON'Ts</h4>
+                    <ul>
+                        <li><strong>Don't fine-tune when RAG will do</strong> (cheaper, more flexible, easier to update)</li>
+                    </ul>
+
+                    <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+                      🔗 <strong>Connection:</strong> If these terms are unfamiliar, take Build Your Own RAG (Course 2) and Build Your Own Fine-Tune (Course 3) first. The Playbook assumes you know the difference — those courses make it visceral.
+                    </div>
+
+                    <ul>
+                        <li><strong>Don't compete with foundation models</strong> (they have billion-dollar budgets)</li>
+                        <li><strong>Don't promise perfection</strong> ("AI that never makes mistakes" is a lie)</li>
+                        <li><strong>Don't ignore latency</strong> (correct answer in 30s loses to good answer in 2s)</li>
+                        <li><strong>Don't underestimate compliance</strong> (SOC2, HIPAA, GDPR add 6+ months)</li>
+                        <li><strong>Don't raise before customers</strong> (10 paying customers first, Paul Graham's advice)</li>
+                        <li><strong>Don't use AI where SQL works</strong> (simple problems need simple solutions)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="quiz-container">
+                <h3>Interactive: Founder Decision Simulator</h3>
+                <p>Scenarios will pop up. Pick the best answer and see the reasoning:</p>
+                <div id="decision-scenarios"></div>
+                <button class="btn" onclick="startDecisionSim()" id="start-decision-btn">Start Simulation</button>
+                <div id="decision-score" style="display: none; margin-top: 20px;"></div>
+            </div>
+
+            <div class="quote">
+                "The gap between a great AI demo and a great AI product is larger than most people think"
+                <div class="quote-author">— Andrew Ng</div>
+            </div>
+
+            <div class="quote">
+                "The most successful AI companies will be the ones that figure out the UX"
+                <div class="quote-author">— Sam Altman</div>
+            </div>
+
+            <div class="quote">
+                "Make something people want" — still the best startup advice in the AI era
+                <div class="quote-author">— Paul Graham</div>
+            </div>
+
+            <button class="btn success" onclick="completeChapter(4)" id="complete-4-btn" style="display: none;">Chapter 4 Complete ✓</button>
+
+            <div class="deeper-section">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li>📄 <a href="https://www.ycombinator.com/library/8h-how-to-build-an-ai-startup" target="_blank">Y Combinator: How to Build an AI Startup</a></li>
+                    <li>🎧 <a href="https://podcasts.apple.com/us/podcast/all-in-with-chamath-jason-sacks-friedberg/id1502871393" target="_blank">All-In Podcast AI episodes</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Your Edge -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: Your Edge</h2>
+            <p><strong>What small teams can do that big companies can't.</strong> Why NOW is the best time to start an AI company.</p>
+
+            <div class="card">
+                <h3>Why Small Teams Win</h3>
+                <div class="business-models">
+                    <div class="model-card">
+                        <h4>🛒 The Model is a Commodity</h4>
+                        <p>You don't need to train GPT-5. <strong>You rent it for $0.002 per query.</strong> The playing field is level.</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🚀 Distribution Beats Technology</h4>
+                        <p>The best model doesn't win. <strong>The best product does.</strong> And you can build better products faster.</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>🎯 Vertical Knowledge is the Moat</h4>
+                        <p>OpenAI doesn't know your customer's industry. <strong>You do.</strong> That's your unfair advantage.</p>
+                    </div>
+                    <div class="model-card">
+                        <h4>⚡ Speed Beats Scale</h4>
+                        <p>A 2-person team can ship in a week <strong>what a big company committees about for a quarter.</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tools-grid">
+                <div class="tool-category">
+                    <h4>Models</h4>
+                    <ul>
+                        <li>OpenAI (GPT-4, GPT-4o)</li>
+                        <li>Anthropic (Claude)</li>
+                        <li>Google (Gemini)</li>
+                        <li>Meta (LLaMA)</li>
+                        <li>Mistral (Mixtral)</li>
+                        <li>Qwen (Alibaba)</li>
+                    </ul>
+                </div>
+                <div class="tool-category">
+                    <h4>Orchestration</h4>
+                    <ul>
+                        <li>LangChain</li>
+                        <li>LlamaIndex</li>
+                        <li>Haystack</li>
+                        <li>Semantic Kernel</li>
+                    </ul>
+                </div>
+                <div class="tool-category">
+                    <h4>Vector DBs</h4>
+                    <ul>
+                        <li>Pinecone</li>
+                        <li>Weaviate</li>
+                        <li>Chroma</li>
+                        <li>pgvector</li>
+                    </ul>
+                </div>
+                <div class="tool-category">
+                    <h4>Deployment</h4>
+                    <ul>
+                        <li>Modal</li>
+                        <li>Replicate</li>
+                        <li>Together AI</li>
+                        <li>RunPod</li>
+                    </ul>
+                </div>
+                <div class="tool-category">
+                    <h4>Evaluation</h4>
+                    <ul>
+                        <li>Braintrust</li>
+                        <li>Promptfoo</li>
+                        <li>LMSYS</li>
+                        <li>LangSmith</li>
+                    </ul>
+                </div>
+                <div class="tool-category">
+                    <h4>Monitoring</h4>
+                    <ul>
+                        <li>LangSmith</li>
+                        <li>Helicone</li>
+                        <li>Portkey</li>
+                        <li>Weights & Biases</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pitch-builder">
+                <h3>🚀 Build Your AI Startup Pitch</h3>
+                <p>Fill this out and get a one-page pitch you can actually use:</p>
+
+                <div class="form-group">
+                    <label>Target Customer (be specific):</label>
+                    <input type="text" id="pitch-customer" placeholder="e.g., Immigration lawyers at mid-size firms">
+                </div>
+
+                <div class="form-group">
+                    <label>Problem (what frustrates them?):</label>
+                    <textarea id="pitch-problem" placeholder="e.g., Spend 4 hours per case manually filling out I-485 forms..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Current Solution (how do they solve it today?):</label>
+                    <input type="text" id="pitch-current" placeholder="e.g., Hire paralegals at $25/hr, still takes forever">
+                </div>
+
+                <div class="form-group">
+                    <label>Your AI-Powered Solution:</label>
+                    <textarea id="pitch-solution" placeholder="e.g., AI agent that auto-fills forms from client interviews, 10 minutes instead of 4 hours..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Why Now (what changed recently?):</label>
+                    <input type="text" id="pitch-timing" placeholder="e.g., GPT-4 can finally handle complex legal forms accurately">
+                </div>
+
+                <div class="form-group">
+                    <label>Your Unfair Advantage (why you?):</label>
+                    <input type="text" id="pitch-moat" placeholder="e.g., My co-founder is an immigration lawyer with 500+ contacts">
+                </div>
+
+                <button class="btn" onclick="generatePitch()">Generate My Pitch</button>
+                <div id="pitch-output" class="pitch-output" style="display: none;"></div>
+                <button class="btn success" onclick="downloadPitch()" id="download-pitch-btn" style="display: none;">📄 Download as Text</button>
+            </div>
+
+            <div class="celebration" id="final-celebration" style="display: none;">
+                <h3>🎉 You Built It!</h3>
+                <p>You now have the technical knowledge and business playbook to start an AI company.</p>
+                <p><strong>The people who will define the next decade of technology are not the ones building foundation models.</strong></p>
+                <p><strong>They're the ones building useful things on top of them.</strong></p>
+                <p><strong>Go build.</strong></p>
+            </div>
+
+            <div class="quote">
+                "Live in the future, then build what's missing"
+                <div class="quote-author">— Paul Graham</div>
+            </div>
+
+            <div class="quote">
+                "In the AI era, the company that can best collect and use data will win"
+                <div class="quote-author">— Andrew Ng</div>
+            </div>
+
+            <div class="quote">
+                "If you're not embarrassed by the first version of your product, you've launched too late"
+                <div class="quote-author">— Reid Hoffman</div>
+            </div>
+
+            <button class="btn success" onclick="completeChapter(5)" id="complete-5-btn" style="display: none;">Course Complete! 🎉</button>
+
+            <div class="deeper-section">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li>📄 <a href="https://www.ycombinator.com/rfs#ai" target="_blank">Y Combinator "Requests for Startups" AI section</a></li>
+                    <li>📧 <a href="https://www.deeplearning.ai/the-batch/" target="_blank">Andrew Ng's "The Batch" newsletter</a></li>
+                    <li>📝 <a href="https://stratechery.com/category/artificial-intelligence/" target="_blank">Stratechery's AI analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+
+        // Quiz data
+        const quizData = [
+            {
+                question: "Jasper AI (AI copywriting tool)",
+                options: ["Thriving Company", "Killed by Platform"],
+                correct: 1,
+                explanation: "Jasper was doing $40M ARR, then ChatGPT launched with better writing for $20/month. Jasper laid off 20% of staff within 6 months."
+            },
+            {
+                question: "Harvey AI (Legal AI assistant)",
+                options: ["Thriving Company", "Killed by Platform"], 
+                correct: 0,
+                explanation: "Harvey focuses on complex legal workflows that require deep domain knowledge. OpenAI can't replicate their legal expertise and client relationships."
+            },
+            {
+                question: "Character.AI (AI chatbots)",
+                options: ["Thriving Company", "Killed by Platform"],
+                correct: 1,
+                explanation: "Amazing demos but users didn't stick around. ChatGPT and Claude now do character roleplay better, and Character.AI had to pivot their business model."
+            },
+            {
+                question: "Scale AI (Data labeling)",
+                options: ["Thriving Company", "Killed by Platform"],
+                correct: 0,
+                explanation: "Scale owns the data pipeline and relationships with enterprises. They're not just a wrapper — they're infrastructure that AI companies depend on."
+            },
+            {
+                question: "Copy.ai (Marketing copy generation)",
+                options: ["Thriving Company", "Killed by Platform"],
+                correct: 1,
+                explanation: "Once unique, now one of dozens of AI writing tools. GPT-4 writes better marketing copy, and Copy.ai struggles to differentiate."
+            }
+        ];
+
+        const autopsyData = [
+            {
+                story: "Startup A raised $10M for an AI-powered email assistant. Great demos, 10K users. Then Gmail added similar AI features built-in. Users abandoned the startup overnight.",
+                options: ["Wrapper Trap", "Demo-Day Darling", "Cost Death Spiral", "Data Privacy Fumble"],
+                correct: 0,
+                explanation: "Classic wrapper trap. Built on top of email APIs, no defensible moat. When the platform added native AI, game over."
+            },
+            {
+                story: "Startup B built an AI that could have conversations with fictional characters. Millions of demo videos went viral. $20M Series A. But monthly active users kept declining after the initial wow.",
+                options: ["Wrapper Trap", "Demo-Day Darling", "Cost Death Spiral", "Solution Looking for Problem"],
+                correct: 1,
+                explanation: "Amazing demo, but no lasting workflow. People tried it once for fun, then forgot about it. Demo-day darling syndrome."
+            },
+            {
+                story: "Startup C offered free AI-powered design tools to get users. Each design cost them $2 in API calls but they charged nothing. Burned $5M trying to find a revenue model.",
+                options: ["Demo-Day Darling", "Cost Death Spiral", "Hallucination Lawsuit", "Solution Looking for Problem"],
+                correct: 1,
+                explanation: "Gave away expensive AI features for free with no path to profitability. Classic cost death spiral."
+            }
+        ];
+
+        const decisionScenarios = [
+            {
+                scenario: "A potential enterprise customer wants you to fine-tune a model on their proprietary data for $50K. What do you do?",
+                options: [
+                    "A) Fine-tune the model immediately",
+                    "B) Build a RAG solution instead", 
+                    "C) Ask what problem they're actually solving",
+                    "D) Quote them $50K for fine-tuning"
+                ],
+                correct: 2,
+                explanation: "C is correct. Most customers ask for fine-tuning when they really need better retrieval or prompting. Understand the problem first — often RAG works better and costs less."
+            },
+            {
+                scenario: "Your AI agent gives wrong information 5% of the time. A customer wants to use it for medical advice. What do you do?",
+                options: [
+                    "A) Ship it with a disclaimer",
+                    "B) Wait until it's 100% accurate",
+                    "C) Add human-in-the-loop verification",
+                    "D) Decline the use case entirely"
+                ],
+                correct: 3,
+                explanation: "D is correct. Medical advice is life-or-death. Even 5% error rate is unacceptable. Some use cases aren't worth the risk, no matter how much they pay."
+            },
+            {
+                scenario: "OpenAI announces a feature that's 80% of what your product does. Your response?",
+                options: [
+                    "A) Panic and pivot immediately",
+                    "B) Double down on your unique 20%",
+                    "C) Compete on price",
+                    "D) Add more AI features quickly"
+                ],
+                correct: 1,
+                explanation: "B is correct. Your unique 20% is your moat. Expand it. Deepen it. Make it so valuable that the 80% overlap doesn't matter. That's how Harvey, Scale, and others survive platform risk."
+            }
+        ];
+
+        // Load saved progress
+        const savedProgress = localStorage.getItem('aiFounderProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+            updateProgressDisplay();
+            updateChapterVisibility();
+        }
+
+        function saveProgress() {
+            localStorage.setItem('aiFounderProgress', JSON.stringify(progress));
+            updateProgressDisplay();
+        }
+
+        function updateProgressDisplay() {
+            const completedCount = Object.values(progress).filter(Boolean).length;
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            const percentage = (completedCount / 5) * 100;
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = `${completedCount} / 5 chapters`;
+        }
+
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5'];
+            const requirements = [
+                progress.chapter1,
+                progress.chapter2, 
+                progress.chapter3,
+                progress.chapter4
+            ];
+
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                    chapter.classList.add('fade-in');
+                }
+            });
+        }
+
+        function completeChapter(chapterNum) {
+            progress[`chapter${chapterNum}`] = true;
+            saveProgress();
+            updateChapterVisibility();
+            
+            const button = document.getElementById(`complete-${chapterNum}-btn`);
+            button.classList.add('celebrating');
+            
+            if (chapterNum === 5) {
+                document.getElementById('final-celebration').style.display = 'block';
+                document.getElementById('final-celebration').classList.add('fade-in');
+            }
+        }
+
+        // Quiz functions
+        function startQuiz() {
+            const container = document.getElementById('quiz-1');
+            const button = document.getElementById('start-quiz-btn');
+            
+            button.style.display = 'none';
+            
+            let html = '';
+            quizData.forEach((q, index) => {
+                html += `
+                    <div class="quiz-question" id="question-${index}">
+                        <strong>${q.question}</strong>
+                        <div class="quiz-options">
+                            ${q.options.map((option, i) => 
+                                `<div class="quiz-option" onclick="selectQuizAnswer(${index}, ${i})">${option}</div>`
+                            ).join('')}
+                        </div>
+                        <div id="explanation-${index}" style="display: none; margin-top: 10px; font-style: italic;"></div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        let quizAnswers = [];
+        function selectQuizAnswer(questionIndex, answerIndex) {
+            const question = quizData[questionIndex];
+            const options = document.querySelectorAll(`#question-${questionIndex} .quiz-option`);
+            
+            // Clear previous selections
+            options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark the selected answer
+            options[answerIndex].classList.add('selected');
+            
+            // Show correct answer after a delay
+            setTimeout(() => {
+                options[question.correct].classList.add('correct');
+                if (answerIndex !== question.correct) {
+                    options[answerIndex].classList.add('incorrect');
+                }
+                
+                // Show explanation
+                document.getElementById(`explanation-${questionIndex}`).style.display = 'block';
+                document.getElementById(`explanation-${questionIndex}`).textContent = question.explanation;
+                
+                // Disable clicking
+                options.forEach(option => option.style.pointerEvents = 'none');
+                
+                quizAnswers[questionIndex] = answerIndex;
+                
+                // Check if all questions answered
+                if (quizAnswers.length === quizData.length && quizAnswers.every(a => a !== undefined)) {
+                    showQuizScore();
+                }
+            }, 500);
+        }
+
+        function showQuizScore() {
+            const correct = quizAnswers.reduce((sum, answer, index) => {
+                return sum + (answer === quizData[index].correct ? 1 : 0);
+            }, 0);
+            
+            const scoreDiv = document.getElementById('quiz-score-1');
+            scoreDiv.style.display = 'block';
+            scoreDiv.innerHTML = `
+                <strong>Your Score: ${correct} / ${quizData.length}</strong><br>
+                ${correct >= 4 ? "🎉 Excellent! You understand the landscape." : 
+                  correct >= 3 ? "✅ Good job! You're getting it." : 
+                  "📚 Study the patterns and try again."}
+            `;
+            
+            if (correct >= 3) {
+                document.getElementById('complete-1-btn').style.display = 'inline-block';
+            }
+        }
+
+        // Revenue Model Builder
+        function buildRevenueModel() {
+            const customer = document.getElementById('customer-type').value;
+            const problem = document.getElementById('problem-type').value;
+            const capability = document.getElementById('ai-capability').value;
+            
+            if (!customer || !problem || !capability) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('revenue-model-result');
+            
+            // Simple logic to recommend business model
+            let model = '';
+            let pricing = '';
+            let example = '';
+            
+            if (customer.includes('lawyers') || customer.includes('doctors')) {
+                model = 'Vertical AI Agent';
+                pricing = '$200-500/user/month';
+                example = 'Like Harvey (legal) or Abridge (medical)';
+            } else if (customer.includes('developers')) {
+                model = 'AI-Native Workflow';
+                pricing = '$20-50/user/month';
+                example = 'Like Cursor or Replit';
+            } else {
+                model = 'Infrastructure/Data Moat';
+                pricing = 'Usage-based or enterprise deals';
+                example = 'Like Scale AI or Pinecone';
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid #2563eb;">
+                    <h4>📊 Your Recommended Model: ${model}</h4>
+                    <p><strong>Target:</strong> ${customer} struggling with ${problem}</p>
+                    <p><strong>AI Solution:</strong> ${capability} to automate the workflow</p>
+                    <p><strong>Pricing:</strong> ${pricing}</p>
+                    <p><strong>Example:</strong> ${example}</p>
+                    <p><strong>Unit Economics:</strong> If you save them 4 hours at $50/hr = $200 value. Price at $100 for 50% margin.</p>
+                </div>
+            `;
+            
+            // Show complete button after interaction
+            setTimeout(() => {
+                document.getElementById('complete-2-btn').style.display = 'inline-block';
+            }, 2000);
+        }
+
+        // Startup Autopsy Quiz
+        function startAutopsyQuiz() {
+            const container = document.getElementById('autopsy-quiz');
+            const button = document.getElementById('start-autopsy-btn');
+            
+            button.style.display = 'none';
+            
+            let html = '';
+            autopsyData.forEach((story, index) => {
+                html += `
+                    <div class="quiz-question" id="autopsy-${index}">
+                        <p><strong>Case ${index + 1}:</strong> ${story.story}</p>
+                        <div class="quiz-options">
+                            ${story.options.map((option, i) => 
+                                `<div class="quiz-option" onclick="selectAutopsyAnswer(${index}, ${i})">${option}</div>`
+                            ).join('')}
+                        </div>
+                        <div id="autopsy-explanation-${index}" style="display: none; margin-top: 10px; font-style: italic;"></div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        let autopsyAnswers = [];
+        function selectAutopsyAnswer(questionIndex, answerIndex) {
+            const story = autopsyData[questionIndex];
+            const options = document.querySelectorAll(`#autopsy-${questionIndex} .quiz-option`);
+            
+            // Clear previous selections
+            options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark the selected answer
+            options[answerIndex].classList.add('selected');
+            
+            // Show correct answer after a delay
+            setTimeout(() => {
+                options[story.correct].classList.add('correct');
+                if (answerIndex !== story.correct) {
+                    options[answerIndex].classList.add('incorrect');
+                }
+                
+                // Show explanation
+                document.getElementById(`autopsy-explanation-${questionIndex}`).style.display = 'block';
+                document.getElementById(`autopsy-explanation-${questionIndex}`).textContent = story.explanation;
+                
+                // Disable clicking
+                options.forEach(option => option.style.pointerEvents = 'none');
+                
+                autopsyAnswers[questionIndex] = answerIndex;
+                
+                // Check if all questions answered
+                if (autopsyAnswers.length === autopsyData.length && autopsyAnswers.every(a => a !== undefined)) {
+                    showAutopsyScore();
+                }
+            }, 500);
+        }
+
+        function showAutopsyScore() {
+            const correct = autopsyAnswers.reduce((sum, answer, index) => {
+                return sum + (answer === autopsyData[index].correct ? 1 : 0);
+            }, 0);
+            
+            const scoreDiv = document.getElementById('autopsy-score');
+            scoreDiv.style.display = 'block';
+            scoreDiv.innerHTML = `
+                <strong>Autopsy Score: ${correct} / ${autopsyData.length}</strong><br>
+                ${correct === 3 ? "🕵️ Perfect detective work!" : 
+                  correct >= 2 ? "✅ You're learning from their mistakes." : 
+                  "💀 Study the death patterns more carefully."}
+            `;
+            
+            if (correct >= 2) {
+                document.getElementById('complete-3-btn').style.display = 'inline-block';
+            }
+        }
+
+        // Decision Simulator
+        function startDecisionSim() {
+            const container = document.getElementById('decision-scenarios');
+            const button = document.getElementById('start-decision-btn');
+            
+            button.style.display = 'none';
+            
+            let html = '';
+            decisionScenarios.forEach((scenario, index) => {
+                html += `
+                    <div class="scenario" id="scenario-${index}">
+                        <p><strong>Scenario ${index + 1}:</strong> ${scenario.scenario}</p>
+                        <div class="scenario-options">
+                            ${scenario.options.map((option, i) => 
+                                `<div class="scenario-option" onclick="selectDecisionAnswer(${index}, ${i})">${option}</div>`
+                            ).join('')}
+                        </div>
+                        <div id="decision-explanation-${index}" style="display: none; margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 6px; font-style: italic;"></div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        let decisionAnswers = [];
+        function selectDecisionAnswer(questionIndex, answerIndex) {
+            const scenario = decisionScenarios[questionIndex];
+            const options = document.querySelectorAll(`#scenario-${questionIndex} .scenario-option`);
+            
+            // Clear previous selections
+            options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark the selected answer
+            options[answerIndex].classList.add('selected');
+            
+            // Show correct answer after a delay
+            setTimeout(() => {
+                options[scenario.correct].classList.add('correct');
+                if (answerIndex !== scenario.correct) {
+                    options[answerIndex].classList.add('incorrect');
+                }
+                
+                // Show explanation
+                document.getElementById(`decision-explanation-${questionIndex}`).style.display = 'block';
+                document.getElementById(`decision-explanation-${questionIndex}`).textContent = scenario.explanation;
+                
+                // Disable clicking
+                options.forEach(option => option.style.pointerEvents = 'none');
+                
+                decisionAnswers[questionIndex] = answerIndex;
+                
+                // Check if all questions answered
+                if (decisionAnswers.length === decisionScenarios.length && decisionAnswers.every(a => a !== undefined)) {
+                    showDecisionScore();
+                }
+            }, 500);
+        }
+
+        function showDecisionScore() {
+            const correct = decisionAnswers.reduce((sum, answer, index) => {
+                return sum + (answer === decisionScenarios[index].correct ? 1 : 0);
+            }, 0);
+            
+            const scoreDiv = document.getElementById('decision-score');
+            scoreDiv.style.display = 'block';
+            scoreDiv.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <strong>Decision Score: ${correct} / ${decisionScenarios.length}</strong><br>
+                    ${correct === 3 ? "🎯 You think like a successful founder!" : 
+                      correct >= 2 ? "✅ Good instincts. Trust them." : 
+                      "🤔 Review the playbook and try to think like Paul Graham."}
+                </div>
+            `;
+            
+            if (correct >= 2) {
+                document.getElementById('complete-4-btn').style.display = 'inline-block';
+            }
+        }
+
+        // Pitch Builder
+        let generatedPitch = '';
+        function generatePitch() {
+            const customer = document.getElementById('pitch-customer').value;
+            const problem = document.getElementById('pitch-problem').value;
+            const current = document.getElementById('pitch-current').value;
+            const solution = document.getElementById('pitch-solution').value;
+            const timing = document.getElementById('pitch-timing').value;
+            const moat = document.getElementById('pitch-moat').value;
+            
+            if (!customer || !problem || !solution) {
+                alert('Please fill in at least Customer, Problem, and Solution');
+                return;
+            }
+            
+            generatedPitch = `# AI Startup Pitch
+
+## The Problem
+${customer} are frustrated by: ${problem}
+
+Currently, they solve this by: ${current || 'Manual processes or inadequate tools'}
+
+## Our Solution
+${solution}
+
+## Why Now
+${timing || 'AI models have reached the capability threshold needed for this use case'}
+
+## Our Unfair Advantage
+${moat || 'Deep domain expertise and customer relationships'}
+
+## Market Size
+- Target: ${customer}
+- Pain Level: High (current solution is expensive/slow)
+- Willingness to Pay: High (saves significant time/money)
+
+## Business Model
+- Direct sales to ${customer.toLowerCase()}
+- Pricing: Value-based (charge % of savings delivered)
+- Revenue Target: $1M ARR in 12 months
+
+## Next Steps
+1. Build MVP in 8 weeks
+2. Get 10 paying customers in 90 days
+3. Iterate based on feedback
+4. Scale sales and marketing
+
+---
+Generated by AI Company Builder Course
+${new Date().toLocaleDateString()}`;
+
+            const outputDiv = document.getElementById('pitch-output');
+            outputDiv.style.display = 'block';
+            outputDiv.textContent = generatedPitch;
+            
+            document.getElementById('download-pitch-btn').style.display = 'inline-block';
+            document.getElementById('complete-5-btn').style.display = 'inline-block';
+        }
+
+        function downloadPitch() {
+            const blob = new Blob([generatedPitch], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ai-startup-pitch.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgressDisplay();
+            updateChapterVisibility();
+        });
+
+        // Intersection Observer for chapter progression
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting && !entry.target.classList.contains('visible')) {
+                    entry.target.classList.add('visible');
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        document.querySelectorAll('.chapter').forEach((chapter) => {
+            observer.observe(chapter);
+        });
+    </script>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-data/" style="color:#2563eb;text-decoration:none;">← Previous: Data Pipeline</a>
+        <a href="../build-chief-of-staff/" style="color:#2563eb;text-decoration:none;">Next: AI Chief of Staff →</a>
+    </div>
+</body>
+</html>

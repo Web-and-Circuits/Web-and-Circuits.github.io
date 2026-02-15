@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own AI Chief of Staff — From Chaos to Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .hero .tagline {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2563eb;
+            margin: 30px 0;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .overwhelm-demo {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-flood {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc2626;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease;
+            opacity: 0.9;
+        }
+
+        .notification.urgent {
+            border-left-color: #dc2626;
+            animation: pulse 2s infinite;
+        }
+
+        .notification.medium {
+            border-left-color: #f59e0b;
+        }
+
+        .notification.low {
+            border-left-color: #10b981;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 0.9; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc2626;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .overwhelm-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .integration-map {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .integration-tile {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .integration-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .integration-tile.connected {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(22, 163, 74, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(22, 163, 74, 0.6); }
+        }
+
+        .central-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .brief-builder {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .brief-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 25px;
+            background: #e2e8f0;
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.on {
+            background: #16a34a;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(25px);
+        }
+
+        .brief-preview {
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-line;
+        }
+
+        .triage-game {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .triage-zones {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+            height: 200px;
+        }
+
+        .triage-zone {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .triage-zone.tier1 {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+
+        .triage-zone.tier2 {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .triage-zone.tier3 {
+            background: #ecfdf5;
+            border-color: #10b981;
+        }
+
+        .triage-zone.drag-over {
+            background: #ddd6fe;
+            border-color: #8b5cf6;
+            transform: scale(1.05);
+        }
+
+        .draggable-notification {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: grab;
+            border-left: 4px solid #6b7280;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .draggable-notification:active {
+            cursor: grabbing;
+        }
+
+        .autonomy-slider {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .autonomy-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .autonomy-level {
+            display: flex;
+            gap: 10px;
+        }
+
+        .level-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .level-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .approval-inbox {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .approval-item {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .approve-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .reject-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .go-deeper {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
+
+        .go-deeper ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .go-deeper li {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .go-deeper li::before {
+            content: "📚";
+            margin-right: 10px;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .cta-section h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .cta-btn {
+            background: white;
+            color: #2563eb;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .integration-map {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .notification-flood {
+                grid-template-columns: 1fr;
+            }
+
+            .triage-zones {
+                grid-template-columns: 1fr;
+                height: auto;
+                gap: 15px;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease;
+        }
+
+        .accuracy-score {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f0fdf4;
+            border: 2px solid #16a34a;
+            border-radius: 12px;
+        }
+
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #16a34a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 auto 10px;
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 12 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own AI Chief of Staff</h1>
+            <p>A Chief of Staff makes sure the CEO's priorities actually happen.</p>
+            <p class="tagline">What if your AI could do that?</p>
+            <p>In 30 minutes you'll build an agent that manages your calendar, triages your inbox, tracks your tasks, and keeps you focused on what matters.</p>
+            <p><strong>This is the most practical course in the series.</strong></p>
+        </div>
+
+        <!-- Chapter 1: The Overwhelm -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: "The Overwhelm" — Why you need a Chief of Staff</h2>
+            
+            <p>You have 47 unread emails. 3 meetings today. A Slack channel blowing up. A todo list from last week you haven't looked at. And someone just texted asking if you're free for coffee.</p>
+
+            <div class="overwhelm-demo" id="overwhelm-demo">
+                <div class="timer" id="timer">0:00</div>
+                <h3>Your Morning</h3>
+                <p>Try to manually triage these notifications. Click each one to handle it:</p>
+                <div class="notification-flood" id="notification-flood">
+                    <!-- Notifications will be populated by JavaScript -->
+                </div>
+                <button class="overwhelm-btn" onclick="startOverwhelmDemo()">Start Your Morning</button>
+                <div id="overwhelm-result" style="display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 8px;">
+                    <strong>Exhausting, right?</strong> Now imagine an agent doing this while you sleep.
+                </div>
+            </div>
+
+            <p><strong>A human Chief of Staff would:</strong> scan the emails (flag 3 urgent, archive 30 junk, draft replies to 5), prep you for your meetings (pull context from past conversations), prioritize your todo list (what actually moves the needle today), and reply to the coffee text with your availability.</p>
+
+            <div class="card">
+                <h3>The role of an AI CoS:</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+                        <span style="position: absolute; left: 0; font-weight: 600; color: #2563eb;">Triage</span>
+                        — scan inputs, prioritize, surface what matters
+                    </li>
+                    <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+                        <span style="position: absolute; left: 0; font-weight: 600; color: #2563eb;">Context</span>
+                        — remember everything, pull relevant history
+                    </li>
+                    <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+                        <span style="position: absolute; left: 0; font-weight: 600; color: #2563eb;">Draft</span>
+                        — write responses you can approve with one tap
+                    </li>
+                    <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+                        <span style="position: absolute; left: 0; font-weight: 600; color: #2563eb;">Schedule</span>
+                        — manage calendar, find meeting times, prep briefs
+                    </li>
+                    <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+                        <span style="position: absolute; left: 0; font-weight: 600; color: #2563eb;">Track</span>
+                        — maintain task lists, follow up on commitments, remind you
+                    </li>
+                </ul>
+                <button class="run-btn" onclick="enableIntegrations()" id="enable-integrations-btn">Build This →</button>
+            </div>
+        </div>
+
+        <!-- Chapter 2: The Integrations -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: "The Integrations" — Connecting to your life</h2>
+            
+            <p><strong>An AI CoS is only useful if it can see your stuff.</strong> The integration layer:</p>
+
+            <div class="card">
+                <h3>Integration Map</h3>
+                <p>Drag each integration onto the central hub to connect it:</p>
+                <div class="integration-map" id="integration-map">
+                    <div class="central-hub">Agent</div>
+                    <div class="integration-tile" draggable="true" data-integration="gmail">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📧</div>
+                        <strong>Gmail</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Read, search, send emails</div>
+                    </div>
+                    <div class="integration-tile" draggable="true" data-integration="calendar">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📅</div>
+                        <strong>Calendar</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Read events, create meetings</div>
+                    </div>
+                    <div class="integration-tile" draggable="true" data-integration="slack">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                        <strong>Slack</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Read, send messages</div>
+                    </div>
+                    <div class="integration-tile" draggable="true" data-integration="tasks">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+                        <strong>Tasks</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Manage todo lists</div>
+                    </div>
+                    <div class="integration-tile" draggable="true" data-integration="files">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📁</div>
+                        <strong>Files</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Read, search documents</div>
+                    </div>
+                    <div class="integration-tile" draggable="true" data-integration="weather">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🌤</div>
+                        <strong>Weather</strong>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">Current conditions</div>
+                    </div>
+                </div>
+                <p style="margin-top: 30px;"><strong>Each integration is just a set of tools the agent can call.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>Under the Hood</h3>
+                <p>How a Gmail integration works:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>const tools = [{
+  name: 'gmail_search',
+  description: 'Search emails by query',
+  parameters: { 
+    query: 'string', 
+    maxResults: 'number' 
+  }
+}, {
+  name: 'gmail_send',
+  description: 'Send an email',
+  parameters: { 
+    to: 'string', 
+    subject: 'string', 
+    body: 'string' 
+  }
+}];</code></pre>
+                </div>
+                <p><strong>The agent doesn't need special access. It uses the same APIs you would.</strong> Gmail API, Google Calendar API, Slack API — they're all documented, standard REST endpoints. The agent calls them with your credentials.</p>
+                <button class="run-btn" onclick="enableMorningBrief()" id="enable-brief-btn">Next: Daily Routine →</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li><a href="https://developers.google.com/workspace/guides" target="_blank">Google Workspace APIs</a></li>
+                    <li><a href="https://api.slack.com/start/overview" target="_blank">Slack API Documentation</a></li>
+                    <li><a href="https://github.com/openclaw-project/openclaw/blob/main/CHANNELS.md" target="_blank">OpenClaw Channels</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 3: The Morning Brief -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: "The Morning Brief" — Building the daily routine</h2>
+            
+            <p><strong>The killer feature: every morning your agent scans everything and gives you a brief.</strong></p>
+
+            <div class="card">
+                <h3>Build Your Morning Brief</h3>
+                <p>Configure what your agent checks at 6 AM every day:</p>
+                <div class="brief-builder">
+                    <div class="brief-section">
+                        <span>📅 Today's calendar events</span>
+                        <div class="toggle-switch on" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                    <div class="brief-section">
+                        <span>📧 Urgent emails (VIPs + flagged)</span>
+                        <div class="toggle-switch on" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                    <div class="brief-section">
+                        <span>✅ Overdue tasks</span>
+                        <div class="toggle-switch on" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                    <div class="brief-section">
+                        <span>🌤 Weather (do you need an umbrella?)</span>
+                        <div class="toggle-switch" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                    <div class="brief-section">
+                        <span>📰 News headlines</span>
+                        <div class="toggle-switch" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                    <div class="brief-section">
+                        <span>📊 Yesterday's metrics</span>
+                        <div class="toggle-switch" onclick="toggleBriefSection(this)"></div>
+                    </div>
+                </div>
+                <button class="run-btn" onclick="previewBrief()">Preview Brief</button>
+                <div class="brief-preview" id="brief-preview" style="display: none;"></div>
+                <p style="margin-top: 20px;"><strong>Your agent runs this at 6 AM every day while you're still asleep.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>The Heartbeat Pattern</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Every morning at 6 AM
+schedule('0 6 * * *', async () => {
+  const calendar = await getCalendarEvents(today);
+  const urgentEmails = await searchEmails('is:unread label:important');
+  const overdueTasks = await getTasks({ status: 'overdue' });
+  const weather = await getWeather(userLocation);
+  
+  const brief = composeBrief({ 
+    calendar, 
+    urgentEmails, 
+    overdueTasks, 
+    weather 
+  });
+  
+  await sendMessage(userChannel, brief);
+});</code></pre>
+                </div>
+                <p><strong>Proactive agents are just scheduled prompts with tool access.</strong> The "magic" is in the prompt that decides what's worth surfacing and what to ignore.</p>
+                <button class="run-btn" onclick="enableTriage()" id="enable-triage-btn">Next: Smart Triage →</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li><a href="https://crontab.guru/" target="_blank">Cron Schedule Expressions</a></li>
+                    <li><a href="https://nodejs.org/api/timers.html" target="_blank">Node.js Scheduling</a></li>
+                    <li><a href="https://github.com/openclaw-project/openclaw/blob/main/docs/heartbeats.md" target="_blank">OpenClaw Heartbeats</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 4: The Triage Engine -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: "The Triage Engine" — Teaching it your priorities</h2>
+            
+            <p><strong>Not all emails are equal. Not all Slack messages need a response. The agent needs to learn YOUR priorities.</strong></p>
+
+            <div class="card">
+                <h3>Train Your Triage</h3>
+                <p>Drag each notification to the appropriate tier:</p>
+                <div class="triage-game">
+                    <div class="triage-zones">
+                        <div class="triage-zone tier1" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            <h4>Tier 1</h4>
+                            <p>Interrupt me</p>
+                            <div class="zone-items" id="tier1-items"></div>
+                        </div>
+                        <div class="triage-zone tier2" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            <h4>Tier 2</h4>
+                            <p>Surface in brief</p>
+                            <div class="zone-items" id="tier2-items"></div>
+                        </div>
+                        <div class="triage-zone tier3" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            <h4>Tier 3</h4>
+                            <p>Handle silently</p>
+                            <div class="zone-items" id="tier3-items"></div>
+                        </div>
+                    </div>
+                    <div id="notifications-to-triage">
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📧 Email from your CEO: "Need Q4 numbers ASAP"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📧 Amazon: "Your order has shipped"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            💬 Slack from teammate: "Great job on the presentation!"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📧 LinkedIn: "You have 5 profile views"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📅 Calendar: "Meeting with investors in 30 minutes"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📧 Newsletter: "10 AI tools you should know"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            📧 Bank: "Your statement is ready"
+                        </div>
+                        <div class="draggable-notification" draggable="true" ondragstart="drag(event)">
+                            💬 Slack: "Anyone know where the printer paper is?"
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="run-btn" onclick="finishTriage()" id="finish-triage-btn" style="display: none;">Finish Training</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accuracy-score" id="triage-results" style="display: none;">
+                <div class="score-circle" id="accuracy-circle">87%</div>
+                <p><strong>You just taught your agent your preferences in 2 minutes.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>The System Prompt</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>You are my Chief of Staff. Triage incoming messages:
+
+TIER 1 (notify immediately):
+- From: [list of VIPs]
+- Contains: "urgent", "asap", "deadline"
+- Calendar conflicts
+
+TIER 2 (include in daily brief):
+- Newsletters from: [list]
+- Task updates
+- Non-urgent emails from known contacts
+
+TIER 3 (handle silently):
+- Marketing emails → archive
+- Scheduling requests → auto-reply with calendar link
+- Receipts → label and archive</code></pre>
+                </div>
+                <p><strong>The priority system is just a well-written system prompt plus rules.</strong> You don't need ML or custom models. You need clear instructions and good tool definitions.</p>
+                <button class="run-btn" onclick="enableAutonomy()" id="enable-autonomy-btn">Next: Trust Boundary →</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li><a href="https://platform.openai.com/docs/guides/prompt-engineering" target="_blank">Prompt Engineering Guide</a></li>
+                    <li><a href="https://www.anthropic.com/news/constitutional-ai-harmlessness-from-ai-feedback" target="_blank">Constitutional AI</a></li>
+                    <li><a href="https://github.com/microsoft/semantic-kernel" target="_blank">Microsoft Semantic Kernel</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Chapter 5: The Trust Boundary -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: "The Trust Boundary" — What the agent does vs what it drafts</h2>
+            
+            <p><strong>The critical question: what should your agent DO vs what should it DRAFT FOR YOUR APPROVAL?</strong></p>
+
+            <div class="card">
+                <h3>Autonomy Slider</h3>
+                <p>Set the autonomy level for each type of action:</p>
+                <div class="autonomy-slider">
+                    <div class="autonomy-item">
+                        <span>📧 Archive junk email</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn active" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                    <div class="autonomy-item">
+                        <span>📧 Reply to important email</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn active" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                    <div class="autonomy-item">
+                        <span>📅 Schedule internal meeting</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn active" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                    <div class="autonomy-item">
+                        <span>🐦 Post on social media</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn active" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                    <div class="autonomy-item">
+                        <span>💰 Approve expense report</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn active" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                    <div class="autonomy-item">
+                        <span>📄 Share confidential document</span>
+                        <div class="autonomy-level">
+                            <button class="level-btn" onclick="setAutonomy(this, 'auto')">Auto</button>
+                            <button class="level-btn" onclick="setAutonomy(this, 'draft')">Draft</button>
+                            <button class="level-btn active" onclick="setAutonomy(this, 'alert')">Alert</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Approval Inbox</h3>
+                <p>Your agent has drafted these actions. Review and approve:</p>
+                <div class="approval-inbox">
+                    <div class="approval-item">
+                        <strong>📧 Email Reply</strong>
+                        <div style="color: #6b7280; margin: 10px 0;">To: sarah@company.com</div>
+                        <div style="margin: 10px 0;">Subject: Re: Q4 Budget Review</div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 10px 0; font-style: italic;">
+                            "Hi Sarah, I've reviewed the budget proposal. The marketing allocation looks reasonable, but I'd like to discuss the R&D increase before finalizing. Can we schedule 30 minutes this week? Best regards..."
+                        </div>
+                        <div class="approval-actions">
+                            <button class="approve-btn" onclick="approveAction(this)">✅ Send</button>
+                            <button class="edit-btn" onclick="editAction(this)">✍️ Edit</button>
+                            <button class="reject-btn" onclick="rejectAction(this)">❌ Reject</button>
+                        </div>
+                    </div>
+                    <div class="approval-item">
+                        <strong>📅 Meeting Request</strong>
+                        <div style="color: #6b7280; margin: 10px 0;">With: john@company.com, alice@company.com</div>
+                        <div style="margin: 10px 0;">Topic: Sprint Planning</div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 10px 0; font-style: italic;">
+                            "Thursday 2 PM - 3 PM (based on everyone's availability). Conference Room B is booked. I'll send the agenda tomorrow."
+                        </div>
+                        <div class="approval-actions">
+                            <button class="approve-btn" onclick="approveAction(this)">✅ Schedule</button>
+                            <button class="edit-btn" onclick="editAction(this)">✍️ Edit</button>
+                            <button class="reject-btn" onclick="rejectAction(this)">❌ Reject</button>
+                        </div>
+                    </div>
+                    <div class="approval-item">
+                        <strong>💬 Slack Reply</strong>
+                        <div style="color: #6b7280; margin: 10px 0;">Channel: #general</div>
+                        <div style="margin: 10px 0;">Reply to: "Who's joining the team lunch?"</div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 10px 0; font-style: italic;">
+                            "I'll be there! Looking forward to the new sushi place. Should we make a reservation for 6 people?"
+                        </div>
+                        <div class="approval-actions">
+                            <button class="approve-btn" onclick="approveAction(this)">✅ Send</button>
+                            <button class="edit-btn" onclick="editAction(this)">✍️ Edit</button>
+                            <button class="reject-btn" onclick="rejectAction(this)">❌ Reject</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Implementation</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>async function handleEmail(email) {
+  const priority = await triageEmail(email);
+  
+  if (priority.tier === 3) {
+    await autoHandle(email); // Archive, label, etc.
+    return;
+  }
+  
+  const draft = await generateReply(email);
+  
+  if (priority.tier === 1) {
+    await sendForApproval(draft, { 
+      channel: 'slack', 
+      urgent: true 
+    });
+  } else {
+    await queueForBrief(draft);
+  }
+}</code></pre>
+                </div>
+                <p><strong>The best AI Chief of Staff isn't fully autonomous. It's an extension of your judgment with infinite patience.</strong> It drafts 50 emails while you approve the 5 that matter.</p>
+                <button class="run-btn" onclick="completeCoS()" id="complete-cos-btn">Complete Your CoS →</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <ul>
+                    <li><a href="https://calnewport.com/deep-work/" target="_blank">Cal Newport's "Deep Work"</a></li>
+                    <li><a href="https://www.buildingasecondbrain.com/" target="_blank">Building a Second Brain by Tiago Forte</a></li>
+                    <li><a href="https://github.com/KillianLucas/open-interpreter" target="_blank">Open Interpreter Examples</a></li>
+                    <li><a href="https://github.com/Significant-Gravitas/AutoGPT" target="_blank">AutoGPT Patterns</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- The Finale -->
+        <div class="chapter" id="finale">
+            <h2>Your AI Chief of Staff is Ready</h2>
+            
+            <div class="card">
+                <p><strong>A Chief of Staff doesn't replace you. They amplify you.</strong></p>
+                <p>Your AI CoS handles the 80% that's routine so you can focus on the 20% that needs your brain. And it never takes a day off.</p>
+                
+                <p>You've built an agent that:</p>
+                <ul style="margin: 20px 0;">
+                    <li>🔍 <strong>Triages</strong> your communications intelligently</li>
+                    <li>📋 <strong>Briefs</strong> you every morning with what matters</li>
+                    <li>✍️ <strong>Drafts</strong> responses for your approval</li>
+                    <li>📅 <strong>Manages</strong> your calendar and commitments</li>
+                    <li>🔒 <strong>Respects</strong> your trust boundaries</li>
+                </ul>
+
+                <p><strong>This isn't theory.</strong> People are building exactly this with OpenClaw, AutoGPT, and custom agent frameworks. The patterns you learned today scale from personal productivity to enterprise operations.</p>
+                
+                <p><strong>The question isn't whether AI can be your Chief of Staff.</strong></p>
+                <p><strong>You just designed one.</strong></p>
+                <p><strong>The question is when you'll deploy it.</strong></p>
+            </div>
+
+            <div class="cta-section">
+                <h3>What's Next?</h3>
+                <p>Ready to run this 24/7? Want us to build a custom AI Chief of Staff for your team?</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/openclaw-project/openclaw" class="cta-btn">Deploy with OpenClaw →</a>
+                    <a href="mailto:hello@webandcircuits.com" class="cta-btn">Custom AI CoS →</a>
+                    <a href="https://twitter.com/intent/tweet?text=I just built my own AI Chief of Staff in 30 minutes! 🤖📈" class="cta-btn">Share on Twitter</a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://buildchiefsof.staff" class="cta-btn">Share on LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state for the course
+        const CoS = {
+            integrations: new Set(),
+            briefSections: new Set(['calendar', 'email', 'tasks']),
+            triageRules: {},
+            autonomySettings: {},
+            completedSteps: new Set()
+        };
+
+        // Load saved progress
+        const savedCoS = localStorage.getItem('aiChiefOfStaff');
+        if (savedCoS) {
+            Object.assign(CoS, JSON.parse(savedCoS));
+        }
+
+        function saveProgress() {
+            // Convert Sets to Arrays for JSON serialization
+            const toSave = {
+                ...CoS,
+                integrations: Array.from(CoS.integrations),
+                briefSections: Array.from(CoS.briefSections),
+                completedSteps: Array.from(CoS.completedSteps)
+            };
+            localStorage.setItem('aiChiefOfStaff', JSON.stringify(toSave));
+            
+            // Convert back to Sets
+            CoS.integrations = new Set(toSave.integrations);
+            CoS.briefSections = new Set(toSave.briefSections);
+            CoS.completedSteps = new Set(toSave.completedSteps);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateChapterVisibility();
+            setupIntersectionObserver();
+            
+            // Restore state if loading saved progress
+            if (savedCoS) {
+                const data = JSON.parse(savedCoS);
+                CoS.integrations = new Set(data.integrations || []);
+                CoS.briefSections = new Set(data.briefSections || ['calendar', 'email', 'tasks']);
+                CoS.completedSteps = new Set(data.completedSteps || []);
+                
+                // Update UI based on saved state
+                updateIntegrationUI();
+                updateBriefBuilderUI();
+            }
+        });
+
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5', 'finale'];
+            const requirements = [
+                CoS.completedSteps.has('integrations'),
+                CoS.completedSteps.has('brief'),
+                CoS.completedSteps.has('triage'),
+                CoS.completedSteps.has('autonomy'),
+                CoS.completedSteps.has('complete')
+            ];
+            
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                    chapter.classList.add('fade-in');
+                }
+            });
+        }
+
+        function setupIntersectionObserver() {
+            const chapters = document.querySelectorAll('.chapter');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.3 });
+
+            chapters.forEach(chapter => {
+                observer.observe(chapter);
+            });
+        }
+
+        // Chapter 1: Overwhelm Demo
+        function startOverwhelmDemo() {
+            const notifications = [
+                { text: "📧 CEO: 'Need Q4 numbers ASAP'", type: "urgent" },
+                { text: "📧 Amazon: 'Your order shipped'", type: "low" },
+                { text: "💬 Slack: 'Meeting moved to 3 PM'", type: "medium" },
+                { text: "📧 LinkedIn: 'You have 12 new connections'", type: "low" },
+                { text: "📅 Calendar: 'Team standup in 15 minutes'", type: "urgent" },
+                { text: "📧 Bank: 'Security alert on your account'", type: "urgent" },
+                { text: "💬 Slack: 'Great job on the presentation!'", type: "low" },
+                { text: "📧 Newsletter: '10 productivity tips'", type: "low" },
+                { text: "📧 Client: 'Can we reschedule tomorrow?'", type: "medium" },
+                { text: "📱 Text: 'Coffee later? Are you free?'", type: "medium" },
+                { text: "📧 HR: 'Please complete your timesheet'", type: "medium" },
+                { text: "💬 Slack: 'Server is down in staging'", type: "urgent" }
+            ];
+
+            const flood = document.getElementById('notification-flood');
+            const timer = document.getElementById('timer');
+            let startTime = Date.now();
+            let handledCount = 0;
+
+            // Clear existing content
+            flood.innerHTML = '';
+
+            // Start timer
+            const timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+
+            // Add notifications with staggered timing
+            notifications.forEach((notif, index) => {
+                setTimeout(() => {
+                    const notifDiv = document.createElement('div');
+                    notifDiv.className = `notification ${notif.type}`;
+                    notifDiv.textContent = notif.text;
+                    notifDiv.onclick = () => {
+                        notifDiv.style.opacity = '0.3';
+                        notifDiv.style.pointerEvents = 'none';
+                        handledCount++;
+                        
+                        if (handledCount >= 8) {
+                            clearInterval(timerInterval);
+                            document.getElementById('overwhelm-result').style.display = 'block';
+                            document.querySelector('.overwhelm-btn').textContent = '🤯 That was exhausting!';
+                            document.querySelector('.overwhelm-btn').style.background = '#dc2626';
+                        }
+                    };
+                    flood.appendChild(notifDiv);
+                }, index * 800);
+            });
+        }
+
+        function enableIntegrations() {
+            CoS.completedSteps.add('integrations');
+            updateChapterVisibility();
+            saveProgress();
+            
+            const btn = document.getElementById('enable-integrations-btn');
+            btn.textContent = '✓ Integration Layer Built';
+            btn.style.background = '#16a34a';
+            btn.classList.add('celebrating');
+        }
+
+        // Chapter 2: Integration Map
+        function setupDragDrop() {
+            const tiles = document.querySelectorAll('.integration-tile');
+            const hub = document.querySelector('.central-hub');
+
+            tiles.forEach(tile => {
+                tile.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', tile.dataset.integration);
+                });
+            });
+
+            hub.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                hub.style.transform = 'translate(-50%, -50%) scale(1.1)';
+            });
+
+            hub.addEventListener('dragleave', () => {
+                hub.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+
+            hub.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const integration = e.dataTransfer.getData('text/plain');
+                CoS.integrations.add(integration);
+                
+                const tile = document.querySelector(`[data-integration="${integration}"]`);
+                tile.classList.add('connected');
+                
+                hub.style.transform = 'translate(-50%, -50%) scale(1)';
+                
+                if (CoS.integrations.size >= 3) {
+                    document.getElementById('enable-brief-btn').disabled = false;
+                }
+            });
+        }
+
+        function updateIntegrationUI() {
+            CoS.integrations.forEach(integration => {
+                const tile = document.querySelector(`[data-integration="${integration}"]`);
+                if (tile) tile.classList.add('connected');
+            });
+        }
+
+        function enableMorningBrief() {
+            CoS.completedSteps.add('brief');
+            updateChapterVisibility();
+            saveProgress();
+            
+            const btn = document.getElementById('enable-brief-btn');
+            btn.textContent = '✓ Daily Brief System Ready';
+            btn.style.background = '#16a34a';
+            btn.classList.add('celebrating');
+        }
+
+        // Chapter 3: Brief Builder
+        function toggleBriefSection(toggle) {
+            const section = toggle.closest('.brief-section').querySelector('span').textContent;
+            const sectionKey = section.includes('📅') ? 'calendar' :
+                              section.includes('📧') ? 'email' :
+                              section.includes('✅') ? 'tasks' :
+                              section.includes('🌤') ? 'weather' :
+                              section.includes('📰') ? 'news' : 'metrics';
+            
+            toggle.classList.toggle('on');
+            
+            if (toggle.classList.contains('on')) {
+                CoS.briefSections.add(sectionKey);
+            } else {
+                CoS.briefSections.delete(sectionKey);
+            }
+            saveProgress();
+        }
+
+        function updateBriefBuilderUI() {
+            // Update toggle switches based on saved state
+            document.querySelectorAll('.brief-section').forEach(section => {
+                const text = section.querySelector('span').textContent;
+                const toggle = section.querySelector('.toggle-switch');
+                const key = text.includes('📅') ? 'calendar' :
+                           text.includes('📧') ? 'email' :
+                           text.includes('✅') ? 'tasks' :
+                           text.includes('🌤') ? 'weather' :
+                           text.includes('📰') ? 'news' : 'metrics';
+                
+                if (CoS.briefSections.has(key)) {
+                    toggle.classList.add('on');
+                } else {
+                    toggle.classList.remove('on');
+                }
+            });
+        }
+
+        function previewBrief() {
+            const preview = document.getElementById('brief-preview');
+            let briefContent = "🌅 Good morning! Here's your daily brief for Tuesday, Feb 15:\n\n";
+            
+            if (CoS.briefSections.has('calendar')) {
+                briefContent += "📅 TODAY'S CALENDAR:\n";
+                briefContent += "  • 9:00 AM - Team standup (Conference Room A)\n";
+                briefContent += "  • 11:00 AM - Client call with Acme Corp\n";
+                briefContent += "  • 2:00 PM - Product roadmap review\n\n";
+            }
+            
+            if (CoS.briefSections.has('email')) {
+                briefContent += "📧 URGENT EMAILS (3):\n";
+                briefContent += "  • Sarah Chen: Q4 budget approval needed\n";
+                briefContent += "  • Legal team: Contract review by EOD\n";
+                briefContent += "  • John Smith: Meeting reschedule request\n\n";
+            }
+            
+            if (CoS.briefSections.has('tasks')) {
+                briefContent += "✅ OVERDUE TASKS (2):\n";
+                briefContent += "  • Finalize hiring plan for Q1\n";
+                briefContent += "  • Review marketing campaign metrics\n\n";
+            }
+            
+            if (CoS.briefSections.has('weather')) {
+                briefContent += "🌤 WEATHER:\n";
+                briefContent += "  • 64°F, partly cloudy. Light rain at 3 PM.\n";
+                briefContent += "  • Bring an umbrella for your 4 PM coffee run!\n\n";
+            }
+            
+            briefContent += "Have a productive day! 🚀";
+            
+            preview.textContent = briefContent;
+            preview.style.display = 'block';
+        }
+
+        function enableTriage() {
+            CoS.completedSteps.add('triage');
+            updateChapterVisibility();
+            saveProgress();
+            
+            const btn = document.getElementById('enable-triage-btn');
+            btn.textContent = '✓ Smart Triage Active';
+            btn.style.background = '#16a34a';
+            btn.classList.add('celebrating');
+        }
+
+        // Chapter 4: Triage Game
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.target.closest('.triage-zone').classList.add('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.textContent);
+            ev.dataTransfer.setData("element", ev.target.outerHTML);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const elementHTML = ev.dataTransfer.getData("element");
+            const zone = ev.target.closest('.triage-zone');
+            const zoneItems = zone.querySelector('.zone-items');
+            
+            zone.classList.remove('drag-over');
+            
+            // Create new element in the zone
+            const newEl = document.createElement('div');
+            newEl.innerHTML = elementHTML;
+            newEl.firstElementChild.draggable = false;
+            newEl.firstElementChild.style.cursor = 'default';
+            newEl.firstElementChild.style.fontSize = '12px';
+            newEl.firstElementChild.style.padding = '8px';
+            newEl.firstElementChild.style.margin = '4px 0';
+            zoneItems.appendChild(newEl.firstElementChild);
+            
+            // Remove original element
+            const originalElements = document.querySelectorAll('.draggable-notification');
+            originalElements.forEach(el => {
+                if (el.textContent === data) {
+                    el.remove();
+                }
+            });
+            
+            // Check if all items are triaged
+            const remaining = document.querySelectorAll('#notifications-to-triage .draggable-notification');
+            if (remaining.length === 0) {
+                document.getElementById('finish-triage-btn').style.display = 'inline-block';
+            }
+        }
+
+        // Remove drag-over class when leaving
+        document.addEventListener('dragleave', (ev) => {
+            if (ev.target.classList.contains('triage-zone')) {
+                ev.target.classList.remove('drag-over');
+            }
+        });
+
+        function finishTriage() {
+            // Simulate accuracy calculation
+            const accuracy = Math.floor(Math.random() * 15 + 80); // 80-95%
+            document.getElementById('accuracy-circle').textContent = accuracy + '%';
+            document.getElementById('triage-results').style.display = 'block';
+            
+            // Update button
+            const btn = document.getElementById('finish-triage-btn');
+            btn.textContent = '✓ Preferences Learned';
+            btn.style.background = '#16a34a';
+        }
+
+        function enableAutonomy() {
+            CoS.completedSteps.add('autonomy');
+            updateChapterVisibility();
+            saveProgress();
+            
+            const btn = document.getElementById('enable-autonomy-btn');
+            btn.textContent = '✓ Trust Boundary Set';
+            btn.style.background = '#16a34a';
+            btn.classList.add('celebrating');
+        }
+
+        // Chapter 5: Autonomy Settings
+        function setAutonomy(btn, level) {
+            const item = btn.closest('.autonomy-item');
+            const buttons = item.querySelectorAll('.level-btn');
+            
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const action = item.querySelector('span').textContent;
+            CoS.autonomySettings[action] = level;
+            saveProgress();
+        }
+
+        function approveAction(btn) {
+            const item = btn.closest('.approval-item');
+            item.style.background = '#f0fdf4';
+            item.style.borderLeftColor = '#16a34a';
+            
+            const actions = item.querySelector('.approval-actions');
+            actions.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✅ Approved and executed</span>';
+        }
+
+        function editAction(btn) {
+            const item = btn.closest('.approval-item');
+            item.style.background = '#fefbf3';
+            item.style.borderLeftColor = '#f59e0b';
+            
+            const actions = item.querySelector('.approval-actions');
+            actions.innerHTML = '<span style="color: #f59e0b; font-weight: 600;">✍️ Edited and sent</span>';
+        }
+
+        function rejectAction(btn) {
+            const item = btn.closest('.approval-item');
+            item.style.background = '#fef2f2';
+            item.style.borderLeftColor = '#dc2626';
+            
+            const actions = item.querySelector('.approval-actions');
+            actions.innerHTML = '<span style="color: #dc2626; font-weight: 600;">❌ Rejected</span>';
+        }
+
+        function completeCoS() {
+            CoS.completedSteps.add('complete');
+            updateChapterVisibility();
+            saveProgress();
+            
+            const btn = document.getElementById('complete-cos-btn');
+            btn.textContent = '🎉 AI Chief of Staff Complete!';
+            btn.style.background = '#16a34a';
+            btn.classList.add('celebrating');
+            
+            // Scroll to finale
+            setTimeout(() => {
+                document.getElementById('finale').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 1000);
+        }
+
+        // Utility functions
+        function copyCode(btn) {
+            const codeBlock = btn.nextElementSibling.textContent;
+            navigator.clipboard.writeText(codeBlock).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#16a34a';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+
+        // Initialize drag and drop after DOM loads
+        document.addEventListener('DOMContentLoaded', setupDragDrop);
+    </script>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-founder/" style="color:#2563eb;text-decoration:none;">← Previous: AI Company</a>
+        <a href="../build-spatial/" style="color:#2563eb;text-decoration:none;">Next: 3D World →</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Tool System — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .helpless-demo {
+            background: #fef2f2;
+            border: 2px solid #dc2626;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .helpless-chat {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 150px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .user-msg {
+            background: #2563eb;
+            color: white;
+            text-align: right;
+            margin-left: 20%;
+        }
+
+        .ai-msg {
+            background: #f3f4f6;
+            color: #1a1a2e;
+            margin-right: 20%;
+        }
+
+        .demo-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .demo-input input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .demo-input button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .react-loop {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .react-step {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .react-step.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .react-step-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .react-step-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .calculator-demo {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .calc-display {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .mcp-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .mcp-before, .mcp-after {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .mcp-node {
+            background: #2563eb;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mcp-connector {
+            background: #6b7280;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .tool-builder {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .tool-builder input, .tool-builder textarea {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .go-deeper {
+            background: #f0f9ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .cta-section h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .react-loop {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+
+        .skill-package {
+            border: 2px dashed #2563eb;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 4 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own Tool System</h1>
+            <p>AI can think. But it can't DO anything — until you give it tools.</p>
+            <p><strong>In 30 minutes you'll build a tool system, create a skill, and understand MCP.</strong></p>
+            <p>For absolute beginners. No assumed knowledge.</p>
+        </div>
+
+        <!-- Chapter 1: The Helpless Genius -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Helpless Genius</h2>
+            
+            <p>Ask any AI model to write you a sonnet about quantum physics. It'll do it beautifully. Ask it what time it is. It can't tell you.</p>
+
+            <div class="card">
+                <h3>Try This Right Now</h3>
+                <p><strong>An LLM without tools is a brain without hands.</strong> Let's prove it.</p>
+                
+                <div class="helpless-demo">
+                    <div class="helpless-chat" id="helpless-chat">
+                        <div class="message ai-msg">Hi! I'm a language model. I can write, reason, and chat — but I can't DO anything in the real world. Try asking me something I can't answer!</div>
+                    </div>
+                    
+                    <div class="demo-input">
+                        <input type="text" id="helpless-input" placeholder="Ask me what time it is, or 847 × 293..." />
+                        <button onclick="simulateHelplessAI()">Ask</button>
+                    </div>
+                </div>
+                
+                <p>The AI can talk about math, but <strong>it can't actually calculate.</strong> It can describe weather patterns, but can't check today's forecast. It knows about files and databases, but can't read your documents.</p>
+                <p><strong>Pure language models are brilliant but helpless.</strong></p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://openai.com/research/gpt-4" target="_blank">GPT-4 Paper</a> — Why even the most advanced models need tools</p>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Function Calling -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: Function Calling</h2>
+            
+            <p><strong>Function calling is how you give AI hands.</strong> You describe a tool as a JSON schema. The model reads the schema and decides when to call it.</p>
+
+            <div class="card">
+                <h3>The Calculator Tool</h3>
+                <p>Let's build the simplest possible tool: a calculator.</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>const calculatorTool = {
+  type: 'function',
+  function: {
+    name: 'calculator',
+    description: 'Evaluate a math expression like 847 * 293',
+    parameters: {
+      type: 'object',
+      properties: {
+        expression: {
+          type: 'string',
+          description: 'The math expression to evaluate'
+        }
+      },
+      required: ['expression']
+    }
+  }
+};
+
+// The actual function that does the work
+function calculator({ expression }) {
+  try {
+    return eval(expression);  // Don't use eval in production!
+  } catch (error) {
+    return `Error: ${error.message}`;
+  }
+}</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="enableCalculator()">Build Calculator Tool</button>
+                
+                <div class="calculator-demo" id="calculator-demo" style="display: none;">
+                    <h4>Test Your Calculator</h4>
+                    <div class="demo-input">
+                        <input type="text" id="calc-input" placeholder="Enter math expression: 847 * 293" />
+                        <button onclick="testCalculator()">Calculate</button>
+                    </div>
+                    <div class="calc-display" id="calc-display">Ready to calculate...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The JSON Dance</h3>
+                <p><strong>Here's what happens when the AI wants to use your tool:</strong></p>
+                
+                <div class="code-block">
+                    <pre><code>// 1. You send the tool description with your message
+{
+  "model": "gpt-4o-mini",
+  "messages": [{"role": "user", "content": "What's 847 × 293?"}],
+  "tools": [calculatorTool]
+}
+
+// 2. The AI responds with a tool_call (not text!)
+{
+  "role": "assistant",
+  "tool_calls": [{
+    "id": "call_abc123",
+    "type": "function",
+    "function": {
+      "name": "calculator",
+      "arguments": "{\"expression\": \"847 * 293\"}"
+    }
+  }]
+}
+
+// 3. You execute the function and send the result back
+{
+  "role": "tool",
+  "tool_call_id": "call_abc123",
+  "content": "248071"
+}
+
+// 4. The AI sees the result and responds normally
+{
+  "role": "assistant",
+  "content": "847 × 293 = 248,071"
+}</code></pre>
+                </div>
+                
+                <p><strong>The AI never sees your code.</strong> It only sees the JSON description. If your description is wrong, the AI will use the tool incorrectly.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank">OpenAI Function Calling Guide</a> — Complete documentation</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: The ReAct Loop -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: The ReAct Loop</h2>
+            
+            <p>What happens when the model needs multiple tools? Or needs to call the same tool twice? <strong>Welcome to the ReAct loop: Reason → Act → Observe → Repeat.</strong></p>
+
+            <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+              🔗 <strong>Connection:</strong> This is the same loop you'll build in Build Your Own Agent — but there it connects to real APIs. The Agent course is the capstone that ties tools, memory, and security together.
+            </div>
+
+            <div class="card">
+                <h3>The Loop Visualization</h3>
+                <div class="react-loop" id="react-loop">
+                    <div class="react-step">
+                        <div class="react-step-icon">🤔</div>
+                        <div class="react-step-title">Think</div>
+                        <div>Agent reads the message, plans what to do</div>
+                    </div>
+                    <div class="react-step">
+                        <div class="react-step-icon">🔧</div>
+                        <div class="react-step-title">Act</div>
+                        <div>Agent calls one or more tools</div>
+                    </div>
+                    <div class="react-step">
+                        <div class="react-step-icon">👁</div>
+                        <div class="react-step-title">Observe</div>
+                        <div>We execute tools, return results</div>
+                    </div>
+                    <div class="react-step">
+                        <div class="react-step-icon">🔄</div>
+                        <div class="react-step-title">Repeat</div>
+                        <div>Loop until task is complete</div>
+                    </div>
+                </div>
+                <button class="run-btn" onclick="demoReActLoop()">Watch ReAct in Action</button>
+            </div>
+
+            <div class="card">
+                <h3>Multi-Tool Agent</h3>
+                <p>Let's build an agent with multiple tools: calculator, clock, and weather.</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>const tools = [
+  {
+    type: 'function',
+    function: {
+      name: 'calculator',
+      description: 'Evaluate math expressions',
+      parameters: {
+        type: 'object',
+        properties: {
+          expression: { type: 'string' }
+        },
+        required: ['expression']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_current_time',
+      description: 'Get the current time',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get weather for a city',
+      parameters: {
+        type: 'object',
+        properties: {
+          city: { type: 'string' }
+        },
+        required: ['city']
+      }
+    }
+  }
+];
+
+// The agent loop that handles multiple tool calls
+async function agentLoop(userMessage) {
+  const messages = [{ role: 'user', content: userMessage }];
+  
+  while (true) {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { /* auth headers */ },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        tools: tools
+      })
+    });
+    
+    const data = await response.json();
+    const message = data.choices[0].message;
+    messages.push(message);
+    
+    // If no tool calls, we're done
+    if (!message.tool_calls) {
+      return message.content;
+    }
+    
+    // Execute each tool call
+    for (const toolCall of message.tool_calls) {
+      const result = executeFunction(toolCall.function.name, toolCall.function.arguments);
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: result
+      });
+    }
+    
+    // Loop back — model will see the results and decide what to do next
+  }
+}</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="enableMultiTool()">Build Multi-Tool Agent</button>
+            </div>
+
+            <div class="card" id="complex-demo" style="display: none;">
+                <h3>Complex Query Test</h3>
+                <p>Try this: <em>"What's the temperature in NYC right now, and if it's below 50°F, what's 50 minus that number?"</em></p>
+                
+                <div class="demo-input">
+                    <input type="text" id="complex-input" value="What's the temperature in NYC right now, and if it's below 50°F, what's 50 minus that number?" />
+                    <button onclick="testComplexQuery()">Run Query</button>
+                </div>
+                
+                <div class="calc-display" id="complex-display">
+                    Agent will think → get weather → decide if calculation needed → calculate → respond
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2210.03629" target="_blank">ReAct Paper</a> — The original research on reasoning and acting</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Building a Skill -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Building a Skill</h2>
+            
+            <p><strong>A tool is one function. A skill is a package:</strong> multiple tools + instructions + context.</p>
+
+            <div class="card">
+                <h3>File Manager Skill</h3>
+                <p>Let's build a complete file management skill with multiple related tools.</p>
+                
+                <div class="skill-package" id="skill-package">
+                    <h4>📁 File Manager Skill</h4>
+                    <div class="tool-builder">
+                        <h5>Tools in this skill:</h5>
+                        <ul>
+                            <li><code>read_file</code> — Read contents of a file</li>
+                            <li><code>write_file</code> — Write content to a file</li>
+                            <li><code>list_directory</code> — List files in a directory</li>
+                            <li><code>search_files</code> — Search for files by name or content</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// SKILL.md — Instructions for the AI agent
+/*
+# File Manager Skill
+
+## Purpose
+This skill gives you complete file system access. Use it to help users organize, read, and manipulate files.
+
+## When to use
+- User asks about files or directories
+- User wants to read, write, or search files
+- User needs help organizing their filesystem
+
+## Guidelines
+- Always use list_directory before trying to read files
+- Ask for confirmation before writing/deleting files
+- Use relative paths when possible
+- Be helpful but respectful of user's file structure
+*/
+
+const fileManagerTools = [
+  {
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Read the contents of a file',
+      parameters: {
+        type: 'object',
+        properties: {
+          filepath: { type: 'string', description: 'Path to the file to read' }
+        },
+        required: ['filepath']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Write content to a file',
+      parameters: {
+        type: 'object',
+        properties: {
+          filepath: { type: 'string', description: 'Path to write to' },
+          content: { type: 'string', description: 'Content to write' }
+        },
+        required: ['filepath', 'content']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_directory',
+      description: 'List files and folders in a directory',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Directory path to list' }
+        },
+        required: ['path']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_files',
+      description: 'Search for files by name or content',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Search query' },
+          directory: { type: 'string', description: 'Directory to search in' }
+        },
+        required: ['query']
+      }
+    }
+  }
+];</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="buildFileSkill()">Package This Skill</button>
+                
+                <p><strong>Skills are how you teach an agent a new job.</strong> The SKILL.md file is like a job description — it tells the agent when and how to use the tools.</p>
+            </div>
+
+            <div class="card" id="skill-demo" style="display: none;">
+                <h3>Test Your File Skill</h3>
+                <div class="demo-input">
+                    <input type="text" id="skill-input" placeholder="Ask me to create a file or list directories..." />
+                    <button onclick="testFileSkill()">Try Skill</button>
+                </div>
+                <div class="calc-display" id="skill-display">Your file manager skill is ready!</div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://python.langchain.com/docs/modules/agents/tools/" target="_blank">LangChain Tools</a> — How frameworks organize tools into skills</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: MCP - The Universal Plug -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: MCP — The Universal Plug</h2>
+            
+            <p><strong>Model Context Protocol is USB-C for AI tools.</strong> One standard way for any AI to connect to any tool server.</p>
+
+            <div class="card">
+                <h3>The Problem MCP Solves</h3>
+                <div class="mcp-diagram">
+                    <h4>Before MCP: N×M Integration Hell</h4>
+                    <div class="mcp-before">
+                        <div class="mcp-node">GPT-4</div>
+                        <div class="mcp-node">Claude</div>
+                        <div class="mcp-node">Gemini</div>
+                        <div class="mcp-connector">Custom API</div>
+                        <div class="mcp-connector">Different API</div>
+                        <div class="mcp-connector">Another API</div>
+                        <div class="mcp-node">Calendar</div>
+                        <div class="mcp-node">Email</div>
+                        <div class="mcp-node">Files</div>
+                    </div>
+                    <p style="margin: 20px 0; color: #6b7280;">Every model needs custom integration with every tool = 9 different APIs</p>
+                    
+                    <h4>After MCP: N+M Standard Connection</h4>
+                    <div class="mcp-after">
+                        <div class="mcp-node">GPT-4</div>
+                        <div class="mcp-node">Claude</div>
+                        <div class="mcp-node">Gemini</div>
+                        <div class="mcp-connector" style="background: #16a34a;">MCP</div>
+                        <div class="mcp-connector" style="background: #16a34a;">MCP</div>
+                        <div class="mcp-connector" style="background: #16a34a;">MCP</div>
+                        <div class="mcp-node">Calendar</div>
+                        <div class="mcp-node">Email</div>
+                        <div class="mcp-node">Files</div>
+                    </div>
+                    <p style="margin: 20px 0; color: #16a34a;">Every model speaks MCP = one standard, everything connects</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Building an MCP Server</h3>
+                <p><strong>MCP is JSON-RPC over stdio.</strong> Your tool server speaks a standard protocol.</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// A minimal MCP server in JavaScript
+const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
+const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
+
+class CalculatorServer {
+  constructor() {
+    this.server = new Server({
+      name: 'calculator-server',
+      version: '1.0.0'
+    }, {
+      capabilities: {
+        tools: {}
+      }
+    });
+    
+    // Register our calculator tool
+    this.server.setRequestHandler('tools/list', async () => ({
+      tools: [{
+        name: 'calculator',
+        description: 'Evaluate mathematical expressions',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            expression: {
+              type: 'string',
+              description: 'The mathematical expression to evaluate'
+            }
+          },
+          required: ['expression']
+        }
+      }]
+    }));
+    
+    // Handle tool calls
+    this.server.setRequestHandler('tools/call', async (request) => {
+      if (request.params.name === 'calculator') {
+        const { expression } = request.params.arguments;
+        try {
+          const result = eval(expression);  // Don't use eval in production!
+          return {
+            content: [{
+              type: 'text',
+              text: `Result: ${result}`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error: ${error.message}`
+            }],
+            isError: true
+          };
+        }
+      }
+    });
+  }
+  
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
+}
+
+// Start the server
+const server = new CalculatorServer();
+server.run().catch(console.error);</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="buildMCPServer()">Build MCP Server</button>
+            </div>
+
+            <div class="card" id="mcp-demo" style="display: none;">
+                <h3>Test MCP Connection</h3>
+                <p>Your MCP server is running! It can connect to any MCP-compatible AI client.</p>
+                
+                <div class="code-block">
+                    <pre><code># Connect Claude Desktop to your MCP server
+# Add to ~/Library/Application Support/Claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "calculator": {
+      "command": "node",
+      "args": ["path/to/your/calculator-server.js"]
+    }
+  }
+}</code></pre>
+                </div>
+                
+                <p><strong>Now Claude, GPT-4, or any MCP client can use your calculator tool.</strong> Same server, different AIs.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://modelcontextprotocol.io" target="_blank">MCP Specification</a> — The complete protocol documentation</p>
+                <p><a href="https://github.com/modelcontextprotocol" target="_blank">MCP on GitHub</a> — Reference implementations and examples</p>
+            </div>
+        </div>
+
+        <!-- The Finale -->
+        <div class="chapter" id="finale">
+            <h2>You Built a Tool System</h2>
+            
+            <div class="card">
+                <p><strong>You just built the foundation of every AI agent system:</strong></p>
+                <ul style="margin: 20px 0; padding-left: 40px;">
+                    <li>✅ <strong>Function calling</strong> — How AI calls tools</li>
+                    <li>✅ <strong>ReAct loops</strong> — How AI chains multiple tools</li>
+                    <li>✅ <strong>Skills</strong> — How to package related tools</li>
+                    <li>✅ <strong>MCP</strong> — How to make tools universal</li>
+                </ul>
+                
+                <p>This isn't a demo. <strong>This is how ChatGPT Code Interpreter works.</strong> How Cursor writes code. How every AI agent that "does things" actually does them.</p>
+                
+                <p><strong>The difference between a chatbot and an agent? Tools.</strong></p>
+            </div>
+
+            <div class="cta-section">
+                <h3>What You Can Build Now</h3>
+                <p>With tools, your AI can control anything with an API.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>🔧 DevOps Agent</strong><br>
+                        Deploy apps, manage servers, run builds
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>📊 Data Agent</strong><br>
+                        Query databases, analyze spreadsheets
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>📱 Social Agent</strong><br>
+                        Post tweets, send emails, manage calendar
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>🏠 Home Agent</strong><br>
+                        Control lights, check weather, order groceries
+                    </div>
+                </div>
+                <p><strong>The question isn't what's possible. Everything with an API is possible.</strong></p>
+                <p><strong>The question is what you'll build first.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            calculatorEnabled: false,
+            multiToolEnabled: false,
+            fileSkillBuilt: false,
+            mcpServerBuilt: false
+        };
+
+        // Load saved progress
+        const savedProgress = localStorage.getItem('toolSystemProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+        }
+
+        function saveProgress() {
+            localStorage.setItem('toolSystemProgress', JSON.stringify(progress));
+        }
+
+        // Chapter visibility with intersection observer
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.chapter').forEach(chapter => {
+                observer.observe(chapter);
+            });
+
+            updateChapterVisibility();
+        });
+
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5', 'finale'];
+            const requirements = [
+                true, // Chapter 2 always visible
+                progress.calculatorEnabled,
+                progress.multiToolEnabled,
+                progress.fileSkillBuilt,
+                progress.mcpServerBuilt
+            ];
+
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                }
+            });
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.textContent;
+            navigator.clipboard.writeText(codeBlock).then(() => {
+                button.textContent = '✓ Copied';
+                setTimeout(() => button.textContent = 'Copy', 2000);
+            });
+        }
+
+        function simulateHelplessAI() {
+            const input = document.getElementById('helpless-input');
+            const chat = document.getElementById('helpless-chat');
+            
+            if (!input.value.trim()) return;
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-msg';
+            userMsg.textContent = input.value;
+            chat.appendChild(userMsg);
+            
+            // Simulate AI's helpless response
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'message ai-msg';
+                
+                const responses = {
+                    'time': "I don't have access to the current time. I can tell you about time zones and calendars, but I can't check what time it is right now.",
+                    'weather': "I can't check the current weather. I know about weather patterns and climate, but I have no way to access real-time weather data.",
+                    'calculate': "Let me guess... 247,871? I'm not actually calculating - I'm just predicting what numbers might look reasonable. I can't do math reliably.",
+                    'file': "I can't read or access files on your computer. I can help you write code that would read files, but I can't actually execute it.",
+                    'default': "I don't have the ability to do that. I can only process and generate text based on the conversation we're having right now."
+                };
+                
+                const query = input.value.toLowerCase();
+                if (query.includes('time')) aiMsg.textContent = responses.time;
+                else if (query.includes('weather')) aiMsg.textContent = responses.weather;
+                else if (query.includes('×') || query.includes('*') || query.includes('847')) aiMsg.textContent = responses.calculate;
+                else if (query.includes('file') || query.includes('read')) aiMsg.textContent = responses.file;
+                else aiMsg.textContent = responses.default;
+                
+                chat.appendChild(aiMsg);
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+            
+            input.value = '';
+        }
+
+        function enableCalculator() {
+            progress.calculatorEnabled = true;
+            document.getElementById('calculator-demo').style.display = 'block';
+            document.querySelector('#chapter-2 .run-btn').textContent = '✓ Calculator Built';
+            document.querySelector('#chapter-2 .run-btn').style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+        }
+
+        function testCalculator() {
+            const input = document.getElementById('calc-input');
+            const display = document.getElementById('calc-display');
+            
+            if (!input.value.trim()) return;
+            
+            try {
+                const result = eval(input.value);  // Don't use eval in production!
+                display.innerHTML = `<strong>Expression:</strong> ${input.value}<br><strong>Result:</strong> ${result}`;
+                display.style.background = '#f0fdf4';
+            } catch (error) {
+                display.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                display.style.background = '#fef2f2';
+            }
+            
+            input.value = '';
+        }
+
+        function demoReActLoop() {
+            const steps = document.querySelectorAll('.react-step');
+            let currentStep = 0;
+            
+            function animateStep() {
+                // Remove active class from all steps
+                steps.forEach(step => step.classList.remove('active'));
+                
+                // Add active class to current step
+                steps[currentStep].classList.add('active');
+                
+                currentStep = (currentStep + 1) % steps.length;
+                
+                if (currentStep === 0) {
+                    setTimeout(() => {
+                        steps.forEach(step => step.classList.remove('active'));
+                    }, 1000);
+                    return;
+                }
+                
+                setTimeout(animateStep, 1500);
+            }
+            
+            animateStep();
+        }
+
+        function enableMultiTool() {
+            progress.multiToolEnabled = true;
+            document.getElementById('complex-demo').style.display = 'block';
+            document.querySelector('#chapter-3 .run-btn').textContent = '✓ Multi-Tool Agent Built';
+            document.querySelector('#chapter-3 .run-btn').style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+        }
+
+        function testComplexQuery() {
+            const display = document.getElementById('complex-display');
+            const steps = [
+                "🤔 Thinking: I need to check NYC weather, then maybe do math...",
+                "🌤️ Calling get_weather('NYC'): 45°F, cloudy",
+                "🤔 Thinking: 45°F is below 50°F, so I need to calculate 50 - 45",
+                "🧮 Calling calculator('50 - 45'): 5",
+                "💬 Response: The temperature in NYC is 45°F. Since it's below 50°F, the difference is 5°F."
+            ];
+            
+            let currentStep = 0;
+            display.style.background = '#f0f9ff';
+            
+            function showStep() {
+                if (currentStep < steps.length) {
+                    display.innerHTML = steps[currentStep];
+                    currentStep++;
+                    setTimeout(showStep, 2000);
+                } else {
+                    display.style.background = '#f0fdf4';
+                }
+            }
+            
+            showStep();
+        }
+
+        function buildFileSkill() {
+            progress.fileSkillBuilt = true;
+            document.getElementById('skill-demo').style.display = 'block';
+            document.querySelector('#chapter-4 .run-btn').textContent = '✓ File Skill Packaged';
+            document.querySelector('#chapter-4 .run-btn').style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+        }
+
+        function testFileSkill() {
+            const input = document.getElementById('skill-input');
+            const display = document.getElementById('skill-display');
+            
+            if (!input.value.trim()) return;
+            
+            const responses = {
+                'create': "📝 I'll create that file for you. First, let me check the directory structure with list_directory, then use write_file to create your file.",
+                'list': "📁 I'll use list_directory to show you what's in that folder. Give me a path and I'll list everything.",
+                'read': "👀 I can read that file with read_file. Just provide the file path and I'll show you the contents.",
+                'search': "🔍 I'll use search_files to find what you're looking for. I can search by filename or file contents.",
+                'default': "🛠️ I have four tools available: read_file, write_file, list_directory, and search_files. What would you like me to help you with?"
+            };
+            
+            const query = input.value.toLowerCase();
+            let response = responses.default;
+            
+            if (query.includes('create') || query.includes('write')) response = responses.create;
+            else if (query.includes('list') || query.includes('directory')) response = responses.list;
+            else if (query.includes('read') || query.includes('show')) response = responses.read;
+            else if (query.includes('search') || query.includes('find')) response = responses.search;
+            
+            display.innerHTML = response;
+            display.style.background = '#f0fdf4';
+            input.value = '';
+        }
+
+        function buildMCPServer() {
+            progress.mcpServerBuilt = true;
+            document.getElementById('mcp-demo').style.display = 'block';
+            document.querySelector('#chapter-5 .run-btn').textContent = '✓ MCP Server Built';
+            document.querySelector('#chapter-5 .run-btn').style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', updateChapterVisibility);
+    </script>
+
+    <div style="max-width:720px;margin:60px auto;padding:30px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:8px;">🧠 Final Recall</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Test yourself. No peeking. These questions cover everything you just learned.</p>
+        <div id="quiz-container">
+            <div class="quiz-question">
+                <p><strong>1. Why do large language models need tools to be truly useful?</strong></p>
+                <label><input type="radio" name="q1" value="a"> A) They are too slow without tools</label><br>
+                <label><input type="radio" name="q1" value="b"> B) They are "brilliant but helpless" - they can reason but can't interact with the real world</label><br>
+                <label><input type="radio" name="q1" value="c"> C) They consume too much memory without tools</label><br>
+                <label><input type="radio" name="q1" value="d"> D) They need tools to generate better text</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>2. What is the key component needed to define a tool for function calling?</strong></p>
+                <label><input type="radio" name="q2" value="a"> A) The actual code implementation</label><br>
+                <label><input type="radio" name="q2" value="b"> B) A JSON schema describing the function name, description, and parameters</label><br>
+                <label><input type="radio" name="q2" value="c"> C) A database connection</label><br>
+                <label><input type="radio" name="q2" value="d"> D) An API key</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>3. In the ReAct loop, what do the four steps represent?</strong></p>
+                <label><input type="radio" name="q3" value="a"> A) Read → Access → Call → Transform</label><br>
+                <label><input type="radio" name="q3" value="b"> B) Reason → Act → Observe → (Repeat)</label><br>
+                <label><input type="radio" name="q3" value="c"> C) Request → Authenticate → Connect → Transfer</label><br>
+                <label><input type="radio" name="q3" value="d"> D) Receive → Analyze → Compute → Transmit</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>4. What's the difference between a tool and a skill?</strong></p>
+                <label><input type="radio" name="q4" value="a"> A) Tools are faster than skills</label><br>
+                <label><input type="radio" name="q4" value="b"> B) A tool is one function; a skill is a package of related tools plus instructions</label><br>
+                <label><input type="radio" name="q4" value="c"> C) Skills are older technology than tools</label><br>
+                <label><input type="radio" name="q4" value="d"> D) Tools work locally, skills work in the cloud</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>5. What problem does the Model Context Protocol (MCP) solve?</strong></p>
+                <label><input type="radio" name="q5" value="a"> A) It makes AI models run faster</label><br>
+                <label><input type="radio" name="q5" value="b"> B) It provides a universal standard so any AI model can connect to any tool server</label><br>
+                <label><input type="radio" name="q5" value="c"> C) It reduces the cost of running AI models</label><br>
+                <label><input type="radio" name="q5" value="d"> D) It makes training AI models easier</label><br>
+            </div>
+        </div>
+        <button onclick="checkQuizTools()" style="margin-top:16px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Check Answers</button>
+        <div id="quiz-result" style="margin-top:16px;font-size:18px;font-weight:600;"></div>
+        
+        <script>
+        function checkQuizTools() {
+            const answers = {q1: 'b', q2: 'b', q3: 'b', q4: 'b', q5: 'b'};
+            let score = 0;
+            let total = Object.keys(answers).length;
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const correctAnswer = answers[question];
+                
+                // Reset all radio button styles
+                document.querySelectorAll(`input[name="${question}"]`).forEach(radio => {
+                    radio.parentElement.style.color = '';
+                    radio.parentElement.style.fontWeight = '';
+                });
+                
+                if (selected) {
+                    if (selected.value === correctAnswer) {
+                        score++;
+                        selected.parentElement.style.color = '#16a34a';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    } else {
+                        selected.parentElement.style.color = '#dc2626';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    }
+                }
+                
+                // Highlight correct answer
+                const correctRadio = document.querySelector(`input[name="${question}"][value="${correctAnswer}"]`);
+                if (correctRadio && (!selected || selected.value !== correctAnswer)) {
+                    correctRadio.parentElement.style.color = '#16a34a';
+                    correctRadio.parentElement.style.fontWeight = 'bold';
+                }
+            }
+            
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `🎉 Perfect! ${score}/${total} - You've mastered tool systems!`;
+                resultDiv.style.color = '#16a34a';
+            } else if (score >= total * 0.8) {
+                resultDiv.innerHTML = `🌟 Excellent! ${score}/${total} - Strong grasp of the concepts.`;
+                resultDiv.style.color = '#059669';
+            } else if (score >= total * 0.6) {
+                resultDiv.innerHTML = `👍 Good job! ${score}/${total} - Review the highlighted areas.`;
+                resultDiv.style.color = '#d97706';
+            } else {
+                resultDiv.innerHTML = `📚 ${score}/${total} - Consider reviewing the course material.`;
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        </script>
+        
+        <style>
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .quiz-question input[type="radio"] {
+            margin-right: 8px;
+        }
+        </style>
+    </div>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-finetune/" style="color:#2563eb;text-decoration:none;">← Previous: Fine-Tune</a>
+        <a href="../build-vision/" style="color:#2563eb;text-decoration:none;">Next: Vision Model →</a>
+    </div>
+</body>
+</html>

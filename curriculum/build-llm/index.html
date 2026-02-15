@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own LLM — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interactive-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .tokenizer-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tokenizer-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: monospace;
+        }
+
+        .tokens-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .token {
+            background: #2563eb;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .token-ids {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .token-id {
+            background: #dc2626;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .bigram-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .bigram-table th,
+        .bigram-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .bigram-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .prediction-game {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .prediction-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .prediction-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .prediction-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .prediction-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .prediction-btn.correct {
+            background: #16a34a;
+            color: white;
+        }
+
+        .attention-heatmap {
+            display: grid;
+            gap: 2px;
+            margin: 20px 0;
+        }
+
+        .attention-cell {
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 60px;
+        }
+
+        .attention-word {
+            font-weight: 600;
+            background: #f8fafc;
+        }
+
+        .layer-slider {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .model-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .model-toggle {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .model-output {
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            min-height: 80px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .go-deeper {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .prediction-game {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 1 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own LLM — From Scratch</h1>
+            <p>You use AI every day. But do you know how it actually works?</p>
+            <p>In 30 minutes, you'll build a language model from scratch — and finally understand the magic.</p>
+            <p><strong>For absolute beginners.</strong> No math degree required.</p>
+        </div>
+
+        <!-- Chapter 1: Letters to Numbers -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: Letters to Numbers</h2>
+            
+            <p>Computers don't understand words. <strong>They only understand numbers.</strong></p>
+            
+            <p>Before any AI can think about language, it has to convert text into numbers. This process is called <strong>tokenization</strong> — breaking text into small pieces (tokens) and assigning each piece a unique number.</p>
+
+            <div class="card">
+                <h3>Try It: Live Tokenizer</h3>
+                <div class="interactive-box">
+                    <div class="tokenizer-demo">
+                        <input 
+                            type="text" 
+                            class="tokenizer-input" 
+                            id="tokenizer-input" 
+                            placeholder="Type anything... try 'understanding'"
+                            oninput="tokenizeText()"
+                        />
+                        <div>
+                            <strong>Tokens (words/pieces):</strong>
+                            <div class="tokens-display" id="tokens-display"></div>
+                        </div>
+                        <div>
+                            <strong>Token IDs (numbers):</strong>
+                            <div class="token-ids" id="token-ids"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p>Notice how "understanding" becomes ["under", "stand", "ing"]? <strong>The AI learns that words with similar parts have similar meanings.</strong></p>
+                
+                <p>Try typing "misunderstanding" — see how it reuses the same pieces?</p>
+            </div>
+
+            <div class="card">
+                <h3>BPE: Building the Vocabulary</h3>
+                
+                <p>How does the AI know to split "understanding" that way? It uses **Byte Pair Encoding (BPE)** — it looks at lots of text and finds the most common pairs of characters.</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Simple BPE example:
+// 1. Start with characters: u-n-d-e-r-s-t-a-n-d-i-n-g
+// 2. Find most common pairs: "nd" appears twice
+// 3. Merge: u-(nd)-e-r-s-t-a-(nd)-i-n-g  
+// 4. Repeat until you have ~50,000 tokens
+
+function buildVocab(texts) {
+  let vocab = [...'abcdefghijklmnopqrstuvwxyz '];
+  
+  for (let merges = 0; merges < 1000; merges++) {
+    let pairCounts = {};
+    
+    // Count all adjacent pairs
+    texts.forEach(text => {
+      for (let i = 0; i < text.length - 1; i++) {
+        let pair = text.slice(i, i + 2);
+        pairCounts[pair] = (pairCounts[pair] || 0) + 1;
+      }
+    });
+    
+    // Find most common pair and merge it
+    let bestPair = Object.keys(pairCounts).reduce(
+      (a, b) => pairCounts[a] > pairCounts[b] ? a : b
+    );
+    
+    vocab.push(bestPair);
+    texts = texts.map(text => text.replaceAll(bestPair, bestPair));
+  }
+  
+  return vocab;
+}</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter1()" id="complete-ch1-btn">I Understand Tokenization</button>
+                
+                <p><strong>Every word becomes a list of numbers.</strong> "Hello world" → [15496, 1917]. Now the AI can work with it.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://youtube.com/watch?v=zduSFxRajkE" target="_blank">Andrej Karpathy: "Tokenization Explained"</a> — The clearest explanation of how tokenizers work</p>
+            </div>
+        </div>
+
+        <!-- Chapter 2: The Prediction Game -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: The Prediction Game</h2>
+            
+            <p><strong>Language modeling is just predicting the next word.</strong> Given some text, what word comes next?</p>
+            
+            <p>Let's start simple: with a **frequency table**. If we see "I like" in our training data, what usually comes after?</p>
+
+            <div class="card">
+                <h3>Try It: Bigram Prediction</h3>
+                <div class="interactive-box">
+                    <div class="prediction-game">
+                        <div class="prediction-input">
+                            <p><strong>Text so far:</strong> "<span id="context-text">The cat sat on the</span>"</p>
+                            <p>What comes next?</p>
+                        </div>
+                        <div class="prediction-buttons" id="prediction-buttons">
+                            <button class="prediction-btn" onclick="makePrediction(this, 'mat')">mat</button>
+                            <button class="prediction-btn" onclick="makePrediction(this, 'floor')">floor</button>
+                            <button class="prediction-btn" onclick="makePrediction(this, 'chair')">chair</button>
+                            <button class="prediction-btn" onclick="makePrediction(this, 'table')">table</button>
+                        </div>
+                    </div>
+                    
+                    <div id="prediction-result" style="margin-top: 15px; font-weight: 600;"></div>
+                </div>
+                
+                <p><strong>You just did language modeling!</strong> You used your knowledge to predict the next word. A **bigram model** does the same thing with statistics.</p>
+            </div>
+
+            <div class="card">
+                <h3>Building a Bigram Table</h3>
+                
+                <table class="bigram-table" id="bigram-table">
+                    <thead>
+                        <tr>
+                            <th>Previous Word</th>
+                            <th>Next Word</th>
+                            <th>Count</th>
+                            <th>Probability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>the</td><td>cat</td><td>5</td><td>0.25</td></tr>
+                        <tr><td>the</td><td>dog</td><td>3</td><td>0.15</td></tr>
+                        <tr><td>the</td><td>mat</td><td>8</td><td>0.40</td></tr>
+                        <tr><td>the</td><td>floor</td><td>4</td><td>0.20</td></tr>
+                    </tbody>
+                </table>
+                
+                <p>**The AI picks the most likely next word based on what it saw in training.** But there's a problem...</p>
+                
+                <div class="code-block">
+                    <pre><code>// Bigram problem: only looks at ONE previous word
+"The cat sat on the ___"
+// Only sees "the", ignores "cat sat on"
+// Might predict "cat" again!</code></pre>
+                </div>
+                
+                <p><strong>Bigrams are dumb. They only look at one word back.</strong> Neural networks can look at ALL previous words at once.</p>
+            </div>
+
+            <div class="card">
+                <h3>Neural Network Magic</h3>
+                
+                <p>Instead of counting words, a **neural network learns weights** — numbers that capture patterns in language.</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Simplified neural network prediction
+function predict(tokens, weights) {
+  let score = 0;
+  
+  // Each token contributes to the prediction
+  for (let i = 0; i < tokens.length; i++) {
+    let tokenId = tokens[i];
+    let position = i;
+    
+    // Learned weights for this token at this position
+    score += weights[tokenId][position];
+  }
+  
+  // Convert score to probability
+  return softmax(score);
+}
+
+// The network learns: what patterns predict what words?
+// "The cat sat" → high score for "on"
+// "I love" → high score for "you"</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter2()" id="complete-ch2-btn">I Understand Prediction</button>
+                
+                <p><strong>Training adjusts the weights until predictions match real text.</strong> See 1 billion examples, learn 1 billion patterns.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://youtube.com/watch?v=7xTGNNLPyMI" target="_blank">Karpathy: "Deep Dive into LLMs" (start at 23:04)</a> — How neural networks learn to predict</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: The Attention Trick -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: The Attention Trick</h2>
+            
+            <p>Even smart neural networks have a problem: <strong>they treat all words equally.</strong> But some words are more important than others.</p>
+            
+            <p>"The cat that my neighbor owns sat on the mat" — to predict what comes after "sat", which words matter most? "cat" and "sat", not "neighbor" or "owns".</p>
+            
+            <p><strong>Attention lets every word look at every other word and decide what's important.</strong></p>
+
+            <div class="card">
+                <h3>Try It: Attention Heatmap</h3>
+                <div class="interactive-box">
+                    <input 
+                        type="text" 
+                        class="tokenizer-input" 
+                        id="attention-input" 
+                        placeholder="Type a sentence... try 'The cat sat on the mat'"
+                        oninput="updateAttention()"
+                    />
+                    <div class="attention-heatmap" id="attention-heatmap"></div>
+                    <p><em>Each cell shows how much one word "attends to" another. Darker = more attention.</em></p>
+                </div>
+                
+                <p>Notice how "sat" pays attention to "cat" (the thing doing the sitting) and "on" pays attention to "mat" (the location)? <strong>The network learns these relationships automatically.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>The Math (With Real Numbers)</h3>
+                
+                <p>**Attention uses three matrices: Query (Q), Key (K), and Value (V).** Think of it like a database lookup:</p>
+                
+                <div class="code-block">
+                    <pre><code>// Example with tiny numbers:
+// Word: "cat"
+let query = [0.1, 0.8];    // "What am I looking for?"
+let key   = [0.2, 0.9];    // "What do I contain?"  
+let value = [0.5, 0.3];    // "What information do I have?"
+
+// Attention score = query · key (dot product)
+let score = query[0]*key[0] + query[1]*key[1]
+         = 0.1*0.2 + 0.8*0.9 
+         = 0.02 + 0.72 
+         = 0.74
+
+// High score = pay attention to this word</code></pre>
+                </div>
+                
+                <p>**The scaled dot-product attention equation:**</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>function attention(Q, K, V) {
+  // 1. Calculate all attention scores
+  let scores = matmul(Q, transpose(K));
+  
+  // 2. Scale by sqrt(dimension) to prevent explosion
+  scores = scale(scores, 1 / Math.sqrt(K[0].length));
+  
+  // 3. Softmax: turn scores into probabilities
+  let weights = softmax(scores);
+  
+  // 4. Mix the values according to attention weights
+  let output = matmul(weights, V);
+  
+  return output;
+}
+
+// This happens in parallel for every word in the sentence</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter3()" id="complete-ch3-btn">I Understand Attention</button>
+                
+                <p><strong>Every word gets to vote on what every other word should represent.</strong> This is the breakthrough that made modern AI possible.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://youtube.com/watch?v=eMlx5fFNoYc" target="_blank">3Blue1Brown: "Attention in Transformers"</a> — Beautiful visual explanation</p>
+                <p><a href="https://arxiv.org/abs/1706.03762" target="_blank">"Attention Is All You Need" paper (§3.2)</a> — The original attention paper</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Stack and Scale -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Stack and Scale</h2>
+            
+            <p><strong>One attention layer is weak.</strong> It can only learn simple patterns. But stack many layers together, and magic happens.</p>
+            
+            <p>Each layer learns different things:</p>
+            <ul style="margin: 20px 0; padding-left: 30px;">
+                <li><strong>Layer 1-2:</strong> Basic grammar ("the" comes before nouns)</li>
+                <li><strong>Layer 3-6:</strong> Syntax and structure (subject-verb agreement)</li>
+                <li><strong>Layer 7-12:</strong> Facts and knowledge ("Paris is in France")</li>
+                <li><strong>Layer 13-24:</strong> Reasoning and logic</li>
+            </ul>
+
+            <div class="card">
+                <h3>Try It: Layer by Layer</h3>
+                <div class="interactive-box">
+                    <label for="layer-slider"><strong>Number of layers:</strong> <span id="layer-count">1</span></label>
+                    <input 
+                        type="range" 
+                        class="layer-slider" 
+                        id="layer-slider" 
+                        min="1" 
+                        max="24" 
+                        value="1" 
+                        oninput="updateLayers()"
+                    />
+                    
+                    <div class="model-output" id="layer-output">
+                        <strong>Input:</strong> "The capital of France is"<br>
+                        <strong>Output:</strong> "The capital of France is the"
+                    </div>
+                    
+                    <p><em>Watch how the quality improves as you add layers. Real models like GPT-4 have 100+ layers!</em></p>
+                </div>
+                
+                <p><strong>More layers = more complex thinking.</strong> But there's a pattern to how much better they get...</p>
+            </div>
+
+            <div class="card">
+                <h3>The Scaling Laws</h3>
+                
+                <p>Here's the most important discovery in AI: <strong>quality improves predictably with scale.</strong></p>
+                
+                <div class="code-block">
+                    <pre><code>// The power law of language models:
+Loss = A × (Compute)^(-α)
+
+Where:
+- Loss = how wrong the model is (lower = better)
+- Compute = training budget (GPUs × time)  
+- α ≈ 0.05 (the scaling exponent)
+
+Translation: 10x more compute → predictably better AI</code></pre>
+                </div>
+                
+                <p>This is why everyone is building bigger models:</p>
+                
+                <ul style="margin: 20px 0; padding-left: 30px;">
+                    <li><strong>GPT-1 (2018):</strong> 117M parameters, $600 training cost</li>
+                    <li><strong>GPT-2 (2019):</strong> 1.5B parameters, $40K training cost</li>
+                    <li><strong>GPT-3 (2020):</strong> 175B parameters, $4.6M training cost</li>
+                    <li><strong>GPT-4 (2023):</strong> ~1.8T parameters, ~$100M training cost</li>
+                </ul>
+                
+                <p><strong>The Chinchilla insight:</strong> Don't just make models bigger — train them on more data too. The optimal ratio is ~20 tokens per parameter.</p>
+                
+                <button class="run-btn" onclick="completeChapter4()" id="complete-ch4-btn">I Understand Scaling</button>
+                
+                <p><strong>GPT-4 is this exact architecture, just bigger.</strong> You now understand how it thinks.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2203.15556" target="_blank">Chinchilla Paper</a> — How to scale compute and data optimally</p>
+                <p><a href="https://youtube.com/watch?v=l8pRSuU81PU" target="_blank">Karpathy: "Let's reproduce GPT-2"</a> — Building a transformer from scratch</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Make It Chat -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: Make It Chat</h2>
+            
+            <p><strong>A raw language model just predicts text.</strong> Feed it "The capital of France is" and it might continue with "located in the heart of Europe" — technically correct but not conversational.</p>
+            
+            <p>How do you turn a text predictor into a helpful assistant? <strong>You teach it the format of conversation.</strong></p>
+
+            <div class="card">
+                <h3>Try It: Base vs Chat Model</h3>
+                <div class="interactive-box">
+                    <div class="model-demo">
+                        <div class="model-toggle">
+                            <button class="toggle-btn active" onclick="switchModel('base')" id="base-btn">Base Model</button>
+                            <button class="toggle-btn" onclick="switchModel('chat')" id="chat-btn">Chat Model</button>
+                        </div>
+                        
+                        <div><strong>Your input:</strong> "What is Python?"</div>
+                        
+                        <div class="model-output" id="model-response">
+                            <strong>Base model output:</strong><br>
+                            What is Python? Python is a high-level programming language that was first released in 1991. It was created by Guido van Rossum. Python is often used for web development, data analysis, artificial intelligence, and scientific computing. The language emphasizes code readability...
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>Same model, different behavior!</strong> The chat version learned conversational format during training.</p>
+            </div>
+
+            <div class="card">
+                <h3>The Training Process</h3>
+                
+                <p>Making a model conversational requires three steps:</p>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Step 1: Instruction Tuning
+// Show the model conversation examples:
+[
+  {
+    "messages": [
+      {"role": "user", "content": "What is Python?"},
+      {"role": "assistant", "content": "Python is a programming language..."}
+    ]
+  },
+  // ... thousands more examples
+]
+
+// Step 2: Human Feedback (RLHF)  
+// Humans rank model responses:
+// Response A: "Python is a programming language..." ⭐⭐⭐⭐⭐
+// Response B: "Python is a snake that..." ⭐⭐
+
+// Step 3: System Prompts
+// Hidden instructions that shape behavior:
+"You are a helpful, harmless, and honest assistant. 
+Answer questions clearly and concisely."</code></pre>
+                </div>
+                
+                <p><strong>The model learns: "When I see a conversation format, I should be helpful, not just continue the text."</strong></p>
+                
+                <button class="run-btn" onclick="completeChapter5()" id="complete-ch5-btn">I Understand Chat Models</button>
+            </div>
+
+            <div class="card">
+                <h3>You Built an LLM!</h3>
+                
+                <p style="font-size: 1.3em; font-weight: 600; text-align: center; margin: 30px 0;">
+                    🎉 <strong>Congratulations!</strong> 🎉
+                </p>
+                
+                <p><strong>You now understand every major component of modern language models:</strong></p>
+                
+                <ul style="margin: 20px 0; padding-left: 30px;">
+                    <li>✅ <strong>Tokenization:</strong> Converting text to numbers</li>
+                    <li>✅ <strong>Prediction:</strong> Using patterns to guess next words</li>
+                    <li>✅ <strong>Attention:</strong> Letting words talk to each other</li>
+                    <li>✅ <strong>Scaling:</strong> More layers = more intelligence</li>
+                    <li>✅ <strong>Chat Training:</strong> Teaching conversation format</li>
+                </ul>
+                
+                <p><strong>GPT, Claude, Gemini — they're all variations of what you just learned.</strong> Different training data, different fine-tuning, but the same core architecture.</p>
+                
+                <p>The next time someone asks "How does ChatGPT work?" — you can actually explain it.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2203.02155" target="_blank">InstructGPT Paper</a> — How to train models to follow instructions</p>
+                <p><a href="https://arxiv.org/abs/2204.05862" target="_blank">"Training language models to follow instructions"</a> — The RLHF process</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,  
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+        
+        // Load saved progress
+        const savedProgress = localStorage.getItem('llmProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('llmProgress', JSON.stringify(progress));
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateChapterVisibility();
+            if (document.getElementById('tokenizer-input').value === '') {
+                tokenizeText(); // Initialize with empty
+            }
+        });
+        
+        function updateChapterVisibility() {
+            const chapters = [
+                { id: 'chapter-2', condition: progress.chapter1 },
+                { id: 'chapter-3', condition: progress.chapter2 },
+                { id: 'chapter-4', condition: progress.chapter3 },
+                { id: 'chapter-5', condition: progress.chapter4 }
+            ];
+            
+            chapters.forEach(chapter => {
+                const element = document.getElementById(chapter.id);
+                if (chapter.condition) {
+                    element.classList.add('visible');
+                    element.classList.add('fade-in');
+                }
+            });
+        }
+        
+        // Chapter 1: Tokenization
+        function tokenizeText() {
+            const text = document.getElementById('tokenizer-input').value || 'understanding';
+            const tokens = simpleTokenize(text);
+            const tokenIds = tokens.map((token, i) => i + 1000);
+            
+            // Display tokens
+            const tokensDiv = document.getElementById('tokens-display');
+            tokensDiv.innerHTML = tokens.map(token => `<span class="token">${token}</span>`).join('');
+            
+            // Display token IDs
+            const idsDiv = document.getElementById('token-ids');
+            idsDiv.innerHTML = tokenIds.map(id => `<span class="token-id">${id}</span>`).join('');
+        }
+        
+        function simpleTokenize(text) {
+            // Simple BPE-style tokenization for demo
+            text = text.toLowerCase();
+            
+            // Common subwords
+            const subwords = [
+                'ing', 'ed', 'er', 'est', 'ly', 'tion', 'ness',
+                'un', 'pre', 're', 'over', 'under', 'mis'
+            ];
+            
+            let tokens = [];
+            let remaining = text;
+            
+            while (remaining.length > 0) {
+                let foundSubword = false;
+                
+                // Try to find subwords
+                for (let subword of subwords) {
+                    if (remaining.startsWith(subword) && remaining.length > subword.length) {
+                        tokens.push(subword);
+                        remaining = remaining.slice(subword.length);
+                        foundSubword = true;
+                        break;
+                    }
+                    if (remaining.endsWith(subword) && remaining.length > subword.length) {
+                        let prefix = remaining.slice(0, -subword.length);
+                        tokens.push(prefix);
+                        tokens.push(subword);
+                        remaining = '';
+                        foundSubword = true;
+                        break;
+                    }
+                }
+                
+                if (!foundSubword) {
+                    // Split by spaces or take whole remaining
+                    let spaceIndex = remaining.indexOf(' ');
+                    if (spaceIndex === -1) {
+                        if (remaining.trim()) tokens.push(remaining.trim());
+                        break;
+                    } else {
+                        let word = remaining.slice(0, spaceIndex);
+                        if (word.trim()) tokens.push(word.trim());
+                        remaining = remaining.slice(spaceIndex + 1);
+                    }
+                }
+            }
+            
+            return tokens.filter(token => token.length > 0);
+        }
+        
+        function completeChapter1() {
+            progress.chapter1 = true;
+            document.getElementById('complete-ch1-btn').textContent = '✓ Chapter 1 Complete';
+            document.getElementById('complete-ch1-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch1-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 2: Prediction
+        let predictionScenarios = [
+            { context: 'The cat sat on the', correct: 'mat', options: ['mat', 'floor', 'chair', 'table'] },
+            { context: 'I love to eat', correct: 'pizza', options: ['pizza', 'grass', 'rocks', 'paper'] },
+            { context: 'The sun rises in the', correct: 'east', options: ['east', 'west', 'north', 'south'] }
+        ];
+        let currentScenario = 0;
+        
+        function makePrediction(button, choice) {
+            const scenario = predictionScenarios[currentScenario];
+            const resultDiv = document.getElementById('prediction-result');
+            
+            // Clear previous selections
+            document.querySelectorAll('.prediction-btn').forEach(btn => {
+                btn.classList.remove('correct');
+                btn.style.background = '';
+            });
+            
+            if (choice === scenario.correct) {
+                button.classList.add('correct');
+                resultDiv.innerHTML = '✅ Correct! You predicted like a language model.';
+                resultDiv.style.color = '#16a34a';
+                
+                // Move to next scenario
+                setTimeout(() => {
+                    currentScenario = (currentScenario + 1) % predictionScenarios.length;
+                    loadPredictionScenario();
+                }, 2000);
+            } else {
+                button.style.background = '#dc2626';
+                button.style.color = 'white';
+                resultDiv.innerHTML = '❌ Try again! Think about what usually comes after "' + scenario.context + '"';
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        
+        function loadPredictionScenario() {
+            const scenario = predictionScenarios[currentScenario];
+            document.getElementById('context-text').textContent = scenario.context;
+            
+            const buttonsDiv = document.getElementById('prediction-buttons');
+            buttonsDiv.innerHTML = scenario.options.map(option => 
+                `<button class="prediction-btn" onclick="makePrediction(this, '${option}')">${option}</button>`
+            ).join('');
+            
+            document.getElementById('prediction-result').innerHTML = '';
+        }
+        
+        function completeChapter2() {
+            progress.chapter2 = true;
+            document.getElementById('complete-ch2-btn').textContent = '✓ Chapter 2 Complete';
+            document.getElementById('complete-ch2-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch2-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 3: Attention
+        function updateAttention() {
+            const text = document.getElementById('attention-input').value || 'The cat sat on the mat';
+            const words = text.toLowerCase().split(' ').filter(w => w.length > 0);
+            
+            if (words.length === 0) return;
+            
+            const heatmap = document.getElementById('attention-heatmap');
+            
+            // Generate attention scores (simplified for demo)
+            let html = '<div style="display: grid; grid-template-columns: 100px ' + 'repeat(' + words.length + ', 60px)' + '; gap: 2px; margin-top: 10px;">';
+            
+            // Header row
+            html += '<div class="attention-cell attention-word"></div>';
+            words.forEach(word => {
+                html += `<div class="attention-cell attention-word">${word}</div>`;
+            });
+            
+            // Attention rows
+            words.forEach((sourceWord, i) => {
+                html += `<div class="attention-cell attention-word">${sourceWord}</div>`;
+                
+                words.forEach((targetWord, j) => {
+                    let attention = calculateAttention(sourceWord, targetWord, i, j);
+                    let opacity = attention;
+                    let bgColor = `rgba(37, 99, 235, ${opacity})`;
+                    let textColor = opacity > 0.5 ? 'white' : 'black';
+                    
+                    html += `<div class="attention-cell" style="background: ${bgColor}; color: ${textColor};">${Math.round(attention * 100)}</div>`;
+                });
+            });
+            
+            html += '</div>';
+            heatmap.innerHTML = html;
+        }
+        
+        function calculateAttention(source, target, sourceIdx, targetIdx) {
+            // Simplified attention calculation for demo
+            let attention = 0.1; // base attention
+            
+            // Self-attention is high
+            if (sourceIdx === targetIdx) attention += 0.4;
+            
+            // Adjacent words get more attention
+            if (Math.abs(sourceIdx - targetIdx) === 1) attention += 0.3;
+            
+            // Semantic relationships (hardcoded for demo)
+            const relationships = {
+                'cat': ['sat', 'mat'],
+                'sat': ['cat', 'on'],
+                'on': ['sat', 'mat'],
+                'the': ['cat', 'mat']
+            };
+            
+            if (relationships[source] && relationships[source].includes(target)) {
+                attention += 0.5;
+            }
+            
+            return Math.min(attention, 1.0);
+        }
+        
+        function completeChapter3() {
+            progress.chapter3 = true;
+            document.getElementById('complete-ch3-btn').textContent = '✓ Chapter 3 Complete';
+            document.getElementById('complete-ch3-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch3-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 4: Layers
+        function updateLayers() {
+            const layers = document.getElementById('layer-slider').value;
+            document.getElementById('layer-count').textContent = layers;
+            
+            const outputs = [
+                'The capital of France is the',
+                'The capital of France is a',
+                'The capital of France is Paris',
+                'The capital of France is Paris.',
+                'The capital of France is Paris, which is',
+                'The capital of France is Paris, which is known for',
+                'The capital of France is Paris, which is known for its beautiful architecture',
+                'The capital of France is Paris, which is known for its beautiful architecture and rich cultural heritage'
+            ];
+            
+            let outputIndex = Math.min(Math.floor(layers / 3), outputs.length - 1);
+            let output = outputs[outputIndex];
+            
+            // Add some quality indicators
+            let quality = 'Poor';
+            if (layers > 6) quality = 'Basic';
+            if (layers > 12) quality = 'Good';  
+            if (layers > 18) quality = 'Excellent';
+            
+            document.getElementById('layer-output').innerHTML = `
+                <strong>Input:</strong> "The capital of France is"<br>
+                <strong>Output:</strong> "${output}"<br>
+                <strong>Quality:</strong> ${quality} (${layers} layers)
+            `;
+        }
+        
+        function completeChapter4() {
+            progress.chapter4 = true;
+            document.getElementById('complete-ch4-btn').textContent = '✓ Chapter 4 Complete';
+            document.getElementById('complete-ch4-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch4-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 5: Chat Models
+        let currentModel = 'base';
+        
+        function switchModel(model) {
+            currentModel = model;
+            
+            // Update buttons
+            document.getElementById('base-btn').classList.remove('active');
+            document.getElementById('chat-btn').classList.remove('active');
+            document.getElementById(model + '-btn').classList.add('active');
+            
+            // Update response
+            const responseDiv = document.getElementById('model-response');
+            
+            if (model === 'base') {
+                responseDiv.innerHTML = `
+                    <strong>Base model output:</strong><br>
+                    What is Python? Python is a high-level programming language that was first released in 1991. It was created by Guido van Rossum. Python is often used for web development, data analysis, artificial intelligence, and scientific computing. The language emphasizes code readability...
+                `;
+            } else {
+                responseDiv.innerHTML = `
+                    <strong>Chat model output:</strong><br>
+                    Python is a popular programming language known for its simplicity and versatility. Here are the key things to know:<br><br>
+                    • Easy to learn and read<br>
+                    • Great for beginners<br>
+                    • Used for web development, data science, and AI<br>
+                    • Has a large community and many libraries<br><br>
+                    Would you like to know more about any specific aspect of Python?
+                `;
+            }
+        }
+        
+        function completeChapter5() {
+            progress.chapter5 = true;
+            document.getElementById('complete-ch5-btn').textContent = '✓ Course Complete! 🎉';
+            document.getElementById('complete-ch5-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch5-btn').classList.add('celebrating');
+            saveProgress();
+        }
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#16a34a';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+        
+        // Initialize
+        loadPredictionScenario();
+        updateAttention();
+        updateLayers();
+    </script>
+
+    <div style="max-width:720px;margin:60px auto;padding:30px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:8px;">🧠 Final Recall</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Test yourself. No peeking. These questions cover everything you just learned.</p>
+        <div id="quiz-container">
+            <div class="quiz-question">
+                <p><strong>1. A BPE tokenizer splits "understanding" into ["under", "stand", "ing"]. Why does it do this instead of character-by-character?</strong></p>
+                <label><input type="radio" name="q1" value="a"> A) To reduce the vocabulary size</label><br>
+                <label><input type="radio" name="q1" value="b"> B) Because it learned these are the most frequently occurring subword pairs</label><br>
+                <label><input type="radio" name="q1" value="c"> C) To make tokenization faster</label><br>
+                <label><input type="radio" name="q1" value="d"> D) Because English words are naturally divided this way</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>2. Why are bigram models insufficient for modern language modeling?</strong></p>
+                <label><input type="radio" name="q2" value="a"> A) They require too much memory</label><br>
+                <label><input type="radio" name="q2" value="b"> B) They only consider one previous word, ignoring longer context</label><br>
+                <label><input type="radio" name="q2" value="c"> C) They can't handle rare words</label><br>
+                <label><input type="radio" name="q2" value="d"> D) They predict too slowly</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>3. In the attention equation Attention(Q,K,V), what does the dot product Q·K represent?</strong></p>
+                <label><input type="radio" name="q3" value="a"> A) The final output vector</label><br>
+                <label><input type="radio" name="q3" value="b"> B) The compatibility score between query and key</label><br>
+                <label><input type="radio" name="q3" value="c"> C) The weighted average of values</label><br>
+                <label><input type="radio" name="q3" value="d"> D) The positional encoding</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>4. According to scaling laws, if training compute increases 10x, how much does model loss typically improve?</strong></p>
+                <label><input type="radio" name="q4" value="a"> A) It decreases by exactly 10x</label><br>
+                <label><input type="radio" name="q4" value="b"> B) It decreases by a predictable power law relationship (α ≈ 0.05)</label><br>
+                <label><input type="radio" name="q4" value="c"> C) It decreases logarithmically</label><br>
+                <label><input type="radio" name="q4" value="d"> D) It plateaus after 5x improvement</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>5. What's the key difference between a base language model and a chat model?</strong></p>
+                <label><input type="radio" name="q5" value="a"> A) Chat models have more parameters</label><br>
+                <label><input type="radio" name="q5" value="b"> B) Chat models use a different architecture</label><br>
+                <label><input type="radio" name="q5" value="c"> C) Chat models are fine-tuned on conversation data and human feedback (RLHF)</label><br>
+                <label><input type="radio" name="q5" value="d"> D) Chat models process input faster</label><br>
+            </div>
+        </div>
+        <button onclick="checkQuiz()" style="margin-top:16px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Check Answers</button>
+        <div id="quiz-result" style="margin-top:16px;font-size:18px;font-weight:600;"></div>
+        
+        <script>
+        function checkQuiz() {
+            const answers = {q1: 'b', q2: 'b', q3: 'b', q4: 'b', q5: 'c'};
+            let score = 0;
+            let total = Object.keys(answers).length;
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const correctAnswer = answers[question];
+                
+                // Reset all radio button styles
+                document.querySelectorAll(`input[name="${question}"]`).forEach(radio => {
+                    radio.parentElement.style.color = '';
+                    radio.parentElement.style.fontWeight = '';
+                });
+                
+                if (selected) {
+                    if (selected.value === correctAnswer) {
+                        score++;
+                        selected.parentElement.style.color = '#16a34a';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    } else {
+                        selected.parentElement.style.color = '#dc2626';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    }
+                }
+                
+                // Highlight correct answer
+                const correctRadio = document.querySelector(`input[name="${question}"][value="${correctAnswer}"]`);
+                if (correctRadio && (!selected || selected.value !== correctAnswer)) {
+                    correctRadio.parentElement.style.color = '#16a34a';
+                    correctRadio.parentElement.style.fontWeight = 'bold';
+                }
+            }
+            
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `🎉 Perfect! ${score}/${total} - You've mastered LLM fundamentals!`;
+                resultDiv.style.color = '#16a34a';
+            } else if (score >= total * 0.8) {
+                resultDiv.innerHTML = `🌟 Excellent! ${score}/${total} - Strong grasp of the concepts.`;
+                resultDiv.style.color = '#059669';
+            } else if (score >= total * 0.6) {
+                resultDiv.innerHTML = `👍 Good job! ${score}/${total} - Review the highlighted areas.`;
+                resultDiv.style.color = '#d97706';
+            } else {
+                resultDiv.innerHTML = `📚 ${score}/${total} - Consider reviewing the course material.`;
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        </script>
+        
+        <style>
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .quiz-question input[type="radio"] {
+            margin-right: 8px;
+        }
+        </style>
+    </div>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Previous: Series Index</a>
+        <a href="../build-rag/" style="color:#2563eb;text-decoration:none;">Next: RAG System →</a>
+    </div>
+</body>
+</html>

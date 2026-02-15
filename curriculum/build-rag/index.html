@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own RAG System — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interactive-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .hallucination-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-simulation {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .user-message {
+            background: #2563eb;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
+        .ai-message {
+            background: #f1f5f9;
+            color: #1a1a2e;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .hallucination {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .chunking-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .chunking-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .chunks-display {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .chunk {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            position: relative;
+        }
+
+        .chunk-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .vector-space {
+            width: 100%;
+            height: 300px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vector-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .vector-point:hover {
+            transform: scale(1.5);
+            z-index: 10;
+        }
+
+        .vector-point.similar {
+            background: #16a34a;
+        }
+
+        .vector-point.query {
+            background: #dc2626;
+            transform: scale(1.3);
+        }
+
+        .search-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .search-result {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .similarity-score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #2563eb;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .search-result.top-k {
+            border-left: 4px solid #16a34a;
+            background: #f0fdf4;
+        }
+
+        .rag-pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .pipeline-step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            position: relative;
+        }
+
+        .pipeline-step.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #2563eb;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .pipeline-arrow {
+            text-align: center;
+            font-size: 24px;
+            color: #6b7280;
+            margin: -10px 0;
+        }
+
+        .rag-toggle {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 4px;
+            margin: 20px 0;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .rag-demo {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+
+        .prompt-assembly {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .system-message {
+            color: #6b7280;
+        }
+
+        .retrieved-chunks {
+            color: #2563eb;
+            background: #eff6ff;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+
+        .user-query {
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .go-deeper {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .chunking-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 2 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own RAG System — From Scratch</h1>
+            <p>Your AI doesn't know about your company, your docs, or last Tuesday.</p>
+            <p>RAG fixes that. In 30 minutes, you'll build a system that lets AI answer questions about any document.</p>
+            <p><strong>For absolute beginners.</strong> No AI PhD required.</p>
+        </div>
+
+        <!-- Chapter 1: The Problem -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Problem</h2>
+            
+            <p><strong>AI models are trained on data from the past.</strong> They know about Shakespeare, but not your company's policies. They know about Python, but not your codebase. They know about cats, but not what happened in your meeting last Tuesday.</p>
+            
+            <p>Ask an AI about something it hasn't seen before, and it will **hallucinate** — make stuff up confidently.</p>
+
+            <div class="card">
+                <h3>Try It: Watch It Hallucinate</h3>
+                <div class="interactive-box">
+                    <div class="hallucination-demo">
+                        <div class="chat-simulation">
+                            <div class="user-message">
+                                What is the vacation policy at Acme Corp?
+                            </div>
+                            <div class="ai-message">
+                                <span class="hallucination">Acme Corp offers 15 days of paid vacation per year, plus 10 sick days. Employees can carry over up to 5 unused vacation days to the next year. The company also provides 2 weeks of paternity/maternity leave.</span>
+                            </div>
+                        </div>
+                        <p><em>This is completely made up! The AI has never seen Acme Corp's actual policy.</em></p>
+                    </div>
+                </div>
+                
+                <p><strong>The AI sounds confident, but it's lying.</strong> It doesn't know it's lying — it's just predicting what a reasonable policy might look like.</p>
+                
+                <button class="run-btn" onclick="showMoreHallucinations()" id="hallucination-btn">Show More Examples</button>
+                
+                <div id="more-hallucinations" style="display: none; margin-top: 20px;">
+                    <div class="chat-simulation">
+                        <div class="user-message">
+                            What did John say in yesterday's meeting?
+                        </div>
+                        <div class="ai-message">
+                            <span class="hallucination">John mentioned that the Q3 sales targets are looking good and suggested we focus more on the mobile app features for better user engagement.</span>
+                        </div>
+                    </div>
+                    <p style="margin-top: 10px;"><em>Again, completely fabricated! But it sounds plausible.</em></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Core Problem</h3>
+                
+                <div class="code-block">
+                    <pre><code>// What the AI knows:
+✅ General knowledge (Wikipedia, books, web)
+✅ Programming concepts (GitHub, Stack Overflow) 
+✅ Common facts and patterns
+
+// What the AI doesn't know:
+❌ Your company's internal documents
+❌ Recent events (after training cutoff)
+❌ Personal information
+❌ Proprietary data
+❌ Real-time information</code></pre>
+                </div>
+                
+                <p><strong>LLMs don't know your data. You have to give it to them.</strong> That's where RAG comes in.</p>
+                
+                <p>**RAG = Retrieval-Augmented Generation.** Instead of just asking the AI, you:</p>
+                
+                <ol style="margin: 20px 0; padding-left: 30px;">
+                    <li>Find relevant documents</li>
+                    <li>Give them to the AI as context</li>
+                    <li>Ask your question</li>
+                </ol>
+                
+                <button class="run-btn" onclick="completeChapter1()" id="complete-ch1-btn">I Understand the Problem</button>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Chunks -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: Chunks</h2>
+            
+            <p><strong>You can't paste a whole book into the AI prompt.</strong> Context windows are limited (usually 4K-128K tokens), and longer prompts cost more and run slower.</p>
+            
+            <p>The solution: **break documents into small pieces called "chunks."** Each chunk contains one coherent idea or topic.</p>
+
+            <div class="card">
+                <h3>Try It: Live Document Chunker</h3>
+                <div class="interactive-box">
+                    <div class="chunking-demo">
+                        <textarea 
+                            class="text-input" 
+                            id="document-input"
+                            placeholder="Paste your document here... or try the sample text below"
+                            oninput="chunkDocument()"
+                        >Our company's vacation policy is designed to promote work-life balance. All full-time employees earn 15 days of paid vacation annually, starting from their hire date.
+
+Vacation days must be requested at least two weeks in advance through our HR system. Managers will approve requests based on operational needs and team coverage.
+
+Unused vacation days can be carried over to the next year, up to a maximum of 5 days. Any excess days will be forfeited at year-end.
+
+Emergency time off may be granted at the manager's discretion for unexpected circumstances. This does not count against your vacation allowance.
+
+For questions about the vacation policy, contact HR at hr@company.com or extension 1234.</textarea>
+                        
+                        <div class="chunking-controls">
+                            <div class="control-group">
+                                <label>Chunk by:</label>
+                                <select id="chunk-method" onchange="chunkDocument()">
+                                    <option value="paragraph">Paragraph</option>
+                                    <option value="sentence">Sentence</option>
+                                    <option value="fixed">Fixed tokens (200)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>Overlap:</label>
+                                <input type="range" id="overlap-slider" min="0" max="50" value="10" onchange="chunkDocument()" />
+                                <span id="overlap-value">10%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="chunks-display" id="chunks-display"></div>
+                    </div>
+                </div>
+                
+                <p>Notice how overlap helps? If a sentence is split across chunks, the overlap ensures both chunks have enough context.</p>
+            </div>
+
+            <div class="card">
+                <h3>Chunk Size Matters</h3>
+                
+                <div class="code-block">
+                    <pre><code>// Too small (< 100 tokens):
+"Our company's vacation policy"
+// Problem: No context, meaningless fragment
+
+// Too large (> 1000 tokens):  
+[Entire 5-page policy document]
+// Problem: Too much noise, key info gets lost
+
+// Just right (200-500 tokens):
+"Our company's vacation policy is designed to promote 
+work-life balance. All full-time employees earn 15 days 
+of paid vacation annually, starting from their hire date.
+Vacation days must be requested at least two weeks in 
+advance through our HR system..."
+// Perfect: Complete thought with context</code></pre>
+                </div>
+                
+                <p><strong>The right chunk size is the difference between finding the answer and missing it.</strong></p>
+                
+                <button class="run-btn" onclick="completeChapter2()" id="complete-ch2-btn">I Understand Chunking</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://www.llamaindex.ai/blog/evaluating-the-ideal-chunk-size-for-a-rag-system-using-llamaindex-6207e5d3fec5" target="_blank">Evaluating Ideal Chunk Size for RAG</a> — Research on optimal chunking strategies</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Embeddings -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: Embeddings</h2>
+            
+            <p><strong>Each chunk needs to become a number so you can search it.</strong> But not just any number — a special kind of number that captures **meaning**.</p>
+            
+            <p>**Embeddings** are like GPS coordinates, but for meaning instead of location. Similar ideas get similar coordinates.</p>
+
+            <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+              🔗 <strong>Connection:</strong> You'll see embeddings again in Build Your Own Vision (where CLIP puts images and text in the same vector space) and Build Your Own Fine-Tune (where the model adjusts its internal embeddings during training). This is one of the most important concepts in all of AI.
+            </div>
+
+            <div class="card">
+                <h3>Try It: Vector Space Explorer</h3>
+                <div class="interactive-box">
+                    <p>Drag the points below to explore how embeddings cluster by meaning:</p>
+                    <div class="vector-space" id="vector-space">
+                        <!-- Points will be added by JavaScript -->
+                    </div>
+                    <p><em>Similar meanings cluster together. "Dog" and "puppy" are close. "Dog" and "database" are far apart.</em></p>
+                </div>
+                
+                <p><strong>The magic:</strong> An AI model reads each chunk and converts it into a list of numbers (usually 300-1500 dimensions) that represents its meaning.</p>
+            </div>
+
+            <div class="card">
+                <h3>How Embeddings Work</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Sample embedding vectors (simplified to 3 dimensions)
+const embeddings = {
+  "dog": [0.2, 0.8, 0.1],
+  "puppy": [0.3, 0.7, 0.2],      // Close to "dog"
+  "cat": [0.1, 0.6, 0.3],        // Pet-related, but different
+  "vacation": [-0.5, 0.2, 0.8],  // Completely different topic
+  "policy": [-0.3, 0.1, 0.9]     // Work-related
+};
+
+function similarity(vec1, vec2) {
+  // Cosine similarity: how "parallel" are two vectors?
+  let dotProduct = 0;
+  let mag1 = 0, mag2 = 0;
+  
+  for (let i = 0; i < vec1.length; i++) {
+    dotProduct += vec1[i] * vec2[i];
+    mag1 += vec1[i] * vec1[i];
+    mag2 += vec2[i] * vec2[i];
+  }
+  
+  return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
+}
+
+// "dog" vs "puppy" = 0.97 (very similar!)
+// "dog" vs "vacation" = -0.23 (very different)</code></pre>
+                </div>
+                
+                <p><strong>In reality, embeddings have 1000+ dimensions.</strong> Each dimension captures some aspect of meaning — past tense, emotion, topic, formality, etc.</p>
+            </div>
+
+            <div class="card">
+                <h3>Creating Embeddings</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Using OpenAI's embedding API:
+async function getEmbedding(text) {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-3-small',
+      input: text
+    })
+  });
+  
+  const data = await response.json();
+  return data.data[0].embedding; // Array of 1536 numbers
+}
+
+// Convert all chunks to embeddings
+const chunkEmbeddings = [];
+for (const chunk of chunks) {
+  const embedding = await getEmbedding(chunk.text);
+  chunkEmbeddings.push({
+    text: chunk.text,
+    embedding: embedding
+  });
+}</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter3()" id="complete-ch3-btn">I Understand Embeddings</button>
+                
+                <p><strong>Now every chunk is a point in 1536-dimensional space.</strong> Chunks with similar meanings are close together. Time to search!</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://youtube.com/watch?v=9-Jl0dxWQs8" target="_blank">3Blue1Brown: "How LLMs store facts"</a> — Visual explanation of how embeddings capture knowledge</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Search -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Search</h2>
+            
+            <p><strong>Now comes the magic moment:</strong> User asks a question → embed the question → find the closest chunks.</p>
+            
+            <p>This is **semantic search** — searching by meaning, not just keywords.</p>
+
+            <div class="card">
+                <h3>Try It: Semantic Search</h3>
+                <div class="interactive-box">
+                    <div class="search-demo">
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            id="search-input"
+                            placeholder="Ask about vacation policy... try 'Can I carry over unused days?'"
+                            oninput="performSearch()"
+                        />
+                        
+                        <div class="search-results" id="search-results"></div>
+                    </div>
+                </div>
+                
+                <p>Notice how it finds relevant chunks even when your question uses different words? **"carry over" matches "unused vacation days" because they have similar embeddings.**</p>
+            </div>
+
+            <div class="card">
+                <h3>The Search Algorithm</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>async function semanticSearch(query, chunkEmbeddings, topK = 3) {
+  // 1. Embed the user's question
+  const queryEmbedding = await getEmbedding(query);
+  
+  // 2. Calculate similarity to every chunk
+  const scores = chunkEmbeddings.map(chunk => ({
+    ...chunk,
+    similarity: cosineSimilarity(queryEmbedding, chunk.embedding)
+  }));
+  
+  // 3. Sort by similarity (highest first)
+  scores.sort((a, b) => b.similarity - a.similarity);
+  
+  // 4. Return top-K most relevant chunks
+  return scores.slice(0, topK);
+}
+
+function cosineSimilarity(vec1, vec2) {
+  const dotProduct = vec1.reduce((sum, a, i) => sum + a * vec2[i], 0);
+  const mag1 = Math.sqrt(vec1.reduce((sum, a) => sum + a * a, 0));
+  const mag2 = Math.sqrt(vec2.reduce((sum, a) => sum + a * a, 0));
+  return dotProduct / (mag1 * mag2);
+}</code></pre>
+                </div>
+                
+                <p><strong>The search finds chunks with similarity scores above a threshold</strong> (usually 0.7+). Lower scores mean the chunk probably isn't relevant.</p>
+            </div>
+
+            <div class="card">
+                <h3>Vector Databases</h3>
+                
+                <p>For real applications, you'd store embeddings in a **vector database** like Pinecone, Chroma, or Weaviate. They can search millions of vectors in milliseconds.</p>
+                
+                <div class="code-block">
+                    <pre><code>// Vector database pseudocode:
+const db = new VectorDB();
+
+// Store embeddings (do this once)
+await db.upsert(chunkEmbeddings);
+
+// Search (do this for every query)
+const results = await db.query({
+  vector: queryEmbedding,
+  topK: 5,
+  filter: { source: "company-policies" } // Optional filtering
+});
+
+// Results come back ranked by similarity</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter4()" id="complete-ch4-btn">I Understand Search</button>
+                
+                <p><strong>You now have a semantic search engine!</strong> But RAG adds one more step — using those search results to answer questions.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Generate -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: Generate</h2>
+            
+            <p><strong>The final step:</strong> Take the retrieved chunks, inject them into the prompt, ask the LLM.</p>
+            
+            <p>This is where **Retrieval-Augmented Generation** gets its name — we retrieve relevant information, then use it to augment the AI's generation.</p>
+
+            <div class="card">
+                <h3>Try It: RAG vs No-RAG</h3>
+                <div class="interactive-box">
+                    <div class="rag-toggle">
+                        <button class="toggle-btn active" onclick="toggleRAG('off')" id="no-rag-btn">Without RAG</button>
+                        <button class="toggle-btn" onclick="toggleRAG('on')" id="rag-btn">With RAG</button>
+                    </div>
+                    
+                    <div class="rag-demo" id="rag-demo">
+                        <div class="user-message">
+                            Question: "How many vacation days do I get per year?"
+                        </div>
+                        
+                        <div id="rag-response" class="ai-message">
+                            <span class="hallucination">I don't have specific information about your company's vacation policy. Typically, companies offer between 10-25 days per year depending on seniority and location. You should check with your HR department for the exact policy.</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>With RAG:</strong> The AI answers confidently with accurate information. <strong>Without RAG:</strong> It gives a generic, unhelpful response.</p>
+            </div>
+
+            <div class="card">
+                <h3>Behind the Scenes: Prompt Assembly</h3>
+                
+                <div class="interactive-box">
+                    <h4>The RAG Prompt (with retrieved chunks):</h4>
+                    <div class="prompt-assembly" id="prompt-display">
+                        <div class="system-message">System: You are a helpful assistant. Answer the user's question using only the provided context. If the context doesn't contain the answer, say so.</div>
+                        
+                        <div class="retrieved-chunks">Context:
+Our company's vacation policy is designed to promote work-life balance. All full-time employees earn 15 days of paid vacation annually, starting from their hire date.
+
+Vacation days must be requested at least two weeks in advance through our HR system. Managers will approve requests based on operational needs and team coverage.</div>
+                        
+                        <div class="user-query">User: How many vacation days do I get per year?</div>
+                    </div>
+                </div>
+                
+                <p><strong>The AI sees the relevant context right in the prompt.</strong> It doesn't need to guess — the answer is right there!</p>
+            </div>
+
+            <div class="card">
+                <h3>The Complete RAG Pipeline</h3>
+                
+                <div class="rag-pipeline">
+                    <div class="pipeline-step active" id="step-1">
+                        <div class="step-number">1</div>
+                        <h4>User asks a question</h4>
+                        <p>"How many vacation days do I get?"</p>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-2">
+                        <div class="step-number">2</div>
+                        <h4>Embed the question</h4>
+                        <p>Convert question to vector: [0.1, -0.3, 0.8, ...]</p>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-3">
+                        <div class="step-number">3</div>
+                        <h4>Search for relevant chunks</h4>
+                        <p>Find top-3 chunks with highest similarity scores</p>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-4">
+                        <div class="step-number">4</div>
+                        <h4>Build the prompt</h4>
+                        <p>System message + retrieved chunks + user question</p>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-5">
+                        <div class="step-number">5</div>
+                        <h4>Generate answer</h4>
+                        <p>LLM uses the context to provide accurate response</p>
+                    </div>
+                </div>
+                
+                <button class="run-btn" onclick="animatePipeline()" id="animate-btn">Animate Pipeline</button>
+            </div>
+
+            <div class="card">
+                <h3>The Complete Code</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>async function ragQuery(question, documents) {
+  // 1. Chunk the documents
+  const chunks = chunkDocuments(documents);
+  
+  // 2. Create embeddings for all chunks  
+  const chunkEmbeddings = [];
+  for (const chunk of chunks) {
+    const embedding = await getEmbedding(chunk);
+    chunkEmbeddings.push({ text: chunk, embedding });
+  }
+  
+  // 3. Embed the user's question
+  const questionEmbedding = await getEmbedding(question);
+  
+  // 4. Find most relevant chunks
+  const relevantChunks = semanticSearch(
+    question, 
+    chunkEmbeddings, 
+    topK = 3
+  );
+  
+  // 5. Build the prompt
+  const context = relevantChunks.map(chunk => chunk.text).join('\n\n');
+  const prompt = `
+    Context: ${context}
+    
+    Question: ${question}
+    
+    Answer based only on the context above:`;
+  
+  // 6. Get the answer from LLM
+  const response = await llm.complete(prompt);
+  return response;
+}
+
+// Usage:
+const answer = await ragQuery(
+  "How many vacation days do I get?", 
+  [vacationPolicyDoc, hrHandbookDoc]
+);
+</code></pre>
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter5()" id="complete-ch5-btn">I Built a RAG System!</button>
+                
+                <p><strong>You just built what every enterprise AI product does.</strong> Slack AI, Notion AI, Microsoft Copilot — they're all variations of this exact pattern.</p>
+            </div>
+
+            <div class="card">
+                <h3>🎉 Congratulations! 🎉</h3>
+                
+                <p style="font-size: 1.3em; font-weight: 600; text-align: center; margin: 30px 0;">
+                    <strong>You now understand RAG inside and out!</strong>
+                </p>
+                
+                <p><strong>You learned how to:</strong></p>
+                
+                <ul style="margin: 20px 0; padding-left: 30px;">
+                    <li>✅ <strong>Identify the problem:</strong> AI models don't know your data</li>
+                    <li>✅ <strong>Chunk documents:</strong> Break text into searchable pieces</li>
+                    <li>✅ <strong>Create embeddings:</strong> Convert text to meaning vectors</li>
+                    <li>✅ <strong>Semantic search:</strong> Find relevant chunks by similarity</li>
+                    <li>✅ <strong>Generate answers:</strong> Use retrieved context to ground AI responses</li>
+                </ul>
+                
+                <p><strong>Next steps:</strong> Try building your own RAG system with your company's docs. The hardest part isn't the code — it's getting clean, well-chunked data.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2005.11401" target="_blank">RAG Paper (Lewis et al.)</a> — The original Retrieval-Augmented Generation research</p>
+                <p><a href="https://python.langchain.com/docs/tutorials/rag/" target="_blank">LangChain RAG Tutorial</a> — Build production RAG systems</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,  
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+        
+        // Sample chunks for search demo
+        const sampleChunks = [
+            {
+                text: "Our company's vacation policy is designed to promote work-life balance. All full-time employees earn 15 days of paid vacation annually, starting from their hire date.",
+                embedding: [0.2, 0.8, 0.1, 0.5] // Simplified
+            },
+            {
+                text: "Vacation days must be requested at least two weeks in advance through our HR system. Managers will approve requests based on operational needs and team coverage.",
+                embedding: [0.1, 0.7, 0.2, 0.4]
+            },
+            {
+                text: "Unused vacation days can be carried over to the next year, up to a maximum of 5 days. Any excess days will be forfeited at year-end.",
+                embedding: [0.3, 0.6, 0.3, 0.6]
+            },
+            {
+                text: "Emergency time off may be granted at the manager's discretion for unexpected circumstances. This does not count against your vacation allowance.",
+                embedding: [0.0, 0.4, 0.5, 0.3]
+            },
+            {
+                text: "For questions about the vacation policy, contact HR at hr@company.com or extension 1234.",
+                embedding: [0.1, 0.3, 0.1, 0.2]
+            }
+        ];
+        
+        // Load saved progress
+        const savedProgress = localStorage.getItem('ragProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('ragProgress', JSON.stringify(progress));
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateChapterVisibility();
+            chunkDocument();
+            initVectorSpace();
+            performSearch();
+        });
+        
+        function updateChapterVisibility() {
+            const chapters = [
+                { id: 'chapter-2', condition: progress.chapter1 },
+                { id: 'chapter-3', condition: progress.chapter2 },
+                { id: 'chapter-4', condition: progress.chapter3 },
+                { id: 'chapter-5', condition: progress.chapter4 }
+            ];
+            
+            chapters.forEach(chapter => {
+                const element = document.getElementById(chapter.id);
+                if (chapter.condition) {
+                    element.classList.add('visible');
+                    element.classList.add('fade-in');
+                }
+            });
+        }
+        
+        // Chapter 1: Hallucination demo
+        function showMoreHallucinations() {
+            document.getElementById('more-hallucinations').style.display = 'block';
+            document.getElementById('hallucination-btn').textContent = '✓ I See the Problem';
+            document.getElementById('hallucination-btn').style.background = '#dc2626';
+        }
+        
+        function completeChapter1() {
+            progress.chapter1 = true;
+            document.getElementById('complete-ch1-btn').textContent = '✓ Chapter 1 Complete';
+            document.getElementById('complete-ch1-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch1-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 2: Chunking
+        function chunkDocument() {
+            const text = document.getElementById('document-input').value;
+            const method = document.getElementById('chunk-method').value;
+            const overlap = parseInt(document.getElementById('overlap-slider').value);
+            
+            document.getElementById('overlap-value').textContent = overlap + '%';
+            
+            let chunks = [];
+            
+            if (method === 'paragraph') {
+                chunks = text.split('\n\n').filter(chunk => chunk.trim().length > 0);
+            } else if (method === 'sentence') {
+                chunks = text.split('.').filter(chunk => chunk.trim().length > 0)
+                    .map(chunk => chunk.trim() + '.');
+            } else if (method === 'fixed') {
+                // Simplified token-based chunking
+                const words = text.split(' ');
+                const chunkSize = 50; // ~200 tokens ≈ 50 words
+                chunks = [];
+                
+                for (let i = 0; i < words.length; i += chunkSize) {
+                    const overlapSize = Math.floor(chunkSize * overlap / 100);
+                    const start = Math.max(0, i - overlapSize);
+                    const end = Math.min(words.length, i + chunkSize);
+                    chunks.push(words.slice(start, end).join(' '));
+                }
+            }
+            
+            // Display chunks
+            const display = document.getElementById('chunks-display');
+            display.innerHTML = chunks.map((chunk, index) => `
+                <div class="chunk">
+                    <div class="chunk-meta">Chunk ${index + 1} • ${chunk.length} chars • ~${Math.ceil(chunk.split(' ').length * 0.75)} tokens</div>
+                    <div>${chunk}</div>
+                </div>
+            `).join('');
+        }
+        
+        function completeChapter2() {
+            progress.chapter2 = true;
+            document.getElementById('complete-ch2-btn').textContent = '✓ Chapter 2 Complete';
+            document.getElementById('complete-ch2-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch2-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 3: Vector space
+        function initVectorSpace() {
+            const space = document.getElementById('vector-space');
+            
+            const concepts = [
+                { text: 'dog', x: 150, y: 100 },
+                { text: 'puppy', x: 170, y: 120 },
+                { text: 'cat', x: 100, y: 150 },
+                { text: 'pet', x: 130, y: 130 },
+                { text: 'car', x: 350, y: 80 },
+                { text: 'truck', x: 380, y: 100 },
+                { text: 'policy', x: 250, y: 200 },
+                { text: 'vacation', x: 280, y: 220 },
+            ];
+            
+            space.innerHTML = concepts.map((concept, i) => `
+                <div class="vector-point" 
+                     style="left: ${concept.x}px; top: ${concept.y}px;"
+                     title="${concept.text}"
+                     onclick="highlightSimilar('${concept.text}')">${i+1}</div>
+            `).join('');
+        }
+        
+        function highlightSimilar(clickedText) {
+            const similarities = {
+                'dog': ['puppy', 'pet'],
+                'puppy': ['dog', 'pet'],
+                'cat': ['pet'],
+                'pet': ['dog', 'puppy', 'cat'],
+                'car': ['truck'],
+                'truck': ['car'],
+                'policy': ['vacation'],
+                'vacation': ['policy']
+            };
+            
+            // Reset all points
+            document.querySelectorAll('.vector-point').forEach(point => {
+                point.classList.remove('similar', 'query');
+            });
+            
+            // Highlight clicked point and similar ones
+            const points = Array.from(document.querySelectorAll('.vector-point'));
+            const concepts = ['dog', 'puppy', 'cat', 'pet', 'car', 'truck', 'policy', 'vacation'];
+            
+            concepts.forEach((concept, i) => {
+                if (concept === clickedText) {
+                    points[i].classList.add('query');
+                } else if (similarities[clickedText] && similarities[clickedText].includes(concept)) {
+                    points[i].classList.add('similar');
+                }
+            });
+        }
+        
+        function completeChapter3() {
+            progress.chapter3 = true;
+            document.getElementById('complete-ch3-btn').textContent = '✓ Chapter 3 Complete';
+            document.getElementById('complete-ch3-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch3-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 4: Search
+        function performSearch() {
+            const query = document.getElementById('search-input').value || 'Can I carry over unused days?';
+            const resultsDiv = document.getElementById('search-results');
+            
+            // Simple similarity calculation based on keyword matching and semantic similarity
+            const results = sampleChunks.map(chunk => {
+                let similarity = calculateSimilarity(query.toLowerCase(), chunk.text.toLowerCase());
+                return { ...chunk, similarity };
+            }).sort((a, b) => b.similarity - a.similarity);
+            
+            resultsDiv.innerHTML = results.map((result, index) => `
+                <div class="search-result ${index < 3 ? 'top-k' : ''}">
+                    <div class="similarity-score">${(result.similarity * 100).toFixed(0)}%</div>
+                    <div>${result.text}</div>
+                </div>
+            `).join('');
+        }
+        
+        function calculateSimilarity(query, text) {
+            // Simple similarity based on common words and semantic hints
+            const queryWords = query.split(' ');
+            const textWords = text.split(' ');
+            
+            let score = 0;
+            
+            // Exact word matches
+            queryWords.forEach(qWord => {
+                if (textWords.includes(qWord)) {
+                    score += 0.3;
+                }
+            });
+            
+            // Semantic matches (hardcoded for demo)
+            const semanticPairs = {
+                'carry': ['carried', 'carryover', 'over'],
+                'unused': ['excess', 'remaining'],
+                'days': ['vacation', 'time', 'off'],
+                'vacation': ['time', 'days', 'leave']
+            };
+            
+            queryWords.forEach(qWord => {
+                if (semanticPairs[qWord]) {
+                    semanticPairs[qWord].forEach(semanticWord => {
+                        if (text.includes(semanticWord)) {
+                            score += 0.2;
+                        }
+                    });
+                }
+            });
+            
+            return Math.min(score, 1.0);
+        }
+        
+        function completeChapter4() {
+            progress.chapter4 = true;
+            document.getElementById('complete-ch4-btn').textContent = '✓ Chapter 4 Complete';
+            document.getElementById('complete-ch4-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch4-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 5: RAG demo
+        let ragEnabled = false;
+        
+        function toggleRAG(mode) {
+            ragEnabled = mode === 'on';
+            
+            // Update buttons
+            document.getElementById('no-rag-btn').classList.toggle('active', !ragEnabled);
+            document.getElementById('rag-btn').classList.toggle('active', ragEnabled);
+            
+            // Update response
+            const responseDiv = document.getElementById('rag-response');
+            
+            if (ragEnabled) {
+                responseDiv.innerHTML = `
+                    Based on the company policy documents, <strong>all full-time employees earn 15 days of paid vacation annually</strong>, starting from their hire date. This is clearly stated in our vacation policy.
+                `;
+                responseDiv.classList.remove('hallucination');
+                responseDiv.style.background = '#f0fdf4';
+            } else {
+                responseDiv.innerHTML = `
+                    <span class="hallucination">I don't have specific information about your company's vacation policy. Typically, companies offer between 10-25 days per year depending on seniority and location. You should check with your HR department for the exact policy.</span>
+                `;
+                responseDiv.style.background = '#fef2f2';
+            }
+        }
+        
+        function animatePipeline() {
+            const steps = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            let currentStep = 0;
+            
+            // Reset all steps
+            steps.forEach(stepId => {
+                document.getElementById(stepId).classList.remove('active');
+            });
+            
+            function highlightNext() {
+                if (currentStep < steps.length) {
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    currentStep++;
+                    setTimeout(highlightNext, 1000);
+                } else {
+                    // Reset after animation
+                    setTimeout(() => {
+                        steps.forEach(stepId => {
+                            document.getElementById(stepId).classList.remove('active');
+                        });
+                        document.getElementById('step-1').classList.add('active');
+                    }, 2000);
+                }
+            }
+            
+            highlightNext();
+        }
+        
+        function completeChapter5() {
+            progress.chapter5 = true;
+            document.getElementById('complete-ch5-btn').textContent = '✓ RAG Master! 🎉';
+            document.getElementById('complete-ch5-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch5-btn').classList.add('celebrating');
+            saveProgress();
+        }
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#16a34a';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+    </script>
+
+    <div style="max-width:720px;margin:60px auto;padding:30px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:8px;">🧠 Final Recall</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Test yourself. No peeking. These questions cover everything you just learned.</p>
+        <div id="quiz-container">
+            <div class="quiz-question">
+                <p><strong>1. What is the fundamental problem that RAG solves?</strong></p>
+                <label><input type="radio" name="q1" value="a"> A) LLMs are too slow to generate responses</label><br>
+                <label><input type="radio" name="q1" value="b"> B) LLMs hallucinate when asked about information they weren't trained on</label><br>
+                <label><input type="radio" name="q1" value="c"> C) LLMs consume too much memory</label><br>
+                <label><input type="radio" name="q1" value="d"> D) LLMs can't handle multiple languages</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>2. Why do you need to chunk documents for RAG instead of using the entire document?</strong></p>
+                <label><input type="radio" name="q2" value="a"> A) To make embeddings more accurate</label><br>
+                <label><input type="radio" name="q2" value="b"> B) Because context windows are limited and larger prompts are slower/costlier</label><br>
+                <label><input type="radio" name="q2" value="c"> C) To reduce storage requirements</label><br>
+                <label><input type="radio" name="q2" value="d"> D) Because vector databases can't handle large texts</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>3. What makes embeddings useful for semantic search?</strong></p>
+                <label><input type="radio" name="q3" value="a"> A) They compress text into smaller files</label><br>
+                <label><input type="radio" name="q3" value="b"> B) They convert text into vectors where similar meanings have similar coordinates</label><br>
+                <label><input type="radio" name="q3" value="c"> C) They make text searchable by keywords</label><br>
+                <label><input type="radio" name="q3" value="d"> D) They translate text into multiple languages</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>4. In semantic search, how do you find the most relevant chunks for a user's query?</strong></p>
+                <label><input type="radio" name="q4" value="a"> A) Count matching keywords between query and chunks</label><br>
+                <label><input type="radio" name="q4" value="b"> B) Embed the query and calculate cosine similarity with chunk embeddings</label><br>
+                <label><input type="radio" name="q4" value="c"> C) Search for exact phrase matches</label><br>
+                <label><input type="radio" name="q4" value="d"> D) Use alphabetical ordering</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>5. In the RAG prompt assembly, what components are typically included?</strong></p>
+                <label><input type="radio" name="q5" value="a"> A) Only the user's question</label><br>
+                <label><input type="radio" name="q5" value="b"> B) System instructions + retrieved context chunks + user question</label><br>
+                <label><input type="radio" name="q5" value="c"> C) Just the retrieved chunks</label><br>
+                <label><input type="radio" name="q5" value="d"> D) The entire document database</label><br>
+            </div>
+        </div>
+        <button onclick="checkQuizRAG()" style="margin-top:16px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Check Answers</button>
+        <div id="quiz-result" style="margin-top:16px;font-size:18px;font-weight:600;"></div>
+        
+        <script>
+        function checkQuizRAG() {
+            const answers = {q1: 'b', q2: 'b', q3: 'b', q4: 'b', q5: 'b'};
+            let score = 0;
+            let total = Object.keys(answers).length;
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const correctAnswer = answers[question];
+                
+                // Reset all radio button styles
+                document.querySelectorAll(`input[name="${question}"]`).forEach(radio => {
+                    radio.parentElement.style.color = '';
+                    radio.parentElement.style.fontWeight = '';
+                });
+                
+                if (selected) {
+                    if (selected.value === correctAnswer) {
+                        score++;
+                        selected.parentElement.style.color = '#16a34a';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    } else {
+                        selected.parentElement.style.color = '#dc2626';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    }
+                }
+                
+                // Highlight correct answer
+                const correctRadio = document.querySelector(`input[name="${question}"][value="${correctAnswer}"]`);
+                if (correctRadio && (!selected || selected.value !== correctAnswer)) {
+                    correctRadio.parentElement.style.color = '#16a34a';
+                    correctRadio.parentElement.style.fontWeight = 'bold';
+                }
+            }
+            
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `🎉 Perfect! ${score}/${total} - You've mastered RAG fundamentals!`;
+                resultDiv.style.color = '#16a34a';
+            } else if (score >= total * 0.8) {
+                resultDiv.innerHTML = `🌟 Excellent! ${score}/${total} - Strong grasp of the concepts.`;
+                resultDiv.style.color = '#059669';
+            } else if (score >= total * 0.6) {
+                resultDiv.innerHTML = `👍 Good job! ${score}/${total} - Review the highlighted areas.`;
+                resultDiv.style.color = '#d97706';
+            } else {
+                resultDiv.innerHTML = `📚 ${score}/${total} - Consider reviewing the course material.`;
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        </script>
+        
+        <style>
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .quiz-question input[type="radio"] {
+            margin-right: 8px;
+        }
+        </style>
+    </div>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-llm/" style="color:#2563eb;text-decoration:none;">← Previous: Build Your Own LLM</a>
+        <a href="../build-finetune/" style="color:#2563eb;text-decoration:none;">Next: Fine-Tune →</a>
+    </div>
+</body>
+</html>

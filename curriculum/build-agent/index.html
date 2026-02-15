@@ -606,6 +606,11 @@
     </style>
 </head>
 <body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 7 of 14</span>
+    </div>
+    
     <div class="container">
         <div class="hero">
             <h1>Build Your Own AI Agent — From Scratch</h1>
@@ -677,9 +682,9 @@
             </div>
         </div>
 
-        <!-- Chapter 3: The Memory -->
-        <div class="chapter" id="chapter-3">
-            <h2>Chapter 3: The Memory</h2>
+        <!-- Chapter 2: The Memory -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: The Memory</h2>
             
             <p><strong>Your agent has amnesia.</strong> Every message arrives in a vacuum. Ask it your name — it doesn't know. Reference something from two messages ago — gone.</p>
             
@@ -757,9 +762,9 @@ async function chat(message) {
             </div>
         </div>
 
-        <!-- Chapter 4: The Hands -->
-        <div class="chapter" id="chapter-4">
-            <h2>Chapter 4: The Hands</h2>
+        <!-- Chapter 3: The Hands -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: The Hands</h2>
             
             <div class="card">
                 <p>Ask your agent: <strong>"What's 847 × 293?"</strong></p>
@@ -909,9 +914,9 @@ async function chat(message) {
             </div>
         </div>
 
-        <!-- Chapter 7: The Lock -->
-        <div class="chapter" id="chapter-7">
-            <h2>Chapter 7: The Lock</h2>
+        <!-- Chapter 4: The Lock -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: The Lock</h2>
             
             <p><strong>Your agent does whatever anyone asks.</strong> That's fine when it's just you. But the moment you share it — with a friend, a coworker, the internet — you have a problem.</p>
 
@@ -1035,6 +1040,11 @@ for (const call of msg.tool_calls) {
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-voice/" style="color:#2563eb;text-decoration:none;">← Previous: Voice Assistant</a>
+        <a href="../build-eval/" style="color:#2563eb;text-decoration:none;">Next: Eval System →</a>
     </div>
 
     <!-- Chat Button and Panel -->
@@ -1280,7 +1290,7 @@ for (const call of msg.tool_calls) {
         });
         
         function updateChapterVisibility() {
-            const chapters = ['chapter-3', 'chapter-4', 'chapter-7', 'finale'];
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'finale'];
             const requirements = [
                 progress.basicChatEnabled,
                 progress.memoryEnabled,

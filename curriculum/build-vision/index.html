@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Vision Model — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .blind-demo {
+            background: #fef2f2;
+            border: 2px solid #dc2626;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .image-upload {
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-upload:hover {
+            border-color: #2563eb;
+            background: #f8fafc;
+        }
+
+        .image-upload.has-image {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .patch-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            margin: 20px 0;
+            max-width: 300px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .patch {
+            aspect-ratio: 1;
+            background: #f3f4f6;
+            border: 1px solid #e2e8f0;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+
+        .patch.active {
+            background: #2563eb;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .architecture-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .architecture-node {
+            background: #2563eb;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .architecture-arrow {
+            font-size: 24px;
+            color: #6b7280;
+        }
+
+        .side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .token-demo {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .token {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .clip-demo {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .similarity-search {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .search-input {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .search-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .result-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .similarity-score {
+            background: #2563eb;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .drag-drop-area {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+        }
+
+        .component-box {
+            background: white;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: move;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .component-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .component-box.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .drop-zone {
+            background: #f0fdf4;
+            border: 2px dashed #16a34a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a;
+        }
+
+        .drop-zone.drag-over {
+            background: #dcfce7;
+            border-color: #15803d;
+        }
+
+        .vision-test {
+            background: #fefce8;
+            border: 2px solid #eab308;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .image-analysis {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .uploaded-image {
+            max-width: 200px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .analysis-result {
+            flex: 1;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .go-deeper {
+            background: #f0f9ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .cta-section h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .side-by-side {
+                grid-template-columns: 1fr;
+            }
+
+            .drag-drop-area {
+                flex-direction: column;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .image-analysis {
+                flex-direction: column;
+            }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .sliding {
+            animation: slideIn 0.8s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 5 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own Vision Model</h1>
+            <p>AI can read text. But the world is visual.</p>
+            <p><strong>In 30 minutes you'll teach a model to see — and understand how every AI vision system works.</strong></p>
+            <p>For absolute beginners. No assumed knowledge.</p>
+        </div>
+
+        <!-- Chapter 1: The Blind Bot -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Blind Bot</h2>
+            
+            <p>Your AI agent can write poetry, solve equations, and debate philosophy. But show it a picture of your cat, and it sees... nothing.</p>
+
+            <div class="card">
+                <h3>The Blind Test</h3>
+                <div class="blind-demo">
+                    <div class="image-upload" id="blind-upload" onclick="triggerImageUpload('blind')">
+                        <input type="file" id="blind-image" accept="image/*" style="display: none;" onchange="handleBlindImage(event)">
+                        <p>📸 Click to upload an image</p>
+                        <small>Show your AI what it can't see</small>
+                    </div>
+                    
+                    <div id="blind-result" style="display: none; margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                        <strong>AI Response:</strong> "I'm sorry, but I cannot see or analyze images. I can only process text-based information."
+                    </div>
+                </div>
+                
+                <p><strong>The fundamental problem: AI models are text processors.</strong> They take words in, output words out. Images are pixels, not words.</p>
+                
+                <p>So how do you feed a picture into something that only understands words? <strong>You make the picture look like words.</strong></p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://openai.com/research/clip" target="_blank">CLIP: Connecting Text and Images</a> — OpenAI's breakthrough paper</p>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Patches to Tokens -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: Patches to Tokens</h2>
+            
+            <p><strong>Vision Transformers literally treat image patches as words.</strong> Slice an image into 16×16 patches. Each patch becomes a token.</p>
+
+            <div class="card">
+                <h3>The Patch Grid</h3>
+                <div class="image-upload" id="patch-upload" onclick="triggerImageUpload('patch')">
+                    <input type="file" id="patch-image" accept="image/*" style="display: none;" onchange="handlePatchImage(event)">
+                    <p>📸 Upload an image to see it get "tokenized"</p>
+                </div>
+                
+                <div id="patch-demo" style="display: none;">
+                    <div class="side-by-side">
+                        <div>
+                            <h4>Your Image</h4>
+                            <img id="uploaded-image" class="uploaded-image" />
+                        </div>
+                        <div>
+                            <h4>16×16 Patches (64 total)</h4>
+                            <div class="patch-grid" id="patch-grid"></div>
+                            <button class="run-btn" onclick="animatePatches()">Animate Tokenization</button>
+                        </div>
+                    </div>
+                    
+                    <div class="architecture-flow">
+                        <div class="architecture-node">224×224 Image</div>
+                        <div class="architecture-arrow">↓ Slice into patches</div>
+                        <div class="architecture-node">8×8 = 64 Patches</div>
+                        <div class="architecture-arrow">↓ Flatten each patch</div>
+                        <div class="architecture-node">64 × 768-dim Vectors</div>
+                        <div class="architecture-arrow">↓ Feed to Transformer</div>
+                        <div class="architecture-node">Same as text tokens!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Text vs. Image Tokens</h3>
+                <div class="side-by-side">
+                    <div class="token-demo">
+                        <h4>Text Tokenization</h4>
+                        <p>Input: "A red cat sits on a mat"</p>
+                        <div style="margin: 15px 0;">
+                            <span class="token">A</span>
+                            <span class="token">red</span>
+                            <span class="token">cat</span>
+                            <span class="token">sits</span>
+                            <span class="token">on</span>
+                            <span class="token">a</span>
+                            <span class="token">mat</span>
+                        </div>
+                        <small>7 tokens → Transformer</small>
+                    </div>
+                    <div class="token-demo">
+                        <h4>Image Tokenization</h4>
+                        <p>Input: 224×224 image of a cat</p>
+                        <div style="margin: 15px 0;">
+                            <span class="token">P1</span>
+                            <span class="token">P2</span>
+                            <span class="token">P3</span>
+                            <span class="token">...</span>
+                            <span class="token">P64</span>
+                        </div>
+                        <small>64 patches → Same Transformer!</small>
+                    </div>
+                </div>
+                
+                <p><strong>The breakthrough insight:</strong> Both text and images are just sequences of tokens to a Transformer. The architecture doesn't care if token #1 is the word "cat" or a 16×16 patch of pixels.</p>
+
+                <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+                  🔗 <strong>Connection:</strong> Remember tokenization from Build Your Own LLM? Same idea, different input. Text gets split into subwords. Images get split into patches. Both become vectors that the transformer processes identically. This is why the same architecture works for text AND images.
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2010.11929" target="_blank">ViT Paper: "An Image is Worth 16×16 Words"</a> — The original Vision Transformer</p>
+                <p><a href="https://www.youtube.com/watch?v=TrdevFK_am4" target="_blank">Yannic Kilcher's ViT Explanation</a> — Great visual walkthrough</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: CLIP - Connecting Words and Pictures -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: CLIP — Connecting Words and Pictures</h2>
+            
+            <p>CLIP trained on 400 million image-text pairs. <strong>Images and text end up in the same vector space.</strong> "King - man + woman = queen" but for images.</p>
+
+            <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+              🔗 <strong>Connection:</strong> Embeddings again — you first saw these in Build Your Own RAG. CLIP takes the same idea (meaning as coordinates in space) and extends it across modalities. Text and images live in the same neighborhood.
+            </div>
+
+            <div class="card">
+                <h3>The CLIP Embedding Space</h3>
+                <div class="clip-demo">
+                    <p><strong>Magic happens here:</strong> Images and their descriptions get mapped to nearby points in a high-dimensional space.</p>
+                    
+                    <div class="architecture-flow">
+                        <div style="display: flex; gap: 20px; align-items: center; justify-content: center;">
+                            <div class="architecture-node" style="background: #dc2626;">Image: "A cat"</div>
+                            <div class="architecture-node" style="background: #16a34a;">Text: "A cat"</div>
+                        </div>
+                        <div class="architecture-arrow">↓ Encode separately</div>
+                        <div style="display: flex; gap: 20px; align-items: center; justify-content: center;">
+                            <div class="architecture-node" style="background: #6b7280;">[0.2, -0.5, 0.8, ...]</div>
+                            <div class="architecture-node" style="background: #6b7280;">[0.1, -0.4, 0.9, ...]</div>
+                        </div>
+                        <div class="architecture-arrow">↓ Train to be close</div>
+                        <div class="architecture-node" style="background: #2563eb;">Same point in space!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Search Images with Text</h3>
+                <div class="similarity-search">
+                    <input type="text" class="search-input" id="clip-search" placeholder="Type: 'cat', 'car', 'sunset', 'person dancing'..." onkeyup="searchImages(event)" />
+                    
+                    <div class="search-results" id="search-results">
+                        <div class="result-item" data-category="cat">
+                            <div>🐱</div>
+                            <small>Cat</small>
+                            <div class="similarity-score">0.89</div>
+                        </div>
+                        <div class="result-item" data-category="car">
+                            <div>🚗</div>
+                            <small>Car</small>
+                            <div class="similarity-score">0.23</div>
+                        </div>
+                        <div class="result-item" data-category="sunset">
+                            <div>🌅</div>
+                            <small>Sunset</small>
+                            <div class="similarity-score">0.15</div>
+                        </div>
+                        <div class="result-item" data-category="dance">
+                            <div>💃</div>
+                            <small>Dancing</small>
+                            <div class="similarity-score">0.12</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>This is how every AI image search works.</strong> Google Photos, Pinterest, Midjourney — they're all measuring distances in CLIP space.</p>
+            </div>
+
+            <div class="card">
+                <h3>Build Your Own CLIP</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Simplified CLIP implementation in JavaScript
+class SimpleCLIP {
+  constructor() {
+    this.textEmbeddings = new Map();
+    this.imageEmbeddings = new Map();
+    
+    // Pre-computed embeddings (in real CLIP, these come from neural networks)
+    this.textEmbeddings.set('cat', [0.8, -0.2, 0.5, 0.1]);
+    this.textEmbeddings.set('dog', [0.7, -0.1, 0.4, 0.2]);
+    this.textEmbeddings.set('car', [-0.3, 0.9, -0.2, 0.6]);
+    this.textEmbeddings.set('sunset', [0.1, 0.3, 0.8, -0.4]);
+  }
+  
+  // Calculate cosine similarity between two vectors
+  similarity(vec1, vec2) {
+    const dot = vec1.reduce((sum, a, i) => sum + a * vec2[i], 0);
+    const mag1 = Math.sqrt(vec1.reduce((sum, a) => sum + a * a, 0));
+    const mag2 = Math.sqrt(vec2.reduce((sum, a) => sum + a * a, 0));
+    return dot / (mag1 * mag2);
+  }
+  
+  // Search images by text
+  searchImages(textQuery) {
+    const queryEmbedding = this.textEmbeddings.get(textQuery.toLowerCase());
+    if (!queryEmbedding) return [];
+    
+    const results = [];
+    for (const [image, embedding] of this.imageEmbeddings) {
+      const score = this.similarity(queryEmbedding, embedding);
+      results.push({ image, score });
+    }
+    
+    return results.sort((a, b) => b.score - a.score);
+  }
+}</code></pre>
+                </div>
+                <button class="run-btn" onclick="buildCLIP()">Build CLIP Search</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2103.00020" target="_blank">CLIP Paper</a> — "Learning Transferable Visual Representations from Natural Language Supervision"</p>
+                <p><a href="https://www.youtube.com/watch?v=iv-5mZ_9CPY" target="_blank">Welch Labs: CLIP Explained</a> — Excellent visual explanation</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Vision-Language Models -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Vision-Language Models</h2>
+            
+            <p>Take a vision encoder (ViT) + a language model (GPT). Connect them with a projection layer. <strong>Every multimodal AI is just a vision encoder plugged into an LLM.</strong></p>
+
+            <div class="card">
+                <h3>Drag & Drop Architecture</h3>
+                <p>Build your own vision-language model by connecting the pieces:</p>
+                
+                <div class="drag-drop-area">
+                    <div class="component-box" draggable="true" data-component="vision" ondragstart="dragStart(event)">
+                        👁️<br>Vision<br>Encoder
+                    </div>
+                    <div class="component-box" draggable="true" data-component="projection" ondragstart="dragStart(event)">
+                        🔄<br>Projection<br>Layer
+                    </div>
+                    <div class="component-box" draggable="true" data-component="llm" ondragstart="dragStart(event)">
+                        🧠<br>Language<br>Model
+                    </div>
+                </div>
+                
+                <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" id="architecture-zone">
+                    Drop components here to build your model
+                </div>
+                
+                <div id="architecture-result" style="display: none;">
+                    <div class="architecture-flow">
+                        <div class="architecture-node">Image → Vision Encoder → Image Embeddings</div>
+                        <div class="architecture-arrow">↓</div>
+                        <div class="architecture-node">Projection Layer → Text-like Tokens</div>
+                        <div class="architecture-arrow">↓</div>
+                        <div class="architecture-node">Language Model → "I see a cat on a mat"</div>
+                    </div>
+                    <p><strong>You just built GPT-4V, LLaVA, and Claude Vision!</strong> They all use this pattern.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Models You Know</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong>GPT-4V</strong><br>
+                        <small>ViT + GPT-4</small>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong>LLaVA</strong><br>
+                        <small>CLIP + LLaMA</small>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong>Claude 3</strong><br>
+                        <small>ViT + Claude</small>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong>Gemini Pro Vision</strong><br>
+                        <small>ViT + Gemini</small>
+                    </div>
+                </div>
+                <p><strong>Different vision encoders, different LLMs, same architecture.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>The Code</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Simplified vision-language model
+class VisionLanguageModel {
+  constructor() {
+    this.visionEncoder = new VisionTransformer();
+    this.projectionLayer = new LinearProjection(768, 4096); // Vision → Text dims
+    this.languageModel = new GPT();
+  }
+  
+  async generate(image, textPrompt) {
+    // 1. Encode the image
+    const imagePatches = this.preprocessImage(image); // 224x224 → 8x8 patches
+    const imageEmbeddings = this.visionEncoder.encode(imagePatches); // [64, 768]
+    
+    // 2. Project to language model dimensions
+    const projectedEmbeddings = this.projectionLayer.forward(imageEmbeddings); // [64, 4096]
+    
+    // 3. Tokenize text prompt
+    const textTokens = this.tokenize(textPrompt); // "What do you see?" → [1234, 567, 890]
+    const textEmbeddings = this.languageModel.embed(textTokens); // [3, 4096]
+    
+    // 4. Concatenate image + text embeddings
+    const combinedInput = [...projectedEmbeddings, ...textEmbeddings]; // [67, 4096]
+    
+    // 5. Generate response
+    const response = this.languageModel.generate(combinedInput);
+    return this.decode(response);
+  }
+}
+
+// Usage
+const model = new VisionLanguageModel();
+const response = await model.generate(catImage, "What do you see?");
+console.log(response); // "I see a orange cat sitting on a blue mat..."</code></pre>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2304.08485" target="_blank">LLaVA Paper</a> — Large Language and Vision Assistant</p>
+                <p><a href="https://openai.com/research/gpt-4v-system-card" target="_blank">GPT-4V System Card</a> — How OpenAI built multimodal GPT-4</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: See For Yourself -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: See For Yourself</h2>
+            
+            <p>Let's wire up a real vision model. Upload a photo, get a description, ask questions about it. <strong>Your agent can now see.</strong></p>
+
+            <div class="card">
+                <h3>Vision API Integration</h3>
+                <div class="vision-test">
+                    <div class="image-upload" id="vision-upload" onclick="triggerImageUpload('vision')">
+                        <input type="file" id="vision-image" accept="image/*" style="display: none;" onchange="handleVisionImage(event)">
+                        <p>📸 Upload an image for AI to analyze</p>
+                        <small>Your agent will describe what it sees</small>
+                    </div>
+                    
+                    <div id="vision-analysis" class="image-analysis" style="display: none;">
+                        <img id="vision-uploaded" class="uploaded-image" />
+                        <div class="analysis-result" id="vision-result">
+                            <strong>AI Analysis:</strong><br>
+                            <div id="vision-description">Analyzing image...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="vision-chat" style="display: none; margin-top: 20px;">
+                        <input type="text" placeholder="Ask about this image..." id="vision-question" onkeypress="handleVisionQuestion(event)" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;" />
+                        <button onclick="askVisionQuestion()" style="margin-top: 10px; background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Ask Question</button>
+                        <div id="vision-qa" style="margin-top: 15px; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Complete Pipeline</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Complete vision pipeline
+async function analyzeImage(imageFile, question = "What do you see?") {
+  // 1. Convert image to base64
+  const base64Image = await fileToBase64(imageFile);
+  
+  // 2. Call vision API (OpenAI GPT-4V example)
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4-vision-preview',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: question },
+          { 
+            type: 'image_url', 
+            image_url: { url: `data:image/jpeg;base64,${base64Image}` }
+          }
+        ]
+      }],
+      max_tokens: 500
+    })
+  });
+  
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// Helper function
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+// Usage
+const imageFile = document.getElementById('image-input').files[0];
+const description = await analyzeImage(imageFile, "Describe this image in detail");
+console.log(description);</code></pre>
+                </div>
+                <button class="run-btn" onclick="enableVision()">Enable Vision</button>
+            </div>
+
+            <div class="card" id="fallback-demo" style="display: none;">
+                <h3>No API Key? No Problem!</h3>
+                <p>We'll simulate the vision model with pre-built responses:</p>
+                <div class="code-block">
+                    <pre><code>// Fallback vision simulator
+const visionSimulator = {
+  responses: {
+    'cat': 'I can see an orange tabby cat sitting comfortably. The cat has bright green eyes and distinctive stripes. It appears to be resting on what looks like a soft surface.',
+    'dog': 'This image shows a friendly-looking dog, possibly a Golden Retriever. The dog has a warm golden coat and appears to be smiling or panting happily.',
+    'car': 'I can see a car in the image. It appears to be a modern sedan with a sleek design and clean lines.',
+    'landscape': 'This is a beautiful landscape photo showing natural scenery. I can see open space with natural lighting.',
+    'default': 'I can see an interesting image with various elements. The composition includes different colors and shapes that create an engaging visual.'
+  },
+  
+  analyze(imageData) {
+    // In a real implementation, this would use computer vision
+    // For demo purposes, we'll return a realistic response
+    return this.responses.default;
+  }
+};</code></pre>
+                </div>
+                <p><strong>The interface is the same whether you use GPT-4V, Claude, or a local model.</strong> That's the power of abstractions.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://platform.openai.com/docs/guides/vision" target="_blank">OpenAI Vision Guide</a> — How to use GPT-4 with images</p>
+                <p><a href="https://huggingface.co/models?pipeline_tag=image-to-text" target="_blank">HuggingFace Vision Models</a> — Free alternatives to try</p>
+            </div>
+        </div>
+
+        <!-- The Finale -->
+        <div class="chapter" id="finale">
+            <h2>Your Agent Can See</h2>
+            
+            <div class="card">
+                <p><strong>You just built the visual intelligence behind every modern AI system:</strong></p>
+                <ul style="margin: 20px 0; padding-left: 40px;">
+                    <li>✅ <strong>Image tokenization</strong> — How to feed pixels to transformers</li>
+                    <li>✅ <strong>CLIP embeddings</strong> — How to search images with text</li>
+                    <li>✅ <strong>Vision-language models</strong> — How to make AI see and talk</li>
+                    <li>✅ <strong>Real vision API</strong> — How to integrate with your agent</li>
+                </ul>
+                
+                <p>This isn't theory. <strong>This is how GPT-4V sees your photos.</strong> How Claude analyzes your screenshots. How every "multimodal AI" actually works under the hood.</p>
+                
+                <p><strong>The magic isn't the model. It's the tokenization.</strong> Turn anything into tokens, and transformers can process it.</p>
+            </div>
+
+            <div class="cta-section">
+                <h3>What You Can Build Now</h3>
+                <p>With vision, your AI can understand any visual input.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>📸 Photo Organizer</strong><br>
+                        Sort and tag thousands of images automatically
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>🎨 Design Assistant</strong><br>
+                        Analyze UI mockups and generate code
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>📊 Chart Reader</strong><br>
+                        Extract data from graphs and infographics
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                        <strong>🔍 Visual Search</strong><br>
+                        Find similar images in massive databases
+                    </div>
+                </div>
+                <p><strong>Vision + Language = Limitless Possibilities</strong></p>
+                <p><strong>What will you teach your agent to see?</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            blindTestShown: false,
+            patchDemoEnabled: false,
+            clipBuilt: false,
+            architectureBuilt: false,
+            visionEnabled: false
+        };
+
+        // Components for drag & drop
+        const droppedComponents = [];
+
+        // Load saved progress
+        const savedProgress = localStorage.getItem('visionModelProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+        }
+
+        function saveProgress() {
+            localStorage.setItem('visionModelProgress', JSON.stringify(progress));
+        }
+
+        // Chapter visibility with intersection observer
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.chapter').forEach(chapter => {
+                observer.observe(chapter);
+            });
+
+            updateChapterVisibility();
+        });
+
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5', 'finale'];
+            const requirements = [
+                true, // Chapter 2 always visible
+                progress.patchDemoEnabled,
+                progress.clipBuilt,
+                progress.architectureBuilt,
+                progress.visionEnabled
+            ];
+
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                }
+            });
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.textContent;
+            navigator.clipboard.writeText(codeBlock).then(() => {
+                button.textContent = '✓ Copied';
+                setTimeout(() => button.textContent = 'Copy', 2000);
+            });
+        }
+
+        function triggerImageUpload(type) {
+            document.getElementById(`${type}-image`).click();
+        }
+
+        function handleBlindImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const upload = document.getElementById('blind-upload');
+                upload.classList.add('has-image');
+                upload.innerHTML = `<p>🖼️ Image uploaded: ${file.name}</p><small>The AI still can't see it!</small>`;
+                
+                setTimeout(() => {
+                    document.getElementById('blind-result').style.display = 'block';
+                    progress.blindTestShown = true;
+                    updateChapterVisibility();
+                    saveProgress();
+                }, 1000);
+            }
+        }
+
+        function handlePatchImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('uploaded-image').src = e.target.result;
+                    document.getElementById('patch-demo').style.display = 'block';
+                    createPatchGrid();
+                    progress.patchDemoEnabled = true;
+                    updateChapterVisibility();
+                    saveProgress();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function createPatchGrid() {
+            const grid = document.getElementById('patch-grid');
+            grid.innerHTML = '';
+            
+            // Create 8x8 = 64 patches
+            for (let i = 0; i < 64; i++) {
+                const patch = document.createElement('div');
+                patch.className = 'patch';
+                patch.textContent = `P${i + 1}`;
+                grid.appendChild(patch);
+            }
+        }
+
+        function animatePatches() {
+            const patches = document.querySelectorAll('.patch');
+            patches.forEach((patch, index) => {
+                setTimeout(() => {
+                    patch.classList.add('active');
+                    setTimeout(() => patch.classList.remove('active'), 300);
+                }, index * 50);
+            });
+        }
+
+        function searchImages(event) {
+            const query = event.target.value.toLowerCase();
+            const results = document.querySelectorAll('.result-item');
+            
+            results.forEach(result => {
+                const category = result.dataset.category;
+                const scoreElement = result.querySelector('.similarity-score');
+                
+                let score = 0.05; // Base similarity
+                if (query.includes(category)) {
+                    score = 0.89;
+                } else if (category === 'cat' && (query.includes('animal') || query.includes('pet'))) {
+                    score = 0.67;
+                } else if (category === 'car' && query.includes('vehicle')) {
+                    score = 0.72;
+                }
+                
+                scoreElement.textContent = score.toFixed(2);
+                result.style.order = score > 0.5 ? -1 : 1;
+                result.style.opacity = score > 0.1 ? 1 : 0.3;
+            });
+        }
+
+        function buildCLIP() {
+            progress.clipBuilt = true;
+            const button = event.target;
+            button.textContent = '✓ CLIP Search Built';
+            button.style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+            
+            // Demo the search
+            document.getElementById('clip-search').focus();
+            document.getElementById('clip-search').value = 'cat';
+            searchImages({ target: { value: 'cat' } });
+        }
+
+        // Drag and drop for architecture building
+        function dragStart(event) {
+            event.dataTransfer.setData('text/plain', event.target.dataset.component);
+            event.target.classList.add('dragging');
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+            document.getElementById('architecture-zone').classList.add('drag-over');
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const component = event.dataTransfer.getData('text');
+            const zone = document.getElementById('architecture-zone');
+            zone.classList.remove('drag-over');
+            
+            if (!droppedComponents.includes(component)) {
+                droppedComponents.push(component);
+                updateArchitecture();
+            }
+            
+            // Remove dragging class from all components
+            document.querySelectorAll('.component-box').forEach(box => {
+                box.classList.remove('dragging');
+            });
+        }
+
+        function updateArchitecture() {
+            const zone = document.getElementById('architecture-zone');
+            const result = document.getElementById('architecture-result');
+            
+            zone.innerHTML = `
+                <p>Components added: ${droppedComponents.join(' → ')}</p>
+                <small>Need all 3: Vision Encoder → Projection Layer → Language Model</small>
+            `;
+            
+            if (droppedComponents.length === 3) {
+                result.style.display = 'block';
+                progress.architectureBuilt = true;
+                updateChapterVisibility();
+                saveProgress();
+            }
+        }
+
+        function handleVisionImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('vision-uploaded').src = e.target.result;
+                    document.getElementById('vision-analysis').style.display = 'flex';
+                    
+                    // Simulate AI analysis
+                    const descriptions = [
+                        "I can see a detailed image with interesting visual elements. The composition includes various colors and shapes that create an engaging scene.",
+                        "This appears to be a photograph with good lighting and clear details. I notice several distinct elements in the frame.",
+                        "The image shows a well-composed scene with natural or artificial lighting. There are multiple visual elements that contribute to the overall composition."
+                    ];
+                    
+                    setTimeout(() => {
+                        const description = descriptions[Math.floor(Math.random() * descriptions.length)];
+                        document.getElementById('vision-description').innerHTML = description + "<br><small><em>Note: This is a simulated response. With an API key, you'd get real AI vision analysis!</em></small>";
+                        document.getElementById('vision-chat').style.display = 'block';
+                    }, 2000);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleVisionQuestion(event) {
+            if (event.key === 'Enter') {
+                askVisionQuestion();
+            }
+        }
+
+        function askVisionQuestion() {
+            const question = document.getElementById('vision-question').value;
+            if (!question.trim()) return;
+            
+            const qa = document.getElementById('vision-qa');
+            const questionDiv = document.createElement('div');
+            questionDiv.style.cssText = 'margin: 10px 0; padding: 8px; background: #2563eb; color: white; border-radius: 8px; text-align: right;';
+            questionDiv.textContent = question;
+            qa.appendChild(questionDiv);
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const answerDiv = document.createElement('div');
+                answerDiv.style.cssText = 'margin: 10px 0; padding: 8px; background: #f3f4f6; border-radius: 8px;';
+                
+                const responses = {
+                    'color': 'Based on the image, I can see several colors including what appears to be natural tones.',
+                    'object': 'I can identify various objects and elements in the scene.',
+                    'detail': 'Looking more closely at the image, I notice fine details in the composition.',
+                    'default': 'That\'s an interesting question about the image. The visual elements suggest various interpretations.'
+                };
+                
+                const key = Object.keys(responses).find(k => question.toLowerCase().includes(k));
+                answerDiv.innerHTML = responses[key] || responses.default;
+                answerDiv.innerHTML += "<br><small><em>Simulated response - real vision models would provide detailed, accurate analysis!</em></small>";
+                
+                qa.appendChild(answerDiv);
+                qa.scrollTop = qa.scrollHeight;
+            }, 1500);
+            
+            document.getElementById('vision-question').value = '';
+        }
+
+        function enableVision() {
+            progress.visionEnabled = true;
+            document.getElementById('fallback-demo').style.display = 'block';
+            const button = event.target;
+            button.textContent = '✓ Vision Enabled';
+            button.style.background = '#16a34a';
+            updateChapterVisibility();
+            saveProgress();
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', updateChapterVisibility);
+    </script>
+
+    <div style="max-width:720px;margin:60px auto;padding:30px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:8px;">🧠 Final Recall</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Test yourself. No peeking. These questions cover everything you just learned.</p>
+        <div id="quiz-container">
+            <div class="quiz-question">
+                <p><strong>1. Why can't AI models see images by default?</strong></p>
+                <label><input type="radio" name="q1" value="a"> A) Images are too large</label><br>
+                <label><input type="radio" name="q1" value="b"> B) AI models are text processors that only understand words/tokens, not pixels</label><br>
+                <label><input type="radio" name="q1" value="c"> C) Images contain no useful information</label><br>
+                <label><input type="radio" name="q1" value="d"> D) AI models run too slowly on images</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>2. How do Vision Transformers (ViT) process images?</strong></p>
+                <label><input type="radio" name="q2" value="a"> A) They analyze pixels one by one</label><br>
+                <label><input type="radio" name="q2" value="b"> B) They slice images into 16×16 patches and treat each patch as a token</label><br>
+                <label><input type="radio" name="q2" value="c"> C) They convert images to text descriptions first</label><br>
+                <label><input type="radio" name="q2" value="d"> D) They use convolutional neural networks exclusively</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>3. What makes CLIP's approach to vision-language learning special?</strong></p>
+                <label><input type="radio" name="q3" value="a"> A) It only works with text</label><br>
+                <label><input type="radio" name="q3" value="b"> B) It learns to map images and text to the same vector space through contrastive learning</label><br>
+                <label><input type="radio" name="q3" value="c"> C) It processes images faster than other models</label><br>
+                <label><input type="radio" name="q3" value="d"> D) It requires less training data</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>4. What are the core components of a vision-language model?</strong></p>
+                <label><input type="radio" name="q4" value="a"> A) Vision encoder + projection layer + language model</label><br>
+                <label><input type="radio" name="q4" value="b"> B) Only a language model</label><br>
+                <label><input type="radio" name="q4" value="c"> C) Only a vision encoder</label><br>
+                <label><input type="radio" name="q4" value="d"> D) Database + search engine</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>5. How do you send both an image and text to a multimodal API?</strong></p>
+                <label><input type="radio" name="q5" value="a"> A) Send text and image in separate API calls</label><br>
+                <label><input type="radio" name="q5" value="b"> B) Convert the image to a base64 string and include both text and image_url in the message content</label><br>
+                <label><input type="radio" name="q5" value="c"> C) Only send the image, no text allowed</label><br>
+                <label><input type="radio" name="q5" value="d"> D) Send a URL to the image stored online</label><br>
+            </div>
+        </div>
+        <button onclick="checkQuizVision()" style="margin-top:16px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Check Answers</button>
+        <div id="quiz-result" style="margin-top:16px;font-size:18px;font-weight:600;"></div>
+        
+        <script>
+        function checkQuizVision() {
+            const answers = {q1: 'b', q2: 'b', q3: 'b', q4: 'a', q5: 'b'};
+            let score = 0;
+            let total = Object.keys(answers).length;
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const correctAnswer = answers[question];
+                
+                // Reset all radio button styles
+                document.querySelectorAll(`input[name="${question}"]`).forEach(radio => {
+                    radio.parentElement.style.color = '';
+                    radio.parentElement.style.fontWeight = '';
+                });
+                
+                if (selected) {
+                    if (selected.value === correctAnswer) {
+                        score++;
+                        selected.parentElement.style.color = '#16a34a';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    } else {
+                        selected.parentElement.style.color = '#dc2626';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    }
+                }
+                
+                // Highlight correct answer
+                const correctRadio = document.querySelector(`input[name="${question}"][value="${correctAnswer}"]`);
+                if (correctRadio && (!selected || selected.value !== correctAnswer)) {
+                    correctRadio.parentElement.style.color = '#16a34a';
+                    correctRadio.parentElement.style.fontWeight = 'bold';
+                }
+            }
+            
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `🎉 Perfect! ${score}/${total} - You've mastered AI vision!`;
+                resultDiv.style.color = '#16a34a';
+            } else if (score >= total * 0.8) {
+                resultDiv.innerHTML = `🌟 Excellent! ${score}/${total} - Strong grasp of the concepts.`;
+                resultDiv.style.color = '#059669';
+            } else if (score >= total * 0.6) {
+                resultDiv.innerHTML = `👍 Good job! ${score}/${total} - Review the highlighted areas.`;
+                resultDiv.style.color = '#d97706';
+            } else {
+                resultDiv.innerHTML = `📚 ${score}/${total} - Consider reviewing the course material.`;
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        </script>
+        
+        <style>
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .quiz-question input[type="radio"] {
+            margin-right: 8px;
+        }
+        </style>
+    </div>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-tools/" style="color:#2563eb;text-decoration:none;">← Previous: Tools & MCP</a>
+        <a href="../build-voice/" style="color:#2563eb;text-decoration:none;">Next: Voice Assistant →</a>
+    </div>
+</body>
+</html>

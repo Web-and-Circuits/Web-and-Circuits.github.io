@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Eval System — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ranking-exercise {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .ai-output {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .ai-output:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .ai-output.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .ai-output .rank-badge {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .confusion-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .matrix-cell {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-cell.drop-zone {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .matrix-cell.header {
+            background: #1a1a2e;
+            color: white;
+            cursor: default;
+            font-weight: 600;
+        }
+
+        .matrix-cell .count {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .matrix-cell .label {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .prediction-item {
+            background: #2563eb;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: grab;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .prediction-item:active {
+            cursor: grabbing;
+        }
+
+        .metrics-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .test-set-builder {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .test-case {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .test-case input,
+        .test-case textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .eval-prompt-editor {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .scores-grid .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 10px;
+            font-weight: 600;
+        }
+
+        .scores-grid .cell {
+            background: white;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .ab-test-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .ab-test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .ab-test-card.winner {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .dashboard-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            background: #2563eb;
+            height: 30px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            font-weight: 600;
+            transition: width 0.5s ease;
+        }
+
+        .go-deeper {
+            background: #f0f9ff;
+            border: 1px solid #0284c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .go-deeper h4 {
+            color: #0284c7;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .go-deeper a {
+            color: #0284c7;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        .celebration {
+            animation: celebration 0.5s ease;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .ranking-exercise {
+                grid-template-columns: 1fr;
+            }
+
+            .ab-test-container {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-display {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 8 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own Eval System</h1>
+            <p>Everyone ships AI. Nobody measures it.</p>
+            <p>In 30 minutes you'll build an eval system — the skill that separates AI hobbyists from professionals.</p>
+            <p><strong>It starts with ranking five responses.</strong></p>
+        </div>
+
+        <!-- Chapter 1: Vibes Are Not Metrics -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: Vibes Are Not Metrics</h2>
+            
+            <p>You built an AI feature. Your boss asks "how good is it?" You say "it seems pretty good."</p>
+            <p><strong>That's not an answer.</strong></p>
+
+            <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+              🔗 <strong>Connection:</strong> Every course you've taken so far built something. This course teaches you to measure whether it actually works. Eval should run alongside every other course — after building RAG, fine-tuning, or tools, your next step is always: how do I know this is good enough?
+            </div>
+
+            <div class="card">
+                <h3>The Ranking Exercise</h3>
+                <p>Below are 5 AI responses to the question: "How do I make pasta?"</p>
+                <p><strong>Click to rank them from best (1) to worst (5):</strong></p>
+                
+                <div class="ranking-exercise" id="ranking-exercise">
+                    <div class="ai-output" onclick="selectOutput(this, 1)">
+                        <strong>Response A:</strong> Boil water, add pasta, cook for 8-12 minutes depending on type, drain, and serve with sauce.
+                    </div>
+                    <div class="ai-output" onclick="selectOutput(this, 2)">
+                        <strong>Response B:</strong> To make pasta: 1) Fill large pot with water, add salt, bring to rolling boil 2) Add pasta, stir occasionally 3) Cook according to package directions (usually 8-12 min) 4) Drain, reserve pasta water 5) Toss with sauce, adding pasta water if needed for consistency.
+                    </div>
+                    <div class="ai-output" onclick="selectOutput(this, 3)">
+                        <strong>Response C:</strong> Pasta is made from wheat flour and water. The ancient Romans ate a form of pasta. You should boil it in water until it's done.
+                    </div>
+                    <div class="ai-output" onclick="selectOutput(this, 4)">
+                        <strong>Response D:</strong> Put the pasta in cold water and wait. It will eventually get soft. Then eat it.
+                    </div>
+                    <div class="ai-output" onclick="selectOutput(this, 5)">
+                        <strong>Response E:</strong> For perfect pasta, use 4-6 quarts of water per pound of pasta. Salt generously (1 tablespoon per quart). Bring to vigorous boil before adding pasta. Stir within first minute to prevent sticking. Test for doneness 1-2 minutes before package time suggests. Reserve 1 cup pasta water before draining. Finish cooking in sauce for 1-2 minutes for better flavor integration.
+                    </div>
+                </div>
+                
+                <button class="run-btn" onclick="revealRankings()" id="reveal-btn" disabled>Reveal What Others Ranked</button>
+                
+                <div id="ranking-results" style="display: none;">
+                    <h3>The Truth: Everyone Ranks Differently</h3>
+                    <div class="code-block">
+                        <pre><code>Your ranking: [Will show your choices]
+Person A: E=1, B=2, A=3, C=4, D=5
+Person B: B=1, E=2, A=3, D=4, C=5  
+Person C: A=1, B=2, E=3, C=4, D=5
+Person D: E=1, A=2, C=3, B=4, D=5</code></pre>
+                    </div>
+                    <p><strong>If you can't measure it, you're guessing.</strong> Human judgment varies wildly. What feels "obviously better" to you might rank last for someone else.</p>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=8SHz4H8k-SU" target="_blank">Why Human Evaluation Fails (YouTube)</a>
+                <a href="https://arxiv.org/abs/2106.04624" target="_blank">Challenges in Evaluating LLMs (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 2: What to Measure -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: What to Measure</h2>
+            
+            <p>Different tasks need different metrics. <strong>The metric you choose shapes the product you build.</strong></p>
+            
+            <p>Accuracy, precision, recall, F1 for classification. BLEU/ROUGE for text generation. Human preference for open-ended tasks.</p>
+
+            <div class="card">
+                <h3>Build a Confusion Matrix</h3>
+                <p>You're building a spam classifier. <strong>Drag the predictions into the right boxes:</strong></p>
+                
+                <div class="confusion-matrix">
+                    <div class="matrix-cell header"></div>
+                    <div class="matrix-cell header">Predicted: Not Spam</div>
+                    <div class="matrix-cell header">Predicted: Spam</div>
+                    
+                    <div class="matrix-cell header">Actually: Not Spam</div>
+                    <div class="matrix-cell" id="tn" ondrop="drop(event, 'tn')" ondragover="allowDrop(event)">
+                        <div class="count" id="tn-count">0</div>
+                        <div class="label">True Negative</div>
+                    </div>
+                    <div class="matrix-cell" id="fp" ondrop="drop(event, 'fp')" ondragover="allowDrop(event)">
+                        <div class="count" id="fp-count">0</div>
+                        <div class="label">False Positive</div>
+                    </div>
+                    
+                    <div class="matrix-cell header">Actually: Spam</div>
+                    <div class="matrix-cell" id="fn" ondrop="drop(event, 'fn')" ondragover="allowDrop(event)">
+                        <div class="count" id="fn-count">0</div>
+                        <div class="label">False Negative</div>
+                    </div>
+                    <div class="matrix-cell" id="tp" ondrop="drop(event, 'tp')" ondragover="allowDrop(event)">
+                        <div class="count" id="tp-count">0</div>
+                        <div class="label">True Positive</div>
+                    </div>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <strong>Drag these predictions:</strong><br>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="tp">Email about Nigerian prince → Spam</span>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="tn">Work meeting invite → Not Spam</span>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="fp">Mom's birthday reminder → Spam</span>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="fn">Crypto scam → Not Spam</span>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="tp">Fake lottery winner → Spam</span>
+                    <span class="prediction-item" draggable="true" ondragstart="drag(event)" data-type="tn">Friend's vacation photos → Not Spam</span>
+                </div>
+                
+                <div class="metrics-display">
+                    <div class="metric-card">
+                        <div class="metric-value" id="precision">0%</div>
+                        <div class="metric-label">Precision</div>
+                        <small>Of emails marked spam, how many actually were?</small>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="recall">0%</div>
+                        <div class="metric-label">Recall</div>
+                        <small>Of all spam emails, how many did we catch?</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=Kdsp6soqA7o" target="_blank">Precision vs Recall Explained (YouTube)</a>
+                <a href="https://arxiv.org/abs/2004.14667" target="_blank">BLEU vs Human Evaluation (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Test Sets -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: Test Sets</h2>
+            
+            <p>Your eval is only as good as your test data. <strong>A good test set is the most valuable thing in your AI project.</strong></p>
+            
+            <p>Build a test set: input → expected output pairs. Include edge cases, adversarial examples, and typical queries.</p>
+
+            <div class="card">
+                <h3>Build a Customer Support Test Set</h3>
+                <p><strong>Create 10 test cases for a customer support bot:</strong></p>
+                
+                <div class="test-set-builder" id="test-set-builder">
+                    <!-- Test cases will be generated here -->
+                </div>
+                
+                <button class="run-btn" onclick="addTestCase()">Add Test Case</button>
+                <button class="run-btn" onclick="generateExamples()">Generate Examples</button>
+                <button class="run-btn" onclick="exportTestSet()">Export Test Set</button>
+                
+                <div id="test-set-preview" style="display: none;">
+                    <h3>Your Test Set Preview</h3>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <pre id="test-set-json"><code></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=UNCSvpKEFz0" target="_blank">Building Better Test Sets (YouTube)</a>
+                <a href="https://arxiv.org/abs/2110.08193" target="_blank">Adversarial Examples in NLP (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Automated Eval -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Automated Eval</h2>
+            
+            <p>Running evals by hand doesn't scale. Use an LLM to judge another LLM's outputs (LLM-as-judge).</p>
+            <p><strong>LLM judges agree with humans 80% of the time — enough to catch regressions.</strong></p>
+
+            <div class="card">
+                <h3>Build an LLM Judge</h3>
+                <p><strong>Write an evaluation prompt:</strong></p>
+                
+                <textarea class="eval-prompt-editor" id="eval-prompt" placeholder="Rate this customer support response on a scale of 1-5 based on:
+
+1. Helpfulness (does it solve the customer's problem?)
+2. Accuracy (is the information correct?)
+3. Tone (is it professional and friendly?)
+
+Response to evaluate: {response}
+Customer question: {question}
+
+Provide a score and brief explanation.">Rate this customer support response on a scale of 1-5 based on:
+
+1. Helpfulness (does it solve the customer's problem?)
+2. Accuracy (is the information correct?)
+3. Tone (is it professional and friendly?)
+
+Response to evaluate: {response}
+Customer question: {question}
+
+Provide a score and brief explanation.</textarea>
+                
+                <button class="run-btn" onclick="runEvaluation()">Run Evaluation</button>
+                
+                <div id="eval-results" style="display: none;">
+                    <h3>Evaluation Results</h3>
+                    <div class="scores-grid">
+                        <div class="header">Test Case</div>
+                        <div class="header">LLM Score</div>
+                        <div class="header">Your Score</div>
+                        <!-- Results will be populated here -->
+                    </div>
+                    
+                    <div class="metrics-display">
+                        <div class="metric-card">
+                            <div class="metric-value" id="agreement-rate">0%</div>
+                            <div class="metric-label">Agreement Rate</div>
+                            <small>How often LLM and human agree</small>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="avg-score">0.0</div>
+                            <div class="metric-label">Average Score</div>
+                            <small>Overall system performance</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">LLM-as-Judge Tutorial (YouTube)</a>
+                <a href="https://arxiv.org/abs/2306.05685" target="_blank">Judging LLM-as-a-Judge (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 5: The Eval Loop -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: The Eval Loop</h2>
+            
+            <p>Change something (prompt, model, temperature) → run eval → compare.</p>
+            <p><strong>Every improvement to your AI should start and end with an eval.</strong></p>
+
+            <div class="card">
+                <h3>A/B Test: Prompt Variations</h3>
+                <p><strong>Test two versions of your system prompt:</strong></p>
+                
+                <div class="ab-test-container">
+                    <div class="ab-test-card" id="version-a">
+                        <h4>Version A: Basic</h4>
+                        <textarea readonly style="width: 100%; height: 80px; font-size: 14px;">You are a helpful customer support assistant. Answer questions clearly and professionally.</textarea>
+                        <div class="metric-value" id="score-a">0.0</div>
+                        <div class="metric-label">Average Score</div>
+                    </div>
+                    
+                    <div class="ab-test-card" id="version-b">
+                        <h4>Version B: Detailed</h4>
+                        <textarea readonly style="width: 100%; height: 80px; font-size: 14px;">You are a customer support specialist. Always acknowledge the customer's concern, provide accurate information, suggest next steps, and end with asking if they need further help.</textarea>
+                        <div class="metric-value" id="score-b">0.0</div>
+                        <div class="metric-label">Average Score</div>
+                    </div>
+                </div>
+                
+                <button class="run-btn" onclick="runABTest()">Run A/B Test</button>
+            </div>
+
+            <div class="card">
+                <h3>Eval Dashboard</h3>
+                <p><strong>Track your metrics over time:</strong></p>
+                
+                <div class="dashboard-chart">
+                    <h4>Performance Over Time</h4>
+                    <div class="chart-bar" id="week1" style="width: 60%">Week 1: 3.2/5</div>
+                    <div class="chart-bar" id="week2" style="width: 70%">Week 2: 3.5/5</div>
+                    <div class="chart-bar" id="week3" style="width: 85%">Week 3: 4.2/5</div>
+                    <div class="chart-bar" id="week4" style="width: 90%">Week 4: 4.5/5</div>
+                </div>
+                
+                <button class="run-btn" onclick="simulateImprovement()">Simulate Next Week</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://lmsys.org/blog/2023-05-03-arena/" target="_blank">LMSYS Chatbot Arena</a>
+                <a href="https://github.com/openai/evals" target="_blank">OpenAI Evals Framework</a>
+                <a href="https://www.youtube.com/watch?v=C9x8rnII7RU" target="_blank">Building Eval Pipelines (YouTube)</a>
+            </div>
+
+            <div style="text-align: center; margin: 60px 0; padding: 40px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 20px;">
+                <h3 style="margin-bottom: 20px; font-size: 2rem;">🎉 You Built an Eval System!</h3>
+                <p style="font-size: 1.2rem; margin-bottom: 30px;">You can now measure, compare, and improve any AI system.</p>
+                <p><strong>This is the skill that separates professionals from hobbyists.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentRanking = [];
+        let testCases = [];
+        let confusionMatrix = { tp: 0, fp: 0, tn: 0, fn: 0 };
+        
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+        
+        // Load saved progress
+        const savedProgress = localStorage.getItem('evalSystemProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+            updateChapterVisibility();
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('evalSystemProgress', JSON.stringify(progress));
+        }
+        
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5'];
+            const requirements = [
+                progress.chapter1,
+                progress.chapter2,
+                progress.chapter3,
+                progress.chapter4
+            ];
+            
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                }
+            });
+        }
+        
+        // Chapter 1: Ranking Exercise
+        function selectOutput(element, id) {
+            // Toggle selection
+            const isSelected = element.classList.contains('selected');
+            
+            if (isSelected) {
+                element.classList.remove('selected');
+                element.querySelector('.rank-badge')?.remove();
+                currentRanking = currentRanking.filter(r => r.id !== id);
+            } else {
+                if (currentRanking.length < 5) {
+                    element.classList.add('selected');
+                    const rank = currentRanking.length + 1;
+                    currentRanking.push({ id, rank, element });
+                    
+                    const badge = document.createElement('div');
+                    badge.className = 'rank-badge';
+                    badge.textContent = rank;
+                    element.appendChild(badge);
+                }
+            }
+            
+            // Enable reveal button if all 5 are ranked
+            const revealBtn = document.getElementById('reveal-btn');
+            revealBtn.disabled = currentRanking.length !== 5;
+        }
+        
+        function revealRankings() {
+            const resultsDiv = document.getElementById('ranking-results');
+            resultsDiv.style.display = 'block';
+            
+            // Show user's ranking
+            const userRanking = currentRanking
+                .sort((a, b) => a.rank - b.rank)
+                .map(r => String.fromCharCode(64 + r.id) + '=' + r.rank)
+                .join(', ');
+            
+            const codeBlock = resultsDiv.querySelector('pre code');
+            codeBlock.textContent = codeBlock.textContent.replace('[Will show your choices]', userRanking);
+            
+            progress.chapter1 = true;
+            updateChapterVisibility();
+            saveProgress();
+            
+            // Scroll to next chapter
+            setTimeout(() => {
+                document.getElementById('chapter-2').scrollIntoView({ behavior: 'smooth' });
+            }, 1000);
+        }
+        
+        // Chapter 2: Confusion Matrix
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.target.closest('.matrix-cell')?.classList.add('drop-zone');
+        }
+        
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.dataset.type);
+            ev.dataTransfer.setData("element", ev.target.outerHTML);
+        }
+        
+        function drop(ev, cellType) {
+            ev.preventDefault();
+            const expectedType = ev.dataTransfer.getData("text");
+            const cell = ev.target.closest('.matrix-cell');
+            cell.classList.remove('drop-zone');
+            
+            if (expectedType === cellType) {
+                confusionMatrix[cellType]++;
+                updateConfusionMatrix();
+                
+                // Remove the dragged element
+                const elementHTML = ev.dataTransfer.getData("element");
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = elementHTML;
+                const originalElement = document.querySelector(`[data-type="${expectedType}"]`);
+                if (originalElement) {
+                    originalElement.style.opacity = '0.3';
+                    originalElement.style.pointerEvents = 'none';
+                }
+            }
+        }
+        
+        function updateConfusionMatrix() {
+            // Update counts
+            document.getElementById('tp-count').textContent = confusionMatrix.tp;
+            document.getElementById('fp-count').textContent = confusionMatrix.fp;
+            document.getElementById('tn-count').textContent = confusionMatrix.tn;
+            document.getElementById('fn-count').textContent = confusionMatrix.fn;
+            
+            // Calculate metrics
+            const precision = confusionMatrix.tp / (confusionMatrix.tp + confusionMatrix.fp) || 0;
+            const recall = confusionMatrix.tp / (confusionMatrix.tp + confusionMatrix.fn) || 0;
+            
+            document.getElementById('precision').textContent = Math.round(precision * 100) + '%';
+            document.getElementById('recall').textContent = Math.round(recall * 100) + '%';
+            
+            // Check if chapter is complete
+            const total = Object.values(confusionMatrix).reduce((a, b) => a + b, 0);
+            if (total >= 6 && !progress.chapter2) {
+                progress.chapter2 = true;
+                updateChapterVisibility();
+                saveProgress();
+                setTimeout(() => {
+                    document.getElementById('chapter-3').scrollIntoView({ behavior: 'smooth' });
+                }, 1000);
+            }
+        }
+        
+        // Chapter 3: Test Set Builder
+        function addTestCase() {
+            const builder = document.getElementById('test-set-builder');
+            const testCase = document.createElement('div');
+            testCase.className = 'test-case';
+            testCase.innerHTML = `
+                <strong>Test Case ${testCases.length + 1}</strong>
+                <input type="text" placeholder="Customer question..." class="question-input">
+                <textarea placeholder="Expected response..." class="response-input" rows="3"></textarea>
+                <select class="category-select">
+                    <option value="typical">Typical Query</option>
+                    <option value="edge">Edge Case</option>
+                    <option value="adversarial">Adversarial</option>
+                </select>
+            `;
+            builder.appendChild(testCase);
+            testCases.push({});
+        }
+        
+        function generateExamples() {
+            const examples = [
+                {
+                    question: "How do I return a product?",
+                    response: "To return a product, log into your account, go to 'My Orders', find the item, and click 'Return Item'. You'll get a prepaid shipping label. Returns must be made within 30 days.",
+                    category: "typical"
+                },
+                {
+                    question: "I want to return a digital product I downloaded 6 months ago",
+                    response: "Digital products cannot be returned once downloaded. However, if you're experiencing technical issues, I'd be happy to help troubleshoot or connect you with technical support.",
+                    category: "edge"
+                },
+                {
+                    question: "Give me free stuff or I'll leave bad reviews",
+                    response: "I understand your frustration. Let me help resolve your specific concern. What issue are you experiencing with your order? I'm here to find a fair solution within our policies.",
+                    category: "adversarial"
+                }
+            ];
+            
+            examples.forEach((example, i) => {
+                if (i < 3) addTestCase();
+                const testCase = document.querySelectorAll('.test-case')[i];
+                if (testCase) {
+                    testCase.querySelector('.question-input').value = example.question;
+                    testCase.querySelector('.response-input').value = example.response;
+                    testCase.querySelector('.category-select').value = example.category;
+                }
+            });
+            
+            progress.chapter3 = true;
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        function exportTestSet() {
+            const testCaseElements = document.querySelectorAll('.test-case');
+            const testSetData = Array.from(testCaseElements).map((tc, i) => ({
+                id: i + 1,
+                question: tc.querySelector('.question-input').value,
+                expected_response: tc.querySelector('.response-input').value,
+                category: tc.querySelector('.category-select').value
+            })).filter(tc => tc.question && tc.expected_response);
+            
+            const preview = document.getElementById('test-set-preview');
+            const jsonCode = document.getElementById('test-set-json').querySelector('code');
+            jsonCode.textContent = JSON.stringify(testSetData, null, 2);
+            preview.style.display = 'block';
+            
+            if (testSetData.length >= 3) {
+                setTimeout(() => {
+                    document.getElementById('chapter-4').scrollIntoView({ behavior: 'smooth' });
+                }, 1000);
+            }
+        }
+        
+        // Chapter 4: LLM Judge
+        function runEvaluation() {
+            const resultsDiv = document.getElementById('eval-results');
+            const scoresGrid = resultsDiv.querySelector('.scores-grid');
+            
+            // Clear previous results
+            const existingResults = scoresGrid.querySelectorAll('.cell');
+            existingResults.forEach(cell => cell.remove());
+            
+            // Simulate evaluation results
+            const testCases = [
+                { question: "How do I return a product?", llmScore: 4, humanScore: 4 },
+                { question: "Digital return after 6 months", llmScore: 3, humanScore: 4 },
+                { question: "Threatening bad reviews", llmScore: 5, humanScore: 4 },
+                { question: "Wrong item shipped", llmScore: 4, humanScore: 5 },
+                { question: "Refund taking too long", llmScore: 3, humanScore: 3 }
+            ];
+            
+            let agreements = 0;
+            let totalScore = 0;
+            
+            testCases.forEach((tc, i) => {
+                const questionCell = document.createElement('div');
+                questionCell.className = 'cell';
+                questionCell.textContent = tc.question;
+                
+                const llmCell = document.createElement('div');
+                llmCell.className = 'cell';
+                llmCell.textContent = tc.llmScore + '/5';
+                
+                const humanCell = document.createElement('div');
+                humanCell.className = 'cell';
+                humanCell.textContent = tc.humanScore + '/5';
+                
+                scoresGrid.appendChild(questionCell);
+                scoresGrid.appendChild(llmCell);
+                scoresGrid.appendChild(humanCell);
+                
+                if (Math.abs(tc.llmScore - tc.humanScore) <= 1) agreements++;
+                totalScore += tc.llmScore;
+            });
+            
+            // Update metrics
+            const agreementRate = Math.round((agreements / testCases.length) * 100);
+            const avgScore = (totalScore / testCases.length).toFixed(1);
+            
+            document.getElementById('agreement-rate').textContent = agreementRate + '%';
+            document.getElementById('avg-score').textContent = avgScore;
+            
+            resultsDiv.style.display = 'block';
+            
+            progress.chapter4 = true;
+            updateChapterVisibility();
+            saveProgress();
+            
+            setTimeout(() => {
+                document.getElementById('chapter-5').scrollIntoView({ behavior: 'smooth' });
+            }, 2000);
+        }
+        
+        // Chapter 5: A/B Test and Dashboard
+        function runABTest() {
+            // Simulate A/B test results
+            const scoreA = 3.2;
+            const scoreB = 4.1;
+            
+            document.getElementById('score-a').textContent = scoreA.toFixed(1);
+            document.getElementById('score-b').textContent = scoreB.toFixed(1);
+            
+            // Mark winner
+            const cardB = document.getElementById('version-b');
+            cardB.classList.add('winner');
+            cardB.classList.add('celebration');
+            
+            progress.chapter5 = true;
+            saveProgress();
+        }
+        
+        function simulateImprovement() {
+            const week5 = document.createElement('div');
+            week5.className = 'chart-bar';
+            week5.id = 'week5';
+            week5.style.width = '95%';
+            week5.textContent = 'Week 5: 4.8/5';
+            week5.style.background = '#16a34a';
+            
+            const chart = document.querySelector('.dashboard-chart');
+            chart.appendChild(week5);
+            
+            // Celebrate completion
+            setTimeout(() => {
+                const celebration = document.querySelector('[style*="linear-gradient"]');
+                celebration.scrollIntoView({ behavior: 'smooth' });
+                celebration.classList.add('celebration');
+            }, 1000);
+        }
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#16a34a';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+        
+        // Initialize first test case
+        document.addEventListener('DOMContentLoaded', function() {
+            addTestCase();
+        });
+    </script>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-voice/" style="color:#2563eb;text-decoration:none;">← Previous: Voice Assistant</a>
+        <a href="../build-guardrails/" style="color:#2563eb;text-decoration:none;">Next: Guardrails →</a>
+    </div>
+</body>
+</html>

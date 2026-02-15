@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Data Pipeline — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .document-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 150px;
+        }
+
+        .document-card:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .document-card.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .document-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .document-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .document-problems {
+            font-size: 0.9rem;
+            color: #dc2626;
+            font-style: italic;
+        }
+
+        .extraction-demo {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .before-after .section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .before-after .before {
+            border-left: 4px solid #dc2626;
+        }
+
+        .before-after .after {
+            border-left: 4px solid #16a34a;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+            align-items: center;
+        }
+
+        .pipeline-step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+
+        .pipeline-step.processing {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .pipeline-step.completed {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .pipeline-arrow {
+            font-size: 2rem;
+            color: #6b7280;
+        }
+
+        .extraction-controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .extraction-controls input,
+        .extraction-controls select,
+        .extraction-controls textarea {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .chunking-strategies {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .strategy-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover,
+        .strategy-card.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .strategy-result {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .chunk-preview {
+            font-size: 0.9rem;
+            color: #4b5563;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .annotation-interface {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .annotation-header {
+            background: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .annotation-text {
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .annotation-controls {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .label-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .label-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .label-btn:hover {
+            border-color: #2563eb;
+        }
+
+        .label-btn.positive {
+            background: #f0fdf4;
+            border-color: #16a34a;
+            color: #16a34a;
+        }
+
+        .label-btn.negative {
+            background: #fef2f2;
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+
+        .label-btn.neutral {
+            background: #f8fafc;
+            border-color: #6b7280;
+            color: #6b7280;
+        }
+
+        .annotation-progress {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .annotation-progress-fill {
+            background: #2563eb;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .synthetic-generator {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .generation-prompt {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .synthetic-output {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .quality-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .go-deeper {
+            background: #f0f9ff;
+            border: 1px solid #0284c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .go-deeper h4 {
+            color: #0284c7;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .go-deeper a {
+            color: #0284c7;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        .celebration {
+            animation: celebration 0.5s ease;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .before-after {
+                grid-template-columns: 1fr;
+            }
+
+            .chunking-strategies {
+                grid-template-columns: 1fr;
+            }
+
+            .extraction-controls {
+                flex-direction: column;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 10 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own Data Pipeline</h1>
+            <p>Your AI is only as good as its data.</p>
+            <p>In 30 minutes you'll build the pipeline that turns messy real-world documents into clean, structured AI fuel.</p>
+            <p><strong>It starts with choosing a messy document.</strong></p>
+        </div>
+
+        <!-- Chapter 1: The Mess -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Mess</h2>
+            
+            <p>Real data is ugly. PDFs with tables. HTML with ads. CSVs with missing fields. Scanned images.</p>
+            <p><strong>Before your AI can learn anything, someone has to clean this up. That someone is your pipeline.</strong></p>
+
+            <div class="card">
+                <h3>Choose Your Poison</h3>
+                <p><strong>Click on a document type to see what goes wrong:</strong></p>
+                
+                <div class="document-grid">
+                    <div class="document-card" onclick="selectDocument('pdf')">
+                        <div class="document-icon">📄</div>
+                        <div class="document-title">PDF Report</div>
+                        <div class="document-problems">Tables become gibberish</div>
+                    </div>
+                    
+                    <div class="document-card" onclick="selectDocument('html')">
+                        <div class="document-icon">🌐</div>
+                        <div class="document-title">Web Page</div>
+                        <div class="document-problems">Ads mixed with content</div>
+                    </div>
+                    
+                    <div class="document-card" onclick="selectDocument('csv')">
+                        <div class="document-icon">📊</div>
+                        <div class="document-title">CSV File</div>
+                        <div class="document-problems">Missing fields, bad encoding</div>
+                    </div>
+                    
+                    <div class="document-card" onclick="selectDocument('image')">
+                        <div class="document-icon">🖼️</div>
+                        <div class="document-title">Scanned Document</div>
+                        <div class="document-problems">Text locked in pixels</div>
+                    </div>
+                    
+                    <div class="document-card" onclick="selectDocument('word')">
+                        <div class="document-icon">📝</div>
+                        <div class="document-title">Word Document</div>
+                        <div class="document-problems">Formatting chaos</div>
+                    </div>
+                </div>
+                
+                <div id="document-preview" style="display: none;">
+                    <h3>Document Preview</h3>
+                    <div class="extraction-demo" id="demo-content">
+                        <!-- Preview will be shown here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=VtRLrQ3Ev-U" target="_blank">Data Quality Challenges (YouTube)</a>
+                <a href="https://arxiv.org/abs/2206.07746" target="_blank">Document AI Survey (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Extraction -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: Extraction</h2>
+            
+            <p>Pull text from anything. PDF parsing (layout-aware vs raw text), HTML to markdown, OCR for images, table extraction.</p>
+            <p><strong>Extraction is 90% of the work and gets 10% of the attention.</strong></p>
+
+            <div class="card">
+                <h3>Build an Extraction Pipeline</h3>
+                <p><strong>Paste a URL or upload content to extract:</strong></p>
+                
+                <div class="extraction-controls">
+                    <input type="url" id="url-input" placeholder="https://example.com/article" style="flex: 1; min-width: 200px;">
+                    <button class="run-btn" onclick="extractFromURL()">Extract from URL</button>
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0; color: #6b7280;">OR</div>
+                
+                <div class="extraction-controls">
+                    <textarea id="raw-content" placeholder="Paste raw HTML, PDF text, or other content here..." rows="6" style="width: 100%;"></textarea>
+                    <select id="content-type">
+                        <option value="html">HTML</option>
+                        <option value="pdf">PDF Text</option>
+                        <option value="csv">CSV</option>
+                        <option value="markdown">Markdown</option>
+                    </select>
+                    <button class="run-btn" onclick="processRawContent()">Process Content</button>
+                </div>
+                
+                <div class="pipeline-flow" id="extraction-pipeline" style="display: none;">
+                    <div class="pipeline-step" id="step-parse">
+                        <h4>1. Parse Structure</h4>
+                        <p>Identify headers, paragraphs, tables, lists</p>
+                        <div id="parse-result"></div>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-clean">
+                        <h4>2. Clean Content</h4>
+                        <p>Remove ads, navigation, boilerplate</p>
+                        <div id="clean-result"></div>
+                    </div>
+                    
+                    <div class="pipeline-arrow">↓</div>
+                    
+                    <div class="pipeline-step" id="step-normalize">
+                        <h4>3. Normalize Text</h4>
+                        <p>Fix encoding, whitespace, special characters</p>
+                        <div id="normalize-result"></div>
+                    </div>
+                </div>
+                
+                <div class="before-after" id="before-after" style="display: none;">
+                    <div class="section before">
+                        <h4>Before Extraction</h4>
+                        <div id="before-content" class="chunk-preview"></div>
+                    </div>
+                    <div class="section after">
+                        <h4>After Extraction</h4>
+                        <div id="after-content" class="chunk-preview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=o6kDJNyFBvU" target="_blank">PDF Parsing Techniques (YouTube)</a>
+                <a href="https://github.com/jsvine/pdfplumber" target="_blank">PDF Plumber (Python Library)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Chunking & Cleaning -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: Chunking & Cleaning</h2>
+            
+            <p>Raw text → clean chunks ready for embedding or training. Remove boilerplate, normalize whitespace, handle Unicode, split at natural boundaries.</p>
+            <p><strong>The wrong chunk size is why your RAG doesn't work.</strong></p>
+
+            <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+              🔗 <strong>Connection:</strong> You saw chunking in Build Your Own RAG. Here's the deeper truth: bad chunks are the #1 reason RAG systems fail. This chapter is why your RAG from Course 2 might need a revisit.
+            </div>
+
+            <div class="card">
+                <h3>Test Chunking Strategies</h3>
+                <p><strong>Apply different chunking strategies to see the results:</strong></p>
+                
+                <textarea id="sample-text" rows="8" style="width: 100%; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 15px 0;">The field of artificial intelligence has undergone rapid transformation in recent years, driven primarily by advances in machine learning and deep learning technologies. Large language models like GPT-3 and GPT-4 have demonstrated remarkable capabilities in natural language understanding and generation, leading to widespread adoption across various industries.
+
+These models work by processing vast amounts of text data and learning patterns in language usage. The training process involves feeding the model billions of words from books, articles, websites, and other text sources. Through this process, the model develops an understanding of grammar, context, facts about the world, and even some reasoning abilities.
+
+However, deploying these models in production environments presents unique challenges. Issues like bias, hallucination, and prompt injection attacks require careful consideration. Organizations must implement robust evaluation frameworks and safety measures to ensure responsible AI deployment.</textarea>
+                
+                <div class="chunking-strategies">
+                    <div class="strategy-card" onclick="selectStrategy('fixed')">
+                        <h4>Fixed-Size Chunking</h4>
+                        <p>Split every N characters</p>
+                        <div class="strategy-result" style="display: none;">
+                            <strong>Chunk size:</strong> 200 characters<br>
+                            <strong>Chunks created:</strong> <span id="fixed-count">0</span>
+                            <div class="chunk-preview" id="fixed-preview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="strategy-card" onclick="selectStrategy('sentence')">
+                        <h4>Sentence Splitting</h4>
+                        <p>Split at sentence boundaries</p>
+                        <div class="strategy-result" style="display: none;">
+                            <strong>Average size:</strong> <span id="sentence-avg">0</span> chars<br>
+                            <strong>Chunks created:</strong> <span id="sentence-count">0</span>
+                            <div class="chunk-preview" id="sentence-preview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="strategy-card" onclick="selectStrategy('paragraph')">
+                        <h4>Paragraph Splitting</h4>
+                        <p>Split at paragraph breaks</p>
+                        <div class="strategy-result" style="display: none;">
+                            <strong>Average size:</strong> <span id="paragraph-avg">0</span> chars<br>
+                            <strong>Chunks created:</strong> <span id="paragraph-count">0</span>
+                            <div class="chunk-preview" id="paragraph-preview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="strategy-card" onclick="selectStrategy('semantic')">
+                        <h4>Semantic Chunking</h4>
+                        <p>Split by topic/meaning</p>
+                        <div class="strategy-result" style="display: none;">
+                            <strong>Topics found:</strong> <span id="semantic-topics">0</span><br>
+                            <strong>Chunks created:</strong> <span id="semantic-count">0</span>
+                            <div class="chunk-preview" id="semantic-preview"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="run-btn" onclick="compareStrategies()" style="width: 100%; margin-top: 20px;">Compare All Strategies</button>
+                
+                <div id="strategy-comparison" style="display: none;">
+                    <h3>Strategy Comparison</h3>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <pre id="comparison-results"><code></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=8OJC21T2SL4" target="_blank">RAG Chunking Strategies (YouTube)</a>
+                <a href="https://arxiv.org/abs/2312.06648" target="_blank">Retrieval-Augmented Generation Survey (Paper)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Labeling & Annotation -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: Labeling & Annotation</h2>
+            
+            <p>For fine-tuning and eval, you need labeled data.</p>
+            <p><strong>Labeling is boring. It's also the highest-leverage thing you can do for your AI.</strong></p>
+
+            <div class="card">
+                <h3>Build an Annotation Interface</h3>
+                <p><strong>Label 10 examples to see how annotation works:</strong></p>
+                
+                <div class="annotation-interface">
+                    <div class="annotation-header">
+                        Customer Review Sentiment Analysis
+                    </div>
+                    <div class="annotation-text" id="annotation-text">
+                        Loading example...
+                    </div>
+                    <div class="annotation-controls">
+                        <div class="label-buttons">
+                            <button class="label-btn" onclick="labelExample('positive')">👍 Positive</button>
+                            <button class="label-btn" onclick="labelExample('negative')">👎 Negative</button>
+                            <button class="label-btn" onclick="labelExample('neutral')">😐 Neutral</button>
+                        </div>
+                        <div style="flex: 1;"></div>
+                        <div>
+                            <strong id="example-counter">1 / 10</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="annotation-progress">
+                    <div class="annotation-progress-fill" id="annotation-progress" style="width: 0%"></div>
+                </div>
+                
+                <div id="annotation-results" style="display: none;">
+                    <h3>Your Annotations</h3>
+                    <div class="quality-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value" id="positive-count">0</div>
+                            <div class="metric-label">Positive</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="negative-count">0</div>
+                            <div class="metric-label">Negative</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="neutral-count">0</div>
+                            <div class="metric-label">Neutral</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="agreement-score">0%</div>
+                            <div class="metric-label">Agreement</div>
+                        </div>
+                    </div>
+                    
+                    <button class="run-btn" onclick="exportAnnotations()">Export Dataset</button>
+                    
+                    <div class="code-block" id="exported-data" style="display: none;">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <pre><code id="annotation-json"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://www.youtube.com/watch?v=w1_aHvDsKQk" target="_blank">Data Annotation Best Practices (YouTube)</a>
+                <a href="https://labelstud.io/" target="_blank">Label Studio (Annotation Tool)</a>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Synthetic Data -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: Synthetic Data</h2>
+            
+            <p>Not enough real data? Generate it. Use a strong model to create training data for a smaller model.</p>
+            <p><strong>The best AI companies all use synthetic data. The bad ones pretend they don't.</strong></p>
+
+            <div class="card">
+                <h3>Generate Synthetic Training Data</h3>
+                <p><strong>Write a generation prompt to create training examples:</strong></p>
+                
+                <div class="synthetic-generator">
+                    <textarea class="generation-prompt" id="generation-prompt" placeholder="Enter your generation prompt here...">Generate 10 customer support conversations about product returns. Each conversation should include:
+
+1. A customer inquiry about returning a product
+2. A helpful support response
+3. Natural back-and-forth dialogue
+4. A clear resolution
+
+Make the conversations realistic with varied customer tones (frustrated, polite, urgent) and different return scenarios (defective product, wrong size, changed mind, etc.).
+
+Format as JSON with fields: customer_message, support_response, sentiment, category.</textarea>
+                    
+                    <button class="run-btn" onclick="generateSyntheticData()" style="width: 100%; margin-top: 15px;">Generate Training Data</button>
+                </div>
+                
+                <div class="synthetic-output" id="synthetic-output" style="display: none;">
+                    <h4>Generated Data</h4>
+                    <div id="generated-content"></div>
+                </div>
+                
+                <div class="quality-metrics" id="quality-metrics" style="display: none;">
+                    <div class="metric-card">
+                        <div class="metric-value" id="diversity-score">0</div>
+                        <div class="metric-label">Diversity Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="realism-score">0</div>
+                        <div class="metric-label">Realism Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="coverage-score">0</div>
+                        <div class="metric-label">Coverage Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="examples-generated">0</div>
+                        <div class="metric-label">Examples</div>
+                    </div>
+                </div>
+                
+                <div class="card" style="background: #fef3c7; border-color: #f59e0b;">
+                    <h4 style="color: #92400e;">⚠️ Contamination Warning</h4>
+                    <p>Synthetic data can inherit biases and patterns from the generating model. Always validate against real-world examples and avoid training on your own model's outputs (model collapse).</p>
+                    <div class="code-block" style="margin-top: 15px;">
+                        <pre><code>// Contamination check
+function checkContamination(syntheticData, trainingData) {
+  const similarities = syntheticData.map(synthetic => 
+    trainingData.map(real => 
+      calculateSimilarity(synthetic, real)
+    ).max()
+  );
+  
+  const highSimilarity = similarities.filter(sim => sim > 0.9);
+  return {
+    contaminationRate: highSimilarity.length / syntheticData.length,
+    flagged: highSimilarity.length > 0
+  };
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://arxiv.org/abs/2304.12244" target="_blank">Alpaca: Synthetic Instruction Data (Paper)</a>
+                <a href="https://arxiv.org/abs/2306.11644" target="_blank">Textbooks Are All You Need - phi-1 (Paper)</a>
+                <a href="https://www.youtube.com/watch?v=4O_KwcaKkKw" target="_blank">Synthetic Data Generation (YouTube)</a>
+            </div>
+
+            <div style="text-align: center; margin: 60px 0; padding: 40px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 20px;">
+                <h3 style="margin-bottom: 20px; font-size: 2rem;">🔄 You Built a Data Pipeline!</h3>
+                <p style="font-size: 1.2rem; margin-bottom: 30px;">From messy documents to clean, labeled, AI-ready data.</p>
+                <p><strong>This is the foundation every AI system needs.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let selectedDocument = null;
+        let selectedStrategy = null;
+        let annotationIndex = 0;
+        let annotations = [];
+        
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+        
+        // Sample data
+        const annotationExamples = [
+            "This product exceeded my expectations! Great quality and fast shipping.",
+            "Worst purchase ever. Broke after one day. Waste of money.",
+            "It's okay, nothing special but does what it says.",
+            "Amazing customer service! They resolved my issue immediately.",
+            "The product is fine but delivery took forever.",
+            "I love this! Buying more for my family.",
+            "Total garbage. Don't waste your time.",
+            "Good value for money. Recommended.",
+            "Meh. It works but could be better.",
+            "Outstanding quality! Worth every penny!"
+        ];
+        
+        const expectedLabels = ['positive', 'negative', 'neutral', 'positive', 'neutral', 'positive', 'negative', 'positive', 'neutral', 'positive'];
+        
+        // Load saved progress
+        const savedProgress = localStorage.getItem('dataPipelineProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+            updateChapterVisibility();
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('dataPipelineProgress', JSON.stringify(progress));
+        }
+        
+        function updateChapterVisibility() {
+            const chapters = ['chapter-2', 'chapter-3', 'chapter-4', 'chapter-5'];
+            const requirements = [
+                progress.chapter1,
+                progress.chapter2,
+                progress.chapter3,
+                progress.chapter4
+            ];
+            
+            chapters.forEach((chapterId, index) => {
+                const chapter = document.getElementById(chapterId);
+                if (requirements[index]) {
+                    chapter.classList.add('visible');
+                }
+            });
+        }
+        
+        // Chapter 1: Document Selection
+        function selectDocument(type) {
+            // Remove previous selections
+            document.querySelectorAll('.document-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select current document
+            event.target.closest('.document-card').classList.add('selected');
+            selectedDocument = type;
+            
+            const preview = document.getElementById('document-preview');
+            const content = document.getElementById('demo-content');
+            
+            const examples = {
+                pdf: {
+                    title: 'PDF Financial Report',
+                    before: `Q2 EARNINGS REPORT
+                    
+Revenue    $45.2M    Growth 23%
+Expenses   $32.1M    
+Profit     $13.1M    Margin 29%
+
+SUMMARY
+Our Q2 performance shows strong growth...`,
+                    after: `Revenue $45.2M Growth 23% Expenses $32.1M Profit $13.1M Margin 29% SUMMARY Our Q2 performance shows strong growth...`,
+                    problem: 'Table structure lost, numbers jumbled with text'
+                },
+                html: {
+                    title: 'News Article Web Page',
+                    before: `<div class="ad">🎯 BUY NOW!</div>
+<h1>Breaking: AI Breakthrough</h1>
+<div class="social-share">Share this!</div>
+<p>Scientists have developed...</p>
+<div class="ad">🛒 SHOP DEALS!</div>
+<p>The implications are huge...</p>`,
+                    after: `🎯 BUY NOW! Breaking: AI Breakthrough Share this! Scientists have developed... 🛒 SHOP DEALS! The implications are huge...`,
+                    problem: 'Ads and navigation mixed with content'
+                },
+                csv: {
+                    title: 'Customer Data Export',
+                    before: `name,email,age,city
+John,john@email.com,25,New York
+,sarah@email.com,,
+Mike,,35,Chicago
+"Smith, Jane",jane@email.com,28,"Los Angeles"`,
+                    after: `name,email,age,city John,john@email.com,25,New York ,sarah@email.com,, Mike,,35,Chicago Smith Jane,jane@email.com,28,Los Angeles`,
+                    problem: 'Missing fields, encoding issues, quotes stripped'
+                },
+                image: {
+                    title: 'Scanned Contract',
+                    before: `[IMAGE: 📄 Blurry scanned document with text]`,
+                    after: `CONTPACT AGREEMENT This agreem3nt is mad3 b3tween... [OCR errors throughout]`,
+                    problem: 'OCR errors, missing formatting, poor quality'
+                },
+                word: {
+                    title: 'Research Paper',
+                    before: `# TITLE
+**Abstract:** This paper presents...
+- Bullet point 1
+  - Sub point
+    - Sub sub point`,
+                    after: `TITLE Abstract: This paper presents... Bullet point 1 Sub point Sub sub point`,
+                    problem: 'All formatting lost, structure flattened'
+                }
+            };
+            
+            const example = examples[type];
+            content.innerHTML = `
+                <h4>${example.title}</h4>
+                <div class="before-after">
+                    <div class="section before">
+                        <h5>Raw Input</h5>
+                        <pre style="font-size: 12px; white-space: pre-wrap;">${example.before}</pre>
+                    </div>
+                    <div class="section after">
+                        <h5>Naive Extraction</h5>
+                        <pre style="font-size: 12px; white-space: pre-wrap;">${example.after}</pre>
+                    </div>
+                </div>
+                <p style="color: #dc2626; margin-top: 15px;"><strong>Problem:</strong> ${example.problem}</p>
+            `;
+            
+            preview.style.display = 'block';
+            
+            if (!progress.chapter1) {
+                progress.chapter1 = true;
+                updateChapterVisibility();
+                saveProgress();
+                setTimeout(() => {
+                    document.getElementById('chapter-2').scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
+            }
+        }
+        
+        // Chapter 2: Extraction Pipeline
+        function extractFromURL() {
+            const url = document.getElementById('url-input').value;
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            // Simulate extraction process
+            runExtractionPipeline(`
+                <html>
+                <head><title>Sample Article</title></head>
+                <body>
+                    <nav>Navigation links here</nav>
+                    <div class="ad">Advertisement</div>
+                    <h1>The Future of AI</h1>
+                    <p>Artificial intelligence is rapidly advancing...</p>
+                    <div class="sidebar">Related articles</div>
+                    <p>Machine learning models are becoming...</p>
+                    <footer>Copyright 2024</footer>
+                </body>
+                </html>
+            `, 'html');
+        }
+        
+        function processRawContent() {
+            const content = document.getElementById('raw-content').value;
+            const type = document.getElementById('content-type').value;
+            
+            if (!content.trim()) {
+                alert('Please enter some content to process');
+                return;
+            }
+            
+            runExtractionPipeline(content, type);
+        }
+        
+        function runExtractionPipeline(content, type) {
+            const pipeline = document.getElementById('extraction-pipeline');
+            const beforeAfter = document.getElementById('before-after');
+            
+            pipeline.style.display = 'flex';
+            
+            const steps = ['step-parse', 'step-clean', 'step-normalize'];
+            let currentStep = 0;
+            
+            function processStep() {
+                if (currentStep < steps.length) {
+                    const step = document.getElementById(steps[currentStep]);
+                    step.classList.add('processing');
+                    
+                    setTimeout(() => {
+                        step.classList.remove('processing');
+                        step.classList.add('completed');
+                        
+                        const results = {
+                            'step-parse': 'Found: 2 paragraphs, 1 heading, navigation elements',
+                            'step-clean': 'Removed: ads, navigation, footer (60% reduction)',
+                            'step-normalize': 'Fixed: 3 encoding issues, normalized whitespace'
+                        };
+                        
+                        step.querySelector('div').innerHTML = `<small style="color: #16a34a;">✅ ${results[steps[currentStep]]}</small>`;
+                        
+                        currentStep++;
+                        setTimeout(processStep, 1000);
+                    }, 1500);
+                } else {
+                    // Show before/after
+                    const beforeContent = document.getElementById('before-content');
+                    const afterContent = document.getElementById('after-content');
+                    
+                    beforeContent.textContent = content.substring(0, 300) + '...';
+                    afterContent.textContent = 'The Future of AI\n\nArtificial intelligence is rapidly advancing with new breakthrough models emerging regularly. Machine learning models are becoming more sophisticated and capable of handling complex tasks across various domains.';
+                    
+                    beforeAfter.style.display = 'grid';
+                    
+                    if (!progress.chapter2) {
+                        progress.chapter2 = true;
+                        updateChapterVisibility();
+                        saveProgress();
+                        setTimeout(() => {
+                            document.getElementById('chapter-3').scrollIntoView({ behavior: 'smooth' });
+                        }, 2000);
+                    }
+                }
+            }
+            
+            processStep();
+        }
+        
+        // Chapter 3: Chunking Strategies
+        function selectStrategy(strategy) {
+            // Remove previous selections
+            document.querySelectorAll('.strategy-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select current strategy
+            event.target.closest('.strategy-card').classList.add('selected');
+            selectedStrategy = strategy;
+            
+            const text = document.getElementById('sample-text').value;
+            const result = document.querySelector(`#${strategy}-preview`).closest('.strategy-result');
+            
+            let chunks = [];
+            
+            switch (strategy) {
+                case 'fixed':
+                    chunks = chunkByFixedSize(text, 200);
+                    document.getElementById('fixed-count').textContent = chunks.length;
+                    break;
+                case 'sentence':
+                    chunks = chunkBySentence(text);
+                    document.getElementById('sentence-count').textContent = chunks.length;
+                    document.getElementById('sentence-avg').textContent = Math.round(chunks.reduce((a, b) => a + b.length, 0) / chunks.length);
+                    break;
+                case 'paragraph':
+                    chunks = chunkByParagraph(text);
+                    document.getElementById('paragraph-count').textContent = chunks.length;
+                    document.getElementById('paragraph-avg').textContent = Math.round(chunks.reduce((a, b) => a + b.length, 0) / chunks.length);
+                    break;
+                case 'semantic':
+                    chunks = chunkBySemantic(text);
+                    document.getElementById('semantic-count').textContent = chunks.length;
+                    document.getElementById('semantic-topics').textContent = chunks.length;
+                    break;
+            }
+            
+            const preview = document.getElementById(`${strategy}-preview`);
+            preview.textContent = chunks[0] || 'No chunks generated';
+            
+            result.style.display = 'block';
+        }
+        
+        function chunkByFixedSize(text, size) {
+            const chunks = [];
+            for (let i = 0; i < text.length; i += size) {
+                chunks.push(text.substring(i, i + size));
+            }
+            return chunks;
+        }
+        
+        function chunkBySentence(text) {
+            return text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        }
+        
+        function chunkByParagraph(text) {
+            return text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+        }
+        
+        function chunkBySemantic(text) {
+            // Simulate semantic chunking by splitting on topic boundaries
+            const paragraphs = chunkByParagraph(text);
+            return paragraphs; // In reality, this would use embeddings/ML
+        }
+        
+        function compareStrategies() {
+            const text = document.getElementById('sample-text').value;
+            const comparison = document.getElementById('strategy-comparison');
+            const results = document.getElementById('comparison-results').querySelector('code');
+            
+            const strategies = {
+                'Fixed-size (200 chars)': chunkByFixedSize(text, 200),
+                'Sentence boundaries': chunkBySentence(text),
+                'Paragraph breaks': chunkByParagraph(text),
+                'Semantic topics': chunkBySemantic(text)
+            };
+            
+            let output = 'CHUNKING STRATEGY COMPARISON\n\n';
+            
+            Object.entries(strategies).forEach(([name, chunks]) => {
+                const avgSize = Math.round(chunks.reduce((a, b) => a + b.length, 0) / chunks.length);
+                output += `${name}:\n`;
+                output += `  Chunks: ${chunks.length}\n`;
+                output += `  Avg size: ${avgSize} chars\n`;
+                output += `  First chunk: "${chunks[0]?.substring(0, 50)}..."\n\n`;
+            });
+            
+            output += 'RECOMMENDATION:\n';
+            output += 'For RAG: Use paragraph or semantic chunking\n';
+            output += 'For training: Use sentence or fixed-size chunking\n';
+            output += 'For embeddings: 200-512 character chunks work best';
+            
+            results.textContent = output;
+            comparison.style.display = 'block';
+            
+            if (!progress.chapter3) {
+                progress.chapter3 = true;
+                updateChapterVisibility();
+                saveProgress();
+                setTimeout(() => {
+                    document.getElementById('chapter-4').scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
+            }
+        }
+        
+        // Chapter 4: Annotation Interface
+        function loadNextExample() {
+            if (annotationIndex < annotationExamples.length) {
+                document.getElementById('annotation-text').textContent = annotationExamples[annotationIndex];
+                document.getElementById('example-counter').textContent = `${annotationIndex + 1} / ${annotationExamples.length}`;
+                
+                // Remove previous label highlighting
+                document.querySelectorAll('.label-btn').forEach(btn => {
+                    btn.classList.remove('positive', 'negative', 'neutral');
+                });
+            }
+        }
+        
+        function labelExample(label) {
+            // Highlight selected label
+            document.querySelectorAll('.label-btn').forEach(btn => {
+                btn.classList.remove('positive', 'negative', 'neutral');
+            });
+            event.target.classList.add(label);
+            
+            // Store annotation
+            annotations.push({
+                text: annotationExamples[annotationIndex],
+                label: label,
+                expected: expectedLabels[annotationIndex]
+            });
+            
+            annotationIndex++;
+            
+            // Update progress
+            const progress = (annotationIndex / annotationExamples.length) * 100;
+            document.getElementById('annotation-progress').style.width = progress + '%';
+            
+            if (annotationIndex < annotationExamples.length) {
+                setTimeout(loadNextExample, 500);
+            } else {
+                showAnnotationResults();
+            }
+        }
+        
+        function showAnnotationResults() {
+            const results = document.getElementById('annotation-results');
+            
+            // Calculate metrics
+            const counts = { positive: 0, negative: 0, neutral: 0 };
+            let agreements = 0;
+            
+            annotations.forEach(annotation => {
+                counts[annotation.label]++;
+                if (annotation.label === annotation.expected) {
+                    agreements++;
+                }
+            });
+            
+            const agreementRate = Math.round((agreements / annotations.length) * 100);
+            
+            document.getElementById('positive-count').textContent = counts.positive;
+            document.getElementById('negative-count').textContent = counts.negative;
+            document.getElementById('neutral-count').textContent = counts.neutral;
+            document.getElementById('agreement-score').textContent = agreementRate + '%';
+            
+            results.style.display = 'block';
+            
+            if (!progress.chapter4) {
+                progress.chapter4 = true;
+                updateChapterVisibility();
+                saveProgress();
+                setTimeout(() => {
+                    document.getElementById('chapter-5').scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
+            }
+        }
+        
+        function exportAnnotations() {
+            const exportData = {
+                task: "sentiment_analysis",
+                annotator: "user",
+                timestamp: new Date().toISOString(),
+                data: annotations.map(a => ({
+                    text: a.text,
+                    label: a.label
+                }))
+            };
+            
+            const jsonCode = document.getElementById('annotation-json');
+            jsonCode.textContent = JSON.stringify(exportData, null, 2);
+            
+            document.getElementById('exported-data').style.display = 'block';
+        }
+        
+        // Chapter 5: Synthetic Data Generation
+        function generateSyntheticData() {
+            const output = document.getElementById('synthetic-output');
+            const content = document.getElementById('generated-content');
+            const metrics = document.getElementById('quality-metrics');
+            
+            // Simulate generation process
+            output.style.display = 'block';
+            content.innerHTML = '<div style="text-align: center; color: #6b7280;">Generating synthetic data...</div>';
+            
+            setTimeout(() => {
+                const syntheticData = [
+                    {
+                        customer_message: "Hi, I need to return a pair of shoes I bought last week. They don't fit properly.",
+                        support_response: "I'd be happy to help you with that return! Can you please provide your order number so I can look up your purchase?",
+                        sentiment: "neutral",
+                        category: "size_issue"
+                    },
+                    {
+                        customer_message: "This product is completely defective! I want my money back immediately!",
+                        support_response: "I understand your frustration, and I sincerely apologize for the defective product. Let me process a full refund for you right away and arrange for a return shipping label.",
+                        sentiment: "negative", 
+                        category: "defective_product"
+                    },
+                    {
+                        customer_message: "I changed my mind about this purchase. Is it too late to return it?",
+                        support_response: "Not at all! We have a 30-day return policy. As long as the item is in its original condition, you can definitely return it. Would you like me to start the return process?",
+                        sentiment: "positive",
+                        category: "changed_mind"
+                    }
+                ];
+                
+                content.innerHTML = `
+                    <div class="code-block" style="max-height: 300px; overflow-y: auto;">
+                        <pre><code>${JSON.stringify(syntheticData, null, 2)}</code></pre>
+                    </div>
+                `;
+                
+                // Show quality metrics
+                setTimeout(() => {
+                    document.getElementById('diversity-score').textContent = '8.5';
+                    document.getElementById('realism-score').textContent = '9.2';
+                    document.getElementById('coverage-score').textContent = '7.8';
+                    document.getElementById('examples-generated').textContent = syntheticData.length;
+                    
+                    metrics.style.display = 'grid';
+                    
+                    if (!progress.chapter5) {
+                        progress.chapter5 = true;
+                        saveProgress();
+                        
+                        setTimeout(() => {
+                            const celebration = document.querySelector('[style*="linear-gradient"]');
+                            celebration.scrollIntoView({ behavior: 'smooth' });
+                            celebration.classList.add('celebration');
+                        }, 2000);
+                    }
+                }, 1000);
+            }, 2000);
+        }
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#16a34a';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+        
+        // Initialize annotation interface
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNextExample();
+        });
+    </script>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-guardrails/" style="color:#2563eb;text-decoration:none;">← Previous: Guardrails</a>
+        <a href="../build-founder/" style="color:#2563eb;text-decoration:none;">Next: AI Company →</a>
+    </div>
+</body>
+</html>

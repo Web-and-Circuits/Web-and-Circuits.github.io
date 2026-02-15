@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Fine-Tune — From Scratch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .run-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interactive-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .decision-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .question-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .option-btn.selected {
+            border-color: #2563eb;
+            background: #2563eb;
+            color: white;
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #2563eb;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .recommendation h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .training-data-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .example-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-output-box {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .input-box {
+            border-left: 4px solid #2563eb;
+        }
+
+        .output-box {
+            border-left: 4px solid #16a34a;
+        }
+
+        .example-input,
+        .example-output {
+            width: 100%;
+            min-height: 60px;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .dataset-preview {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .training-animation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .loss-chart {
+            width: 100%;
+            height: 200px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loss-curve {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #2563eb;
+            transform-origin: left;
+            transition: all 0.5s ease;
+        }
+
+        .training-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .slider-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .training-slider {
+            width: 150px;
+        }
+
+        .epoch-display {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .lora-visualization {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .matrix-display {
+            display: grid;
+            grid-template-columns: 200px 50px 80px 20px 80px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .matrix {
+            width: 100%;
+            height: 120px;
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .frozen-matrix {
+            border-color: #dc2626;
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .trainable-matrix {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .rank-slider {
+            width: 200px;
+            margin: 20px 0;
+        }
+
+        .parameter-counter {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .eval-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .model-response {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .base-model {
+            border-left: 4px solid #6b7280;
+        }
+
+        .finetuned-model {
+            border-left: 4px solid #16a34a;
+        }
+
+        .response-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .finetuned-model .response-header {
+            color: #16a34a;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .rating-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .rating-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .rating-btn.selected {
+            background: #2563eb;
+            color: white;
+        }
+
+        .go-deeper {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .go-deeper a:hover {
+            text-decoration: underline;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .rag-col {
+            background: #eff6ff;
+        }
+
+        .finetune-col {
+            background: #f0fdf4;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .example-pair {
+                grid-template-columns: 1fr;
+            }
+
+            .matrix-display {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .eval-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 3 of 14</span>
+    </div>
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own Fine-Tune — From Scratch</h1>
+            <p>RAG gives AI your data at runtime. Fine-tuning teaches it permanently.</p>
+            <p>In 30 minutes, you'll understand when to use which — and build both.</p>
+            <p><strong>For absolute beginners.</strong> No machine learning PhD required.</p>
+        </div>
+
+        <!-- Chapter 1: The Fork in the Road -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: The Fork in the Road</h2>
+            
+            <p>You want AI to know your stuff. <strong>There are two paths:</strong></p>
+            
+            <div class="comparison-table" style="margin: 30px 0;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="rag-col">RAG</th>
+                            <th class="finetune-col">Fine-Tuning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>What it does</strong></td>
+                            <td class="rag-col">Gives AI a cheat sheet every time</td>
+                            <td class="finetune-col">Teaches AI permanently</td>
+                        </tr>
+                        <tr>
+                            <td><strong>When to use</strong></td>
+                            <td class="rag-col">Knowledge & facts</td>
+                            <td class="finetune-col">Style & format</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Speed</strong></td>
+                            <td class="rag-col">Setup in minutes</td>
+                            <td class="finetune-col">Training takes hours/days</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost</strong></td>
+                            <td class="rag-col">Pay per query</td>
+                            <td class="finetune-col">Pay for training + inference</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updates</strong></td>
+                            <td class="rag-col">Add new docs instantly</td>
+                            <td class="finetune-col">Retrain for new data</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Decision Tree: Which Should You Use?</h3>
+                <div class="interactive-box">
+                    <div class="decision-tree" id="decision-tree">
+                        <div class="question-card" id="question-1">
+                            <div class="question-text">What's your main goal?</div>
+                            <div class="question-options">
+                                <button class="option-btn" onclick="nextQuestion(1, 'knowledge')">
+                                    AI should know my company's facts and documents
+                                </button>
+                                <button class="option-btn" onclick="nextQuestion(1, 'style')">
+                                    AI should write in my specific style or format
+                                </button>
+                                <button class="option-btn" onclick="nextQuestion(1, 'both')">
+                                    Both knowledge and style
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="recommendation" id="recommendation" style="display: none;">
+                            <h4>Our Recommendation:</h4>
+                            <div id="recommendation-text"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>Most people who think they need fine-tuning actually need RAG.</strong> Fine-tuning is for changing behavior, not adding knowledge.</p>
+
+                <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+                  🔗 <strong>Connection:</strong> If you haven't taken Build Your Own RAG yet, do that first. Most people who think they need fine-tuning actually need RAG. Understanding both lets you make the right call.
+                </div>
+                
+                <button class="run-btn" onclick="completeChapter1()" id="complete-ch1-btn">I Understand the Difference</button>
+            </div>
+
+            <div class="card">
+                <h3>Real Examples</h3>
+                
+                <div class="code-block">
+                    <pre><code>// RAG is perfect for:
+❓ "What's our vacation policy?" 
+❓ "Who attended the Q3 meeting?"
+❓ "What are the tax implications of..."
+→ Knowledge-based questions
+
+// Fine-tuning is perfect for:
+❓ Making AI write like your CEO
+❓ Following your company's report format
+❓ Responding in your brand voice
+❓ Using your specific terminology consistently
+→ Style and behavior changes</code></pre>
+                </div>
+                
+                <p>**Think of RAG as giving the AI a textbook, and fine-tuning as changing its personality.**</p>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Training Data -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: Training Data</h2>
+            
+            <p><strong>Fine-tuning needs examples. Lots of them.</strong> You show the AI input-output pairs: "When you see this, say that."</p>
+            
+            <p>The format is always: **input → desired output**. The AI learns to mimic your examples.</p>
+
+            <div class="card">
+                <h3>Try It: Build a Training Dataset</h3>
+                <div class="interactive-box">
+                    <div class="training-data-builder">
+                        <p><strong>Scenario:</strong> Training a customer support bot for a coffee shop</p>
+                        
+                        <div id="training-examples">
+                            <div class="example-pair">
+                                <div class="input-output-box input-box">
+                                    <strong>Input:</strong>
+                                    <textarea class="example-input" placeholder="Customer question...">What are your hours?</textarea>
+                                </div>
+                                <div class="input-output-box output-box">
+                                    <strong>Desired Output:</strong>
+                                    <textarea class="example-output" placeholder="Ideal response...">We're open Monday-Friday 6am-8pm, weekends 7am-9pm! Our baristas are ready to craft your perfect cup. ☕</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="run-btn" onclick="addTrainingExample()">Add Another Example</button>
+                        <button class="run-btn" onclick="generateDataset()">Generate JSONL Dataset</button>
+                        
+                        <div class="dataset-preview" id="dataset-preview" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <p><strong>The quality of your examples IS the quality of your model.</strong> Garbage in, garbage out.</p>
+            </div>
+
+            <div class="card">
+                <h3>The JSONL Format</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Each line is a complete training example in JSON format:
+{"messages": [
+  {"role": "user", "content": "What are your hours?"},
+  {"role": "assistant", "content": "We're open Monday-Friday 6am-8pm, weekends 7am-9pm! Our baristas are ready to craft your perfect cup. ☕"}
+]}
+{"messages": [
+  {"role": "user", "content": "Do you have decaf options?"},
+  {"role": "assistant", "content": "Absolutely! We offer decaf versions of all our signature drinks. Our decaf espresso is Swiss Water processed for the cleanest taste. What can I make for you? ☕"}
+]}
+{"messages": [
+  {"role": "user", "content": "I want to complain about my order"},
+  {"role": "assistant", "content": "I'm so sorry to hear that! We want every cup to be perfect. Can you tell me what happened? I'm here to make this right. 💛"}
+]}</code></pre>
+                </div>
+                
+                <p>**Each example teaches the model one pattern.** You need 50-100 examples minimum, 500-1000 for best results.</p>
+                
+                <button class="run-btn" onclick="completeChapter2()" id="complete-ch2-btn">I Understand Training Data</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://platform.openai.com/docs/guides/fine-tuning/preparing-your-dataset" target="_blank">OpenAI Fine-Tuning Guide</a> — Best practices for preparing training data</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: The Training Loop -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: The Training Loop</h2>
+            
+            <p><strong>What actually happens during fine-tuning?</strong> The model looks at your examples and adjusts its **weights** (the numbers that control its behavior) to match your desired outputs.</p>
+            
+            <p>It's like adjusting millions of knobs until the output matches your examples.</p>
+
+            <div class="card">
+                <h3>Try It: Watch Training Happen</h3>
+                <div class="interactive-box">
+                    <div class="training-animation">
+                        <div class="loss-chart">
+                            <div id="loss-curve" class="loss-curve"></div>
+                            <div style="position: absolute; bottom: 5px; left: 10px; font-size: 12px; color: #6b7280;">
+                                Loss (lower is better)
+                            </div>
+                        </div>
+                        
+                        <div class="training-controls">
+                            <div class="slider-control">
+                                <label>Learning Rate:</label>
+                                <input type="range" class="training-slider" id="lr-slider" min="1" max="10" value="5" oninput="updateTraining()">
+                                <span id="lr-value">0.0001</span>
+                            </div>
+                            
+                            <div class="epoch-display">
+                                Epoch <span id="epoch-counter">0</span>
+                            </div>
+                            
+                            <button class="run-btn" onclick="startTraining()" id="training-btn">Start Training</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>Learning rate is crucial:</strong> Too high and the model goes crazy. Too low and it learns nothing. The sweet spot is usually 0.0001-0.001.</p>
+            </div>
+
+            <div class="card">
+                <h3>What's Actually Happening</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Simplified training step:
+for epoch in range(num_epochs):
+  for example in training_data:
+    # 1. Model makes a prediction
+    prediction = model(example.input)
+    
+    # 2. Calculate how wrong it is
+    loss = calculate_loss(prediction, example.target)
+    
+    # 3. Adjust weights to reduce the error
+    gradients = calculate_gradients(loss)
+    weights = weights - learning_rate * gradients
+    
+    # 4. Repeat for every example
+
+# After thousands of examples, the model learns the pattern</code></pre>
+                </div>
+                
+                <p>**Training is just adjusting millions of knobs until the output matches your examples.** Each training example nudges the weights in the right direction.</p>
+                
+                <button class="run-btn" onclick="completeChapter3()" id="complete-ch3-btn">I Understand Training</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://sebastianraschka.com/blog/2023/llm-training-101.html" target="_blank">LLM Training 101</a> — Deep dive into how language models learn</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: LoRA - The Shortcut -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: LoRA — The Shortcut</h2>
+            
+            <p><strong>Full fine-tuning is expensive.</strong> GPT-3 has 175 billion parameters. Training all of them costs thousands of dollars and takes days.</p>
+            
+            <p>**LoRA (Low-Rank Adaptation) is a clever shortcut:** freeze most weights and only train tiny "adapter" layers. You get 90% of the quality with 1% of the parameters.</p>
+
+            <div class="card">
+                <h3>Try It: LoRA Visualization</h3>
+                <div class="interactive-box">
+                    <div class="lora-visualization">
+                        <div class="matrix-display">
+                            <div class="matrix frozen-matrix">
+                                Original Weight Matrix<br>
+                                (FROZEN)<br>
+                                175B params
+                            </div>
+                            
+                            <div style="text-align: center; font-size: 20px; font-weight: 600;">
+                                =
+                            </div>
+                            
+                            <div class="matrix trainable-matrix">
+                                A Matrix<br>
+                                (TRAINABLE)
+                            </div>
+                            
+                            <div style="text-align: center; font-size: 20px; font-weight: 600;">
+                                ×
+                            </div>
+                            
+                            <div class="matrix trainable-matrix">
+                                B Matrix<br>
+                                (TRAINABLE)
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="rank-slider"><strong>LoRA Rank:</strong> <span id="rank-value">16</span></label>
+                            <input type="range" class="rank-slider" id="rank-slider" min="4" max="64" value="16" oninput="updateLoRA()">
+                        </div>
+                        
+                        <div class="parameter-counter" id="parameter-counter">
+                            Training 2.1M parameters (0.001% of original model)
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>The math trick:</strong> Instead of training a huge matrix, train two small matrices that multiply together to approximate the same result.</p>
+            </div>
+
+            <div class="card">
+                <h3>How LoRA Works</h3>
+                
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>// Without LoRA: Train the full weight matrix W (huge)
+output = input @ W  // W is 4096x4096 = 16M parameters
+
+// With LoRA: Keep W frozen, train A and B (tiny)
+output = input @ W + input @ A @ B
+
+Where:
+- W: 4096x4096 (FROZEN, 16M params)
+- A: 4096x16 (trainable, 65K params)  
+- B: 16x4096 (trainable, 65K params)
+- Total trainable: 130K vs 16M (99% reduction!)
+
+// The key insight: most fine-tuning changes are low-rank
+// You don't need to adjust every weight, just the important patterns</code></pre>
+                </div>
+                
+                <p>**LoRA trains 1% of the parameters and gets 90% of the quality.** It's the standard for modern fine-tuning.</p>
+                
+                <button class="run-btn" onclick="completeChapter4()" id="complete-ch4-btn">I Understand LoRA</button>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://arxiv.org/abs/2106.09685" target="_blank">LoRA Paper</a> — The original Low-Rank Adaptation research</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Eval - Did It Work? -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: Eval — Did It Work?</h2>
+            
+            <p><strong>Your fine-tuned model might be great or might have memorized garbage.</strong> How can you tell?</p>
+            
+            <p>**Evaluation** is the only way to know if your fine-tuning worked. You need test data that the model has never seen before.</p>
+
+            <div class="card">
+                <h3>Try It: Side-by-Side Comparison</h3>
+                <div class="interactive-box">
+                    <div class="eval-comparison">
+                        <div class="model-response base-model">
+                            <div class="response-header">Base Model</div>
+                            <div class="response-content">
+                                <strong>Question:</strong> "What are your hours?"<br><br>
+                                <strong>Response:</strong> I don't have access to specific business hours as I don't know which establishment you're referring to. Business hours can vary significantly. Could you please specify which business or organization you're asking about?
+                            </div>
+                            <div class="rating-buttons">
+                                <button class="rating-btn" onclick="rateResponse('base', 1)">😞 Bad</button>
+                                <button class="rating-btn" onclick="rateResponse('base', 2)">😐 Okay</button>
+                                <button class="rating-btn" onclick="rateResponse('base', 3)">😊 Good</button>
+                            </div>
+                        </div>
+                        
+                        <div class="model-response finetuned-model">
+                            <div class="response-header">Fine-Tuned Model</div>
+                            <div class="response-content">
+                                <strong>Question:</strong> "What are your hours?"<br><br>
+                                <strong>Response:</strong> We're open Monday-Friday 6am-8pm, weekends 7am-9pm! Our baristas are ready to craft your perfect cup. ☕ Is there anything specific you'd like to try today?
+                            </div>
+                            <div class="rating-buttons">
+                                <button class="rating-btn" onclick="rateResponse('finetuned', 1)">😞 Bad</button>
+                                <button class="rating-btn" onclick="rateResponse('finetuned', 2)">😐 Okay</button>
+                                <button class="rating-btn selected" onclick="rateResponse('finetuned', 3)">😊 Good</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="eval-results" style="margin-top: 20px; padding: 15px; background: #f0fdf4; border-radius: 6px; display: none;">
+                        <strong>Evaluation Results:</strong>
+                        <div id="eval-summary"></div>
+                    </div>
+                </div>
+                
+                <p><strong>The fine-tuned model knows it's a coffee shop and responds in the right style!</strong> This is what good fine-tuning looks like.</p>
+            </div>
+
+            <div class="card">
+                <h3>Evaluation Metrics</h3>
+                
+                <div class="code-block">
+                    <pre><code>// Common evaluation approaches:
+
+1. HUMAN EVALUATION (gold standard)
+   - Show responses to humans
+   - Rate on helpfulness, accuracy, style
+   - Most reliable but expensive
+
+2. AUTOMATED METRICS
+   - BLEU: How similar to reference answers?
+   - ROUGE: How much content overlap?
+   - Perplexity: How "surprised" is the model?
+
+3. A/B TESTING
+   - Deploy both models to subset of users
+   - Measure real business metrics
+   - Engagement, satisfaction, task completion
+
+// Rule of thumb: if you can't measure it, you can't improve it</code></pre>
+                </div>
+                
+                <p>**If you can't measure it, you can't improve it.** Always hold out test data that the model never sees during training.</p>
+                
+                <button class="run-btn" onclick="completeChapter5()" id="complete-ch5-btn">I Understand Evaluation</button>
+            </div>
+
+            <div class="card">
+                <h3>🎉 You Built Fine-Tuning Mastery! 🎉</h3>
+                
+                <p style="font-size: 1.3em; font-weight: 600; text-align: center; margin: 30px 0;">
+                    <strong>You now understand the complete fine-tuning pipeline!</strong>
+                </p>
+                
+                <p><strong>You learned:</strong></p>
+                
+                <ul style="margin: 20px 0; padding-left: 30px;">
+                    <li>✅ <strong>RAG vs Fine-tuning:</strong> When to use which approach</li>
+                    <li>✅ <strong>Training data:</strong> Creating high-quality input-output pairs</li>
+                    <li>✅ <strong>The training loop:</strong> How models learn from examples</li>
+                    <li>✅ <strong>LoRA:</strong> Efficient fine-tuning with minimal parameters</li>
+                    <li>✅ <strong>Evaluation:</strong> Measuring if your fine-tuning worked</li>
+                </ul>
+                
+                <p><strong>The decision framework:</strong></p>
+                <ul style="margin: 20px 0; padding-left: 30px;">
+                    <li>Need new knowledge? → <strong>RAG</strong></li>
+                    <li>Need consistent style/format? → <strong>Fine-tuning</strong></li>  
+                    <li>Need both? → <strong>RAG + Fine-tuning</strong></li>
+                </ul>
+                
+                <p>You're now equipped to make the right choice for your use case and execute it properly!</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <p><a href="https://wandb.ai/site/articles/evaluating-llms" target="_blank">Evaluating Large Language Models</a> — Comprehensive guide to LLM evaluation</p>
+                <p><a href="https://huggingface.co/blog/peft" target="_blank">Parameter-Efficient Fine-Tuning (PEFT)</a> — Advanced techniques beyond LoRA</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        let progress = {
+            chapter1: false,
+            chapter2: false,  
+            chapter3: false,
+            chapter4: false,
+            chapter5: false
+        };
+        
+        // Decision tree state
+        let decisionAnswers = {};
+        
+        // Training examples
+        let trainingExamples = [
+            {
+                input: "What are your hours?",
+                output: "We're open Monday-Friday 6am-8pm, weekends 7am-9pm! Our baristas are ready to craft your perfect cup. ☕"
+            }
+        ];
+        
+        // Load saved progress
+        const savedProgress = localStorage.getItem('finetuneProgress');
+        if (savedProgress) {
+            progress = { ...progress, ...JSON.parse(savedProgress) };
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('finetuneProgress', JSON.stringify(progress));
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateChapterVisibility();
+            updateLoRA();
+        });
+        
+        function updateChapterVisibility() {
+            const chapters = [
+                { id: 'chapter-2', condition: progress.chapter1 },
+                { id: 'chapter-3', condition: progress.chapter2 },
+                { id: 'chapter-4', condition: progress.chapter3 },
+                { id: 'chapter-5', condition: progress.chapter4 }
+            ];
+            
+            chapters.forEach(chapter => {
+                const element = document.getElementById(chapter.id);
+                if (chapter.condition) {
+                    element.classList.add('visible');
+                    element.classList.add('fade-in');
+                }
+            });
+        }
+        
+        // Chapter 1: Decision tree
+        function nextQuestion(questionNum, answer) {
+            decisionAnswers[questionNum] = answer;
+            
+            // Update button states
+            const buttons = document.querySelectorAll(`#question-${questionNum} .option-btn`);
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Show recommendation
+            showRecommendation(answer);
+        }
+        
+        function showRecommendation(answer) {
+            const recommendationDiv = document.getElementById('recommendation');
+            const textDiv = document.getElementById('recommendation-text');
+            
+            let recommendation = '';
+            
+            if (answer === 'knowledge') {
+                recommendation = `
+                    <strong>Use RAG!</strong><br>
+                    You need to give the AI access to your documents and facts. RAG is perfect for this - it's faster to set up, easier to update, and more cost-effective than fine-tuning for knowledge tasks.
+                `;
+            } else if (answer === 'style') {
+                recommendation = `
+                    <strong>Use Fine-tuning!</strong><br>
+                    You need to change how the AI behaves and communicates. Fine-tuning will teach it your specific style, format, and tone permanently. This is exactly what fine-tuning was designed for.
+                `;
+            } else {
+                recommendation = `
+                    <strong>Use RAG + Fine-tuning!</strong><br>
+                    Start with RAG for the knowledge component (faster and cheaper), then fine-tune on top for consistent style. Many production systems use this hybrid approach.
+                `;
+            }
+            
+            textDiv.innerHTML = recommendation;
+            recommendationDiv.style.display = 'block';
+        }
+        
+        function completeChapter1() {
+            progress.chapter1 = true;
+            document.getElementById('complete-ch1-btn').textContent = '✓ Chapter 1 Complete';
+            document.getElementById('complete-ch1-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch1-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 2: Training data
+        function addTrainingExample() {
+            trainingExamples.push({ input: '', output: '' });
+            renderTrainingExamples();
+        }
+        
+        function renderTrainingExamples() {
+            const container = document.getElementById('training-examples');
+            
+            container.innerHTML = trainingExamples.map((example, index) => `
+                <div class="example-pair">
+                    <div class="input-output-box input-box">
+                        <strong>Input:</strong>
+                        <textarea class="example-input" 
+                                placeholder="Customer question..." 
+                                oninput="updateExample(${index}, 'input', this.value)">${example.input}</textarea>
+                    </div>
+                    <div class="input-output-box output-box">
+                        <strong>Desired Output:</strong>
+                        <textarea class="example-output" 
+                                placeholder="Ideal response..." 
+                                oninput="updateExample(${index}, 'output', this.value)">${example.output}</textarea>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateExample(index, field, value) {
+            trainingExamples[index][field] = value;
+        }
+        
+        function generateDataset() {
+            const validExamples = trainingExamples.filter(ex => ex.input.trim() && ex.output.trim());
+            
+            if (validExamples.length === 0) {
+                alert('Please add at least one complete example first!');
+                return;
+            }
+            
+            const jsonl = validExamples.map(example => 
+                JSON.stringify({
+                    messages: [
+                        { role: "user", content: example.input },
+                        { role: "assistant", content: example.output }
+                    ]
+                })
+            ).join('\n');
+            
+            const preview = document.getElementById('dataset-preview');
+            preview.textContent = jsonl;
+            preview.style.display = 'block';
+        }
+        
+        function completeChapter2() {
+            progress.chapter2 = true;
+            document.getElementById('complete-ch2-btn').textContent = '✓ Chapter 2 Complete';
+            document.getElementById('complete-ch2-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch2-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 3: Training animation
+        let trainingInterval;
+        let currentEpoch = 0;
+        let isTraining = false;
+        
+        function startTraining() {
+            if (isTraining) {
+                stopTraining();
+                return;
+            }
+            
+            isTraining = true;
+            currentEpoch = 0;
+            document.getElementById('training-btn').textContent = 'Stop Training';
+            
+            trainingInterval = setInterval(() => {
+                currentEpoch++;
+                updateTrainingDisplay();
+                
+                if (currentEpoch >= 100) {
+                    stopTraining();
+                }
+            }, 100);
+        }
+        
+        function stopTraining() {
+            if (trainingInterval) {
+                clearInterval(trainingInterval);
+            }
+            isTraining = false;
+            document.getElementById('training-btn').textContent = 'Start Training';
+        }
+        
+        function updateTraining() {
+            const lrValue = document.getElementById('lr-slider').value;
+            const actualLR = (lrValue / 50000).toFixed(6);
+            document.getElementById('lr-value').textContent = actualLR;
+        }
+        
+        function updateTrainingDisplay() {
+            const lrValue = parseInt(document.getElementById('lr-slider').value);
+            
+            // Calculate loss reduction (affected by learning rate)
+            let lossReduction = 1;
+            if (lrValue < 3) {
+                lossReduction = 0.995; // Too low, barely learning
+            } else if (lrValue > 7) {
+                lossReduction = 0.5 + Math.random() * 0.5; // Too high, unstable
+            } else {
+                lossReduction = 0.97; // Good learning rate
+            }
+            
+            const lossHeight = Math.max(5, 160 * Math.pow(lossReduction, currentEpoch));
+            
+            document.getElementById('epoch-counter').textContent = currentEpoch;
+            document.getElementById('loss-curve').style.height = lossHeight + 'px';
+        }
+        
+        function completeChapter3() {
+            progress.chapter3 = true;
+            document.getElementById('complete-ch3-btn').textContent = '✓ Chapter 3 Complete';
+            document.getElementById('complete-ch3-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch3-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 4: LoRA visualization
+        function updateLoRA() {
+            const rank = document.getElementById('rank-slider').value;
+            document.getElementById('rank-value').textContent = rank;
+            
+            // Calculate parameters (simplified)
+            const hiddenSize = 4096;
+            const fullParams = hiddenSize * hiddenSize / 1000000; // in millions
+            const loraParams = (2 * hiddenSize * rank) / 1000000; // A and B matrices
+            const percentage = ((loraParams / fullParams) * 100).toFixed(3);
+            
+            document.getElementById('parameter-counter').innerHTML = `
+                Training ${loraParams.toFixed(1)}M parameters (${percentage}% of original model)<br>
+                <small>Full fine-tuning would be ${fullParams.toFixed(1)}M parameters</small>
+            `;
+        }
+        
+        function completeChapter4() {
+            progress.chapter4 = true;
+            document.getElementById('complete-ch4-btn').textContent = '✓ Chapter 4 Complete';
+            document.getElementById('complete-ch4-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch4-btn').classList.add('celebrating');
+            updateChapterVisibility();
+            saveProgress();
+        }
+        
+        // Chapter 5: Evaluation
+        let ratings = { base: 0, finetuned: 0 };
+        
+        function rateResponse(model, rating) {
+            ratings[model] = rating;
+            
+            // Update button states
+            const buttons = document.querySelectorAll(`.${model}-model .rating-btn`);
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Show results if both are rated
+            if (ratings.base > 0 && ratings.finetuned > 0) {
+                showEvalResults();
+            }
+        }
+        
+        function showEvalResults() {
+            const resultsDiv = document.getElementById('eval-results');
+            const summaryDiv = document.getElementById('eval-summary');
+            
+            const baseScore = ratings.base;
+            const finetunedScore = ratings.finetuned;
+            
+            let summary = '';
+            if (finetunedScore > baseScore) {
+                summary = '✅ Fine-tuning worked! The fine-tuned model performs better.';
+            } else if (finetunedScore === baseScore) {
+                summary = '⚠️ No improvement detected. Consider more/better training data.';
+            } else {
+                summary = '❌ Fine-tuning made it worse! Check your training data quality.';
+            }
+            
+            summaryDiv.innerHTML = `
+                ${summary}<br>
+                <small>Base model score: ${baseScore}/3, Fine-tuned score: ${finetunedScore}/3</small>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        function completeChapter5() {
+            progress.chapter5 = true;
+            document.getElementById('complete-ch5-btn').textContent = '✓ Fine-Tuning Master! 🎉';
+            document.getElementById('complete-ch5-btn').style.background = '#16a34a';
+            document.getElementById('complete-ch5-btn').classList.add('celebrating');
+            saveProgress();
+        }
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#16a34a';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#2563eb';
+                }, 2000);
+            });
+        }
+        
+        // Initialize training display
+        updateTraining();
+        renderTrainingExamples();
+    </script>
+
+    <div style="max-width:720px;margin:60px auto;padding:30px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:8px;">🧠 Final Recall</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Test yourself. No peeking. These questions cover everything you just learned.</p>
+        <div id="quiz-container">
+            <div class="quiz-question">
+                <p><strong>1. When should you choose fine-tuning over RAG?</strong></p>
+                <label><input type="radio" name="q1" value="a"> A) When you need the AI to know more facts</label><br>
+                <label><input type="radio" name="q1" value="b"> B) When you need the AI to write in a specific style or format consistently</label><br>
+                <label><input type="radio" name="q1" value="c"> C) When you need faster responses</label><br>
+                <label><input type="radio" name="q1" value="d"> D) When your data changes frequently</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>2. What is the correct JSONL format for a fine-tuning training example?</strong></p>
+                <label><input type="radio" name="q2" value="a"> A) {"input": "question", "output": "answer"}</label><br>
+                <label><input type="radio" name="q2" value="b"> B) {"messages": [{"role": "user", "content": "question"}, {"role": "assistant", "content": "answer"}]}</label><br>
+                <label><input type="radio" name="q2" value="c"> C) {"prompt": "question", "completion": "answer"}</label><br>
+                <label><input type="radio" name="q2" value="d"> D) {"user": "question", "bot": "answer"}</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>3. What happens if your learning rate is too high during training?</strong></p>
+                <label><input type="radio" name="q3" value="a"> A) Training goes very slowly</label><br>
+                <label><input type="radio" name="q3" value="b"> B) The model becomes unstable and loss oscillates wildly</label><br>
+                <label><input type="radio" name="q3" value="c"> C) Training stops completely</label><br>
+                <label><input type="radio" name="q3" value="d"> D) The model learns perfectly</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>4. What is the key advantage of LoRA (Low-Rank Adaptation)?</strong></p>
+                <label><input type="radio" name="q4" value="a"> A) It makes training faster</label><br>
+                <label><input type="radio" name="q4" value="b"> B) It achieves 90% of full fine-tuning quality while training only 1% of the parameters</label><br>
+                <label><input type="radio" name="q4" value="c"> C) It works better than full fine-tuning</label><br>
+                <label><input type="radio" name="q4" value="d"> D) It doesn't require any training data</label><br>
+            </div>
+            <div class="quiz-question">
+                <p><strong>5. Why is evaluation crucial in fine-tuning?</strong></p>
+                <label><input type="radio" name="q5" value="a"> A) To make training faster</label><br>
+                <label><input type="radio" name="q5" value="b"> B) To reduce costs</label><br>
+                <label><input type="radio" name="q5" value="c"> C) To determine if the model actually improved on unseen test data</label><br>
+                <label><input type="radio" name="q5" value="d"> D) To generate more training examples</label><br>
+            </div>
+        </div>
+        <button onclick="checkQuizFineTune()" style="margin-top:16px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Check Answers</button>
+        <div id="quiz-result" style="margin-top:16px;font-size:18px;font-weight:600;"></div>
+        
+        <script>
+        function checkQuizFineTune() {
+            const answers = {q1: 'b', q2: 'b', q3: 'b', q4: 'b', q5: 'c'};
+            let score = 0;
+            let total = Object.keys(answers).length;
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const correctAnswer = answers[question];
+                
+                // Reset all radio button styles
+                document.querySelectorAll(`input[name="${question}"]`).forEach(radio => {
+                    radio.parentElement.style.color = '';
+                    radio.parentElement.style.fontWeight = '';
+                });
+                
+                if (selected) {
+                    if (selected.value === correctAnswer) {
+                        score++;
+                        selected.parentElement.style.color = '#16a34a';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    } else {
+                        selected.parentElement.style.color = '#dc2626';
+                        selected.parentElement.style.fontWeight = 'bold';
+                    }
+                }
+                
+                // Highlight correct answer
+                const correctRadio = document.querySelector(`input[name="${question}"][value="${correctAnswer}"]`);
+                if (correctRadio && (!selected || selected.value !== correctAnswer)) {
+                    correctRadio.parentElement.style.color = '#16a34a';
+                    correctRadio.parentElement.style.fontWeight = 'bold';
+                }
+            }
+            
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `🎉 Perfect! ${score}/${total} - You've mastered fine-tuning!`;
+                resultDiv.style.color = '#16a34a';
+            } else if (score >= total * 0.8) {
+                resultDiv.innerHTML = `🌟 Excellent! ${score}/${total} - Strong grasp of the concepts.`;
+                resultDiv.style.color = '#059669';
+            } else if (score >= total * 0.6) {
+                resultDiv.innerHTML = `👍 Good job! ${score}/${total} - Review the highlighted areas.`;
+                resultDiv.style.color = '#d97706';
+            } else {
+                resultDiv.innerHTML = `📚 ${score}/${total} - Consider reviewing the course material.`;
+                resultDiv.style.color = '#dc2626';
+            }
+        }
+        </script>
+        
+        <style>
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .quiz-question input[type="radio"] {
+            margin-right: 8px;
+        }
+        </style>
+    </div>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-rag/" style="color:#2563eb;text-decoration:none;">← Previous: RAG System</a>
+        <a href="../build-tools/" style="color:#2563eb;text-decoration:none;">Next: Tools & MCP →</a>
+    </div>
+</body>
+</html>

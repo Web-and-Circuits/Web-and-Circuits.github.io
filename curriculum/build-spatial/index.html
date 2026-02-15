@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own 3D World — Spatial AI for Sports Broadcasting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a2e;
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .chapter {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter.completed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        .chapter h3 {
+            font-size: 1.5rem;
+            margin: 40px 0 20px 0;
+            color: #2563eb;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .interactive-demo {
+            background: #f8fafc;
+            border: 2px solid #2563eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .demo-canvas {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 20px 0;
+            cursor: crosshair;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .demo-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .demo-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .demo-btn.secondary {
+            background: #6b7280;
+        }
+
+        .demo-btn.secondary:hover {
+            background: #4b5563;
+        }
+
+        .depth-visualizer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .depth-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            mix-blend-mode: multiply;
+        }
+
+        .depth-overlay.active {
+            opacity: 0.8;
+        }
+
+        .parallax-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .parallax-image {
+            position: relative;
+            cursor: crosshair;
+        }
+
+        .match-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #2563eb;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .match-line {
+            position: absolute;
+            height: 2px;
+            background: #2563eb;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+        }
+
+        .splat-canvas {
+            background: #000;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .splat-controls {
+            margin: 15px 0;
+        }
+
+        .splat-controls label {
+            display: inline-block;
+            width: 100px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .splat-controls input[type="range"] {
+            width: 150px;
+            margin: 0 10px;
+        }
+
+        .segmentation-demo {
+            position: relative;
+        }
+
+        .segmentation-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .segment-mask {
+            position: absolute;
+            border: 3px solid #2563eb;
+            background: rgba(37, 99, 235, 0.2);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .click-indicator {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: clickPulse 0.6s ease-out;
+        }
+
+        @keyframes clickPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        .homography-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .homography-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .pipeline-builder {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .pipeline-components {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .pipeline-component {
+            background: #2563eb;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .pipeline-component:hover {
+            transform: scale(1.05);
+        }
+
+        .pipeline-component.dragging {
+            opacity: 0.5;
+        }
+
+        .pipeline-dropzone {
+            min-height: 60px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-weight: 600;
+            margin: 10px 0;
+            transition: all 0.2s;
+        }
+
+        .pipeline-dropzone.drag-over {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+        }
+
+        .pipeline-dropzone .component {
+            background: #16a34a;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 5px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-icon {
+            font-size: 24px;
+        }
+
+        .status-icon.ready { color: #16a34a; }
+        .status-icon.partial { color: #f59e0b; }
+        .status-icon.research { color: #8b5cf6; }
+
+        .go-deeper {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 40px 0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .go-deeper h4 {
+            color: #2563eb;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .go-deeper a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            display: block;
+            margin: 8px 0;
+            transition: color 0.2s;
+        }
+
+        .go-deeper a:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .finale {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .finale h2 {
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .finale p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .cta-btn {
+            background: white;
+            color: #2563eb;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .chapter h2 {
+                font-size: 2rem;
+            }
+
+            .depth-visualizer,
+            .parallax-demo,
+            .homography-demo {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .progress-indicator {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:12px 20px;font-size:14px;color:#64748b;max-width:720px;margin:0 auto;">
+        <a href="../" style="color:#2563eb;text-decoration:none;">← Back to Series</a>
+        <span style="float:right;">Course 13 of 14</span>
+    </div>
+    <div class="progress-indicator" id="progress">Chapter 1 of 5</div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Build Your Own 3D World</h1>
+            <p><strong>Spatial AI for Sports Broadcasting</strong></p>
+            <p>Cameras see flat images. The real world is 3D.</p>
+            <p>In 30 minutes you'll learn how AI reconstructs the world from video — and how this changes sports broadcasting forever.</p>
+        </div>
+
+        <!-- Chapter 1: Flat to 3D -->
+        <div class="chapter visible" id="chapter-1">
+            <h2>Chapter 1: "Flat to 3D"</h2>
+            <h3>How computers reconstruct depth from images</h3>
+            
+            <p>Imagine watching disc golf on ESPN. A single camera follows a player as they wind up, release, and watch their disc sail across the course. <strong>That flat video contains a hidden 3D world — if you know how to extract it.</strong></p>
+
+            <div class="card">
+                <h3>The Problem</h3>
+                <p>A photo has no depth. It's a 2D projection of a 3D world. <strong>When light hits your camera sensor, all depth information is lost.</strong> A mountain 10 miles away and a tree 10 feet away can cast the exact same shadow on the same pixel.</p>
+                
+                <p>But your brain reconstructs 3D from two flat images — your eyes. <strong>Computers can do the same thing, and much more.</strong></p>
+            </div>
+
+            <div class="card">
+                <h3>Depth from Single Images</h3>
+                <div class="interactive-demo">
+                    <h4>🖼️ Monocular Depth Estimation</h4>
+                    <div class="depth-visualizer">
+                        <div class="image-container">
+                            <canvas id="source-image" width="300" height="200"></canvas>
+                            <canvas id="depth-overlay" class="depth-overlay" width="300" height="200"></canvas>
+                        </div>
+                        <div>
+                            <p><strong>Modern AI can predict depth from a single image.</strong> Models like Depth Anything and MiDAS learned from millions of images to understand visual cues: size, shadows, overlap, perspective.</p>
+                            <button class="demo-btn" onclick="toggleDepthVisualization()">Toggle Depth Map</button>
+                            <p style="font-size: 14px; margin-top: 10px;">Red = close, Blue = far</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>The catch:</strong> Single-image depth is relative, not metric. You know the tree is closer than the mountain, but not by exactly how many meters. For broadcast sports, that's often enough.</p>
+            </div>
+
+            <div class="card">
+                <h3>Structure from Motion (SfM)</h3>
+                <div class="interactive-demo">
+                    <h4>🎯 Parallax Explorer</h4>
+                    <div class="parallax-demo">
+                        <div class="parallax-image" id="left-image" onclick="addMatchPoint(event, 'left')">
+                            <canvas width="280" height="180"></canvas>
+                            <div class="match-line" id="match-line"></div>
+                        </div>
+                        <div class="parallax-image" id="right-image" onclick="addMatchPoint(event, 'right')">
+                            <canvas width="280" height="180"></canvas>
+                        </div>
+                    </div>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="clearMatchPoints()">Clear Points</button>
+                        <button class="demo-btn" onclick="triangulatePoints()">Triangulate 3D</button>
+                    </div>
+                    <div id="triangulation-result"></div>
+                    <p><strong>Click matching points in both images.</strong> With two views of the same scene, we can triangulate the real 3D position of any point. This is how COLMAP and other SfM systems work.</p>
+                </div>
+                
+                <p><strong>The broadcast problem:</strong> Sports cameras follow the action — they don't orbit the scene. This gives you very few viewpoints. COLMAP might register only 4 frames out of 70. That's why broadcast 3D reconstruction is so hard.</p>
+            </div>
+
+            <div class="card">
+                <p><strong>You now understand the fundamental challenge.</strong> 2D cameras capture 3D worlds, but the depth is lost. AI can estimate it, geometry can triangulate it, but broadcast video gives us limited views.</p>
+                <p>This limitation drove the computer vision revolution of 2020-2024. Let's see what emerged.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://colmap.github.io/" target="_blank">COLMAP — Structure-from-Motion Toolkit</a>
+                <a href="https://arxiv.org/abs/2406.09414" target="_blank">Depth Anything V2 Paper (2024)</a>
+                <a href="https://github.com/isl-org/MiDaS" target="_blank">MiDaS — Monocular Depth Estimation</a>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Gaussian Splats -->
+        <div class="chapter" id="chapter-2">
+            <h2>Chapter 2: "Gaussian Splats"</h2>
+            <h3>The revolution in 3D reconstruction</h3>
+            
+            <p>NeRFs were first (2020) — train a neural network to represent a 3D scene. <strong>Beautiful results, but painfully slow to train and render.</strong></p>
+
+            <p>Then came 3D Gaussian Splatting (2023). <strong>Same quality, 100x faster.</strong> It changed everything.</p>
+
+            <div class="card">
+                <h3>What is a Gaussian Splat?</h3>
+                <p><strong>A fuzzy 3D blob.</strong> Each "splat" has a position in 3D space, a size, a rotation, a color, and an opacity. Imagine a semi-transparent colored ellipsoid floating in space.</p>
+                
+                <p>Now imagine millions of them. <strong>Together, they can approximate any 3D scene.</strong></p>
+
+                <div class="interactive-demo">
+                    <h4>🎨 2D Splat Playground</h4>
+                    <canvas id="splat-canvas" class="splat-canvas" width="600" height="400"></canvas>
+                    <div class="splat-controls">
+                        <label>Size:</label>
+                        <input type="range" id="splat-size" min="10" max="100" value="30">
+                        <label>Opacity:</label>
+                        <input type="range" id="splat-opacity" min="0.1" max="1" step="0.1" value="0.7">
+                    </div>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="clearSplats()">Clear Canvas</button>
+                        <button class="demo-btn secondary" onclick="randomSplats()">Add Random Splats</button>
+                    </div>
+                    <p><strong>Click to add colored gaussian blobs. Drag to move them.</strong> This is what 3D Gaussian Splatting does, but in 3D with millions of splats.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>How Training Works</h3>
+                <p><strong>Start with a point cloud</strong> from SfM (remember Chapter 1). Each point becomes a gaussian splat. Then optimize:</p>
+                
+                <ol style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>Render</strong> the splats to generate an image</li>
+                    <li><strong>Compare</strong> with the actual photo from that viewpoint</li>
+                    <li><strong>Adjust</strong> splat parameters to minimize the difference</li>
+                    <li><strong>Repeat</strong> for all camera views</li>
+                </ol>
+
+                <p><strong>The loss function is simple:</strong> "Does my rendered image look like the real photo?" That's it. The magic is in the differentiable rendering — you can backpropagate through the entire splatting process.</p>
+            </div>
+
+            <div class="card">
+                <h3>The Broadcast Challenge</h3>
+                <p><strong>3D Gaussian Splatting needs many views of the same scene.</strong> Research papers use 100-200 photos taken from different angles around an object.</p>
+                
+                <p>Broadcast video gives you maybe 5-10 useful views as the camera pans. <strong>This is an active research problem.</strong></p>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>Single-view 3DGS</strong><br>
+                            <small>Research frontier</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Multi-view 3DGS</strong><br>
+                            <small>Production ready</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>Dynamic scenes</strong><br>
+                            <small>4D Gaussian Splatting</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon partial">⚡</div>
+                        <div>
+                            <strong>Real-time training</strong><br>
+                            <small>VGGT: 3.8 seconds</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <p><strong>The latest breakthrough: VGGT (Meta, CVPR 2025 Best Paper).</strong> 64 frames → 54,000 3D points in 3.8 seconds. Real-time 3D reconstruction is almost here.</p>
+                <p>For disc golf, imagine this: <strong>Live 3D course reconstruction during the broadcast.</strong> Viewers could switch to any angle, see the disc's flight path in 3D, understand the course layout instantly.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://arxiv.org/abs/2308.14737" target="_blank">3D Gaussian Splatting Paper (2023)</a>
+                <a href="https://lumalabs.ai/" target="_blank">Luma AI — Try Gaussian Splatting</a>
+                <a href="https://arxiv.org/abs/2503.11651" target="_blank">VGGT: Real-time 3D Reconstruction (2025)</a>
+                <a href="https://docs.nerf.studio/" target="_blank">Nerfstudio — 3D Reconstruction Toolkit</a>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Segmentation -->
+        <div class="chapter" id="chapter-3">
+            <h2>Chapter 3: "Segmentation"</h2>
+            <h3>Cutting objects out of images and video</h3>
+            
+            <p>Before you can track a disc golf player across the course, you need to separate them from the background. <strong>Segmentation is how AI cuts objects out of images — and it's the foundation of everything else.</strong></p>
+
+            <div class="card">
+                <h3>The Types of Segmentation</h3>
+                <ul style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>Semantic segmentation</strong> — Label every pixel (sky, grass, person, disc, basket)</li>
+                    <li><strong>Instance segmentation</strong> — Distinguish between objects of the same class (player 1 vs player 2)</li>
+                    <li><strong>Panoptic segmentation</strong> — Combine both: every pixel gets a class AND instance ID</li>
+                </ul>
+
+                <p>For sports broadcasting, <strong>instance segmentation is key.</strong> You need to track individual players, not just "human-shaped regions."</p>
+            </div>
+
+            <div class="card">
+                <h3>SAM: The Game Changer</h3>
+                <div class="interactive-demo">
+                    <h4>✂️ Segment Anything Demo</h4>
+                    <div class="segmentation-demo" onclick="segmentObject(event)">
+                        <canvas id="segmentation-image" width="600" height="400"></canvas>
+                        <div class="segmentation-overlay" id="segmentation-overlay"></div>
+                    </div>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="clearSegmentation()">Clear Masks</button>
+                        <button class="demo-btn secondary" onclick="showBinaryMask()">Show Binary Mask</button>
+                    </div>
+                    <p><strong>Click on any object to segment it.</strong> SAM (Segment Anything Model) can isolate any object with a single click — no training required.</p>
+                </div>
+
+                <p><strong>Meta's SAM changed everything in 2023.</strong> Before SAM, you needed to train a custom model for each type of object. Want to segment disc golf players? Train a player segmentation model. Want to segment discs? Train a disc segmentation model.</p>
+
+                <p><strong>SAM segments ANYTHING.</strong> Zero-shot. One model, any object, perfect masks.</p>
+
+                <div style="margin:20px 0;padding:16px 20px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 8px 8px 0;font-size:15px;color:#1e40af;">
+                  🔗 <strong>Connection:</strong> SAM uses a Vision Transformer — the same ViT architecture from Build Your Own Vision. Patches become tokens, attention finds objects. The difference is the output: instead of a caption, SAM outputs a pixel-level mask.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>SAM 2: Video Segmentation</h3>
+                <p><strong>SAM was for static images. SAM 2 extends to video.</strong> Click an object in frame 1, and SAM 2 tracks that exact object through the entire video sequence.</p>
+
+                <p>For disc golf broadcasting:</p>
+                <ul style="margin: 15px 0; padding-left: 20px;">
+                    <li>Segment the player → track them across every frame → know their position always</li>
+                    <li>Segment the disc → track its flight path → reconstruct the throw trajectory</li>
+                    <li>Segment the basket → use as a landmark for camera calibration</li>
+                </ul>
+
+                <p><strong>This solves the "what" problem.</strong> Now we know where every object is in every frame. Next question: where are they in the real world?</p>
+            </div>
+
+            <div class="card">
+                <h3>YOLO: Real-Time Detection</h3>
+                <p><strong>SAM is incredible but slow.</strong> For real-time sports broadcasting, you need YOLO (You Only Look Once). YOLO-nano runs on phones. YOLOv8 does detection + segmentation in milliseconds.</p>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Player Detection</strong><br>
+                            <small>YOLO + DeepSORT</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Object Tracking</strong><br>
+                            <small>Real-time, production ready</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>Disc Tracking</strong><br>
+                            <small>Small, fast objects = hard</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Video Segmentation</strong><br>
+                            <small>SAM 2</small>
+                        </div>
+                    </div>
+                </div>
+
+                <p><strong>The pipeline:</strong> YOLO for real-time detection, SAM 2 for precision segmentation, DeepSORT for multi-object tracking. This combination works today.</p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://arxiv.org/abs/2304.02643" target="_blank">SAM: Segment Anything Paper (2023)</a>
+                <a href="https://arxiv.org/abs/2408.00714" target="_blank">SAM 2: Video Segmentation (2024)</a>
+                <a href="https://docs.ultralytics.com/" target="_blank">YOLO Documentation</a>
+                <a href="https://segment-anything.com/" target="_blank">Try SAM Online</a>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Pixels to GPS -->
+        <div class="chapter" id="chapter-4">
+            <h2>Chapter 4: "Pixels to GPS"</h2>
+            <h3>Geo-localization from broadcast video</h3>
+            
+            <p><strong>The killer application:</strong> You have broadcast video of disc golf hole 7. A player throws from the tee. You want to know the exact GPS coordinates where the disc lands. How?</p>
+
+            <div class="card">
+                <h3>Homography: The Magic Transform</h3>
+                <p><strong>Homography is a mathematical transform that maps pixel coordinates to real-world coordinates.</strong> If you know where 4+ points are in both the image AND on a map, you can transform any pixel to GPS.</p>
+
+                <div class="interactive-demo">
+                    <h4>📍 Pin the Map</h4>
+                    <div class="homography-demo">
+                        <div style="text-align: center;">
+                            <p><strong>Broadcast Frame</strong></p>
+                            <div style="position: relative; display: inline-block;">
+                                <canvas id="broadcast-frame" width="300" height="200" onclick="addHomographyPoint(event, 'frame')"></canvas>
+                                <div id="frame-points"></div>
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <p><strong>Satellite Map</strong></p>
+                            <div style="position: relative; display: inline-block;">
+                                <canvas id="satellite-map" width="300" height="200" onclick="addHomographyPoint(event, 'map')"></canvas>
+                                <div id="map-points"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="clearHomographyPoints()">Clear Points</button>
+                        <button class="demo-btn" onclick="computeHomography()">Compute Transform</button>
+                        <button class="demo-btn secondary" onclick="testHomography()">Test Click</button>
+                    </div>
+                    <div id="homography-status"></div>
+                    <p><strong>Click matching landmarks in both images.</strong> Tee pad, basket, course markers — any fixed point that appears in both views. After 4+ matches, click anywhere in the broadcast frame to see its GPS coordinate.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Getting Ground Truth Data</h3>
+                <p><strong>The secret sauce: you need to know where things actually are.</strong> For disc golf courses, this data exists:</p>
+
+                <ul style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>UDisc course maps</strong> — GPS coordinates of tee pads and baskets</li>
+                    <li><strong>Satellite imagery</strong> — Google Maps, OpenStreetMap</li>
+                    <li><strong>Course designers' KML files</strong> — Often publicly available</li>
+                    <li><strong>Tournament data</strong> — PDGA course layouts with GPS</li>
+                </ul>
+
+                <p><strong>The workflow:</strong> Identify landmarks in the broadcast frame → match to known GPS coordinates → compute homography → transform any pixel to real-world position.</p>
+            </div>
+
+            <div class="card">
+                <h3>The Challenges</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-icon partial">⚡</div>
+                        <div>
+                            <strong>Camera Movement</strong><br>
+                            <small>Pan/zoom breaks homography</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon partial">⚡</div>
+                        <div>
+                            <strong>Parallax Error</strong><br>
+                            <small>Tall objects aren't on ground plane</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>Auto-Calibration</strong><br>
+                            <small>Manual setup per hole</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Static Accuracy</strong><br>
+                            <small>±3m with good landmarks</small>
+                        </div>
+                    </div>
+                </div>
+
+                <p><strong>Camera zoom changes the homography.</strong> Every time the camera operator adjusts zoom or pan, you need to recompute the transform. This is why auto-calibration from video is such an active research area.</p>
+            </div>
+
+            <div class="card">
+                <h3>Real-World Application</h3>
+                <p><strong>We built this for the USDGC (US Disc Golf Championship).</strong> Hours of manual calibration per hole, but the results were incredible: real-time player positions on a course map, throw distances calculated automatically, landing zones highlighted for commentary.</p>
+
+                <p><strong>The holy grail:</strong> Automatic camera calibration that works with any broadcast feed. No manual setup, no course-specific training. Just point the system at any disc golf video and get GPS coordinates out.</p>
+
+                <p>The computer vision community is getting close. <strong>The first team that cracks this builds something no sports broadcaster can ignore.</strong></p>
+            </div>
+
+            <div class="go-deeper">
+                <h4>📚 Go Deeper</h4>
+                <a href="https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html" target="_blank">OpenCV Homography Tutorial</a>
+                <a href="http://webandcircuits.com/geo-loc/" target="_blank">Our Geo-Localization Demo</a>
+                <a href="https://www.udisc.com/" target="_blank">UDisc — Course GPS Data</a>
+                <a href="https://www.pdga.com/" target="_blank">PDGA Course Database</a>
+            </div>
+        </div>
+
+        <!-- Chapter 5: The Full Stack -->
+        <div class="chapter" id="chapter-5">
+            <h2>Chapter 5: "The Full Stack"</h2>
+            <h3>Putting it all together for sports broadcasting</h3>
+            
+            <p><strong>The vision:</strong> A single broadcast camera feed goes in. Out comes a complete spatial understanding of the game.</p>
+
+            <div class="card">
+                <h3>The Complete Pipeline</h3>
+                <div class="pipeline-builder">
+                    <h4>🔧 Broadcast Pipeline Builder</h4>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <strong>Drag components into the pipeline:</strong>
+                    </div>
+                    <div class="pipeline-components">
+                        <div class="pipeline-component" draggable="true">📹 Video Input</div>
+                        <div class="pipeline-component" draggable="true">🔍 Object Detection</div>
+                        <div class="pipeline-component" draggable="true">✂️ Segmentation</div>
+                        <div class="pipeline-component" draggable="true">📏 Depth Estimation</div>
+                        <div class="pipeline-component" draggable="true">📍 Geo-Localization</div>
+                        <div class="pipeline-component" draggable="true">🎯 Object Tracking</div>
+                        <div class="pipeline-component" draggable="true">🌐 3D Reconstruction</div>
+                        <div class="pipeline-component" draggable="true">📊 Analytics</div>
+                    </div>
+                    <div class="pipeline-dropzone" id="pipeline-dropzone">
+                        Drop pipeline components here
+                    </div>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="clearPipeline()">Clear Pipeline</button>
+                        <button class="demo-btn secondary" onclick="showOptimalPipeline()">Show Optimal</button>
+                    </div>
+                </div>
+
+                <p><strong>The optimal pipeline:</strong> Video Input → Object Detection → Segmentation → Geo-Localization → Object Tracking → Analytics. Each component feeds the next.</p>
+            </div>
+
+            <div class="card">
+                <h3>What Comes Out</h3>
+                <ol style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>Live player positions on course map</strong> (homography + tracking)</li>
+                    <li><strong>3D course reconstruction</strong> (gaussian splats or depth estimation)</li>
+                    <li><strong>Disc flight tracking</strong> (segmentation + trajectory physics)</li>
+                    <li><strong>Automatic highlight detection</strong> (motion pattern analysis)</li>
+                    <li><strong>AR broadcast overlays</strong> (distance to basket, flight speed, wind effects)</li>
+                </ol>
+
+                <p><strong>Imagine watching disc golf with this system:</strong> Real-time distance measurements, 3D replays from any angle, automatic ace detection, wind visualization, course difficulty analysis.</p>
+            </div>
+
+            <div class="card">
+                <h3>What Works Today vs What's Research</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Player Detection & Tracking</strong><br>
+                            <small>YOLO + DeepSORT, production ready</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Video Segmentation</strong><br>
+                            <small>SAM 2, works beautifully</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon ready">✅</div>
+                        <div>
+                            <strong>Depth Estimation</strong><br>
+                            <small>Relative depth, good enough</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon partial">⚡</div>
+                        <div>
+                            <strong>Geo-Localization</strong><br>
+                            <small>Works, needs manual calibration</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>3D from Broadcast</strong><br>
+                            <small>Limited views = active research</small>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon research">🔬</div>
+                        <div>
+                            <strong>Real-Time Disc Tracking</strong><br>
+                            <small>Small, fast object = very hard</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>The Competition</h3>
+                <p><strong>Established sports have this already:</strong></p>
+                <ul style="margin: 15px 0; padding-left: 20px;">
+                    <li><strong>Hawk-Eye</strong> (tennis, cricket) — Ball tracking, line calls, 3D replays</li>
+                    <li><strong>Second Spectrum</strong> (NBA) — Player tracking, shot probability, defensive analysis</li>
+                    <li><strong>MLB Statcast</strong> — Exit velocity, launch angle, catch probability</li>
+                </ul>
+
+                <p><strong>Disc golf has NONE of this.</strong> No real-time tracking. No 3D reconstruction. No automatic analytics. No AR overlays. The opportunity is massive.</p>
+            </div>
+
+            <div class="finale">
+                <h2>The Future is Now</h2>
+                <p><strong>The pieces exist. The research is converging.</strong></p>
+                <p>Computer vision models can segment anything, estimate depth, track objects, and reconstruct 3D scenes from video. The hardware can run it in real-time. The broadcast infrastructure is ready.</p>
+                
+                <p><strong>The first team that assembles this pipeline for disc golf — or any sport — builds something no broadcaster can ignore.</strong></p>
+                
+                <p><strong>And now you understand every piece.</strong></p>
+
+                <div class="cta-buttons">
+                    <a href="#" class="cta-btn">Build the Pipeline →</a>
+                    <a href="#" class="cta-btn">Join the Research →</a>
+                    <a href="#" class="cta-btn">Contact Web & Circuits</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chapter progression
+        let currentChapter = 1;
+        const totalChapters = 5;
+        let completedInteractions = new Set();
+
+        // Save progress
+        function saveProgress() {
+            localStorage.setItem('spatialAIProgress', JSON.stringify({
+                currentChapter,
+                completedInteractions: Array.from(completedInteractions)
+            }));
+        }
+
+        // Load progress
+        function loadProgress() {
+            const saved = localStorage.getItem('spatialAIProgress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                currentChapter = data.currentChapter || 1;
+                completedInteractions = new Set(data.completedInteractions || []);
+                updateProgressIndicator();
+                showCompletedChapters();
+            }
+        }
+
+        function updateProgressIndicator() {
+            document.getElementById('progress').textContent = `Chapter ${currentChapter} of ${totalChapters}`;
+        }
+
+        function showCompletedChapters() {
+            for (let i = 2; i <= currentChapter; i++) {
+                const chapter = document.getElementById(`chapter-${i}`);
+                if (chapter) {
+                    chapter.classList.add('visible');
+                    chapter.classList.add('fade-in');
+                }
+            }
+        }
+
+        function completeInteraction(interactionId) {
+            completedInteractions.add(interactionId);
+            
+            // Check if chapter is complete
+            const chapterInteractions = {
+                1: ['depth-viz', 'parallax-demo'],
+                2: ['splat-playground'],
+                3: ['segmentation-demo'],
+                4: ['homography-demo'],
+                5: ['pipeline-builder']
+            };
+
+            const currentInteractions = chapterInteractions[currentChapter] || [];
+            const completed = currentInteractions.every(id => completedInteractions.has(id));
+
+            if (completed && currentChapter < totalChapters) {
+                currentChapter++;
+                updateProgressIndicator();
+                
+                setTimeout(() => {
+                    const nextChapter = document.getElementById(`chapter-${currentChapter}`);
+                    if (nextChapter) {
+                        nextChapter.classList.add('visible');
+                        nextChapter.classList.add('fade-in');
+                        nextChapter.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 1000);
+            }
+
+            saveProgress();
+        }
+
+        // Chapter 1: Depth visualization
+        function toggleDepthVisualization() {
+            const overlay = document.getElementById('depth-overlay');
+            overlay.classList.toggle('active');
+            completeInteraction('depth-viz');
+        }
+
+        // Parallax demo
+        let matchPoints = { left: [], right: [] };
+
+        function addMatchPoint(event, side) {
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const point = document.createElement('div');
+            point.className = 'match-point';
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            
+            document.getElementById(`${side}-image`).appendChild(point);
+            matchPoints[side].push({ x, y });
+
+            if (matchPoints.left.length === matchPoints.right.length && matchPoints.left.length > 0) {
+                showMatchLine();
+            }
+
+            if (matchPoints.left.length >= 3 && matchPoints.right.length >= 3) {
+                completeInteraction('parallax-demo');
+            }
+        }
+
+        function showMatchLine() {
+            const line = document.getElementById('match-line');
+            line.style.display = 'block';
+            line.style.width = '100%';
+        }
+
+        function clearMatchPoints() {
+            matchPoints = { left: [], right: [] };
+            document.querySelectorAll('.match-point').forEach(p => p.remove());
+            document.getElementById('match-line').style.display = 'none';
+            document.getElementById('triangulation-result').innerHTML = '';
+        }
+
+        function triangulatePoints() {
+            if (matchPoints.left.length >= 4 && matchPoints.right.length >= 4) {
+                document.getElementById('triangulation-result').innerHTML = 
+                    `<div style="background: #dcfce7; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>✓ 3D Points Triangulated!</strong><br>
+                        With ${matchPoints.left.length} point pairs, we can compute their real-world 3D positions.
+                        This is exactly how COLMAP reconstructs scenes from photos.
+                    </div>`;
+            }
+        }
+
+        // Chapter 2: Gaussian Splats playground
+        const splatCanvas = document.getElementById('splat-canvas');
+        const splatCtx = splatCanvas?.getContext('2d');
+        let splats = [];
+
+        function clearSplats() {
+            splats = [];
+            if (splatCtx) {
+                splatCtx.clearRect(0, 0, splatCanvas.width, splatCanvas.height);
+            }
+        }
+
+        function randomSplats() {
+            for (let i = 0; i < 20; i++) {
+                splats.push({
+                    x: Math.random() * splatCanvas.width,
+                    y: Math.random() * splatCanvas.height,
+                    size: 20 + Math.random() * 60,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                    opacity: 0.3 + Math.random() * 0.5
+                });
+            }
+            renderSplats();
+            completeInteraction('splat-playground');
+        }
+
+        function renderSplats() {
+            if (!splatCtx) return;
+            splatCtx.clearRect(0, 0, splatCanvas.width, splatCanvas.height);
+            
+            splats.forEach(splat => {
+                splatCtx.globalAlpha = splat.opacity;
+                splatCtx.fillStyle = splat.color;
+                splatCtx.beginPath();
+                splatCtx.arc(splat.x, splat.y, splat.size, 0, Math.PI * 2);
+                splatCtx.fill();
+            });
+            splatCtx.globalAlpha = 1;
+        }
+
+        if (splatCanvas) {
+            splatCanvas.addEventListener('click', (e) => {
+                const rect = splatCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const size = parseInt(document.getElementById('splat-size').value);
+                const opacity = parseFloat(document.getElementById('splat-opacity').value);
+                
+                splats.push({
+                    x, y, size, opacity,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`
+                });
+                renderSplats();
+                completeInteraction('splat-playground');
+            });
+        }
+
+        // Chapter 3: Segmentation demo
+        function segmentObject(event) {
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Add click indicator
+            const indicator = document.createElement('div');
+            indicator.className = 'click-indicator';
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+            document.getElementById('segmentation-overlay').appendChild(indicator);
+            
+            // Remove indicator after animation
+            setTimeout(() => indicator.remove(), 600);
+            
+            // Add segmentation mask
+            setTimeout(() => {
+                const mask = document.createElement('div');
+                mask.className = 'segment-mask';
+                mask.style.left = (x - 50) + 'px';
+                mask.style.top = (y - 30) + 'px';
+                mask.style.width = '100px';
+                mask.style.height = '60px';
+                mask.style.display = 'block';
+                document.getElementById('segmentation-overlay').appendChild(mask);
+                
+                completeInteraction('segmentation-demo');
+            }, 300);
+        }
+
+        function clearSegmentation() {
+            document.getElementById('segmentation-overlay').innerHTML = '';
+        }
+
+        function showBinaryMask() {
+            // Toggle between color overlay and binary mask visualization
+            const masks = document.querySelectorAll('.segment-mask');
+            masks.forEach(mask => {
+                mask.style.background = mask.style.background.includes('white') ? 
+                    'rgba(37, 99, 235, 0.2)' : 'white';
+                mask.style.border = mask.style.background.includes('white') ? 
+                    '3px solid #000' : '3px solid #2563eb';
+            });
+        }
+
+        // Chapter 4: Homography demo
+        let homographyPoints = { frame: [], map: [] };
+
+        function addHomographyPoint(event, type) {
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const point = document.createElement('div');
+            point.className = 'homography-point';
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            point.textContent = homographyPoints[type].length + 1;
+            
+            document.getElementById(`${type}-points`).appendChild(point);
+            homographyPoints[type].push({ x, y });
+
+            if (homographyPoints.frame.length >= 4 && homographyPoints.map.length >= 4) {
+                completeInteraction('homography-demo');
+            }
+        }
+
+        function clearHomographyPoints() {
+            homographyPoints = { frame: [], map: [] };
+            document.getElementById('frame-points').innerHTML = '';
+            document.getElementById('map-points').innerHTML = '';
+            document.getElementById('homography-status').innerHTML = '';
+        }
+
+        function computeHomography() {
+            if (homographyPoints.frame.length >= 4 && homographyPoints.map.length >= 4) {
+                document.getElementById('homography-status').innerHTML = 
+                    '<div style="background: #dcfce7; padding: 15px; border-radius: 8px; margin: 15px 0;"><strong>✓ Homography computed!</strong> You can now click anywhere in the broadcast frame to get GPS coordinates.</div>';
+            } else {
+                document.getElementById('homography-status').innerHTML = 
+                    '<div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 15px 0;"><strong>Need 4+ matching points</strong> in both images to compute homography.</div>';
+            }
+        }
+
+        function testHomography() {
+            if (homographyPoints.frame.length >= 4) {
+                document.getElementById('homography-status').innerHTML += 
+                    '<div style="background: #eff6ff; padding: 10px; border-radius: 6px; margin: 10px 0; font-family: monospace;">GPS: 40.7589° N, 73.9851° W (Central Park)</div>';
+            }
+        }
+
+        // Chapter 5: Pipeline builder
+        let pipelineComponents = [];
+
+        function initPipelineBuilder() {
+            const components = document.querySelectorAll('.pipeline-component');
+            components.forEach(component => {
+                component.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', component.textContent);
+                    component.classList.add('dragging');
+                });
+
+                component.addEventListener('dragend', () => {
+                    component.classList.remove('dragging');
+                });
+            });
+
+            const dropzone = document.getElementById('pipeline-dropzone');
+            if (dropzone) {
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('drag-over');
+                });
+
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.classList.remove('drag-over');
+                });
+
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const componentText = e.dataTransfer.getData('text/plain');
+                    
+                    if (!pipelineComponents.includes(componentText)) {
+                        pipelineComponents.push(componentText);
+                        
+                        const component = document.createElement('div');
+                        component.className = 'component';
+                        component.textContent = componentText;
+                        dropzone.appendChild(component);
+
+                        if (pipelineComponents.length >= 5) {
+                            completeInteraction('pipeline-builder');
+                        }
+                    }
+                    
+                    dropzone.classList.remove('drag-over');
+                    
+                    if (pipelineComponents.length > 0) {
+                        dropzone.querySelector('.empty-text')?.remove();
+                    }
+                });
+            }
+        }
+
+        function clearPipeline() {
+            pipelineComponents = [];
+            const dropzone = document.getElementById('pipeline-dropzone');
+            dropzone.innerHTML = 'Drop pipeline components here';
+        }
+
+        function showOptimalPipeline() {
+            clearPipeline();
+            const optimal = ['📹 Video Input', '🔍 Object Detection', '✂️ Segmentation', '📍 Geo-Localization', '🎯 Object Tracking', '📊 Analytics'];
+            const dropzone = document.getElementById('pipeline-dropzone');
+            
+            optimal.forEach(comp => {
+                const component = document.createElement('div');
+                component.className = 'component';
+                component.textContent = comp;
+                dropzone.appendChild(component);
+            });
+            
+            pipelineComponents = optimal;
+            completeInteraction('pipeline-builder');
+        }
+
+        // Initialize canvases
+        function initCanvases() {
+            // Source image canvas
+            const sourceCanvas = document.getElementById('source-image');
+            if (sourceCanvas) {
+                const ctx = sourceCanvas.getContext('2d');
+                ctx.fillStyle = '#4ade80';
+                ctx.fillRect(0, 0, 300, 100);
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(50, 50, 200, 80);
+                ctx.fillStyle = '#16a34a';
+                ctx.fillRect(100, 80, 100, 60);
+                ctx.fillStyle = '#1a1a2e';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('Disc Golf Scene', 10, 20);
+            }
+
+            // Depth overlay canvas
+            const depthCanvas = document.getElementById('depth-overlay');
+            if (depthCanvas) {
+                const ctx = depthCanvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 300, 200);
+                gradient.addColorStop(0, 'rgba(255, 0, 0, 0.7)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 0, 0.7)');
+                gradient.addColorStop(1, 'rgba(0, 0, 255, 0.7)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 300, 200);
+            }
+
+            // Parallax images
+            const leftCanvas = document.querySelector('#left-image canvas');
+            const rightCanvas = document.querySelector('#right-image canvas');
+            if (leftCanvas && rightCanvas) {
+                [leftCanvas, rightCanvas].forEach((canvas, i) => {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#60a5fa';
+                    ctx.fillRect(0, 0, 280, 180);
+                    ctx.fillStyle = '#1a1a2e';
+                    ctx.font = '16px sans-serif';
+                    ctx.fillText(`View ${i + 1}`, 10, 25);
+                    
+                    // Add some geometric shapes to represent scene features
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(50 + i * 10, 60, 20, 20);
+                    ctx.fillRect(150 + i * 15, 100, 30, 30);
+                    ctx.fillRect(200 + i * 8, 40, 25, 25);
+                });
+            }
+
+            // Segmentation canvas
+            const segCanvas = document.getElementById('segmentation-image');
+            if (segCanvas) {
+                const ctx = segCanvas.getContext('2d');
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(0, 0, 600, 400);
+                
+                // Draw some objects to segment
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(100, 150, 80, 120); // Player
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(350, 100, 15, 0, Math.PI * 2); // Disc
+                ctx.fill();
+                ctx.fillStyle = '#6b7280';
+                ctx.fillRect(450, 200, 40, 100); // Basket
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '16px sans-serif';
+                ctx.fillText('Player', 110, 140);
+                ctx.fillText('Disc', 330, 85);
+                ctx.fillText('Basket', 455, 190);
+            }
+
+            // Homography canvases
+            const broadcastCanvas = document.getElementById('broadcast-frame');
+            const mapCanvas = document.getElementById('satellite-map');
+            if (broadcastCanvas && mapCanvas) {
+                // Broadcast frame
+                const bCtx = broadcastCanvas.getContext('2d');
+                bCtx.fillStyle = '#22c55e';
+                bCtx.fillRect(0, 0, 300, 200);
+                bCtx.fillStyle = '#1a1a2e';
+                bCtx.fillRect(50, 80, 20, 40); // Tee pad
+                bCtx.fillRect(220, 120, 15, 30); // Basket
+                bCtx.font = '12px sans-serif';
+                bCtx.fillStyle = 'white';
+                bCtx.fillText('Tee', 55, 75);
+                bCtx.fillText('Basket', 185, 140);
+
+                // Map view
+                const mCtx = mapCanvas.getContext('2d');
+                mCtx.fillStyle = '#86efac';
+                mCtx.fillRect(0, 0, 300, 200);
+                mCtx.fillStyle = '#1a1a2e';
+                mCtx.fillRect(40, 70, 8, 15); // Tee pad
+                mCtx.fillRect(240, 130, 6, 12); // Basket
+                mCtx.font = '10px sans-serif';
+                mCtx.fillStyle = 'white';
+                mCtx.fillText('Tee', 25, 85);
+                mCtx.fillText('Basket', 210, 145);
+            }
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            initCanvases();
+            initPipelineBuilder();
+            
+            // Intersection Observer for smooth chapter reveals
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.chapter').forEach(chapter => {
+                observer.observe(chapter);
+            });
+        });
+
+        // Handle resize for mobile
+        window.addEventListener('resize', () => {
+            initCanvases();
+        });
+    </script>
+
+    <div style="max-width:720px;margin:40px auto;padding:20px;display:flex;justify-content:space-between;font-size:15px;">
+        <a href="../build-chief-of-staff/" style="color:#2563eb;text-decoration:none;">← Previous: AI Chief of Staff</a>
+        <a href="../model-cheatsheet/" style="color:#2563eb;text-decoration:none;">Next: Model Cheat Sheet →</a>
+    </div>
+</body>
+</html>
